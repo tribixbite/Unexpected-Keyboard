@@ -72,6 +72,7 @@ public final class Config
   public boolean clipboard_history_enabled;
 
   // Dynamically set
+  public boolean should_show_candidates_view;
   public boolean shouldOfferVoiceTyping;
   public String actionLabel; // Might be 'null'
   public int actionId; // Meaningful only when 'actionLabel' isn't 'null'
@@ -100,6 +101,7 @@ public final class Config
     // from prefs
     refresh(res, foldableUnfolded);
     // initialized later
+    should_show_candidates_view = false;
     shouldOfferVoiceTyping = false;
     actionLabel = null;
     actionId = 0;
@@ -287,6 +289,7 @@ public final class Config
     public void key_down(KeyValue value, boolean is_swipe);
     public void key_up(KeyValue value, Pointers.Modifiers mods);
     public void mods_changed(Pointers.Modifiers mods);
+    public void suggestion_entered(String text);
   }
 
   /** Config migrations. */
