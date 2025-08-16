@@ -14,10 +14,13 @@ import java.util.Iterator;
 
 public final class KeyEventHandler
   implements Config.IKeyEventHandler,
-             ClipboardHistoryService.ClipboardPasteCallback
+             ClipboardHistoryService.ClipboardPasteCallback,
+             CurrentlyTypedWord.Callback
 {
   IReceiver _recv;
   Autocapitalisation _autocap;
+  Suggestions _suggestions;
+  CurrentlyTypedWord _typedword;
   /** State of the system modifiers. It is updated whether a modifier is down
       or up and a corresponding key event is sent. */
   Pointers.Modifiers _mods;
@@ -35,6 +38,7 @@ public final class KeyEventHandler
     _autocap = new Autocapitalisation(recv.getHandler(),
         this.new Autocapitalisation_callback());
     _mods = Pointers.Modifiers.EMPTY;
+    _typedword = new CurrentlyTypedWord(this);
   }
 
   /** Editing just started. */
@@ -121,6 +125,12 @@ public final class KeyEventHandler
   public void paste_from_clipboard_pane(String content)
   {
     send_text(content);
+  }
+
+  @Override
+  public void currently_typed_word(String word)
+  {
+    _suggestions.currently_typed_word(word);
   }
 
   /** Update [_mods] to be consistent with the [mods], sending key events if
@@ -485,7 +495,7 @@ public final class KeyEventHandler
     return info.packageName.startsWith("org.godotengine.editor");
   }
 
-  public static interface IReceiver
+  public static interface IReceiver implements Suggestions.Callback
   {
     public void handle_event_key(KeyValue.Event ev);
     public void set_shift_state(boolean state, boolean lock);

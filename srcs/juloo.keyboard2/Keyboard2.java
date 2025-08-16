@@ -394,6 +394,7 @@ public class Keyboard2 extends InputMethodService
     _keyeventhandler.selection_updated(oldSelStart, newSelStart);
     if ((oldSelStart == oldSelEnd) != (newSelStart == newSelEnd))
       _keyboardView.set_selection_state(newSelStart != newSelEnd);
+    _candidates_view.set_candidates(Arrays.asList("foo", "bar"));
   }
 
   @Override
@@ -525,6 +526,11 @@ public class Keyboard2 extends InputMethodService
     public Handler getHandler()
     {
       return _handler;
+    }
+
+    public void set_suggestions(List<String> suggestions)
+    {
+      _candidates_view.set_suggestions(suggestions);
     }
   }
 
