@@ -2,10 +2,21 @@
 
 # Complete build script for Unexpected Keyboard on Termux ARM64
 # This script handles all the compatibility issues
+# Usage: ./build-on-termux.sh [debug|release]
+
+BUILD_TYPE="${1:-debug}"
+BUILD_TYPE_LOWER=$(echo "$BUILD_TYPE" | tr '[:upper:]' '[:lower:]')
 
 echo "=== Unexpected Keyboard Termux Build Script ==="
-echo "This script builds the APK on Termux ARM64 devices"
+echo "Building $BUILD_TYPE_LOWER APK on Termux ARM64"
 echo
+
+# Validate build type
+if [[ "$BUILD_TYPE_LOWER" != "debug" && "$BUILD_TYPE_LOWER" != "release" ]]; then
+    echo "Error: Invalid build type. Use 'debug' or 'release'"
+    echo "Usage: $0 [debug|release]"
+    exit 1
+fi
 
 # 1. Set up environment
 export ANDROID_HOME="$HOME/android-sdk"
@@ -34,80 +45,104 @@ if [ ! -d "$ANDROID_HOME" ]; then
     exit 1
 fi
 
-echo "Step 2: Installing Termux-compatible build tools..."
-
-# Install AAPT2 if not present
-if ! command -v aapt2 &>/dev/null; then
-    echo "Installing aapt2..."
-    yes | pkg install aapt2 --overwrite '*' 2>/dev/null || {
-        echo "Warning: Failed to install aapt2 package"
-    }
-fi
-
-echo "Step 3: Fixing AAPT2 compatibility..."
-
-# Replace all gradle cached AAPT2 with Termux version
-if command -v aapt2 &>/dev/null; then
-    TERMUX_AAPT2=$(which aapt2)
-    echo "Using Termux AAPT2: $TERMUX_AAPT2"
-    
-    # Find and replace all AAPT2 binaries in gradle cache
-    find ~/.gradle/caches -name "aapt2" -type f 2>/dev/null | while read -r aapt2_file; do
-        echo "Replacing: $aapt2_file"
-        cp "$TERMUX_AAPT2" "$aapt2_file"
-        chmod +x "$aapt2_file"
-    done
-else
-    echo "Warning: Termux AAPT2 not found, build may fail"
-fi
-
-echo "Step 4: Creating symbolic link for android.jar..."
-
-# The Termux AAPT2 might have issues with the android.jar path
-# Create a workaround by ensuring the path is accessible
-ANDROID_JAR="$ANDROID_HOME/platforms/android-35/android.jar"
-if [ ! -f "$ANDROID_JAR" ]; then
-    echo "Error: android.jar not found at $ANDROID_JAR"
+# Check qemu-x86_64 for AAPT2 wrapper
+if ! command -v qemu-x86_64 &>/dev/null; then
+    echo "Error: qemu-x86_64 not found. Install with: pkg install qemu-user-x86-64"
     exit 1
 fi
 
-# Ensure the android.jar is readable
-chmod +r "$ANDROID_JAR" 2>/dev/null || true
+echo "Step 2: Preparing layout resources..."
 
-echo "Step 5: Cleaning previous builds..."
+# Ensure layout files are copied (gradle task sometimes doesn't run)
+if [ ! -d "build/generated-resources/xml" ] || [ -z "$(ls -A build/generated-resources/xml 2>/dev/null)" ]; then
+    echo "Copying layout definitions..."
+    mkdir -p build/generated-resources/xml
+    cp srcs/layouts/*.xml build/generated-resources/xml/ 2>/dev/null || true
+fi
+
+echo "Step 3: Cleaning previous builds..."
 ./gradlew clean || {
     echo "Warning: Clean failed, continuing anyway..."
 }
 
-echo "Step 6: Building Debug APK..."
+# Re-copy layouts after clean
+mkdir -p build/generated-resources/xml
+cp srcs/layouts/*.xml build/generated-resources/xml/ 2>/dev/null || true
+
+# Determine gradle task and output path
+if [ "$BUILD_TYPE_LOWER" = "release" ]; then
+    echo "Step 4: Building Release APK..."
+    echo "Note: Release builds require signing configuration."
+    echo "Creating a test signing key for release build..."
+    
+    # Create a test keystore for release builds if not present
+    if [ ! -f "release.keystore" ]; then
+        keytool -genkey -v -keystore release.keystore -alias release \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Test, OU=Test, O=Test, L=Test, S=Test, C=US" 2>/dev/null || {
+            echo "Warning: Could not create release keystore"
+        }
+    fi
+    
+    # Set environment variables for release signing
+    export RELEASE_KEYSTORE="release.keystore"
+    export RELEASE_KEYSTORE_PASSWORD="android"
+    export RELEASE_KEY_ALIAS="release"
+    export RELEASE_KEY_PASSWORD="android"
+    
+    GRADLE_TASK="assembleRelease"
+    APK_PATH="build/outputs/apk/release/juloo.keyboard2.apk"
+else
+    GRADLE_TASK="assembleDebug"
+    APK_PATH="build/outputs/apk/debug/juloo.keyboard2.debug.apk"
+    echo "Step 4: Building Debug APK..."
+fi
+
 echo "This may take a few minutes on first run..."
 
-# Build with workarounds for Termux
-./gradlew assembleDebug \
+# Build with Termux-specific configuration
+./gradlew $GRADLE_TASK \
     -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" \
-    -Pandroid.aapt2FromMavenOverride="$TERMUX_AAPT2" \
     --no-daemon \
     --warning-mode=all \
-    2>&1 | tee build.log
+    2>&1 | tee build-${BUILD_TYPE_LOWER}.log
 
 # Check build result
-if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+if [ -f "$APK_PATH" ]; then
     echo
     echo "=== BUILD SUCCESSFUL! ==="
-    echo "APK created at: app/build/outputs/apk/debug/app-debug.apk"
+    echo "APK created at: $APK_PATH"
     echo
-    ls -lh app/build/outputs/apk/debug/app-debug.apk
+    ls -lh "$APK_PATH"
     echo
-    echo "To install on device:"
-    echo "  adb install app/build/outputs/apk/debug/app-debug.apk"
+    
+    # Try to open APK for installation if termux-open is available
+    if command -v termux-open &>/dev/null; then
+        echo "Opening APK for installation..."
+        termux-open "$APK_PATH" 2>/dev/null || {
+            echo "To install manually, share the APK file to your file manager"
+        }
+    else
+        echo "To install on device:"
+        echo "  1. Share the APK to your file manager"
+        echo "  2. Open the APK file to install"
+    fi
+    
+    if [ "$BUILD_TYPE_LOWER" = "release" ]; then
+        echo
+        echo "Note: Release APK is unsigned. You need to sign it before distribution."
+        echo "For testing, you can use debug build instead."
+    fi
 else
     echo
     echo "=== BUILD FAILED ==="
-    echo "Check build.log for details"
+    echo "Check build-${BUILD_TYPE_LOWER}.log for details"
     echo
     echo "Common issues:"
-    echo "1. AAPT2 compatibility - ensure 'pkg install aapt2' succeeded"
+    echo "1. AAPT2 compatibility - ensure qemu-x86_64 is installed"
     echo "2. Memory issues - try closing other apps"
-    echo "3. SDK version mismatch - check Android SDK installation"
+    echo "3. Missing layouts - check if srcs/layouts/*.xml exist"
+    echo "4. SDK version mismatch - check Android SDK installation"
     exit 1
 fi

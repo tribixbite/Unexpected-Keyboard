@@ -8,18 +8,49 @@ Unexpected Keyboard is a lightweight, privacy-conscious virtual keyboard for And
 
 ## Build Commands
 
+### Standard Build
 ```bash
 # Build debug APK
 ./gradlew assembleDebug
+# Output: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 # Build release APK  
 ./gradlew assembleRelease
+# Output: build/outputs/apk/release/juloo.keyboard2.apk (unsigned)
 
 # Install debug build on connected device
 ./gradlew installDebug
 
-# Run tests
+# Clean build
+./gradlew clean
+```
+
+### Termux ARM64 Build
+For building on Termux (Android ARM64 devices):
+```bash
+# One-time setup
+./setup-arm64-buildtools.sh
+
+# Build using the convenience script
+./build-on-termux.sh        # Builds debug APK
+./build-on-termux.sh release # Builds release APK
+
+# Or manually with gradle
+export ANDROID_HOME="$HOME/android-sdk"
+export JAVA_HOME="/data/data/com.termux/files/usr/lib/jvm/java-17-openjdk"
+./gradlew assembleDebug
+./gradlew assembleRelease
+```
+
+**Note**: Termux builds require qemu-x86_64 for AAPT2 emulation. The bundled `tools/aapt2-arm64/` wrapper handles this automatically.
+
+### Test Commands
+```bash
+# Run all tests
 ./gradlew test
+
+# Run specific test
+./gradlew test --tests "SpecificTestClass.testMethod"
 
 # Check keyboard layouts
 ./gradlew checkKeyboardLayouts
@@ -29,9 +60,6 @@ Unexpected Keyboard is a lightweight, privacy-conscious virtual keyboard for And
 
 # Compile compose sequences (for modifier keys)
 ./gradlew compileComposeSequences
-
-# Clean build
-./gradlew clean
 ```
 
 ## Development Notes
@@ -131,3 +159,51 @@ Required for development (Python 3):
 - Follow existing code patterns for consistency
 - Test changes with both debug and release builds
 - Ensure compatibility with Android API 21+
+
+## Git Commit Conventions
+
+Use conventional commits format for all commits:
+
+### Format
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
+- `build`: Build system changes
+- `ci`: CI/CD changes
+- `perf`: Performance improvements
+
+### Examples
+```bash
+# Feature
+git commit -m "feat(swipe): add swipe typing support"
+
+# Bug fix
+git commit -m "fix(layout): correct QWERTY key positioning"
+
+# Documentation
+git commit -m "docs: update build instructions for Termux"
+
+# Build changes
+git commit -m "build: add ARM64 AAPT2 support for Termux"
+```
+
+### Scope Examples
+- `layout`: Keyboard layout changes
+- `swipe`: Swipe gesture features
+- `config`: Configuration/settings
+- `ui`: User interface changes
+- `build`: Build system
+- `test`: Testing infrastructure
