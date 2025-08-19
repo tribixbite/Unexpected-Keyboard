@@ -192,6 +192,24 @@ public class Keyboard2View extends View
     _mods = _pointers.getModifiers();
     _config.handler.mods_changed(_mods);
   }
+  
+  public void onSwipeMove(float x, float y, SwipeGestureRecognizer recognizer)
+  {
+    KeyboardData.Key key = getKeyAtPosition(x, y);
+    recognizer.addPoint(x, y, key);
+    if (recognizer.isSwipeTyping())
+    {
+      invalidate(); // Redraw to show swipe trail
+    }
+  }
+  
+  public void onSwipeEnd(SwipeGestureRecognizer recognizer)
+  {
+    // This will be handled by Keyboard2 when integrated
+    // For now, just reset the recognizer
+    recognizer.reset();
+    invalidate(); // Clear the trail
+  }
 
   @Override
   public boolean onTouch(View v, MotionEvent event)

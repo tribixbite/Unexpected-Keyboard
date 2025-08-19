@@ -23,17 +23,21 @@ public final class Pointers implements Handler.Callback
   public static final int FLAG_P_CLEAR_LATCHED = (1 << 6);
   /** Can't be locked, even when long pressing. */
   public static final int FLAG_P_CANT_LOCK = (1 << 7);
+  /** Pointer is part of a swipe typing gesture. */
+  public static final int FLAG_P_SWIPE_TYPING = (1 << 8);
 
   private Handler _longpress_handler;
   private ArrayList<Pointer> _ptrs = new ArrayList<Pointer>();
   private IPointerEventHandler _handler;
   private Config _config;
+  private SwipeGestureRecognizer _swipeRecognizer;
 
   public Pointers(IPointerEventHandler h, Config c)
   {
     _longpress_handler = new Handler(this);
     _handler = h;
     _config = c;
+    _swipeRecognizer = new SwipeGestureRecognizer();
   }
 
   /** Return the list of modifiers currently activated. */
@@ -140,6 +144,16 @@ public final class Pointers implements Handler.Callback
     Pointer ptr = getPtr(pointerId);
     if (ptr == null)
       return;
+    
+    // Handle swipe typing completion
+    if (_config.swipe_typing_enabled && ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
+    {
+      _handler.onSwipeEnd(_swipeRecognizer);
+      _swipeRecognizer.reset();
+      removePtr(ptr);
+      return;
+    }
+    
     if (ptr.hasFlagsAny(FLAG_P_SLIDING))
     {
       clearLatched();
@@ -205,13 +219,26 @@ public final class Pointers implements Handler.Callback
     // touch events can happen while the pointer travels on top of other keys.
     if (isSliding())
       return;
+    
+    // Initialize swipe typing if enabled and this could be the start of a swipe
+    if (_config.swipe_typing_enabled && _ptrs.isEmpty() && key != null)
+    {
+      _swipeRecognizer.startSwipe(x, y, key);
+    }
+    
     // Don't take latched modifiers into account if an other key is pressed.
     // The other key already "own" the latched modifiers and will clear them.
     Modifiers mods = getModifiers(isOtherPointerDown());
     KeyValue value = _handler.modifyKey(key.keys[0], mods);
     Pointer ptr = make_pointer(pointerId, key, value, x, y, mods);
     _ptrs.add(ptr);
-    startLongPress(ptr);
+    
+    // Don't start long press timer if we might be swipe typing
+    if (!(_config.swipe_typing_enabled && _swipeRecognizer.isSwipeTyping()))
+    {
+      startLongPress(ptr);
+    }
+    
     _handler.onPointerDown(value, false);
   }
 
@@ -265,11 +292,31 @@ public final class Pointers implements Handler.Callback
     Pointer ptr = getPtr(pointerId);
     if (ptr == null)
       return;
+    
+    // Track swipe typing if enabled and single pointer
+    if (_config.swipe_typing_enabled && _ptrs.size() == 1 && !ptr.hasFlagsAny(FLAG_P_SLIDING))
+    {
+      // Let handler track the swipe movement (it has access to key positions)
+      _handler.onSwipeMove(x, y, _swipeRecognizer);
+      
+      // Check if this has become a swipe typing gesture
+      if (_swipeRecognizer.isSwipeTyping())
+      {
+        ptr.flags |= FLAG_P_SWIPE_TYPING;
+        // Cancel long press timer if swipe typing detected
+        stopLongPress(ptr);
+      }
+    }
+    
     if (ptr.hasFlagsAny(FLAG_P_SLIDING))
     {
       ptr.sliding.onTouchMove(ptr, x, y);
       return;
     }
+
+    // Skip normal gesture processing if swipe typing
+    if (ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
+      return;
 
     // The position in a IME windows is clampled to view.
     // For a better up swipe behaviour, set the y position to a negative value when clamped.
@@ -812,5 +859,11 @@ public final class Pointers implements Handler.Callback
 
     /** Key is repeating. */
     public void onPointerHold(KeyValue k, Modifiers mods);
+    
+    /** Track swipe movement for swipe typing. */
+    public void onSwipeMove(float x, float y, SwipeGestureRecognizer recognizer);
+    
+    /** Swipe typing gesture completed. */
+    public void onSwipeEnd(SwipeGestureRecognizer recognizer);
   }
 }
