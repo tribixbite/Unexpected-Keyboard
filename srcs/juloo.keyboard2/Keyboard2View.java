@@ -5,6 +5,8 @@ import android.content.ContextWrapper;
 import android.graphics.Canvas;
 import android.graphics.Insets;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.inputmethodservice.InputMethodService;
@@ -18,6 +20,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 import java.util.Arrays;
+import java.util.List;
 
 public class Keyboard2View extends View
   implements View.OnTouchListener, Pointers.IPointerEventHandler
@@ -40,6 +43,9 @@ public class Keyboard2View extends View
   private static int _currentWhat = 0;
 
   private Config _config;
+  
+  private SwipeGestureRecognizer _swipeRecognizer;
+  private Paint _swipeTrailPaint;
 
   private float _keyWidth;
   private float _mainLabelSize;
@@ -69,6 +75,8 @@ public class Keyboard2View extends View
     _theme = new Theme(getContext(), attrs);
     _config = Config.globalConfig();
     _pointers = new Pointers(this, _config);
+    _swipeRecognizer = _pointers._swipeRecognizer; // Share the recognizer
+    initSwipeTrailPaint();
     refresh_navigation_bar(context);
     setOnTouchListener(this);
     int layout_id = (attrs == null) ? 0 :
@@ -77,6 +85,18 @@ public class Keyboard2View extends View
       reset();
     else
       setKeyboard(KeyboardData.load(getResources(), layout_id));
+  }
+  
+  private void initSwipeTrailPaint()
+  {
+    _swipeTrailPaint = new Paint();
+    _swipeTrailPaint.setColor(0xFF1976D2); // Default blue color
+    _swipeTrailPaint.setStrokeWidth(3.0f * getResources().getDisplayMetrics().density);
+    _swipeTrailPaint.setStyle(Paint.Style.STROKE);
+    _swipeTrailPaint.setAntiAlias(true);
+    _swipeTrailPaint.setStrokeCap(Paint.Cap.ROUND);
+    _swipeTrailPaint.setStrokeJoin(Paint.Join.ROUND);
+    _swipeTrailPaint.setAlpha(180); // Semi-transparent
   }
 
   private Window getParentWindow(Context context)
@@ -384,6 +404,31 @@ public class Keyboard2View extends View
       }
       y += row.height * _tc.row_height;
     }
+    
+    // Draw swipe trail if swipe typing is enabled and active
+    if (_config.swipe_typing_enabled && _swipeRecognizer != null && _swipeRecognizer.isSwipeTyping())
+    {
+      drawSwipeTrail(canvas);
+    }
+  }
+  
+  private void drawSwipeTrail(Canvas canvas)
+  {
+    List<PointF> swipePath = _swipeRecognizer.getSwipePath();
+    if (swipePath.size() < 2)
+      return;
+      
+    Path path = new Path();
+    PointF firstPoint = swipePath.get(0);
+    path.moveTo(firstPoint.x, firstPoint.y);
+    
+    for (int i = 1; i < swipePath.size(); i++)
+    {
+      PointF point = swipePath.get(i);
+      path.lineTo(point.x, point.y);
+    }
+    
+    canvas.drawPath(path, _swipeTrailPaint);
   }
 
   @Override

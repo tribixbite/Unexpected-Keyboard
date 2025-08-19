@@ -30,7 +30,7 @@ public final class Pointers implements Handler.Callback
   private ArrayList<Pointer> _ptrs = new ArrayList<Pointer>();
   private IPointerEventHandler _handler;
   private Config _config;
-  private SwipeGestureRecognizer _swipeRecognizer;
+  public final SwipeGestureRecognizer _swipeRecognizer;
 
   public Pointers(IPointerEventHandler h, Config c)
   {
