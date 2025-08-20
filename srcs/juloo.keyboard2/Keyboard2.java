@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.text.InputType;
 import android.util.Log;
 import android.util.LogPrinter;
+import android.util.TypedValue;
 import android.view.*;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -28,7 +29,8 @@ import java.util.Set;
 import juloo.keyboard2.prefs.LayoutsPreference;
 
 public class Keyboard2 extends InputMethodService
-  implements SharedPreferences.OnSharedPreferenceChangeListener
+  implements SharedPreferences.OnSharedPreferenceChangeListener,
+  SuggestionBar.OnSuggestionSelectedListener
 {
   private Keyboard2View _keyboardView;
   private KeyEventHandler _keyeventhandler;
@@ -44,6 +46,12 @@ public class Keyboard2 extends InputMethodService
   private Config _config;
 
   private FoldStateTracker _foldStateTracker;
+  
+  // Swipe typing components
+  private DictionaryManager _dictionaryManager;
+  private WordPredictor _wordPredictor;
+  private SuggestionBar _suggestionBar;
+  private LinearLayout _inputViewContainer;
 
   /** Layout currently visible before it has been modified. */
   KeyboardData current_layout_unmodified()
@@ -122,6 +130,16 @@ public class Keyboard2 extends InputMethodService
     Logs.set_debug_logs(getResources().getBoolean(R.bool.debug_logs));
     ClipboardHistoryService.on_startup(this, _keyeventhandler);
     _foldStateTracker.setChangedCallback(() -> { refresh_config(); });
+    
+    // Initialize swipe typing components
+    if (_config.swipe_typing_enabled)
+    {
+      _dictionaryManager = new DictionaryManager(this);
+      _dictionaryManager.setLanguage("en");
+      _wordPredictor = new WordPredictor();
+      _wordPredictor.loadDictionary(this, "en");
+      _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
+    }
   }
 
   @Override
@@ -283,7 +301,30 @@ public class Keyboard2 extends InputMethodService
     _currentSpecialLayout = refresh_special_layout(info);
     _keyboardView.setKeyboard(current_layout());
     _keyeventhandler.started(info);
-    setInputView(_keyboardView);
+    
+    // Create input view with suggestion bar if swipe typing is enabled
+    if (_config.swipe_typing_enabled && _suggestionBar == null)
+    {
+      _inputViewContainer = new LinearLayout(this);
+      _inputViewContainer.setOrientation(LinearLayout.VERTICAL);
+      
+      _suggestionBar = new SuggestionBar(this);
+      _suggestionBar.setOnSuggestionSelectedListener(this);
+      LinearLayout.LayoutParams suggestionParams = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40,
+          getResources().getDisplayMetrics()));
+      _suggestionBar.setLayoutParams(suggestionParams);
+      
+      _inputViewContainer.addView(_suggestionBar);
+      _inputViewContainer.addView(_keyboardView);
+      setInputView(_inputViewContainer);
+    }
+    else
+    {
+      setInputView(_keyboardView);
+    }
+    
     Logs.debug_startup_input_view(info, _config);
   }
 
@@ -514,6 +555,61 @@ public class Keyboard2 extends InputMethodService
   private IBinder getConnectionToken()
   {
     return getWindow().getWindow().getAttributes().token;
+  }
+  
+  // SuggestionBar.OnSuggestionSelectedListener implementation
+  @Override
+  public void onSuggestionSelected(String word)
+  {
+    InputConnection ic = getCurrentInputConnection();
+    if (ic != null)
+    {
+      ic.commitText(word + " ", 1);
+      if (_suggestionBar != null)
+      {
+        _suggestionBar.clearSuggestions();
+      }
+    }
+  }
+  
+  // Called by Keyboard2View when swipe typing completes
+  public void handleSwipeTyping(List<KeyboardData.Key> swipedKeys)
+  {
+    if (!_config.swipe_typing_enabled || _wordPredictor == null)
+      return;
+      
+    // Build key sequence from swiped keys
+    StringBuilder keySequence = new StringBuilder();
+    for (KeyboardData.Key key : swipedKeys)
+    {
+      if (key != null && key.keys[0] != null)
+      {
+        KeyValue kv = key.keys[0];
+        if (kv.getKind() == KeyValue.Kind.Char)
+        {
+          keySequence.append(kv.getChar());
+        }
+      }
+    }
+    
+    if (keySequence.length() > 0)
+    {
+      // Get predictions
+      List<String> predictions = _wordPredictor.predictWords(keySequence.toString());
+      
+      // Show suggestions in the bar
+      if (_suggestionBar != null && !predictions.isEmpty())
+      {
+        _suggestionBar.setSuggestions(predictions);
+        
+        // Auto-commit the first suggestion if confidence is high
+        if (predictions.size() > 0)
+        {
+          // For now, just show suggestions - user can tap to select
+          // Could auto-commit the first word here if desired
+        }
+      }
+    }
   }
 
   private View inflate_view(int layout)

@@ -271,3 +271,93 @@ This document outlines the complete implementation plan for adding swipe typing 
 - Predictions should be language-aware
 - User dictionary should persist across sessions
 - Feature should be disabled by default initially
+
+## Analysis of Swype Repositories
+
+### FlorisBoard Implementation (../swype/florisboard)
+
+FlorisBoard has a complete glide typing implementation that we can learn from:
+
+#### Key Classes and Patterns
+
+1. **GlideTypingGesture.kt**
+   - Contains `Detector` class that handles motion events
+   - Uses velocity threshold (0.10 dp/ms) to detect swipe vs tap
+   - Tracks pointer data with positions and timestamps
+   - Key insight: Checks if initial key is not a special key (DELETE, SHIFT, SPACE)
+
+2. **GlideTypingManager.kt**  
+   - Manages the gesture classifier
+   - Handles async suggestion generation
+   - Integrates with NLP manager for suggestions
+   - Key pattern: Updates suggestions during swipe for preview
+
+3. **StatisticalGlideTypingClassifier.kt**
+   - Statistical approach to word prediction
+   - Uses keyboard layout for adjacency
+   - Key insight: Normalizes gesture points relative to keyboard
+
+4. **TextKeyboardLayout.kt**
+   - Draws glide trail on canvas
+   - Integrates gesture detector with keyboard view
+   - Key pattern: Uses Compose Canvas for trail rendering
+
+### Key Implementation Fixes Needed
+
+Based on FlorisBoard's working implementation, our issues are:
+
+1. **Missing Integration Point**: Keyboard2.java needs to properly initialize and connect components
+2. **Event Flow**: Touch events need to flow: Keyboard2View → Pointers → SwipeRecognizer → WordPredictor → SuggestionBar
+3. **Suggestion Display**: Need to create/show suggestion bar in the IME view hierarchy
+4. **Async Processing**: Word prediction should run on background thread
+
+### Specific Changes Required
+
+1. **Keyboard2.java**
+   ```java
+   // In onCreate()
+   - Initialize DictionaryManager
+   - Create SuggestionBar view
+   - Add suggestion bar to input view
+   
+   // In onCreateInputView()  
+   - Include suggestion bar in layout
+   - Connect swipe handlers
+   ```
+
+2. **Keyboard2View.java**
+   ```java
+   // Implement IPointerEventHandler methods properly:
+   - onSwipeMove(): Track key under finger, update trail
+   - onSwipeEnd(): Get key sequence, predict words, show suggestions
+   ```
+
+3. **SuggestionBar Integration**
+   - Must be added to the input method's view hierarchy
+   - Should be positioned above the keyboard
+   - Needs proper layout params
+
+4. **Async Word Prediction**
+   - Use AsyncTask or Handler for background processing
+   - Update UI on main thread only
+
+### Files to Create/Modify Based on FlorisBoard
+
+1. **New: GestureClassifier.java** (like StatisticalGlideTypingClassifier)
+   - Statistical prediction algorithm
+   - Keyboard layout awareness
+   - Adjacency calculations
+
+2. **Modify: Keyboard2.java**
+   - Add proper initialization sequence
+   - Create suggestion bar in onCreateInputView()
+   - Handle word commitment
+
+3. **Modify: Keyboard2View.java**  
+   - Implement full swipe event handling
+   - Track keys during swipe
+   - Trigger prediction on swipe end
+
+4. **New: AsyncWordPredictor.java**
+   - Background thread for prediction
+   - Callback to main thread for UI updates

@@ -46,6 +46,10 @@ public class Keyboard2View extends View
   
   private SwipeGestureRecognizer _swipeRecognizer;
   private Paint _swipeTrailPaint;
+  
+  // Swipe typing integration
+  private WordPredictor _wordPredictor;
+  private Keyboard2 _keyboard2;
 
   private float _keyWidth;
   private float _mainLabelSize;
@@ -225,10 +229,22 @@ public class Keyboard2View extends View
   
   public void onSwipeEnd(SwipeGestureRecognizer recognizer)
   {
-    // This will be handled by Keyboard2 when integrated
-    // For now, just reset the recognizer
+    if (recognizer.isSwipeTyping())
+    {
+      List<KeyboardData.Key> swipedKeys = recognizer.endSwipe();
+      if (_keyboard2 != null && swipedKeys != null && !swipedKeys.isEmpty())
+      {
+        _keyboard2.handleSwipeTyping(swipedKeys);
+      }
+    }
     recognizer.reset();
     invalidate(); // Clear the trail
+  }
+  
+  public void setSwipeTypingComponents(WordPredictor predictor, Keyboard2 keyboard2)
+  {
+    _wordPredictor = predictor;
+    _keyboard2 = keyboard2;
   }
 
   @Override
