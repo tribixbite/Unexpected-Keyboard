@@ -273,6 +273,97 @@ This document outlines the complete implementation plan for adding swipe typing 
 - `res/xml/settings.xml` ✅
 - `res/values/strings.xml` ✅
 
+## Performance Improvements Roadmap (To Beat SwiftKey/Gboard)
+
+### Priority 1: High Impact, Low Complexity (Implement First)
+- [ ] **Enhanced Dictionaries** (Impact: 9/10, Complexity: 3/10)
+  - Import FlorisBoard's data.json with 100K+ words and proper frequencies
+  - Add common phrases and contractions
+  - Include informal language and abbreviations
+  
+- [ ] **Dynamic Time Warping (DTW) Algorithm** (Impact: 8/10, Complexity: 4/10)
+  - Replace simple key sequence with DTW for better path matching
+  - Import from FlorisBoard's implementation
+  - Handles speed variations and minor deviations better
+
+- [ ] **Path Smoothing & Noise Reduction** (Impact: 7/10, Complexity: 3/10)
+  - Apply moving average filter to gesture points
+  - Remove jitter from shaky fingers
+  - Implement curve fitting for cleaner paths
+
+- [ ] **Basic Personalization** (Impact: 8/10, Complexity: 4/10)
+  - Track user's word frequency
+  - Boost frequently used words in predictions
+  - Save learned words persistently
+
+### Priority 2: High Impact, Medium Complexity
+- [ ] **Optimized Data Structures** (Impact: 7/10, Complexity: 5/10)
+  - Implement Trie/Radix tree for O(1) prefix lookups
+  - Use bloom filters for quick word existence checks
+  - Memory-mapped files for large dictionaries
+
+- [ ] **Context-Aware Prediction** (Impact: 8/10, Complexity: 6/10)
+  - Simple bigram model for next-word prediction
+  - Consider previous word for current predictions
+  - Basic grammar rules (capitalization after period)
+
+- [ ] **Flow-Through Punctuation** (Impact: 6/10, Complexity: 5/10)
+  - Continue swiping to space/punctuation
+  - Auto-insert space after words
+  - Smart punctuation based on context
+
+- [ ] **Visual Enhancements** (Impact: 5/10, Complexity: 4/10)
+  - Gradient trail with fade effect
+  - Smooth bezier curves for trail
+  - Better visual feedback for word recognition
+
+### Priority 3: Medium Impact, Higher Complexity
+- [ ] **Neural Language Model** (Impact: 9/10, Complexity: 8/10)
+  - Implement lightweight LSTM/Transformer
+  - Train on user's typing patterns
+  - Context-aware predictions
+
+- [ ] **Multi-Language Support** (Impact: 7/10, Complexity: 7/10)
+  - Detect language automatically
+  - Support mixed-language typing
+  - Language-specific gesture patterns
+
+- [ ] **Advanced Gesture Recognition** (Impact: 7/10, Complexity: 7/10)
+  - Velocity and acceleration analysis
+  - Pressure sensitivity support
+  - Gesture shortcuts for common words
+
+- [ ] **Phrase Completion** (Impact: 6/10, Complexity: 6/10)
+  - Multi-word predictions
+  - Complete common phrases
+  - Email/URL completion
+
+### Priority 4: Nice-to-Have Features
+- [ ] **Emoji Prediction** (Impact: 4/10, Complexity: 5/10)
+  - Suggest relevant emojis
+  - Emoji shortcuts via gestures
+
+- [ ] **Cloud Sync** (Impact: 3/10, Complexity: 7/10)
+  - Sync user dictionary across devices
+  - Backup learned patterns
+
+- [ ] **Themes & Customization** (Impact: 3/10, Complexity: 3/10)
+  - Customizable trail colors/styles
+  - Different animation effects
+
+## Implementation Resources Available
+
+### From FlorisBoard (/data/data/com.termux/files/home/git/swype/florisboard)
+- `data.json` - Comprehensive English dictionary with frequencies
+- DTW implementation in `StatisticalGlideTypingClassifier.kt`
+- Gesture smoothing algorithms
+- Trail rendering with Compose
+
+### From swype-patch (/data/data/com.termux/files/home/git/swype/swype-patch)
+- Potential algorithm improvements
+- Performance optimizations
+- Additional dictionaries
+
 ## Notes
 
 - Swipe typing should only activate for alphabetic keys
