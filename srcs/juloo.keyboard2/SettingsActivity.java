@@ -55,14 +55,22 @@ public class SettingsActivity extends PreferenceActivity
       });
     }
     
-    // Set up ML data export preference
+    // Set up ML data export preference (PreferenceScreen type)
     Preference exportMLDataPref = findPreference("export_swipe_ml_data");
     if (exportMLDataPref != null)
     {
-      // Update summary with current data statistics
-      SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
-      SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
-      exportMLDataPref.setSummary("Export all collected swipe data (" + stats.totalCount + " samples)");
+      try
+      {
+        // Update summary with current data statistics
+        SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
+        SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
+        exportMLDataPref.setSummary("Export all collected swipe data (" + stats.totalCount + " samples)");
+      }
+      catch (Exception e)
+      {
+        exportMLDataPref.setSummary("Export all collected swipe data");
+        android.util.Log.e("SettingsActivity", "Failed to get ML data statistics", e);
+      }
       
       exportMLDataPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
       {
@@ -75,13 +83,21 @@ public class SettingsActivity extends PreferenceActivity
       });
     }
     
-    // Set up ML training preference
+    // Set up ML training preference (PreferenceScreen type)
     Preference trainMLModelPref = findPreference("train_swipe_ml_model");
     if (trainMLModelPref != null)
     {
-      SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
-      SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
-      trainMLModelPref.setSummary("Train model with " + stats.totalCount + " samples (min 100 required)");
+      try
+      {
+        SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
+        SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
+        trainMLModelPref.setSummary("Train model with " + stats.totalCount + " samples (min 100 required)");
+      }
+      catch (Exception e)
+      {
+        trainMLModelPref.setSummary("Train swipe prediction model");
+        android.util.Log.e("SettingsActivity", "Failed to get ML data statistics", e);
+      }
       
       trainMLModelPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
       {
@@ -195,7 +211,7 @@ public class SettingsActivity extends PreferenceActivity
         runOnUiThread(() -> {
           progressDialog.dismiss();
           Toast.makeText(SettingsActivity.this, "Training failed: " + error, 
-                        Toast.LENGTH_LONG).show();
+                         Toast.LENGTH_LONG).show();
         });
       }
     });
