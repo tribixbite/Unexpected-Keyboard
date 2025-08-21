@@ -16,6 +16,11 @@
     <CheckBoxPreference android:key="word_prediction_enabled" android:title="@string/pref_word_prediction_title" android:summary="@string/pref_word_prediction_summary" android:defaultValue="false"/>
     <CheckBoxPreference android:key="swipe_typing_enabled" android:title="@string/pref_swipe_typing_title" android:summary="@string/pref_swipe_typing_summary" android:defaultValue="false"/>
     <PreferenceScreen android:key="swipe_calibration" android:title="@string/pref_swipe_calibration_title" android:summary="@string/pref_swipe_calibration_summary" android:dependency="swipe_typing_enabled"/>
+    <PreferenceScreen android:key="swipe_confidence_calibration" android:title="@string/pref_swipe_confidence_calibration_title" android:summary="@string/pref_swipe_confidence_calibration_summary" android:dependency="swipe_typing_enabled">
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_shape_weight" android:title="@string/pref_swipe_confidence_shape_weight_title" android:summary="%s%%" android:defaultValue="100" min="0" max="200"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_location_weight" android:title="@string/pref_swipe_confidence_location_weight_title" android:summary="%s%%" android:defaultValue="100" min="0" max="200"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_frequency_weight" android:title="@string/pref_swipe_confidence_frequency_weight_title" android:summary="%s%%" android:defaultValue="100" min="0" max="200"/>
+    </PreferenceScreen>
     <PreferenceScreen android:key="export_swipe_ml_data" android:title="@string/pref_export_swipe_ml_data_title" android:summary="@string/pref_export_swipe_ml_data_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="train_swipe_ml_model" android:title="@string/pref_train_swipe_ml_title" android:summary="@string/pref_train_swipe_ml_summary" android:dependency="swipe_typing_enabled"/>
     <ListPreference android:key="swipe_dist" android:title="@string/pref_swipe_dist_title" android:summary="@string/pref_swipe_dist_summary" android:defaultValue="15" android:entries="@array/pref_swipe_dist_entries" android:entryValues="@array/pref_swipe_dist_values"/>
@@ -63,5 +68,9 @@
     <CheckBoxPreference android:key="border_config" android:title="@string/pref_border_config_title" android:defaultValue="false"/>
     <juloo.keyboard2.prefs.IntSlideBarPreference android:key="custom_border_radius" android:title="@string/pref_corners_radius_title" android:summary="%s%%" android:defaultValue="0" min="0" max="100" android:dependency="border_config"/>
     <juloo.keyboard2.prefs.SlideBarPreference android:key="custom_border_line_width" android:title="@string/pref_border_width_title" android:summary="%sdp" android:defaultValue="0" min="0" max="5" android:dependency="border_config"/>
+  </PreferenceCategory>
+  <PreferenceCategory android:title="Swipe ML Data">
+    <Preference android:key="export_swipe_ml_data" android:title="Export ML Data" android:summary="Export collected swipe data for training"/>
+    <Preference android:key="train_swipe_ml_model" android:title="Train ML Model" android:summary="Train swipe prediction model"/>
   </PreferenceCategory>
 </PreferenceScreen>

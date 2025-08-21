@@ -19,8 +19,8 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug
 > Task :mergeDebugResources
-> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :parseDebugLocalResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -28,14 +28,14 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :mergeDebugAssets
 > Task :processDebugJavaRes NO-SOURCE
 > Task :compressDebugAssets
-> Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies
 > Task :mergeDebugJniLibFolders
-> Task :mergeLibDexDebug
+> Task :checkDebugDuplicateClasses
 > Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
+> Task :mergeLibDexDebug
 > Task :writeDebugSigningConfigVersions
 > Task :processDebugManifestForPackage
 > Task :mergeDebugJavaResource
@@ -54,5 +54,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 23s
+BUILD SUCCESSFUL in 21s
 31 actionable tasks: 31 executed
