@@ -561,4 +561,9 @@ public class Keyboard2View extends View
     float label_size = main_label ? _mainLabelSize : _subLabelSize;
     return label_size * smaller_font;
   }
+  
+  public Theme getTheme()
+  {
+    return _theme;
+  }
 }

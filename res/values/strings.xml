@@ -78,8 +78,12 @@
     <string name="pref_swipe_dist_e_default">Normal</string>
     <string name="pref_swipe_dist_e_far">Far</string>
     <string name="pref_swipe_dist_e_very_far">Very far</string>
+    <string name="pref_word_prediction_title">Enable word predictions</string>
+    <string name="pref_word_prediction_summary">Show word suggestions while typing</string>
     <string name="pref_swipe_typing_title">Enable swipe typing</string>
     <string name="pref_swipe_typing_summary">Type words by swiping across letters</string>
+    <string name="pref_swipe_calibration_title">Calibrate swipe typing</string>
+    <string name="pref_swipe_calibration_summary">Improve swipe accuracy by training with sample words</string>
     <string name="pref_key_horizontal_space">Horizontal spacing between the keys</string>
     <string name="pref_key_vertical_space">Vertical spacing between the keys</string>
     <string name="pref_border_config_title">Customize borders</string>

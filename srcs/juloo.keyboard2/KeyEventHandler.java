@@ -95,7 +95,17 @@ public final class KeyEventHandler
       case Char: send_text(String.valueOf(key.getChar())); break;
       case String: send_text(key.getString()); break;
       case Event: _recv.handle_event_key(key.getEvent()); break;
-      case Keyevent: send_key_down_up(key.getKeyevent()); break;
+      case Keyevent: 
+        send_key_down_up(key.getKeyevent()); 
+        // Handle backspace for word prediction
+        if (key.getKeyevent() == KeyEvent.KEYCODE_DEL)
+        {
+          if (_recv instanceof Keyboard2.Receiver)
+          {
+            ((Keyboard2.Receiver)_recv).handle_backspace();
+          }
+        }
+        break;
       case Modifier: break;
       case Editing: handle_editing_key(key.getEditing()); break;
       case Compose_pending: _recv.set_compose_pending(true); break;
@@ -213,6 +223,7 @@ public final class KeyEventHandler
       return;
     conn.commitText(text, 1);
     _autocap.typed(text);
+    _recv.handle_text_typed(text.toString());
   }
 
   /** See {!InputConnection.performContextMenuAction}. */
@@ -487,6 +498,8 @@ public final class KeyEventHandler
     public void selection_state_changed(boolean selection_is_ongoing);
     public InputConnection getCurrentInputConnection();
     public Handler getHandler();
+    public void handle_text_typed(String text);
+    public default void handle_backspace() {} // Default implementation for backward compatibility
   }
 
   class Autocapitalisation_callback implements Autocapitalisation.Callback

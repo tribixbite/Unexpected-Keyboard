@@ -22,6 +22,7 @@ public class SuggestionBar extends LinearLayout
   private OnSuggestionSelectedListener _listener;
   private List<String> _currentSuggestions;
   private int _selectedIndex = -1;
+  private Theme _theme;
   
   public interface OnSuggestionSelectedListener
   {
@@ -30,7 +31,16 @@ public class SuggestionBar extends LinearLayout
   
   public SuggestionBar(Context context)
   {
-    this(context, null);
+    this(context, (AttributeSet)null);
+  }
+  
+  public SuggestionBar(Context context, Theme theme)
+  {
+    super(context);
+    _suggestionViews = new ArrayList<>();
+    _currentSuggestions = new ArrayList<>();
+    _theme = theme;
+    initialize(context);
   }
   
   public SuggestionBar(Context context, AttributeSet attrs)
@@ -38,6 +48,8 @@ public class SuggestionBar extends LinearLayout
     super(context, attrs);
     _suggestionViews = new ArrayList<>();
     _currentSuggestions = new ArrayList<>();
+    // Initialize theme to get colors
+    _theme = new Theme(context, attrs);
     initialize(context);
   }
   
@@ -45,7 +57,22 @@ public class SuggestionBar extends LinearLayout
   {
     setOrientation(HORIZONTAL);
     setGravity(Gravity.CENTER_VERTICAL);
-    setBackgroundColor(Color.parseColor("#E0E0E0"));
+    
+    // Use theme colors with proper contrast
+    if (_theme != null && _theme.colorKey != 0)
+    {
+      int backgroundColor = _theme.colorKey;
+      // Adjust alpha to make it more opaque
+      backgroundColor = Color.argb(230, Color.red(backgroundColor), 
+                                   Color.green(backgroundColor), 
+                                   Color.blue(backgroundColor));
+      setBackgroundColor(backgroundColor);
+    }
+    else
+    {
+      // Fallback colors if theme is not properly initialized
+      setBackgroundColor(Color.argb(230, 50, 50, 50)); // Dark grey background
+    }
     
     int padding = dpToPx(context, 8);
     setPadding(padding, padding, padding, padding);
@@ -73,7 +100,16 @@ public class SuggestionBar extends LinearLayout
     textView.setLayoutParams(params);
     textView.setGravity(Gravity.CENTER);
     textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-    textView.setTextColor(Color.BLACK);
+    // Use theme label color for text with fallback
+    if (_theme != null && _theme.labelColor != 0)
+    {
+      textView.setTextColor(_theme.labelColor);
+    }
+    else
+    {
+      // Fallback to white text if theme not initialized
+      textView.setTextColor(Color.WHITE);
+    }
     textView.setPadding(dpToPx(context, 8), 0, dpToPx(context, 8), 0);
     textView.setMaxLines(1);
     textView.setClickable(true);
@@ -103,7 +139,12 @@ public class SuggestionBar extends LinearLayout
       dpToPx(context, 1), ViewGroup.LayoutParams.MATCH_PARENT);
     params.setMargins(0, dpToPx(context, 4), 0, dpToPx(context, 4));
     divider.setLayoutParams(params);
-    divider.setBackgroundColor(Color.parseColor("#CCCCCC"));
+    // Use theme sublabel color with some transparency for divider
+    int dividerColor = _theme.subLabelColor;
+    dividerColor = Color.argb(100, Color.red(dividerColor), 
+                              Color.green(dividerColor), 
+                              Color.blue(dividerColor));
+    divider.setBackgroundColor(dividerColor);
     return divider;
   }
   
@@ -128,16 +169,16 @@ public class SuggestionBar extends LinearLayout
         textView.setText(suggestion);
         textView.setVisibility(View.VISIBLE);
         
-        // Highlight first suggestion
+        // Highlight first suggestion with activated color
         if (i == 0)
         {
           textView.setTypeface(Typeface.DEFAULT_BOLD);
-          textView.setTextColor(Color.parseColor("#1976D2"));
+          textView.setTextColor(_theme != null && _theme.activatedColor != 0 ? _theme.activatedColor : Color.CYAN);
         }
         else
         {
           textView.setTypeface(Typeface.DEFAULT);
-          textView.setTextColor(Color.BLACK);
+          textView.setTextColor(_theme != null && _theme.labelColor != 0 ? _theme.labelColor : Color.WHITE);
         }
       }
       else

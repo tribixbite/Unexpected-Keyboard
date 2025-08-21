@@ -38,10 +38,16 @@ public class SwipeGestureRecognizer
   {
     reset();
     _swipePath.add(new PointF(x, y));
+    android.util.Log.d("SwipeGesture", "startSwipe at " + x + "," + y);
     if (key != null && key.keys[0] != null && isAlphabeticKey(key.keys[0]))
     {
+      android.util.Log.d("SwipeGesture", "Started on alphabetic key: " + key.keys[0].getString());
       _touchedKeys.add(key);
       _lastKey = key;
+    }
+    else
+    {
+      android.util.Log.d("SwipeGesture", "Started on non-alphabetic key");
     }
     _startTime = System.currentTimeMillis();
     _timestamps.add(_startTime);
@@ -63,6 +69,7 @@ public class SwipeGestureRecognizer
     if (!_isSwipeTyping && timeSinceStart > 100 && _totalDistance > MIN_SWIPE_DISTANCE)
     {
       _isSwipeTyping = shouldConsiderSwipeTyping();
+      android.util.Log.d("SwipeGesture", "Swipe typing check: " + _isSwipeTyping);
     }
     
     PointF lastPoint = _swipePath.get(_swipePath.size() - 1);
@@ -77,8 +84,29 @@ public class SwipeGestureRecognizer
     // Add key if it's different from the last one and is alphabetic
     if (key != null && key != _lastKey && key.keys[0] != null && isAlphabeticKey(key.keys[0]))
     {
-      _touchedKeys.add(key);
-      _lastKey = key;
+      // Check if this key is already in recent keys (avoid duplicates)
+      boolean isDuplicate = false;
+      int size = _touchedKeys.size();
+      if (size >= 2)
+      {
+        // Check last 2 keys for duplicates
+        for (int i = Math.max(0, size - 2); i < size; i++)
+        {
+          if (_touchedKeys.get(i) == key)
+          {
+            isDuplicate = true;
+            break;
+          }
+        }
+      }
+      
+      // Only add if not a recent duplicate and we've moved enough
+      if (!isDuplicate && (distance > 35.0f || _touchedKeys.isEmpty()))
+      {
+        android.util.Log.d("SwipeGesture", "Adding key: " + key.keys[0].getString());
+        _touchedKeys.add(key);
+        _lastKey = key;
+      }
     }
   }
   
@@ -87,10 +115,18 @@ public class SwipeGestureRecognizer
    */
   public List<KeyboardData.Key> endSwipe()
   {
+    android.util.Log.d("SwipeGesture", "endSwipe: isSwipeTyping=" + _isSwipeTyping + 
+                        ", touchedKeys=" + _touchedKeys.size());
+    
+    // Log detailed swipe data for analysis
+    logSwipeData();
+    
     if (_isSwipeTyping && _touchedKeys.size() >= 2)
     {
+      android.util.Log.d("SwipeGesture", "Returning " + _touchedKeys.size() + " keys");
       return new ArrayList<>(_touchedKeys);
     }
+    android.util.Log.d("SwipeGesture", "Not enough keys or not swipe typing");
     return null;
   }
   
@@ -172,5 +208,61 @@ public class SwipeGestureRecognizer
       }
     }
     return sb.toString();
+  }
+  
+  /**
+   * Log comprehensive swipe data for analysis and debugging
+   */
+  private void logSwipeData()
+  {
+    if (_swipePath.isEmpty())
+      return;
+    
+    android.util.Log.d("SwipeAnalysis", "===== SWIPE DATA ANALYSIS =====");
+    android.util.Log.d("SwipeAnalysis", "Total points: " + _swipePath.size());
+    android.util.Log.d("SwipeAnalysis", "Total distance: " + _totalDistance);
+    android.util.Log.d("SwipeAnalysis", "Duration: " + (System.currentTimeMillis() - _startTime) + "ms");
+    android.util.Log.d("SwipeAnalysis", "Key sequence: " + getKeySequence());
+    android.util.Log.d("SwipeAnalysis", "Was swipe typing: " + _isSwipeTyping);
+    
+    // Log path coordinates for calibration analysis
+    StringBuilder pathStr = new StringBuilder("Path: ");
+    for (int i = 0; i < Math.min(_swipePath.size(), 20); i++)
+    {
+      PointF p = _swipePath.get(i);
+      pathStr.append(String.format("(%.0f,%.0f) ", p.x, p.y));
+    }
+    if (_swipePath.size() > 20)
+      pathStr.append("... (" + (_swipePath.size() - 20) + " more points)");
+    android.util.Log.d("SwipeAnalysis", pathStr.toString());
+    
+    // Log touched keys
+    StringBuilder keysStr = new StringBuilder("Touched keys: ");
+    for (KeyboardData.Key key : _touchedKeys)
+    {
+      if (key.keys[0] != null && key.keys[0].getKind() == KeyValue.Kind.Char)
+      {
+        keysStr.append(key.keys[0].getChar()).append(" ");
+      }
+    }
+    android.util.Log.d("SwipeAnalysis", keysStr.toString());
+    
+    // Log velocity and gesture characteristics
+    if (_swipePath.size() >= 2)
+    {
+      float avgVelocity = _totalDistance / (System.currentTimeMillis() - _startTime);
+      android.util.Log.d("SwipeAnalysis", "Average velocity: " + avgVelocity + " px/ms");
+      
+      // Calculate straightness ratio
+      PointF start = _swipePath.get(0);
+      PointF end = _swipePath.get(_swipePath.size() - 1);
+      float directDistance = (float)Math.sqrt(
+        Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
+      );
+      float straightnessRatio = directDistance / _totalDistance;
+      android.util.Log.d("SwipeAnalysis", "Straightness ratio: " + straightnessRatio);
+    }
+    
+    android.util.Log.d("SwipeAnalysis", "================================");
   }
 }

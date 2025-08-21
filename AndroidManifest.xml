@@ -23,6 +23,8 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
+
+    <activity android:name="juloo.keyboard2.SwipeCalibrationActivity" android:label="@string/pref_swipe_calibration_title" android:theme="@style/settingsTheme" android:exported="false" android:directBootAware="true"/>
   </application>
 
   <!-- To query enabled input methods for voice IME detection -->

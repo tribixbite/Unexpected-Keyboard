@@ -33,8 +33,13 @@ public class WordPredictor
   public void loadDictionary(Context context, String language)
   {
     _dictionary.clear();
-    String filename = "dictionaries/" + language + ".txt";
+    // Try enhanced dictionary first, fall back to basic
+    String filename = "dictionaries/" + language + "_enhanced.txt";
+    String fallbackFilename = "dictionaries/" + language + ".txt";
     
+    boolean dictionaryLoaded = false;
+    
+    // Try enhanced dictionary first
     try
     {
       BufferedReader reader = new BufferedReader(
@@ -51,11 +56,37 @@ public class WordPredictor
         }
       }
       reader.close();
+      dictionaryLoaded = true;
+      android.util.Log.d("WordPredictor", "Loaded enhanced dictionary: " + filename + " with " + _dictionary.size() + " words");
     }
     catch (IOException e)
     {
-      // If dictionary file doesn't exist, use a basic built-in dictionary
-      loadBasicDictionary();
+      // Try fallback dictionary
+      try
+      {
+        BufferedReader reader = new BufferedReader(
+          new InputStreamReader(context.getAssets().open(fallbackFilename)));
+        String line;
+        while ((line = reader.readLine()) != null)
+        {
+          String[] parts = line.trim().split("\t");
+          if (parts.length >= 1)
+          {
+            String word = parts[0].toLowerCase();
+            int frequency = parts.length > 1 ? Integer.parseInt(parts[1]) : 1000;
+            _dictionary.put(word, frequency);
+          }
+        }
+        reader.close();
+        dictionaryLoaded = true;
+        android.util.Log.d("WordPredictor", "Loaded basic dictionary: " + fallbackFilename + " with " + _dictionary.size() + " words");
+      }
+      catch (IOException e2)
+      {
+        // If neither dictionary file exists, use a basic built-in dictionary
+        loadBasicDictionary();
+        android.util.Log.d("WordPredictor", "Using built-in dictionary with " + _dictionary.size() + " words");
+      }
     }
   }
   
@@ -89,6 +120,35 @@ public class WordPredictor
     _dictionary.put("type", 600);
     _dictionary.put("keyboard", 500);
     _dictionary.put("swipe", 400);
+    
+    // Add more common words for better testing
+    _dictionary.put("is", 9500);
+    _dictionary.put("it", 9000);
+    _dictionary.put("be", 8500);
+    _dictionary.put("of", 8000);
+    _dictionary.put("to", 7500);
+    _dictionary.put("in", 7000);
+    _dictionary.put("he", 6500);
+    _dictionary.put("has", 6000);
+    _dictionary.put("will", 5500);
+    _dictionary.put("on", 5000);
+    _dictionary.put("do", 4500);
+    _dictionary.put("say", 4000);
+    _dictionary.put("she", 3500);
+    _dictionary.put("an", 3000);
+    _dictionary.put("or", 2500);
+    _dictionary.put("by", 2000);
+    _dictionary.put("as", 1500);
+    _dictionary.put("we", 1000);
+    _dictionary.put("her", 900);
+    _dictionary.put("out", 800);
+    _dictionary.put("if", 700);
+    _dictionary.put("would", 600);
+    _dictionary.put("there", 500);
+    _dictionary.put("their", 400);
+    _dictionary.put("been", 300);
+    _dictionary.put("when", 200);
+    _dictionary.put("who", 100);
   }
   
   /**
@@ -151,18 +211,30 @@ public class WordPredictor
     List<WordCandidate> candidates = new ArrayList<>();
     String lowerSequence = keySequence.toLowerCase();
     
+    android.util.Log.d("WordPredictor", "Predicting for: " + lowerSequence + " (len=" + lowerSequence.length() + ")");
+    
+    // Check if this is likely a swipe sequence (too many characters)
+    boolean isSwipeSequence = lowerSequence.length() > 12;
+    
     // Find all words that could match the key sequence
     for (Map.Entry<String, Integer> entry : _dictionary.entrySet())
     {
       String word = entry.getKey();
       int frequency = entry.getValue();
       
-      // Skip words that are too different in length
-      if (Math.abs(word.length() - lowerSequence.length()) > 2)
+      // For swipe sequences, be more lenient with length differences
+      if (!isSwipeSequence && Math.abs(word.length() - lowerSequence.length()) > 2)
+        continue;
+      
+      // For swipe sequences, check if word could be formed from the sequence
+      if (isSwipeSequence && !couldBeFormedFrom(word, lowerSequence))
         continue;
         
       // Calculate match score
-      int score = calculateMatchScore(word, lowerSequence);
+      int score = isSwipeSequence ? 
+        calculateSwipeScore(word, lowerSequence, frequency) :
+        calculateMatchScore(word, lowerSequence);
+      
       if (score > 0)
       {
         candidates.add(new WordCandidate(word, score * frequency));
@@ -294,6 +366,55 @@ public class WordPredictor
       }
     }
     return count;
+  }
+  
+  /**
+   * Check if a word could be formed from a swipe sequence
+   * All letters of the word should appear in order in the sequence
+   */
+  private boolean couldBeFormedFrom(String word, String sequence)
+  {
+    int seqIndex = 0;
+    for (char c : word.toCharArray())
+    {
+      // Find this character in the sequence starting from current position
+      int found = sequence.indexOf(c, seqIndex);
+      if (found == -1)
+        return false;
+      seqIndex = found + 1;
+    }
+    return true;
+  }
+  
+  /**
+   * Calculate score for swipe sequence matching
+   */
+  private int calculateSwipeScore(String word, String sequence, int frequency)
+  {
+    // Find positions of word characters in sequence
+    int seqIndex = 0;
+    int totalGaps = 0;
+    int matchedChars = 0;
+    
+    for (char c : word.toCharArray())
+    {
+      int found = sequence.indexOf(c, seqIndex);
+      if (found != -1)
+      {
+        totalGaps += (found - seqIndex);
+        seqIndex = found + 1;
+        matchedChars++;
+      }
+    }
+    
+    // Score based on:
+    // 1. How many characters matched
+    // 2. How much of the sequence was used (less gaps = better)
+    // 3. Word frequency
+    float matchRatio = (float)matchedChars / word.length();
+    float gapPenalty = 1.0f / (1.0f + totalGaps / 10.0f);
+    
+    return (int)(matchRatio * gapPenalty * 1000);
   }
   
   /**

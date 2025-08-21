@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import juloo.keyboard2.prefs.LayoutsPreference;
 
 public class Keyboard2 extends InputMethodService
@@ -50,8 +52,10 @@ public class Keyboard2 extends InputMethodService
   // Swipe typing components
   private DictionaryManager _dictionaryManager;
   private WordPredictor _wordPredictor;
+  private DTWPredictor _dtwPredictor;
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
+  private StringBuilder _currentWord = new StringBuilder();
 
   /** Layout currently visible before it has been modified. */
   KeyboardData current_layout_unmodified()
@@ -131,14 +135,23 @@ public class Keyboard2 extends InputMethodService
     ClipboardHistoryService.on_startup(this, _keyeventhandler);
     _foldStateTracker.setChangedCallback(() -> { refresh_config(); });
     
-    // Initialize swipe typing components
-    if (_config.swipe_typing_enabled)
+    // Initialize word prediction components (for both swipe and regular typing)
+    if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
       _dictionaryManager = new DictionaryManager(this);
       _dictionaryManager.setLanguage("en");
       _wordPredictor = new WordPredictor();
       _wordPredictor.loadDictionary(this, "en");
-      _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
+      
+      // Initialize DTW predictor for swipe typing only
+      if (_config.swipe_typing_enabled)
+      {
+        _dtwPredictor = new DTWPredictor(_wordPredictor);
+        // DTW will use the WordPredictor's dictionary via fallback
+        // No need to load a separate small dictionary
+        
+        _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
+      }
     }
   }
 
@@ -302,26 +315,61 @@ public class Keyboard2 extends InputMethodService
     _keyboardView.setKeyboard(current_layout());
     _keyeventhandler.started(info);
     
-    // Create input view with suggestion bar if swipe typing is enabled
-    if (_config.swipe_typing_enabled && _suggestionBar == null)
+    // Re-initialize word prediction components if settings have changed
+    if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
-      _inputViewContainer = new LinearLayout(this);
-      _inputViewContainer.setOrientation(LinearLayout.VERTICAL);
+      android.util.Log.d("Keyboard2", "onStartInputView: word_prediction=" + _config.word_prediction_enabled + 
+                         " swipe_typing=" + _config.swipe_typing_enabled);
       
-      _suggestionBar = new SuggestionBar(this);
-      _suggestionBar.setOnSuggestionSelectedListener(this);
-      LinearLayout.LayoutParams suggestionParams = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40,
-          getResources().getDisplayMetrics()));
-      _suggestionBar.setLayoutParams(suggestionParams);
+      // Initialize predictors if not already initialized
+      if (_wordPredictor == null)
+      {
+        android.util.Log.d("Keyboard2", "Initializing word predictor in onStartInputView");
+        _dictionaryManager = new DictionaryManager(this);
+        _dictionaryManager.setLanguage("en");
+        _wordPredictor = new WordPredictor();
+        _wordPredictor.loadDictionary(this, "en");
+        android.util.Log.d("Keyboard2", "Word predictor initialized with " + _wordPredictor.getDictionarySize() + " words");
+      }
       
-      _inputViewContainer.addView(_suggestionBar);
-      _inputViewContainer.addView(_keyboardView);
-      setInputView(_inputViewContainer);
+      if (_config.swipe_typing_enabled && _dtwPredictor == null)
+      {
+        android.util.Log.d("Keyboard2", "Initializing DTW predictor in onStartInputView");
+        _dtwPredictor = new DTWPredictor(_wordPredictor);
+        _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
+      }
+      
+      // Create suggestion bar if needed
+      if (_suggestionBar == null)
+      {
+        android.util.Log.d("Keyboard2", "Creating suggestion bar in onStartInputView");
+        _inputViewContainer = new LinearLayout(this);
+        _inputViewContainer.setOrientation(LinearLayout.VERTICAL);
+        
+        // Get theme from keyboard view if available
+        Theme theme = _keyboardView != null ? _keyboardView.getTheme() : null;
+        _suggestionBar = theme != null ? new SuggestionBar(this, theme) : new SuggestionBar(this);
+        _suggestionBar.setOnSuggestionSelectedListener(this);
+        LinearLayout.LayoutParams suggestionParams = new LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.MATCH_PARENT,
+          (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40,
+            getResources().getDisplayMetrics()));
+        _suggestionBar.setLayoutParams(suggestionParams);
+        
+        _inputViewContainer.addView(_suggestionBar);
+        _inputViewContainer.addView(_keyboardView);
+      }
+      
+      setInputView(_inputViewContainer != null ? _inputViewContainer : _keyboardView);
     }
     else
     {
+      android.util.Log.d("Keyboard2", "Predictions disabled in settings");
+      // Clean up if predictions are disabled
+      _wordPredictor = null;
+      _dtwPredictor = null;
+      _suggestionBar = null;
+      _inputViewContainer = null;
       setInputView(_keyboardView);
     }
     
@@ -550,6 +598,16 @@ public class Keyboard2 extends InputMethodService
     {
       return _handler;
     }
+    
+    public void handle_text_typed(String text)
+    {
+      handleRegularTyping(text);
+    }
+    
+    public void handle_backspace()
+    {
+      Keyboard2.this.handleBackspace();
+    }
   }
 
   private IBinder getConnectionToken()
@@ -564,7 +622,21 @@ public class Keyboard2 extends InputMethodService
     InputConnection ic = getCurrentInputConnection();
     if (ic != null)
     {
+      // If we have a current word being typed, delete it first
+      if (_currentWord.length() > 0)
+      {
+        // Delete the partial word
+        for (int i = 0; i < _currentWord.length(); i++)
+        {
+          ic.deleteSurroundingText(1, 0);
+        }
+      }
+      
+      // Commit the selected word with a space
       ic.commitText(word + " ", 1);
+      
+      // Clear current word and suggestions
+      _currentWord.setLength(0);
       if (_suggestionBar != null)
       {
         _suggestionBar.clearSuggestions();
@@ -572,11 +644,93 @@ public class Keyboard2 extends InputMethodService
     }
   }
   
+  /**
+   * Handle regular typing predictions (non-swipe)
+   */
+  public void handleRegularTyping(String text)
+  {
+    if (!_config.word_prediction_enabled || _wordPredictor == null || _suggestionBar == null)
+    {
+      android.util.Log.d("Keyboard2", "Regular typing predictions disabled or not initialized");
+      return;
+    }
+      
+    android.util.Log.d("Keyboard2", "handleRegularTyping: '" + text + "'");
+    
+    // Track current word being typed
+    if (text.length() == 1 && Character.isLetter(text.charAt(0)))
+    {
+      _currentWord.append(text);
+      android.util.Log.d("Keyboard2", "Current word: " + _currentWord.toString());
+      updatePredictionsForCurrentWord();
+    }
+    else if (text.equals(" ") || text.equals("\n") || text.equals(".") || text.equals(",") || text.equals("!") || text.equals("?"))
+    {
+      // Word boundary - clear current word
+      android.util.Log.d("Keyboard2", "Word boundary detected, clearing current word");
+      _currentWord.setLength(0);
+      if (_suggestionBar != null)
+      {
+        _suggestionBar.clearSuggestions();
+      }
+    }
+  }
+  
+  /**
+   * Handle backspace for prediction tracking
+   */
+  public void handleBackspace()
+  {
+    if (_currentWord.length() > 0)
+    {
+      _currentWord.deleteCharAt(_currentWord.length() - 1);
+      if (_currentWord.length() > 0)
+      {
+        updatePredictionsForCurrentWord();
+      }
+      else if (_suggestionBar != null)
+      {
+        _suggestionBar.clearSuggestions();
+      }
+    }
+  }
+  
+  /**
+   * Update predictions based on current partial word
+   */
+  private void updatePredictionsForCurrentWord()
+  {
+    if (_currentWord.length() > 0)
+    {
+      String partial = _currentWord.toString();
+      android.util.Log.d("Keyboard2", "Updating predictions for: " + partial);
+      
+      List<String> predictions = _wordPredictor.predictWords(partial);
+      
+      if (!predictions.isEmpty() && _suggestionBar != null)
+      {
+        _suggestionBar.setSuggestions(predictions);
+      }
+    }
+  }
+  
   // Called by Keyboard2View when swipe typing completes
   public void handleSwipeTyping(List<KeyboardData.Key> swipedKeys)
   {
-    if (!_config.swipe_typing_enabled || _wordPredictor == null)
+    android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION START =====");
+    android.util.Log.d("Keyboard2", "handleSwipeTyping called with " + swipedKeys.size() + " keys");
+    
+    if (!_config.swipe_typing_enabled)
+    {
+      android.util.Log.d("Keyboard2", "Swipe typing disabled");
       return;
+    }
+    
+    if (_wordPredictor == null)
+    {
+      android.util.Log.d("Keyboard2", "Word predictor is null");
+      return;
+    }
       
     // Build key sequence from swiped keys
     StringBuilder keySequence = new StringBuilder();
@@ -592,15 +746,33 @@ public class Keyboard2 extends InputMethodService
       }
     }
     
+    android.util.Log.d("Keyboard2", "Key sequence: " + keySequence.toString());
+    android.util.Log.d("Keyboard2", "Dictionary size: " + (_wordPredictor != null ? _wordPredictor.getDictionarySize() : 0));
+    
     if (keySequence.length() > 0)
     {
-      // Get predictions
+      // Get predictions using regular word predictor
+      // DTW needs proper implementation with actual touch coordinates
+      long startTime = System.currentTimeMillis();
       List<String> predictions = _wordPredictor.predictWords(keySequence.toString());
+      long predictionTime = System.currentTimeMillis() - startTime;
+      
+      android.util.Log.d("Keyboard2", "Got " + predictions.size() + " predictions in " + predictionTime + "ms");
+      if (predictions.size() > 0)
+      {
+        android.util.Log.d("Keyboard2", "Predictions: " + predictions.toString());
+      }
+      else
+      {
+        android.util.Log.d("Keyboard2", "NO PREDICTIONS FOUND for sequence: " + keySequence.toString());
+      }
       
       // Show suggestions in the bar
       if (_suggestionBar != null && !predictions.isEmpty())
       {
+        android.util.Log.d("Keyboard2", "Setting suggestions in bar: " + predictions);
         _suggestionBar.setSuggestions(predictions);
+        android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION END =====");
         
         // Auto-commit the first suggestion if confidence is high
         if (predictions.size() > 0)
@@ -609,6 +781,16 @@ public class Keyboard2 extends InputMethodService
           // Could auto-commit the first word here if desired
         }
       }
+      else
+      {
+        android.util.Log.d("Keyboard2", "_suggestionBar is " + (_suggestionBar == null ? "null" : "not null"));
+        android.util.Log.d("Keyboard2", "predictions.isEmpty() = " + predictions.isEmpty());
+        android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION END (no display) =====");
+      }
+    }
+    else
+    {
+      android.util.Log.d("Keyboard2", "Empty key sequence");
     }
   }
 
