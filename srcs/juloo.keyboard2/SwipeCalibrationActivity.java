@@ -28,6 +28,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import juloo.keyboard2.ml.SwipeMLData;
+import juloo.keyboard2.ml.SwipeMLDataStore;
 
 /**
  * Complete swipe calibration implementation with keyboard visualization
@@ -75,6 +77,10 @@ public class SwipeCalibrationActivity extends Activity
   private BufferedWriter _logWriter;
   private List<PointF> _currentSwipePoints;
   private long _swipeStartTime;
+  private SwipeMLDataStore _mlDataStore;
+  private int _screenWidth;
+  private int _screenHeight;
+  private int _keyboardHeight;
   
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -83,6 +89,15 @@ public class SwipeCalibrationActivity extends Activity
     
     Log.d(TAG, "=== CALIBRATION ACTIVITY STARTED ===");
     initializeLogging();
+    
+    // Initialize ML data store
+    _mlDataStore = SwipeMLDataStore.getInstance(this);
+    
+    // Get screen dimensions
+    android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
+    getWindowManager().getDefaultDisplay().getMetrics(metrics);
+    _screenWidth = metrics.widthPixels;
+    _screenHeight = metrics.heightPixels;
     
     // Create UI programmatically
     LinearLayout layout = new LinearLayout(this);
@@ -128,6 +143,7 @@ public class SwipeCalibrationActivity extends Activity
     keyboardParams.setMargins(0, 30, 0, 30);
     _keyboardView.setLayoutParams(keyboardParams);
     layout.addView(_keyboardView);
+    _keyboardHeight = 400; // Store keyboard height for ML data
     
     // Buttons
     LinearLayout buttonLayout = new LinearLayout(this);
@@ -219,7 +235,7 @@ public class SwipeCalibrationActivity extends Activity
     
     long duration = System.currentTimeMillis() - _swipeStartTime;
     
-    // Create swipe pattern
+    // Create swipe pattern for legacy storage
     SwipePattern pattern = new SwipePattern(_currentWord, points, duration);
     
     // Add to calibration data
@@ -229,17 +245,42 @@ public class SwipeCalibrationActivity extends Activity
     }
     _calibrationData.get(_currentWord).add(pattern);
     
-    // Log the swipe
+    // Create ML data object
+    SwipeMLData mlData = new SwipeMLData(_currentWord, "calibration",
+                                         _screenWidth, _screenHeight, _keyboardHeight);
+    
+    // Add trace points with timestamps
+    long startTime = _swipeStartTime;
+    for (int i = 0; i < points.size(); i++)
+    {
+      PointF p = points.get(i);
+      // Estimate timestamp based on linear interpolation
+      long timestamp = startTime + (duration * i / Math.max(1, points.size() - 1));
+      mlData.addRawPoint(p.x, p.y, timestamp);
+      
+      // Add registered key
+      String key = _keyboardView.getKeyAt(p.x, p.y);
+      if (key != null)
+      {
+        mlData.addRegisteredKey(key);
+      }
+    }
+    
+    // Store ML data
+    _mlDataStore.storeSwipeData(mlData);
+    
+    // Log the swipe with ML info
     StringBuilder log = new StringBuilder();
     log.append("SWIPE RECORDED: word=").append(_currentWord);
     log.append(", points=").append(points.size());
     log.append(", duration=").append(duration).append("ms");
+    log.append(", ML_trace_id=").append(mlData.getTraceId());
+    log.append(", registered_keys=").append(mlData.getRegisteredKeys().size());
     log.append(", path=[");
     
-    for (PointF p : points)
+    for (String key : mlData.getRegisteredKeys())
     {
-      String key = _keyboardView.getKeyAt(p.x, p.y);
-      if (key != null) log.append(key);
+      log.append(key);
     }
     log.append("]");
     

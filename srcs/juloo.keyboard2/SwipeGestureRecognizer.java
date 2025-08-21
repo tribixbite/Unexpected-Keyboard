@@ -211,6 +211,14 @@ public class SwipeGestureRecognizer
   }
   
   /**
+   * Get timestamps for ML data collection
+   */
+  public List<Long> getTimestamps()
+  {
+    return new ArrayList<>(_timestamps);
+  }
+  
+  /**
    * Log comprehensive swipe data for analysis and debugging
    */
   private void logSwipeData()
