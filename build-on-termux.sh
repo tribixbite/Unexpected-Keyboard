@@ -117,13 +117,17 @@ if [ -f "$APK_PATH" ]; then
     ls -lh "$APK_PATH"
     echo
     
-    # Try to open APK for installation if termux-open is available
-    if command -v termux-open &>/dev/null; then
+    # Auto-install using our new script
+    if [ -f "./auto-install.sh" ]; then
+        ./auto-install.sh
+    elif command -v termux-open &>/dev/null; then
+        # Fallback to termux-open if available
         echo "Opening APK for installation..."
         termux-open "$APK_PATH" 2>/dev/null || {
             echo "To install manually, share the APK file to your file manager"
         }
     else
+        # Manual instructions as last resort
         echo "To install on device:"
         echo "  1. Share the APK to your file manager"
         echo "  2. Open the APK file to install"
