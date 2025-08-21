@@ -18,7 +18,8 @@ public class WordPredictor
 {
   private final Map<String, Integer> _dictionary;
   private final Map<Character, List<Character>> _adjacentKeys;
-  private static final int MAX_PREDICTIONS = 5;
+  private static final int MAX_PREDICTIONS_TYPING = 5;
+  private static final int MAX_PREDICTIONS_SWIPE = 10;
   private static final int MAX_EDIT_DISTANCE = 2;
   
   public WordPredictor()
@@ -134,14 +135,19 @@ public class WordPredictor
     if (keySequence == null || keySequence.isEmpty())
       return new ArrayList<>();
       
-    List<WordCandidate> candidates = new ArrayList<>();
+    // TWO-PASS PRIORITIZED SYSTEM
+    List<WordCandidate> priorityMatches = new ArrayList<>();  // First+last matches
+    List<WordCandidate> otherMatches = new ArrayList<>();     // Other candidates
     String lowerSequence = keySequence.toLowerCase();
     
     android.util.Log.d("WordPredictor", "Predicting for: " + lowerSequence + " (len=" + lowerSequence.length() + ")");
     
     // Check if this is likely a swipe sequence (more chars than expected for word length)
     // Swipes often have 2-3x more characters than the target word
-    boolean isSwipeSequence = lowerSequence.length() > 8;
+    boolean isSwipeSequence = lowerSequence.length() > 6;
+    
+    // Determine max predictions based on input type
+    int maxPredictions = isSwipeSequence ? MAX_PREDICTIONS_SWIPE : MAX_PREDICTIONS_TYPING;
     
     // Find all words that could match the key sequence
     for (Map.Entry<String, Integer> entry : _dictionary.entrySet())
@@ -160,36 +166,37 @@ public class WordPredictor
           char seqFirst = lowerSequence.charAt(0);
           char seqLast = lowerSequence.charAt(lowerSequence.length() - 1);
           
-          // ALWAYS prioritize first and last character matches for swipes
+          // PRIORITY MATCHES: First AND last character match
           if (firstChar == seqFirst && lastChar == seqLast)
           {
             // Count inner character matches
             int innerMatches = countInnerMatches(word, lowerSequence);
-            // Very high score for matching endpoints - this is our primary signal
-            // Even 1-2 inner matches are valid for swipes
-            int score = 2000 + (innerMatches * 200);
-            candidates.add(new WordCandidate(word, score * frequency));
-            android.util.Log.d("WordPredictor", "First/last match: " + word + " (inner=" + innerMatches + ", score=" + score + ")");
+            // NO FREQUENCY MULTIPLICATION for priority matches
+            // Score based purely on match quality
+            int score = 10000 + (innerMatches * 100);
+            priorityMatches.add(new WordCandidate(word, score));
+            android.util.Log.d("WordPredictor", "PRIORITY match: " + word + " (inner=" + innerMatches + ", score=" + score + ")");
           }
-          // Also check if first OR last matches (partial match)
+          // SECONDARY: Partial endpoint match (first OR last)
           else if (firstChar == seqFirst || lastChar == seqLast)
           {
-            // Lower score for partial endpoint match
             int innerMatches = countInnerMatches(word, lowerSequence);
             if (innerMatches >= 1) // At least one inner match required
             {
-              int score = 500 + (innerMatches * 100);
-              candidates.add(new WordCandidate(word, score * frequency));
+              // Lower tier scoring with frequency consideration
+              int score = 1000 + (innerMatches * 50);
+              otherMatches.add(new WordCandidate(word, score * frequency));
               android.util.Log.d("WordPredictor", "Partial match: " + word + " (inner=" + innerMatches + ", score=" + score + ")");
             }
           }
+          // OTHER: Standard swipe candidates
           else if (couldBeFormedFrom(word, lowerSequence))
           {
-            // Standard swipe scoring for other potential matches
             int score = calculateSwipeScore(word, lowerSequence, frequency);
             if (score > 0)
             {
-              candidates.add(new WordCandidate(word, score * frequency));
+              otherMatches.add(new WordCandidate(word, score));
+              android.util.Log.d("WordPredictor", "Other match: " + word + " (score=" + score + ")");
             }
           }
         }
@@ -203,25 +210,48 @@ public class WordPredictor
         int score = calculateMatchScore(word, lowerSequence);
         if (score > 0)
         {
-          candidates.add(new WordCandidate(word, score * frequency));
+          // For regular typing, keep frequency multiplication
+          otherMatches.add(new WordCandidate(word, score * frequency));
         }
       }
     }
     
-    // Sort by score (higher is better)
-    Collections.sort(candidates, new Comparator<WordCandidate>() {
+    // Sort each list independently
+    Collections.sort(priorityMatches, new Comparator<WordCandidate>() {
       @Override
       public int compare(WordCandidate a, WordCandidate b) {
         return Integer.compare(b.score, a.score);
       }
     });
     
-    // Return top predictions
+    Collections.sort(otherMatches, new Comparator<WordCandidate>() {
+      @Override
+      public int compare(WordCandidate a, WordCandidate b) {
+        return Integer.compare(b.score, a.score);
+      }
+    });
+    
+    // Combine lists with PRIORITY matches FIRST
     List<String> predictions = new ArrayList<>();
-    for (int i = 0; i < Math.min(candidates.size(), MAX_PREDICTIONS); i++)
+    
+    // Add ALL priority matches (up to max)
+    for (WordCandidate candidate : priorityMatches)
     {
-      predictions.add(candidates.get(i).word);
+      predictions.add(candidate.word);
+      if (predictions.size() >= maxPredictions) break;
     }
+    
+    // Fill remaining slots with other matches
+    for (WordCandidate candidate : otherMatches)
+    {
+      if (predictions.size() >= maxPredictions) break;
+      if (!predictions.contains(candidate.word)) // Avoid duplicates
+      {
+        predictions.add(candidate.word);
+      }
+    }
+    
+    android.util.Log.d("WordPredictor", "Final predictions (" + predictions.size() + "): " + predictions);
     
     return predictions;
   }
