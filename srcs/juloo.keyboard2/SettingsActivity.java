@@ -8,6 +8,11 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
+import java.io.File;
+import juloo.keyboard2.ml.SwipeMLDataStore;
+import juloo.keyboard2.ml.SwipeMLTrainer;
+import android.app.ProgressDialog;
 
 public class SettingsActivity extends PreferenceActivity
 {
@@ -49,8 +54,156 @@ public class SettingsActivity extends PreferenceActivity
         }
       });
     }
+    
+    // Set up ML data export preference
+    Preference exportMLDataPref = findPreference("export_swipe_ml_data");
+    if (exportMLDataPref != null)
+    {
+      // Update summary with current data statistics
+      SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
+      SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
+      exportMLDataPref.setSummary("Export all collected swipe data (" + stats.totalCount + " samples)");
+      
+      exportMLDataPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          exportSwipeMLData();
+          return true;
+        }
+      });
+    }
+    
+    // Set up ML training preference
+    Preference trainMLModelPref = findPreference("train_swipe_ml_model");
+    if (trainMLModelPref != null)
+    {
+      SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
+      SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
+      trainMLModelPref.setSummary("Train model with " + stats.totalCount + " samples (min 100 required)");
+      
+      trainMLModelPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          startMLTraining();
+          return true;
+        }
+      });
+    }
   }
 
+  private void exportSwipeMLData()
+  {
+    try
+    {
+      SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
+      SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
+      
+      if (stats.totalCount == 0)
+      {
+        Toast.makeText(this, "No swipe data to export", Toast.LENGTH_SHORT).show();
+        return;
+      }
+      
+      // Export to JSON file
+      File exportFile = dataStore.exportToJSON();
+      
+      // Create share intent
+      Intent shareIntent = new Intent(Intent.ACTION_SEND);
+      shareIntent.setType("application/json");
+      // Use standard file URI for now - FileProvider would need AndroidX migration
+      android.net.Uri uri = android.net.Uri.fromFile(exportFile);
+      shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+      shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Swipe ML Training Data Export");
+      shareIntent.putExtra(Intent.EXTRA_TEXT, 
+        "Swipe typing ML training data export\n" +
+        "Total samples: " + stats.totalCount + "\n" +
+        "Calibration samples: " + stats.calibrationCount + "\n" +
+        "User samples: " + stats.userSelectionCount + "\n" +
+        "Unique words: " + stats.uniqueWords);
+      shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+      
+      startActivity(Intent.createChooser(shareIntent, "Export Swipe ML Data"));
+      
+      Toast.makeText(this, "Exported " + stats.totalCount + " swipe samples", 
+                     Toast.LENGTH_LONG).show();
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+      android.util.Log.e("SettingsActivity", "Failed to export ML data", e);
+    }
+  }
+  
+  private void startMLTraining()
+  {
+    SwipeMLTrainer trainer = new SwipeMLTrainer(this);
+    
+    if (!trainer.canTrain())
+    {
+      Toast.makeText(this, "Not enough data for training. Need at least 100 samples.", 
+                     Toast.LENGTH_LONG).show();
+      return;
+    }
+    
+    // Create progress dialog
+    final ProgressDialog progressDialog = new ProgressDialog(this);
+    progressDialog.setTitle("Training ML Model");
+    progressDialog.setMessage("Preparing training data...");
+    progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+    progressDialog.setMax(100);
+    progressDialog.setCancelable(false);
+    progressDialog.show();
+    
+    // Set up training listener
+    trainer.setTrainingListener(new SwipeMLTrainer.TrainingListener()
+    {
+      @Override
+      public void onTrainingStarted()
+      {
+        runOnUiThread(() -> {
+          progressDialog.setMessage("Training in progress...");
+        });
+      }
+      
+      @Override
+      public void onTrainingProgress(int progress, int total)
+      {
+        runOnUiThread(() -> {
+          progressDialog.setProgress(progress);
+        });
+      }
+      
+      @Override
+      public void onTrainingCompleted(SwipeMLTrainer.TrainingResult result)
+      {
+        runOnUiThread(() -> {
+          progressDialog.dismiss();
+          String message = String.format(
+            "Training completed!\nSamples: %d\nTime: %.1f seconds\nAccuracy: %.1f%%",
+            result.samplesUsed, result.trainingTimeMs / 1000.0, result.accuracy * 100);
+          Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_LONG).show();
+        });
+      }
+      
+      @Override
+      public void onTrainingError(String error)
+      {
+        runOnUiThread(() -> {
+          progressDialog.dismiss();
+          Toast.makeText(SettingsActivity.this, "Training failed: " + error, 
+                        Toast.LENGTH_LONG).show();
+        });
+      }
+    });
+    
+    // Start training
+    trainer.startTraining();
+  }
+  
   void fallbackEncrypted()
   {
     // Can't communicate with the user here.
