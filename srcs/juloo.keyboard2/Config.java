@@ -71,6 +71,9 @@ public final class Config
   public int circle_sensitivity;
   public boolean clipboard_history_enabled;
   public boolean swipe_typing_enabled;
+  public float swipe_confidence_shape_weight;
+  public float swipe_confidence_location_weight;
+  public float swipe_confidence_frequency_weight;
   public boolean word_prediction_enabled;
 
   // Dynamically set
@@ -184,6 +187,9 @@ public final class Config
     circle_sensitivity = Integer.valueOf(_prefs.getString("circle_sensitivity", "2"));
     clipboard_history_enabled = _prefs.getBoolean("clipboard_history_enabled", false);
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
+    swipe_confidence_shape_weight = _prefs.getInt("swipe_confidence_shape_weight", 100) / 100.f;
+    swipe_confidence_location_weight = _prefs.getInt("swipe_confidence_location_weight", 100) / 100.f;
+    swipe_confidence_frequency_weight = _prefs.getInt("swipe_confidence_frequency_weight", 100) / 100.f;
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
 
     float screen_width_dp = dm.widthPixels / dm.density;
