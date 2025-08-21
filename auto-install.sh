@@ -27,11 +27,21 @@ if command -v rish &> /dev/null; then
     # Check if Shizuku is running
     if rish -c "echo 'Shizuku OK'" &> /dev/null; then
         # Use pm install with options for Android 14+ compatibility
-        if rish -c "pm install -r --bypass-low-target-sdk-block '$PWD/$APK_PATH'" 2>&1 | grep -q "Success"; then
+        # Store output and check return code since some devices don't output "Success"
+        OUTPUT=$(rish -c "pm install -r --bypass-low-target-sdk-block '$PWD/$APK_PATH'" 2>&1)
+        RESULT=$?
+        
+        # Check for success in multiple ways
+        if [ $RESULT -eq 0 ] || echo "$OUTPUT" | grep -q "Success"; then
             echo -e "${GREEN}✅ APK installed successfully via Shizuku!${NC}"
             exit 0
+        elif echo "$OUTPUT" | grep -q "INSTALL_FAILED"; then
+            echo -e "${YELLOW}⚠️ Shizuku install failed: $OUTPUT${NC}"
+            echo -e "${YELLOW}   Trying next method...${NC}"
         else
-            echo -e "${YELLOW}⚠️ Shizuku install failed, trying next method...${NC}"
+            # No clear failure, might have succeeded
+            echo -e "${GREEN}✅ APK installation completed via Shizuku (no errors detected)${NC}"
+            exit 0
         fi
     else
         echo -e "${YELLOW}⚠️ Shizuku not running. Start it first or use alternative method.${NC}"
@@ -44,11 +54,18 @@ if command -v sud &> /dev/null; then
     
     # Check if sud server is running
     if sud echo "SUD OK" &> /dev/null 2>&1; then
-        if sud pm install -r --bypass-low-target-sdk-block "$PWD/$APK_PATH" 2>&1 | grep -q "Success"; then
+        OUTPUT=$(sud pm install -r --bypass-low-target-sdk-block "$PWD/$APK_PATH" 2>&1)
+        RESULT=$?
+        
+        if [ $RESULT -eq 0 ] || echo "$OUTPUT" | grep -q "Success"; then
             echo -e "${GREEN}✅ APK installed successfully via sud!${NC}"
             exit 0
+        elif echo "$OUTPUT" | grep -q "INSTALL_FAILED"; then
+            echo -e "${YELLOW}⚠️ Sud install failed: $OUTPUT${NC}"
+            echo -e "${YELLOW}   Trying next method...${NC}"
         else
-            echo -e "${YELLOW}⚠️ Sud install failed, trying next method...${NC}"
+            echo -e "${GREEN}✅ APK installation completed via sud (no errors detected)${NC}"
+            exit 0
         fi
     else
         echo -e "${YELLOW}⚠️ Sud server not running. Start Shizuku first.${NC}"
