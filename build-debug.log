@@ -19,8 +19,8 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug
-> Task :processDebugMainManifest
 > Task :parseDebugLocalResources
+> Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -28,8 +28,8 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :mergeDebugAssets
 > Task :processDebugJavaRes NO-SOURCE
 > Task :compressDebugAssets
-> Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies
+> Task :checkDebugDuplicateClasses
 > Task :mergeDebugJniLibFolders
 > Task :mergeLibDexDebug
 > Task :mergeDebugNativeLibs NO-SOURCE
