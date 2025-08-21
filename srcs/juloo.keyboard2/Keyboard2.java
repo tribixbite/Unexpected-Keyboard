@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import juloo.keyboard2.prefs.LayoutsPreference;
 
 public class Keyboard2 extends InputMethodService
@@ -56,6 +59,7 @@ public class Keyboard2 extends InputMethodService
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
   private StringBuilder _currentWord = new StringBuilder();
+  private BufferedWriter _logWriter = null;
 
   /** Layout currently visible before it has been modified. */
   KeyboardData current_layout_unmodified()
@@ -134,6 +138,18 @@ public class Keyboard2 extends InputMethodService
     Logs.set_debug_logs(getResources().getBoolean(R.bool.debug_logs));
     ClipboardHistoryService.on_startup(this, _keyeventhandler);
     _foldStateTracker.setChangedCallback(() -> { refresh_config(); });
+    
+    // Initialize log writer for swipe analysis
+    try
+    {
+      _logWriter = new BufferedWriter(new FileWriter("/data/data/com.termux/files/home/swipe_log.txt", true));
+      _logWriter.write("\n=== Keyboard2 Started: " + new java.util.Date() + " ===\n");
+      _logWriter.flush();
+    }
+    catch (IOException e)
+    {
+      android.util.Log.e("Keyboard2", "Failed to open log file: " + e.getMessage());
+    }
     
     // Initialize word prediction components (for both swipe and regular typing)
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
@@ -731,6 +747,9 @@ public class Keyboard2 extends InputMethodService
       android.util.Log.d("Keyboard2", "Word predictor is null");
       return;
     }
+    
+    // Reset predictor for fresh swipe
+    _wordPredictor.reset();
       
     // Build key sequence from swiped keys
     StringBuilder keySequence = new StringBuilder();
@@ -749,6 +768,20 @@ public class Keyboard2 extends InputMethodService
     android.util.Log.d("Keyboard2", "Key sequence: " + keySequence.toString());
     android.util.Log.d("Keyboard2", "Dictionary size: " + (_wordPredictor != null ? _wordPredictor.getDictionarySize() : 0));
     
+    // Log to file for analysis
+    if (_logWriter != null)
+    {
+      try
+      {
+        _logWriter.write("[" + new java.util.Date() + "] Swipe: " + keySequence.toString() + "\n");
+        _logWriter.flush();
+      }
+      catch (IOException e)
+      {
+        android.util.Log.e("Keyboard2", "Failed to write to log: " + e.getMessage());
+      }
+    }
+    
     if (keySequence.length() > 0)
     {
       // Get predictions using regular word predictor
@@ -765,6 +798,20 @@ public class Keyboard2 extends InputMethodService
       else
       {
         android.util.Log.d("Keyboard2", "NO PREDICTIONS FOUND for sequence: " + keySequence.toString());
+      }
+      
+      // Log predictions to file
+      if (_logWriter != null)
+      {
+        try
+        {
+          _logWriter.write("  Predictions: " + predictions + " (" + predictionTime + "ms)\n");
+          _logWriter.flush();
+        }
+        catch (IOException e)
+        {
+          android.util.Log.e("Keyboard2", "Failed to write predictions to log: " + e.getMessage());
+        }
       }
       
       // Show suggestions in the bar

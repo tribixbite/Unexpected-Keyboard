@@ -39,7 +39,7 @@ public class WordPredictor
     
     boolean dictionaryLoaded = false;
     
-    // Try enhanced dictionary first
+    // Only use enhanced dictionary, no fallback to basic
     try
     {
       BufferedReader reader = new BufferedReader(
@@ -61,94 +61,19 @@ public class WordPredictor
     }
     catch (IOException e)
     {
-      // Try fallback dictionary
-      try
-      {
-        BufferedReader reader = new BufferedReader(
-          new InputStreamReader(context.getAssets().open(fallbackFilename)));
-        String line;
-        while ((line = reader.readLine()) != null)
-        {
-          String[] parts = line.trim().split("\t");
-          if (parts.length >= 1)
-          {
-            String word = parts[0].toLowerCase();
-            int frequency = parts.length > 1 ? Integer.parseInt(parts[1]) : 1000;
-            _dictionary.put(word, frequency);
-          }
-        }
-        reader.close();
-        dictionaryLoaded = true;
-        android.util.Log.d("WordPredictor", "Loaded basic dictionary: " + fallbackFilename + " with " + _dictionary.size() + " words");
-      }
-      catch (IOException e2)
-      {
-        // If neither dictionary file exists, use a basic built-in dictionary
-        loadBasicDictionary();
-        android.util.Log.d("WordPredictor", "Using built-in dictionary with " + _dictionary.size() + " words");
-      }
+      android.util.Log.e("WordPredictor", "Failed to load enhanced dictionary: " + filename + ", error: " + e.getMessage());
+      // Don't fall back to basic dictionary - keep dictionary empty if enhanced not found
     }
   }
   
   /**
-   * Load a basic built-in dictionary for testing
+   * Reset the predictor state - called after space/punctuation
    */
-  private void loadBasicDictionary()
+  public void reset()
   {
-    // Common English words with frequencies
-    _dictionary.put("the", 10000);
-    _dictionary.put("and", 9000);
-    _dictionary.put("you", 8500);
-    _dictionary.put("that", 8000);
-    _dictionary.put("was", 7500);
-    _dictionary.put("for", 7000);
-    _dictionary.put("are", 6500);
-    _dictionary.put("with", 6000);
-    _dictionary.put("his", 5500);
-    _dictionary.put("they", 5000);
-    _dictionary.put("this", 4500);
-    _dictionary.put("have", 4000);
-    _dictionary.put("from", 3500);
-    _dictionary.put("word", 3000);
-    _dictionary.put("but", 2500);
-    _dictionary.put("what", 2000);
-    _dictionary.put("some", 1500);
-    _dictionary.put("can", 1000);
-    _dictionary.put("hello", 900);
-    _dictionary.put("world", 800);
-    _dictionary.put("test", 700);
-    _dictionary.put("type", 600);
-    _dictionary.put("keyboard", 500);
-    _dictionary.put("swipe", 400);
-    
-    // Add more common words for better testing
-    _dictionary.put("is", 9500);
-    _dictionary.put("it", 9000);
-    _dictionary.put("be", 8500);
-    _dictionary.put("of", 8000);
-    _dictionary.put("to", 7500);
-    _dictionary.put("in", 7000);
-    _dictionary.put("he", 6500);
-    _dictionary.put("has", 6000);
-    _dictionary.put("will", 5500);
-    _dictionary.put("on", 5000);
-    _dictionary.put("do", 4500);
-    _dictionary.put("say", 4000);
-    _dictionary.put("she", 3500);
-    _dictionary.put("an", 3000);
-    _dictionary.put("or", 2500);
-    _dictionary.put("by", 2000);
-    _dictionary.put("as", 1500);
-    _dictionary.put("we", 1000);
-    _dictionary.put("her", 900);
-    _dictionary.put("out", 800);
-    _dictionary.put("if", 700);
-    _dictionary.put("would", 600);
-    _dictionary.put("there", 500);
-    _dictionary.put("their", 400);
-    _dictionary.put("been", 300);
-    _dictionary.put("when", 200);
-    _dictionary.put("who", 100);
+    // This method will be called from Keyboard2 to reset state
+    // Dictionary remains loaded, just clears any internal state if needed
+    android.util.Log.d("WordPredictor", "Predictor reset");
   }
   
   /**
@@ -222,22 +147,48 @@ public class WordPredictor
       String word = entry.getKey();
       int frequency = entry.getValue();
       
-      // For swipe sequences, be more lenient with length differences
-      if (!isSwipeSequence && Math.abs(word.length() - lowerSequence.length()) > 2)
-        continue;
-      
-      // For swipe sequences, check if word could be formed from the sequence
-      if (isSwipeSequence && !couldBeFormedFrom(word, lowerSequence))
-        continue;
-        
-      // Calculate match score
-      int score = isSwipeSequence ? 
-        calculateSwipeScore(word, lowerSequence, frequency) :
-        calculateMatchScore(word, lowerSequence);
-      
-      if (score > 0)
+      // For swipe sequences, use special matching
+      if (isSwipeSequence)
       {
-        candidates.add(new WordCandidate(word, score * frequency));
+        // For long sequences, prioritize first/last character matches
+        if (word.length() > 0 && lowerSequence.length() > 0)
+        {
+          char firstChar = word.charAt(0);
+          char lastChar = word.charAt(word.length() - 1);
+          char seqFirst = lowerSequence.charAt(0);
+          char seqLast = lowerSequence.charAt(lowerSequence.length() - 1);
+          
+          // Check if first and last characters match
+          if (firstChar == seqFirst && lastChar == seqLast)
+          {
+            // Count inner character matches
+            int innerMatches = countInnerMatches(word, lowerSequence);
+            // Score based on inner matches + high base score for matching endpoints
+            int score = 1000 + (innerMatches * 100);
+            candidates.add(new WordCandidate(word, score * frequency));
+          }
+          else if (couldBeFormedFrom(word, lowerSequence))
+          {
+            // Standard swipe scoring for other potential matches
+            int score = calculateSwipeScore(word, lowerSequence, frequency);
+            if (score > 0)
+            {
+              candidates.add(new WordCandidate(word, score * frequency));
+            }
+          }
+        }
+      }
+      else
+      {
+        // Regular typing - strict length matching
+        if (Math.abs(word.length() - lowerSequence.length()) > 2)
+          continue;
+          
+        int score = calculateMatchScore(word, lowerSequence);
+        if (score > 0)
+        {
+          candidates.add(new WordCandidate(word, score * frequency));
+        }
       }
     }
     
@@ -423,6 +374,36 @@ public class WordPredictor
   public int getDictionarySize()
   {
     return _dictionary.size();
+  }
+  
+  /**
+   * Count matching characters in the middle of the word (excluding first/last)
+   */
+  private int countInnerMatches(String word, String sequence)
+  {
+    if (word.length() <= 2 || sequence.length() <= 2)
+      return 0;
+      
+    int matches = 0;
+    int seqIndex = 1; // Start after first character
+    
+    // Check inner characters (skip first and last)
+    for (int i = 1; i < word.length() - 1; i++)
+    {
+      char c = word.charAt(i);
+      // Look for this character in the remaining sequence
+      for (int j = seqIndex; j < sequence.length() - 1; j++)
+      {
+        if (sequence.charAt(j) == c)
+        {
+          matches++;
+          seqIndex = j + 1;
+          break;
+        }
+      }
+    }
+    
+    return matches;
   }
   
   /**
