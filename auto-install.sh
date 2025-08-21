@@ -26,22 +26,47 @@ if command -v rish &> /dev/null; then
     
     # Check if Shizuku is running
     if rish -c "echo 'Shizuku OK'" &> /dev/null; then
+        # Copy APK to /data/local/tmp/ for Shizuku access
+        TMP_APK="/data/local/tmp/$(basename "$APK_PATH")"
+        # Try copying with rish (has shell permissions)
+        if rish -c "cp '$PWD/$APK_PATH' '$TMP_APK'" 2>/dev/null; then
+            echo "📦 APK copied to temp location for installation"
+        else
+            # Fallback to direct copy or use original path
+            cp "$APK_PATH" "$TMP_APK" 2>/dev/null || {
+                echo -e "${YELLOW}⚠️ Using direct path (may fail on some devices)${NC}"
+                TMP_APK="$PWD/$APK_PATH"
+            }
+        fi
+        
         # Use pm install with options for Android 14+ compatibility
         # Store output and check return code since some devices don't output "Success"
-        OUTPUT=$(rish -c "pm install -r --bypass-low-target-sdk-block '$PWD/$APK_PATH'" 2>&1)
+        OUTPUT=$(rish -c "pm install -r --bypass-low-target-sdk-block '$TMP_APK'" 2>&1)
         RESULT=$?
         
+        # Clean up temp file if we created one
+        [ "$TMP_APK" != "$PWD/$APK_PATH" ] && rm -f "$TMP_APK" 2>/dev/null
+        
         # Check for success in multiple ways
-        if [ $RESULT -eq 0 ] || echo "$OUTPUT" | grep -q "Success"; then
+        if [ $RESULT -eq 0 ] && ! echo "$OUTPUT" | grep -q "Error\|INSTALL_FAILED\|Can't open"; then
             echo -e "${GREEN}✅ APK installed successfully via Shizuku!${NC}"
             exit 0
-        elif echo "$OUTPUT" | grep -q "INSTALL_FAILED"; then
-            echo -e "${YELLOW}⚠️ Shizuku install failed: $OUTPUT${NC}"
+        elif echo "$OUTPUT" | grep -q "Success"; then
+            echo -e "${GREEN}✅ APK installed successfully via Shizuku!${NC}"
+            exit 0
+        elif echo "$OUTPUT" | grep -q "INSTALL_FAILED\|Error\|Can't open"; then
+            echo -e "${YELLOW}⚠️ Shizuku install failed${NC}"
+            echo -e "${YELLOW}   Error: $(echo "$OUTPUT" | grep -E "Error|INSTALL_FAILED" | head -1)${NC}"
             echo -e "${YELLOW}   Trying next method...${NC}"
         else
-            # No clear failure, might have succeeded
-            echo -e "${GREEN}✅ APK installation completed via Shizuku (no errors detected)${NC}"
-            exit 0
+            # Ambiguous result, check if app was actually updated
+            PACKAGE_NAME=$(basename "$APK_PATH" .apk | sed 's/\.debug$//')
+            if rish -c "pm list packages | grep -q $PACKAGE_NAME"; then
+                echo -e "${GREEN}✅ APK installation completed via Shizuku${NC}"
+                exit 0
+            else
+                echo -e "${YELLOW}⚠️ Installation status unclear, trying next method...${NC}"
+            fi
         fi
     else
         echo -e "${YELLOW}⚠️ Shizuku not running. Start it first or use alternative method.${NC}"
@@ -54,17 +79,31 @@ if command -v sud &> /dev/null; then
     
     # Check if sud server is running
     if sud echo "SUD OK" &> /dev/null 2>&1; then
-        OUTPUT=$(sud pm install -r --bypass-low-target-sdk-block "$PWD/$APK_PATH" 2>&1)
+        # Copy APK to /data/local/tmp/ for sud access
+        TMP_APK="/data/local/tmp/$(basename "$APK_PATH")"
+        cp "$APK_PATH" "$TMP_APK" 2>/dev/null || {
+            echo -e "${YELLOW}⚠️ Cannot copy to /data/local/tmp/, trying direct install...${NC}"
+            TMP_APK="$PWD/$APK_PATH"
+        }
+        
+        OUTPUT=$(sud pm install -r --bypass-low-target-sdk-block "$TMP_APK" 2>&1)
         RESULT=$?
         
-        if [ $RESULT -eq 0 ] || echo "$OUTPUT" | grep -q "Success"; then
+        # Clean up temp file if we created one
+        [ "$TMP_APK" != "$PWD/$APK_PATH" ] && rm -f "$TMP_APK" 2>/dev/null
+        
+        if [ $RESULT -eq 0 ] && ! echo "$OUTPUT" | grep -q "Error\|INSTALL_FAILED\|Can't open"; then
             echo -e "${GREEN}✅ APK installed successfully via sud!${NC}"
             exit 0
-        elif echo "$OUTPUT" | grep -q "INSTALL_FAILED"; then
-            echo -e "${YELLOW}⚠️ Sud install failed: $OUTPUT${NC}"
+        elif echo "$OUTPUT" | grep -q "Success"; then
+            echo -e "${GREEN}✅ APK installed successfully via sud!${NC}"
+            exit 0
+        elif echo "$OUTPUT" | grep -q "INSTALL_FAILED\|Error\|Can't open"; then
+            echo -e "${YELLOW}⚠️ Sud install failed${NC}"
+            echo -e "${YELLOW}   Error: $(echo "$OUTPUT" | grep -E "Error|INSTALL_FAILED" | head -1)${NC}"
             echo -e "${YELLOW}   Trying next method...${NC}"
         else
-            echo -e "${GREEN}✅ APK installation completed via sud (no errors detected)${NC}"
+            echo -e "${GREEN}✅ APK installation completed via sud${NC}"
             exit 0
         fi
     else
