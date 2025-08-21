@@ -74,6 +74,9 @@ public final class Config
   public float swipe_confidence_shape_weight;
   public float swipe_confidence_location_weight;
   public float swipe_confidence_frequency_weight;
+  public float swipe_confidence_velocity_weight;
+  public float swipe_velocity_std;
+  public int swipe_turning_point_threshold;
   public boolean word_prediction_enabled;
 
   // Dynamically set
@@ -190,6 +193,9 @@ public final class Config
     swipe_confidence_shape_weight = _prefs.getInt("swipe_confidence_shape_weight", 100) / 100.f;
     swipe_confidence_location_weight = _prefs.getInt("swipe_confidence_location_weight", 100) / 100.f;
     swipe_confidence_frequency_weight = _prefs.getInt("swipe_confidence_frequency_weight", 100) / 100.f;
+    swipe_confidence_velocity_weight = _prefs.getInt("swipe_confidence_velocity_weight", 100) / 100.f;
+    swipe_velocity_std = _prefs.getInt("swipe_velocity_std", 100) / 100.f;
+    swipe_turning_point_threshold = _prefs.getInt("swipe_turning_point_threshold", 45);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
 
     float screen_width_dp = dm.widthPixels / dm.density;

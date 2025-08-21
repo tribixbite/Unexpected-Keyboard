@@ -18,7 +18,10 @@ package dev.patrickgold.florisboard.ime.text.gestures
 
 import android.content.Context
 import android.view.MotionEvent
+import android.view.VelocityTracker
 import dev.patrickgold.florisboard.R
+import kotlin.math.pow
+import kotlin.math.sqrt
 import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKey
 import dev.patrickgold.florisboard.lib.devtools.flogDebug
@@ -36,6 +39,7 @@ class GlideTypingGesture {
      */
     class Detector(context: Context) {
         private var pointerData: PointerData = PointerData(mutableListOf(), 0)
+        private val velocityTracker = VelocityTracker.obtain()
         private val keySize = ViewUtils.px2dp(context.resources.getDimension(R.dimen.key_width))
         private val listeners: ArrayList<Listener> = arrayListOf()
         private var pointerId: Int = -1
@@ -52,6 +56,7 @@ class GlideTypingGesture {
          * @return whether or not the event was interpreted as part of a gesture.
          */
         fun onTouchEvent(event: MotionEvent, initialKey: TextKey?): Boolean {
+            velocityTracker.addMovement(event)
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_POINTER_DOWN -> {
@@ -76,11 +81,16 @@ class GlideTypingGesture {
                         return false
                     }
 
+                    velocityTracker.computeCurrentVelocity(1000)
+                    val xVelocity = velocityTracker.getXVelocity(pointerId)
+                    val yVelocity = velocityTracker.getYVelocity(pointerId)
+                    val velocity = sqrt(xVelocity.pow(2) + yVelocity.pow(2))
+
                     val pointerIndex = event.findPointerIndex(pointerId)
                     for (i in 0..event.historySize) {
                         val pos = when (i) {
-                            event.historySize -> Position(event.getX(pointerIndex), event.getY(pointerIndex))
-                            else -> Position(event.getHistoricalX(pointerIndex, i), event.getHistoricalY(pointerIndex, i))
+                            event.historySize -> Position(event.getX(pointerIndex), event.getY(pointerIndex), velocity)
+                            else -> Position(event.getHistoricalX(pointerIndex, i), event.getHistoricalY(pointerIndex, i), velocity)
                         }
                         pointerData.positions.add(pos)
                         if (pointerData.isActuallyGesture == null) {
@@ -147,6 +157,7 @@ class GlideTypingGesture {
                 isActuallyGesture = null
             }
             pointerId = -1
+            velocityTracker.clear()
         }
 
         data class PointerData(
@@ -155,7 +166,7 @@ class GlideTypingGesture {
             var isActuallyGesture: Boolean? = null,
         )
 
-        data class Position(val x: Float, val y: Float) {
+        data class Position(val x: Float, val y: Float, val velocity: Float = 0f) {
             fun dist(p2: Position): Float {
                 return sqrt((p2.x - x).pow(2) + (p2.y - y).pow(2))
             }

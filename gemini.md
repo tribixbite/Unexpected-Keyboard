@@ -28,10 +28,10 @@ I will be using my own set of tools to modify the codebase. This includes readin
 
 ## TODO
 
-- [ ] Implement a weighted confidence model for swipe gesture word prediction.
-- [ ] Add a UI in settings to allow users to edit the weights for the confidence model.
-- [ ] Incorporate swipe velocity into the scoring algorithm.
-- [ ] Implement path-based pruning for candidate word selection.
-- [ ] Use geometric heuristics to further prune candidate words.
-- [ ] Implement probabilistic key mapping for ambiguity resolution.
+- [x] Implement a weighted confidence model for swipe gesture word prediction.
+- [x] Add a UI in settings to allow users to edit the weights for the confidence model.
+- [x] Incorporate swipe velocity into the scoring algorithm.
+- [x] Implement path-based pruning for candidate word selection.
+- [x] Use geometric heuristics to further prune candidate words.
+- [x] Implement probabilistic key mapping for ambiguity resolution.
 - [ ] Integrate a simple n-gram language model to improve word prediction.

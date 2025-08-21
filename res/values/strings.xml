@@ -89,6 +89,9 @@
     <string name="pref_swipe_confidence_shape_weight_title">Shape Weight</string>
     <string name="pref_swipe_confidence_location_weight_title">Location Weight</string>
     <string name="pref_swipe_confidence_frequency_weight_title">Frequency Weight</string>
+    <string name="pref_swipe_confidence_velocity_weight_title">Velocity Weight</string>
+    <string name="pref_swipe_velocity_std_title">Velocity Standard Deviation</string>
+    <string name="pref_swipe_turning_point_threshold_title">Turning Point Threshold</string>
     <string name="pref_export_swipe_ml_data_title">Export swipe data</string>
     <string name="pref_export_swipe_ml_data_summary">Export all collected swipe traces for ML training</string>
     <string name="pref_train_swipe_ml_title">Train swipe model</string>

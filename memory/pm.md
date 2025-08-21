@@ -193,7 +193,14 @@ gh issue create --title "Bug: ..." --body "..."
 
 ## Current Sprint Focus
 
-### Week 1-2: ML Model Training
+### ✅ Completed (2025-01-21): Production-Ready Improvements
+1. A* pathfinding for probabilistic key mapping
+2. Full velocity magnitude calculation
+3. Configurable turning point threshold
+4. Improved path-based word pruning
+5. Enhanced UI with user-friendly labels
+
+### Week 1-2: ML Model Training (Next)
 1. Create Python training environment
 2. Load and preprocess collected data
 3. Implement dual-branch GRU architecture
