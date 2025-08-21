@@ -234,7 +234,10 @@ public class Keyboard2View extends View
       List<KeyboardData.Key> swipedKeys = recognizer.endSwipe();
       if (_keyboard2 != null && swipedKeys != null && !swipedKeys.isEmpty())
       {
-        _keyboard2.handleSwipeTyping(swipedKeys);
+        // Pass full swipe data for ML collection
+        List<PointF> swipePath = recognizer.getSwipePath();
+        List<Long> timestamps = recognizer.getTimestamps();
+        _keyboard2.handleSwipeTyping(swipedKeys, swipePath, timestamps);
       }
     }
     recognizer.reset();

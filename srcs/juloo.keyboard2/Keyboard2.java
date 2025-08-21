@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import juloo.keyboard2.ml.SwipeMLData;
+import juloo.keyboard2.ml.SwipeMLDataStore;
 import juloo.keyboard2.prefs.LayoutsPreference;
 
 public class Keyboard2 extends InputMethodService
@@ -60,6 +62,11 @@ public class Keyboard2 extends InputMethodService
   private LinearLayout _inputViewContainer;
   private StringBuilder _currentWord = new StringBuilder();
   private BufferedWriter _logWriter = null;
+  
+  // ML data collection
+  private SwipeMLDataStore _mlDataStore;
+  private SwipeMLData _currentSwipeData;
+  private boolean _wasLastInputSwipe = false;
 
   /** Layout currently visible before it has been modified. */
   KeyboardData current_layout_unmodified()
@@ -138,6 +145,9 @@ public class Keyboard2 extends InputMethodService
     Logs.set_debug_logs(getResources().getBoolean(R.bool.debug_logs));
     ClipboardHistoryService.on_startup(this, _keyeventhandler);
     _foldStateTracker.setChangedCallback(() -> { refresh_config(); });
+    
+    // Initialize ML data store
+    _mlDataStore = SwipeMLDataStore.getInstance(this);
     
     // Initialize log writer for swipe analysis
     try
@@ -617,6 +627,9 @@ public class Keyboard2 extends InputMethodService
     
     public void handle_text_typed(String text)
     {
+      // Reset swipe tracking when regular typing occurs
+      _wasLastInputSwipe = false;
+      _currentSwipeData = null;
       handleRegularTyping(text);
     }
     
@@ -635,6 +648,44 @@ public class Keyboard2 extends InputMethodService
   @Override
   public void onSuggestionSelected(String word)
   {
+    // Store ML data if this was a swipe prediction selection
+    if (_wasLastInputSwipe && _currentSwipeData != null && _mlDataStore != null)
+    {
+      // Create a new ML data object with the selected word
+      android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+      SwipeMLData mlData = new SwipeMLData(word, "user_selection",
+                                           metrics.widthPixels, metrics.heightPixels,
+                                           _keyboardView.getHeight());
+      
+      // Copy trace points from the temporary data
+      for (SwipeMLData.TracePoint point : _currentSwipeData.getTracePoints())
+      {
+        // Add points with their original normalized values and timestamps
+        // Since they're already normalized, we need to denormalize then renormalize
+        // to ensure proper storage
+        float rawX = point.x * metrics.widthPixels;
+        float rawY = point.y * metrics.heightPixels;
+        // Reconstruct approximate timestamp (this is a limitation of the current design)
+        long timestamp = System.currentTimeMillis() - 1000 + point.tDeltaMs;
+        mlData.addRawPoint(rawX, rawY, timestamp);
+      }
+      
+      // Copy registered keys
+      for (String key : _currentSwipeData.getRegisteredKeys())
+      {
+        mlData.addRegisteredKey(key);
+      }
+      
+      // Store the ML data
+      _mlDataStore.storeSwipeData(mlData);
+      
+      android.util.Log.d("Keyboard2", "Stored ML data for swipe selection: " + word);
+    }
+    
+    // Reset swipe tracking
+    _wasLastInputSwipe = false;
+    _currentSwipeData = null;
+    
     InputConnection ic = getCurrentInputConnection();
     if (ic != null)
     {
@@ -749,7 +800,9 @@ public class Keyboard2 extends InputMethodService
   }
   
   // Called by Keyboard2View when swipe typing completes
-  public void handleSwipeTyping(List<KeyboardData.Key> swipedKeys)
+  public void handleSwipeTyping(List<KeyboardData.Key> swipedKeys, 
+                                List<android.graphics.PointF> swipePath,
+                                List<Long> timestamps)
   {
     android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION START =====");
     android.util.Log.d("Keyboard2", "handleSwipeTyping called with " + swipedKeys.size() + " keys");
@@ -768,8 +821,28 @@ public class Keyboard2 extends InputMethodService
     
     // Reset predictor for fresh swipe
     _wordPredictor.reset();
+    
+    // Mark that last input was a swipe for ML data collection
+    _wasLastInputSwipe = true;
+    
+    // Prepare ML data (will be saved if user selects a prediction)
+    android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+    _currentSwipeData = new SwipeMLData("", "user_selection",
+                                        metrics.widthPixels, metrics.heightPixels,
+                                        _keyboardView.getHeight());
+    
+    // Add swipe path points with timestamps
+    if (swipePath != null && timestamps != null && swipePath.size() == timestamps.size())
+    {
+      for (int i = 0; i < swipePath.size(); i++)
+      {
+        android.graphics.PointF point = swipePath.get(i);
+        long timestamp = timestamps.get(i);
+        _currentSwipeData.addRawPoint(point.x, point.y, timestamp);
+      }
+    }
       
-    // Build key sequence from swiped keys
+    // Build key sequence from swiped keys and add to ML data
     StringBuilder keySequence = new StringBuilder();
     for (KeyboardData.Key key : swipedKeys)
     {
@@ -778,7 +851,13 @@ public class Keyboard2 extends InputMethodService
         KeyValue kv = key.keys[0];
         if (kv.getKind() == KeyValue.Kind.Char)
         {
-          keySequence.append(kv.getChar());
+          char c = kv.getChar();
+          keySequence.append(c);
+          // Add to ML data
+          if (_currentSwipeData != null)
+          {
+            _currentSwipeData.addRegisteredKey(String.valueOf(c));
+          }
         }
       }
     }
