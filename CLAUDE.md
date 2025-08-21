@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📋 Project Management Reference
+**IMPORTANT**: For comprehensive project information, always consult:
+- **[memory/pm.md](memory/pm.md)** - Complete project management documentation including:
+  - Full directory structure and file organization
+  - Complete build commands for all platforms
+  - Git workflow and GitHub commands
+  - Product roadmap with current status
+  - Testing and debugging strategies
+  - Performance targets and metrics
+- **[memory/swipe.md](memory/swipe.md)** - Swipe typing ML implementation details
+
 ## Project Overview
 
 Unexpected Keyboard is a lightweight, privacy-conscious virtual keyboard for Android. The main feature is swipe-to-corner gestures for typing additional characters. Originally designed for programmers using Termux, now suitable for everyday use.
@@ -207,3 +218,18 @@ git commit -m "build: add ARM64 AAPT2 support for Termux"
 - `ui`: User interface changes
 - `build`: Build system
 - `test`: Testing infrastructure
+
+## 📌 Quick Reference
+**Always check [memory/pm.md](memory/pm.md) for**:
+- Complete build commands and environment setup
+- Full project roadmap and current sprint focus
+- GitHub CLI commands and PR workflow
+- Debugging tools and ADB commands
+- Performance targets and testing strategy
+- Complete file structure and key components
+
+**Check [memory/swipe.md](memory/swipe.md) for**:
+- ML implementation roadmap
+- Neural network architecture details
+- Training pipeline specifications
+- Current implementation status
