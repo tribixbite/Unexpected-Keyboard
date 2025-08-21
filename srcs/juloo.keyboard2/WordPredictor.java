@@ -73,7 +73,8 @@ public class WordPredictor
   {
     // This method will be called from Keyboard2 to reset state
     // Dictionary remains loaded, just clears any internal state if needed
-    android.util.Log.d("WordPredictor", "Predictor reset");
+    android.util.Log.d("WordPredictor", "===== PREDICTOR RESET CALLED =====");
+    android.util.Log.d("WordPredictor", "Stack trace: ", new Exception("Reset trace"));
   }
   
   /**
@@ -138,8 +139,9 @@ public class WordPredictor
     
     android.util.Log.d("WordPredictor", "Predicting for: " + lowerSequence + " (len=" + lowerSequence.length() + ")");
     
-    // Check if this is likely a swipe sequence (too many characters)
-    boolean isSwipeSequence = lowerSequence.length() > 12;
+    // Check if this is likely a swipe sequence (more chars than expected for word length)
+    // Swipes often have 2-3x more characters than the target word
+    boolean isSwipeSequence = lowerSequence.length() > 8;
     
     // Find all words that could match the key sequence
     for (Map.Entry<String, Integer> entry : _dictionary.entrySet())
@@ -150,7 +152,7 @@ public class WordPredictor
       // For swipe sequences, use special matching
       if (isSwipeSequence)
       {
-        // For long sequences, prioritize first/last character matches
+        // For swipe sequences, always check first/last character matches
         if (word.length() > 0 && lowerSequence.length() > 0)
         {
           char firstChar = word.charAt(0);
@@ -158,14 +160,28 @@ public class WordPredictor
           char seqFirst = lowerSequence.charAt(0);
           char seqLast = lowerSequence.charAt(lowerSequence.length() - 1);
           
-          // Check if first and last characters match
+          // ALWAYS prioritize first and last character matches for swipes
           if (firstChar == seqFirst && lastChar == seqLast)
           {
             // Count inner character matches
             int innerMatches = countInnerMatches(word, lowerSequence);
-            // Score based on inner matches + high base score for matching endpoints
-            int score = 1000 + (innerMatches * 100);
+            // Very high score for matching endpoints - this is our primary signal
+            // Even 1-2 inner matches are valid for swipes
+            int score = 2000 + (innerMatches * 200);
             candidates.add(new WordCandidate(word, score * frequency));
+            android.util.Log.d("WordPredictor", "First/last match: " + word + " (inner=" + innerMatches + ", score=" + score + ")");
+          }
+          // Also check if first OR last matches (partial match)
+          else if (firstChar == seqFirst || lastChar == seqLast)
+          {
+            // Lower score for partial endpoint match
+            int innerMatches = countInnerMatches(word, lowerSequence);
+            if (innerMatches >= 1) // At least one inner match required
+            {
+              int score = 500 + (innerMatches * 100);
+              candidates.add(new WordCandidate(word, score * frequency));
+              android.util.Log.d("WordPredictor", "Partial match: " + word + " (inner=" + innerMatches + ", score=" + score + ")");
+            }
           }
           else if (couldBeFormedFrom(word, lowerSequence))
           {

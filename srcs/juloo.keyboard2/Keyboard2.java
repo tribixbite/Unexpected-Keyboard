@@ -680,11 +680,29 @@ public class Keyboard2 extends InputMethodService
       android.util.Log.d("Keyboard2", "Current word: " + _currentWord.toString());
       updatePredictionsForCurrentWord();
     }
-    else if (text.equals(" ") || text.equals("\n") || text.equals(".") || text.equals(",") || text.equals("!") || text.equals("?"))
+    else if (text.length() == 1 && !Character.isLetter(text.charAt(0)))
     {
-      // Word boundary - clear current word
-      android.util.Log.d("Keyboard2", "Word boundary detected, clearing current word");
+      // Any non-letter character - reset predictor and clear current word
+      android.util.Log.d("Keyboard2", "Non-letter character '" + text + "' detected, resetting predictor");
       _currentWord.setLength(0);
+      if (_wordPredictor != null)
+      {
+        _wordPredictor.reset();
+      }
+      if (_suggestionBar != null)
+      {
+        _suggestionBar.clearSuggestions();
+      }
+    }
+    else if (text.length() > 1)
+    {
+      // Multi-character input (paste, etc) - reset
+      android.util.Log.d("Keyboard2", "Multi-character input, resetting predictor");
+      _currentWord.setLength(0);
+      if (_wordPredictor != null)
+      {
+        _wordPredictor.reset();
+      }
       if (_suggestionBar != null)
       {
         _suggestionBar.clearSuggestions();
