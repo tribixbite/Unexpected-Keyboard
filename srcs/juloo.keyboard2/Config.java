@@ -190,10 +190,10 @@ public final class Config
     circle_sensitivity = Integer.valueOf(_prefs.getString("circle_sensitivity", "2"));
     clipboard_history_enabled = _prefs.getBoolean("clipboard_history_enabled", false);
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
-    swipe_confidence_shape_weight = _prefs.getInt("swipe_confidence_shape_weight", 100) / 100.f;
-    swipe_confidence_location_weight = _prefs.getInt("swipe_confidence_location_weight", 100) / 100.f;
-    swipe_confidence_frequency_weight = _prefs.getInt("swipe_confidence_frequency_weight", 100) / 100.f;
-    swipe_confidence_velocity_weight = _prefs.getInt("swipe_confidence_velocity_weight", 100) / 100.f;
+    swipe_confidence_shape_weight = _prefs.getInt("swipe_confidence_shape_weight", 90) / 100.f;
+    swipe_confidence_location_weight = _prefs.getInt("swipe_confidence_location_weight", 130) / 100.f;
+    swipe_confidence_frequency_weight = _prefs.getInt("swipe_confidence_frequency_weight", 80) / 100.f;
+    swipe_confidence_velocity_weight = _prefs.getInt("swipe_confidence_velocity_weight", 60) / 100.f;
     swipe_velocity_std = _prefs.getInt("swipe_velocity_std", 100) / 100.f;
     swipe_turning_point_threshold = _prefs.getInt("swipe_turning_point_threshold", 45);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
