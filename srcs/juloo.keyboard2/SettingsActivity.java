@@ -127,25 +127,30 @@ public class SettingsActivity extends PreferenceActivity
       // Export to JSON file
       File exportFile = dataStore.exportToJSON();
       
-      // Create share intent
-      Intent shareIntent = new Intent(Intent.ACTION_SEND);
-      shareIntent.setType("application/json");
-      // Use standard file URI for now - FileProvider would need AndroidX migration
-      android.net.Uri uri = android.net.Uri.fromFile(exportFile);
-      shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-      shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Swipe ML Training Data Export");
-      shareIntent.putExtra(Intent.EXTRA_TEXT, 
-        "Swipe typing ML training data export\n" +
-        "Total samples: " + stats.totalCount + "\n" +
-        "Calibration samples: " + stats.calibrationCount + "\n" +
-        "User samples: " + stats.userSelectionCount + "\n" +
-        "Unique words: " + stats.uniqueWords);
-      shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+      // Show success message with file location
+      String message = "Exported " + stats.totalCount + " swipe samples\n\n" +
+                      "File saved to:\n" + exportFile.getAbsolutePath() + "\n\n" +
+                      "Statistics:\n" +
+                      "• Calibration samples: " + stats.calibrationCount + "\n" +
+                      "• User samples: " + stats.userSelectionCount + "\n" +
+                      "• Unique words: " + stats.uniqueWords;
       
-      startActivity(Intent.createChooser(shareIntent, "Export Swipe ML Data"));
+      // Create alert dialog to show export info
+      android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+      builder.setTitle("Export Successful");
+      builder.setMessage(message);
+      builder.setPositiveButton("OK", null);
       
-      Toast.makeText(this, "Exported " + stats.totalCount + " swipe samples", 
-                     Toast.LENGTH_LONG).show();
+      // Add copy path button
+      builder.setNeutralButton("Copy Path", (dialog, which) -> {
+        android.content.ClipboardManager clipboard = 
+          (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+        android.content.ClipData clip = android.content.ClipData.newPlainText("Export Path", exportFile.getAbsolutePath());
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(this, "Path copied to clipboard", Toast.LENGTH_SHORT).show();
+      });
+      
+      builder.show();
     }
     catch (Exception e)
     {

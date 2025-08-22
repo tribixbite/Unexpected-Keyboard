@@ -82,12 +82,14 @@ public class SwipeMLDataStore extends SQLiteOpenHelper
       COL_TIMESTAMP + " INTEGER NOT NULL, " +
       COL_SOURCE + " TEXT NOT NULL, " +
       COL_JSON_DATA + " TEXT NOT NULL, " +
-      COL_IS_EXPORTED + " INTEGER DEFAULT 0, " +
-      "INDEX idx_word (target_word), " +
-      "INDEX idx_source (collection_source), " +
-      "INDEX idx_timestamp (timestamp_utc)" +
+      COL_IS_EXPORTED + " INTEGER DEFAULT 0" +
       ")";
     db.execSQL(createTable);
+    
+    // Create indexes separately
+    db.execSQL("CREATE INDEX idx_word ON " + TABLE_SWIPES + " (" + COL_TARGET_WORD + ")");
+    db.execSQL("CREATE INDEX idx_source ON " + TABLE_SWIPES + " (" + COL_SOURCE + ")");
+    db.execSQL("CREATE INDEX idx_timestamp ON " + TABLE_SWIPES + " (" + COL_TIMESTAMP + ")");
     
     Log.d(TAG, "Database created with version " + DATABASE_VERSION);
   }
