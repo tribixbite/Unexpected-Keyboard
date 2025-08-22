@@ -125,7 +125,7 @@ public class SwipeCalibrationActivity extends Activity
     
     // Instructions
     _instructionText = new TextView(this);
-    _instructionText.setText("Swipe the word shown below on the keyboard");
+    _instructionText.setText("Swipe the word shown below - auto-advances on completion");
     _instructionText.setTextColor(Color.GRAY);
     _instructionText.setPadding(0, 0, 0, 10);
     topLayout.addView(_instructionText);
@@ -157,9 +157,12 @@ public class SwipeCalibrationActivity extends Activity
     buttonLayout.addView(_skipButton);
     
     _nextButton = new Button(this);
-    _nextButton.setText("Next");
-    _nextButton.setEnabled(false);
-    _nextButton.setOnClickListener(v -> nextWord());
+    _nextButton.setText("Retry");
+    _nextButton.setEnabled(true);
+    _nextButton.setOnClickListener(v -> {
+      _keyboardView.reset();
+      Toast.makeText(this, "Try swiping again", Toast.LENGTH_SHORT).show();
+    });
     buttonLayout.addView(_nextButton);
     
     _saveButton = new Button(this);
@@ -309,11 +312,11 @@ public class SwipeCalibrationActivity extends Activity
     
     logMessage(log.toString());
     
-    // Auto-advance to next word after short delay
-    Toast.makeText(this, "Swipe recorded!", Toast.LENGTH_SHORT).show();
-    _keyboardView.postDelayed(() -> {
-      nextWord();
-    }, 800); // 800ms delay to show toast
+    // Show feedback and immediately advance to next word
+    Toast.makeText(this, "Swipe recorded! Duration: " + duration + "ms", Toast.LENGTH_SHORT).show();
+    
+    // Auto-advance immediately after recording the swipe
+    nextWord();
   }
   
   private void nextWord()
