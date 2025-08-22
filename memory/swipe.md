@@ -286,6 +286,20 @@ Input B (Key Path) → Embedding(16) → Masking → GRU(64)
 - Created export functionality
 - Added experimental training button
 
+### 2025-01-22 - Major Swipe Typing Improvements
+#### Phase 1: Core Architecture
+- Created SwipeInput class to encapsulate all swipe data
+- Implemented SwipeDetector with multi-factor classification
+- Built SwipeTypingEngine orchestrator for hybrid prediction
+- Developed SwipeScorer applying all 8 confidence weights
+- Added configurable endpoint matching weights to settings
+
+#### Phase 2: DTW Enhancement 
+- Enhanced DTWPredictor to use actual swipe coordinates
+- Added coordinate normalization and path simplification
+- Implemented confidence scoring for DTW results
+- Integrated coordinate-based matching in production flow
+
 ### Next Session TODOs
 1. Create Python training script
 2. Implement TensorFlow model
@@ -293,25 +307,32 @@ Input B (Key Path) → Embedding(16) → Masking → GRU(64)
 4. Deploy TFLite model
 5. Integrate inference engine
 
-## Recent Commit Review (2025-01-22)
+## Implementation Status (2025-01-22)
 
-### Issues Found
-1. **DTWPredictor not integrated**: While DTWPredictor class exists, all predictions currently route through WordPredictor only
-2. **Unused confidence weights**: Config has 4 swipe confidence weights that aren't applied in scoring
-3. **Missing debug visualization**: No way to see prediction scores for testing weight effectiveness
-4. **Calibration data not used**: SwipeCalibrationActivity collects data but doesn't affect predictions yet
+### ✅ Issues Resolved
+1. **DTWPredictor integrated**: Now uses real coordinates via SwipeTypingEngine
+2. **All weights applied**: All 8 confidence weights actively influence scoring
+3. **Debug visualization added**: Scores display when swipe_show_debug_scores enabled
+4. **Sophisticated swipe detection**: Multi-factor analysis replaces simple heuristic
 
-### Positive Findings
-1. **First/last letter matching implemented**: WordPredictor already has priority system for endpoint matches
-2. **Two-pass scoring system**: Separates priority (first+last) matches from other candidates
-3. **Proper swipe duration tracking**: Fixed to use actual swipe time instead of arbitrary delay
-
-### Algorithm Improvements Needed
+### ✅ Improvements Completed
 1. **Configurable endpoint weights**: 
-   - Separate weights for first letter match
-   - Separate weights for last letter match
-   - Bonus weight when both match
-   - Option to restrict to ONLY endpoint matches
-2. **Debug score display**: Show confidence values below predictions
-3. **Weight integration**: Apply all Config weights to scoring algorithm
-4. **DTW integration**: Use DTWPredictor for coordinate-based matching
+   - ✅ Separate weight for first letter match (0-300%)
+   - ✅ Separate weight for last letter match (0-300%)
+   - ✅ Bonus weight when both match (0-400%)
+   - ✅ Strict mode to require both endpoints
+2. **Debug score display**: ✅ Shows confidence values below predictions
+3. **Weight integration**: ✅ All 8 Config weights properly applied
+4. **DTW integration**: ✅ Uses actual swipe coordinates for matching
+
+### Active Weight System
+| Weight | Purpose | Status | Default |
+|--------|---------|--------|----------|
+| Shape | DTW path matching | ✅ Active | 90% |
+| Location | Key hit accuracy | ✅ Active | 130% |
+| Frequency | Word commonality | ✅ Active | 80% |
+| Velocity | Speed consistency | ✅ Active | 60% |
+| First Letter | Start point match | ✅ Active | 150% |
+| Last Letter | End point match | ✅ Active | 150% |
+| Endpoint Bonus | Both endpoints | ✅ Active | 200% |
+| Velocity StdDev | Speed variation | ✅ Active | 100% |
