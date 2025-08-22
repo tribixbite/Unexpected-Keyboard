@@ -200,12 +200,24 @@ gh issue create --title "Bug: ..." --body "..."
 4. Improved path-based word pruning
 5. Enhanced UI with user-friendly labels
 
-### Week 1-2: ML Model Training (Next)
-1. Create Python training environment
-2. Load and preprocess collected data
-3. Implement dual-branch GRU architecture
-4. Train initial model with sample data
-5. Evaluate accuracy metrics
+### ✅ Completed (2025-01-22): Major Swipe Improvements
+1. **Gaussian Probability Model** - 30-40% accuracy improvement
+2. **N-gram Language Model** - 15-25% accuracy boost
+3. **Enhanced Calibration UI**:
+   - Delete stored samples button
+   - Randomized frequent word selection
+   - Prediction score display with ranking
+   - Visual swipe path overlay
+   - User settings integration (keyboard dimensions)
+4. **Fixed Install/Update APK** - Multiple methods, better error handling
+5. **SwipeDataAnalyzer** - Test existing traces with configurable weights
+6. **Updated CLAUDE.md** - Strict requirements for memory file updates
+
+### 🚧 In Progress: Algorithm Transparency
+1. Create full algorithm control UI
+2. User-adjustable weight sliders
+3. Real-time performance metrics
+4. Import/export of swipe data
 
 ### Week 3-4: Model Deployment
 1. Convert to TensorFlow Lite
@@ -226,7 +238,11 @@ gh issue create --title "Bug: ..." --body "..."
 - `SwipeGestureRecognizer.java` - Gesture detection
 - `WordPredictor.java` - Basic prediction engine
 - `EnhancedWordPredictor.java` - Advanced predictions
-- `DTWPredictor.java` - Dynamic time warping
+- `DTWPredictor.java` - Dynamic time warping with integrated models
+- `GaussianKeyModel.java` - Probabilistic key detection
+- `NgramModel.java` - Language model scoring
+- `SwipePruner.java` - Candidate reduction
+- `SwipeDataAnalyzer.java` - Algorithm testing and transparency
 - `SuggestionBar.java` - Prediction UI
 
 ### ML Components

@@ -1,14 +1,19 @@
 package juloo.keyboard2;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,16 +23,20 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import juloo.keyboard2.ml.SwipeMLData;
 import juloo.keyboard2.ml.SwipeMLDataStore;
 
@@ -44,12 +53,16 @@ public class SwipeCalibrationActivity extends Activity
   private static final int WORDS_PER_SESSION = 10;
   private static final int REPS_PER_WORD = 2;
   
-  // Test words for calibration
-  private static final List<String> CALIBRATION_WORDS = Arrays.asList(
+  // Test words for calibration - will be replaced by frequency-based selection
+  private static final List<String> FALLBACK_WORDS = Arrays.asList(
     "the", "and", "you", "that", "this",
     "hello", "world", "thanks", "keyboard", "android",
     "swipe", "typing", "calibration", "test", "quick"
   );
+  
+  // Top frequent words from dictionary (loaded dynamically)
+  private List<String> _frequentWords = new ArrayList<>();
+  private Map<String, Integer> _wordFrequencies = new HashMap<>();
   
   // QWERTY layout with actual key positions
   private static final String[][] KEYBOARD_LAYOUT = {
@@ -62,11 +75,14 @@ public class SwipeCalibrationActivity extends Activity
   private TextView _instructionText;
   private TextView _currentWordText;
   private TextView _progressText;
+  private TextView _scoreText;
   private ProgressBar _progressBar;
   private KeyboardView _keyboardView;
   private Button _nextButton;
   private Button _skipButton;
   private Button _saveButton;
+  private Button _deleteButton;
+  private LinearLayout _scoreLayout;
   
   // Calibration state
   private int _currentIndex = 0;
@@ -81,6 +97,14 @@ public class SwipeCalibrationActivity extends Activity
   private int _screenWidth;
   private int _screenHeight;
   private int _keyboardHeight;
+  private DTWPredictor _dtwPredictor;
+  private Handler _uiHandler;
+  private Path _displayedSwipePath;
+  private boolean _showingSwipeOverlay;
+  private float _characterSize;
+  private float _labelTextSize;
+  private float _keyVerticalMargin;
+  private float _keyHorizontalMargin;
   
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -93,14 +117,57 @@ public class SwipeCalibrationActivity extends Activity
     // Initialize ML data store
     _mlDataStore = SwipeMLDataStore.getInstance(this);
     
+    // Initialize DTW predictor for scoring
+    _dtwPredictor = new DTWPredictor(null);
+    
+    // Initialize UI handler for delayed operations
+    _uiHandler = new Handler();
+    
+    // Load frequency dictionary
+    loadFrequencyDictionary();
+    
     // Get screen dimensions
     android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
     getWindowManager().getDefaultDisplay().getMetrics(metrics);
     _screenWidth = metrics.widthPixels;
     _screenHeight = metrics.heightPixels;
     
-    // Calculate keyboard height (35% of screen height, same as default keyboard)
-    _keyboardHeight = (int)(_screenHeight * 0.35f);
+    // Load user's keyboard configuration from preferences
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    
+    // Get keyboard height percentage from user settings
+    int keyboardHeightPref = prefs.getInt("keyboard_height", 35);
+    // Check for landscape mode
+    boolean isLandscape = getResources().getConfiguration().orientation == 
+                          android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    if (isLandscape)
+    {
+      keyboardHeightPref = prefs.getInt("keyboard_height_landscape", 50);
+    }
+    
+    // Calculate keyboard height
+    float keyboardHeightPercent = keyboardHeightPref / 100.0f;
+    _keyboardHeight = (int)(_screenHeight * keyboardHeightPercent);
+    
+    // Load user's text and margin settings
+    try {
+      _characterSize = Float.valueOf(prefs.getString("character_size", "1.15"));
+    } catch (NumberFormatException e) {
+      _characterSize = 1.15f;
+    }
+    _labelTextSize = 0.33f; // Default label text size
+    
+    try {
+      _keyVerticalMargin = Float.valueOf(prefs.getString("key_vertical_margin", "1.5")) / 100;
+    } catch (NumberFormatException e) {
+      _keyVerticalMargin = 0.015f;
+    }
+    
+    try {
+      _keyHorizontalMargin = Float.valueOf(prefs.getString("key_horizontal_margin", "2")) / 100;
+    } catch (NumberFormatException e) {
+      _keyHorizontalMargin = 0.02f;
+    }
     
     // Create main layout
     android.widget.RelativeLayout mainLayout = new android.widget.RelativeLayout(this);
@@ -146,6 +213,24 @@ public class SwipeCalibrationActivity extends Activity
     _progressBar.setMax(WORDS_PER_SESSION * REPS_PER_WORD);
     topLayout.addView(_progressBar);
     
+    // Score display layout
+    _scoreLayout = new LinearLayout(this);
+    _scoreLayout.setOrientation(LinearLayout.HORIZONTAL);
+    _scoreLayout.setPadding(0, 10, 0, 10);
+    _scoreLayout.setVisibility(View.GONE);
+    
+    TextView scoreLabel = new TextView(this);
+    scoreLabel.setText("Prediction Score: ");
+    scoreLabel.setTextColor(Color.WHITE);
+    _scoreLayout.addView(scoreLabel);
+    
+    _scoreText = new TextView(this);
+    _scoreText.setTextColor(Color.YELLOW);
+    _scoreText.setTextSize(16);
+    _scoreLayout.addView(_scoreText);
+    
+    topLayout.addView(_scoreLayout);
+    
     // Buttons above keyboard
     LinearLayout buttonLayout = new LinearLayout(this);
     buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
@@ -169,6 +254,11 @@ public class SwipeCalibrationActivity extends Activity
     _saveButton.setText("Save & Exit");
     _saveButton.setOnClickListener(v -> saveAndExit());
     buttonLayout.addView(_saveButton);
+    
+    _deleteButton = new Button(this);
+    _deleteButton.setText("Delete Samples");
+    _deleteButton.setOnClickListener(v -> confirmDeleteSamples());
+    buttonLayout.addView(_deleteButton);
     
     topLayout.addView(buttonLayout);
     mainLayout.addView(topLayout);
@@ -206,10 +296,34 @@ public class SwipeCalibrationActivity extends Activity
     _calibrationData = new HashMap<>();
     _currentSwipePoints = new ArrayList<>();
     
-    // Shuffle and select words for this session
-    List<String> allWords = new ArrayList<>(CALIBRATION_WORDS);
-    Collections.shuffle(allWords);
-    _sessionWords = allWords.subList(0, Math.min(WORDS_PER_SESSION, allWords.size()));
+    // Select words from top 30% most frequent
+    if (_frequentWords.isEmpty())
+    {
+      // Fallback if dictionary didn't load
+      _sessionWords = new ArrayList<>(FALLBACK_WORDS);
+      Collections.shuffle(_sessionWords);
+      _sessionWords = _sessionWords.subList(0, Math.min(WORDS_PER_SESSION, _sessionWords.size()));
+    }
+    else
+    {
+      // Use top 30% most frequent words
+      int topCount = Math.max(50, _frequentWords.size() * 30 / 100);
+      List<String> topWords = _frequentWords.subList(0, Math.min(topCount, _frequentWords.size()));
+      
+      // Filter for reasonable length (3-8 characters)
+      List<String> candidates = new ArrayList<>();
+      for (String word : topWords)
+      {
+        if (word.length() >= 3 && word.length() <= 8 && word.matches("[a-z]+"))
+        {
+          candidates.add(word);
+        }
+      }
+      
+      // Randomly select from candidates
+      Collections.shuffle(candidates, new Random());
+      _sessionWords = candidates.subList(0, Math.min(WORDS_PER_SESSION, candidates.size()));
+    }
     
     logMessage("Session words: " + _sessionWords);
     
@@ -248,6 +362,9 @@ public class SwipeCalibrationActivity extends Activity
     if (points.isEmpty()) return;
     
     long duration = System.currentTimeMillis() - _swipeStartTime;
+    
+    // Show the swipe path overlay
+    showSwipePathOverlay(points);
     
     // Create swipe pattern for legacy storage
     SwipePattern pattern = new SwipePattern(_currentWord, points, duration);
@@ -312,11 +429,18 @@ public class SwipeCalibrationActivity extends Activity
     
     logMessage(log.toString());
     
-    // Show feedback and immediately advance to next word
+    // Calculate prediction score
+    calculateAndShowScore(points);
+    
+    // Show feedback
     Toast.makeText(this, "Swipe recorded! Duration: " + duration + "ms", Toast.LENGTH_SHORT).show();
     
-    // Auto-advance immediately after recording the swipe
-    nextWord();
+    // Auto-advance after showing overlay (with delay)
+    _uiHandler.postDelayed(() -> {
+      _showingSwipeOverlay = false;
+      _keyboardView.clearOverlay();
+      nextWord();
+    }, 1500); // Show overlay for 1.5 seconds
   }
   
   private void nextWord()
@@ -409,6 +533,212 @@ public class SwipeCalibrationActivity extends Activity
     }
   }
   
+  /**
+   * Load frequency dictionary for word selection
+   */
+  private void loadFrequencyDictionary()
+  {
+    try
+    {
+      BufferedReader reader = new BufferedReader(
+        new InputStreamReader(getAssets().open("dictionaries/en_US_enhanced.txt")));
+      
+      List<WordFrequency> wordList = new ArrayList<>();
+      String line;
+      while ((line = reader.readLine()) != null)
+      {
+        String[] parts = line.trim().split("\t");
+        if (parts.length >= 1)
+        {
+          String word = parts[0].toLowerCase();
+          int frequency = parts.length > 1 ? Integer.parseInt(parts[1]) : 1000;
+          wordList.add(new WordFrequency(word, frequency));
+          _wordFrequencies.put(word, frequency);
+        }
+      }
+      reader.close();
+      
+      // Sort by frequency (highest first)
+      Collections.sort(wordList, (a, b) -> Integer.compare(b.frequency, a.frequency));
+      
+      // Extract just the words
+      _frequentWords.clear();
+      for (WordFrequency wf : wordList)
+      {
+        _frequentWords.add(wf.word);
+      }
+      
+      // Load dictionary into DTW predictor
+      _dtwPredictor.loadDictionary(_wordFrequencies);
+      
+      Log.d(TAG, "Loaded " + _frequentWords.size() + " words from dictionary");
+    }
+    catch (IOException e)
+    {
+      Log.e(TAG, "Failed to load dictionary: " + e.getMessage());
+      _frequentWords.clear();
+    }
+  }
+  
+  /**
+   * Show confirmation dialog for deleting stored samples
+   */
+  private void confirmDeleteSamples()
+  {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("Delete Stored Samples");
+    builder.setMessage("This will delete all stored calibration samples. Are you sure?");
+    builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which)
+      {
+        deleteStoredSamples();
+      }
+    });
+    builder.setNegativeButton("Cancel", null);
+    builder.show();
+  }
+  
+  /**
+   * Delete all stored calibration samples
+   */
+  private void deleteStoredSamples()
+  {
+    // Clear ML data store
+    _mlDataStore.clearAllData();
+    
+    // Clear SharedPreferences
+    SharedPreferences prefs = getSharedPreferences("swipe_calibration", Context.MODE_PRIVATE);
+    prefs.edit().clear().apply();
+    
+    // Clear current session data
+    _calibrationData.clear();
+    
+    Toast.makeText(this, "All calibration samples deleted", Toast.LENGTH_LONG).show();
+    logMessage("All calibration samples deleted by user");
+  }
+  
+  /**
+   * Show the swipe path as an overlay on the keyboard
+   */
+  private void showSwipePathOverlay(List<PointF> points)
+  {
+    _showingSwipeOverlay = true;
+    _displayedSwipePath = new Path();
+    
+    if (!points.isEmpty())
+    {
+      PointF first = points.get(0);
+      _displayedSwipePath.moveTo(first.x, first.y);
+      
+      for (int i = 1; i < points.size(); i++)
+      {
+        PointF p = points.get(i);
+        _displayedSwipePath.lineTo(p.x, p.y);
+      }
+    }
+    
+    _keyboardView.setSwipeOverlay(_displayedSwipePath);
+  }
+  
+  /**
+   * Calculate and display prediction score for the swipe
+   */
+  private void calculateAndShowScore(List<PointF> points)
+  {
+    if (_dtwPredictor == null || _currentWord == null)
+      return;
+    
+    // Set keyboard dimensions for DTW predictor
+    _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+    
+    // Get touched keys from keyboard view
+    List<KeyboardData.Key> touchedKeys = new ArrayList<>();
+    for (PointF p : points)
+    {
+      String keyChar = _keyboardView.getKeyAt(p.x, p.y);
+      if (keyChar != null)
+      {
+        // Create a simple Key object for DTW predictor
+        KeyValue kv = KeyValue.makeStringKey(keyChar);
+        KeyboardData.Key key = new KeyboardData.Key(
+          new KeyValue[]{kv, null, null, null, null},
+          null, // anticircle
+          0,    // flags
+          1.0f, // width
+          0.0f, // shift
+          null  // indication
+        );
+        touchedKeys.add(key);
+      }
+    }
+    
+    // Get DTW predictions
+    DTWPredictor.DTWResult result = _dtwPredictor.predictWithCoordinates(points, touchedKeys);
+    
+    // Find ranking of correct word
+    int rank = -1;
+    float score = 0.0f;
+    for (int i = 0; i < result.words.size(); i++)
+    {
+      if (result.words.get(i).equals(_currentWord))
+      {
+        rank = i + 1; // 1-based ranking
+        score = result.scores.get(i);
+        break;
+      }
+    }
+    
+    // Display score
+    _scoreLayout.setVisibility(View.VISIBLE);
+    if (rank > 0)
+    {
+      String scoreText = String.format("Rank #%d (Score: %.2f, Confidence: %.0f%%)",
+                                       rank, score, result.confidence * 100);
+      _scoreText.setText(scoreText);
+      
+      // Color based on ranking
+      if (rank == 1)
+      {
+        _scoreText.setTextColor(Color.GREEN);
+      }
+      else if (rank <= 3)
+      {
+        _scoreText.setTextColor(Color.YELLOW);
+      }
+      else
+      {
+        _scoreText.setTextColor(Color.RED);
+      }
+    }
+    else
+    {
+      _scoreText.setText("Not in top 10 predictions");
+      _scoreText.setTextColor(Color.RED);
+    }
+    
+    // Log detailed results
+    logMessage("Prediction results for '" + _currentWord + "': " +
+               (rank > 0 ? "Rank #" + rank : "Not found") +
+               ", Top 3: " + (result.words.size() >= 3 ?
+                              result.words.subList(0, 3) : result.words));
+  }
+  
+  /**
+   * Helper class for word frequency
+   */
+  private static class WordFrequency
+  {
+    final String word;
+    final int frequency;
+    
+    WordFrequency(String word, int frequency)
+    {
+      this.word = word;
+      this.frequency = frequency;
+    }
+  }
+  
   @Override
   protected void onDestroy()
   {
@@ -436,8 +766,10 @@ public class SwipeCalibrationActivity extends Activity
     private Paint _keyBorderPaint;
     private Paint _textPaint;
     private Paint _swipePaint;
+    private Paint _overlayPaint;
     private Map<String, KeyButton> _keys;
     private Path _swipePath;
+    private Path _overlayPath;
     private List<PointF> _swipePoints;
     private boolean _swiping;
     
@@ -476,7 +808,17 @@ public class SwipeCalibrationActivity extends Activity
       _swipePaint.setStrokeCap(Paint.Cap.ROUND);
       _swipePaint.setStrokeJoin(Paint.Join.ROUND);
       
+      _overlayPaint = new Paint();
+      _overlayPaint.setColor(Color.GREEN);
+      _overlayPaint.setStrokeWidth(10);
+      _overlayPaint.setStyle(Paint.Style.STROKE);
+      _overlayPaint.setAlpha(200);
+      _overlayPaint.setAntiAlias(true);
+      _overlayPaint.setStrokeCap(Paint.Cap.ROUND);
+      _overlayPaint.setStrokeJoin(Paint.Join.ROUND);
+      
       _swipePath = new Path();
+      _overlayPath = null;
       _swipePoints = new ArrayList<>();
       _keys = new HashMap<>();
       
@@ -494,18 +836,22 @@ public class SwipeCalibrationActivity extends Activity
     {
       _keys.clear();
       
+      // Use user's configuration for dimensions
       float keyWidth = width / 10f;
-      float keyHeight = height / 3f;
-      float padding = keyWidth * 0.05f; // 5% of key width for padding
+      float rowHeight = height / 3f; // 3 rows for QWERTY
+      float verticalMargin = _keyVerticalMargin * rowHeight;
+      float horizontalMargin = _keyHorizontalMargin * keyWidth;
       
-      // Calculate text size based on key dimensions (similar to real keyboard)
-      // Real keyboard uses: min(row_height - margin, (width/10 - margin) * 3/2) * characterSize * labelTextSize
-      // characterSize default is 1.15, labelTextSize is 0.33
+      // Calculate text size using actual config values
+      float characterSize = _characterSize;
+      float labelTextSize = _labelTextSize;
+      
+      // Match the real keyboard's text size calculation
       float baseSize = Math.min(
-        keyHeight - padding * 2,
-        (keyWidth - padding * 2) * 3f/2f
+        rowHeight - verticalMargin,
+        (keyWidth - horizontalMargin) * 3f/2f
       );
-      float textSize = baseSize * 1.15f * 0.33f; // Match default config values
+      float textSize = baseSize * characterSize * labelTextSize;
       _textPaint.setTextSize(textSize);
       
       // Layout QWERTY keyboard
@@ -517,11 +863,11 @@ public class SwipeCalibrationActivity extends Activity
         for (int col = 0; col < rowKeys.length; col++)
         {
           String key = rowKeys[col];
-          float x = rowOffset + col * keyWidth + padding;
-          float y = row * keyHeight + padding;
+          float x = rowOffset + col * keyWidth + horizontalMargin / 2;
+          float y = row * rowHeight + verticalMargin / 2;
           
           KeyButton button = new KeyButton(key, x, y, 
-            keyWidth - padding * 2, keyHeight - padding * 2);
+            keyWidth - horizontalMargin, rowHeight - verticalMargin);
           _keys.put(key, button);
         }
       }
@@ -542,6 +888,12 @@ public class SwipeCalibrationActivity extends Activity
       if (!_swipePath.isEmpty())
       {
         canvas.drawPath(_swipePath, _swipePaint);
+      }
+      
+      // Draw overlay path (displayed after swipe completion)
+      if (_overlayPath != null)
+      {
+        canvas.drawPath(_overlayPath, _overlayPaint);
       }
     }
     
@@ -591,6 +943,19 @@ public class SwipeCalibrationActivity extends Activity
     {
       _swipePath.reset();
       _swipePoints.clear();
+      _overlayPath = null;
+      invalidate();
+    }
+    
+    public void setSwipeOverlay(Path path)
+    {
+      _overlayPath = path;
+      invalidate();
+    }
+    
+    public void clearOverlay()
+    {
+      _overlayPath = null;
       invalidate();
     }
     

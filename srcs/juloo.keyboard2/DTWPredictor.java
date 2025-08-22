@@ -19,6 +19,8 @@ public class DTWPredictor
   private final Map<String, Integer> _wordFrequencies;
   private final WordPredictor _fallbackPredictor;
   private SwipePruner _pruner;
+  private GaussianKeyModel _gaussianModel;
+  private NgramModel _ngramModel;
   private float _keyboardWidth = 1.0f;
   private float _keyboardHeight = 1.0f;
   
@@ -70,6 +72,8 @@ public class DTWPredictor
     _wordFrequencies = new HashMap<>();
     _fallbackPredictor = fallback;
     _pruner = null;
+    _gaussianModel = new GaussianKeyModel();
+    _ngramModel = new NgramModel();
   }
   
   /**
@@ -190,9 +194,23 @@ public class DTWPredictor
       // Calculate DTW distance
       float distance = calculateDTW(normalizedPath, wordPath);
       
+      // Calculate Gaussian probability score
+      float gaussianScore = _gaussianModel.getWordConfidence(word, normalizedPath);
+      
+      // Calculate N-gram language model score
+      float ngramScore = _ngramModel.scoreWord(word);
+      
       // Convert distance to score (lower distance = higher score)
       int frequency = _wordFrequencies.getOrDefault(word, 1000);
-      float score = (1.0f / (1.0f + distance)) * frequency;
+      
+      // Combined scoring with weights:
+      // 40% DTW distance, 30% Gaussian probability, 20% N-gram, 10% frequency
+      float dtwScore = 1.0f / (1.0f + distance);
+      float freqScore = Math.min(1.0f, frequency / 10000.0f);
+      float score = (dtwScore * 0.4f + 
+                    gaussianScore * 0.3f + 
+                    ngramScore / 100.0f * 0.2f + 
+                    freqScore * 0.1f) * 1000;
       
       candidates.add(new WordScore(word, score, distance));
     }

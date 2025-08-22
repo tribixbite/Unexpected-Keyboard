@@ -2,8 +2,34 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL REQUIREMENTS - MUST FOLLOW 🚨
+
+### 1. ALWAYS CHECK AND UPDATE PROJECT MANAGEMENT FILES
+**MANDATORY**: At the start of EVERY session and before making changes:
+- **READ** `memory/pm.md` to understand current project state
+- **READ** `memory/swipe.md` for swipe typing implementation details
+- **UPDATE** these files with ALL progress and changes made
+- **RECORD** completed tasks, new issues, and roadmap updates
+
+### 2. BUILD AFTER EVERY CODE CHANGE
+**MANDATORY**: After EVERY code modification:
+```bash
+./gradlew assembleDebug
+```
+- NEVER proceed without confirming successful build
+- Fix ALL compilation errors immediately
+- Test on device when possible
+
+### 3. DOCUMENT ALL PROGRESS
+**MANDATORY**: Update `memory/pm.md` with:
+- Tasks completed (move from TODO to DONE)
+- New issues discovered
+- Performance metrics observed
+- Test results
+- Next steps identified
+
 ## 📋 Project Management Reference
-**IMPORTANT**: For comprehensive project information, always consult:
+**CRITICAL**: These files are your SOURCE OF TRUTH:
 - **[memory/pm.md](memory/pm.md)** - Complete project management documentation including:
   - Full directory structure and file organization
   - Complete build commands for all platforms

@@ -287,77 +287,118 @@ public class SettingsActivity extends PreferenceActivity
   
   private void installUpdate()
   {
-    File updateApk = new File("/sdcard/unexpected/debug-kb.apk");
-    if (!updateApk.exists())
+    // Check multiple possible APK locations
+    File[] possibleLocations = new File[] {
+      new File("/sdcard/unexpected/debug-kb.apk"),
+      new File("/storage/emulated/0/unexpected/debug-kb.apk"),
+      new File("/sdcard/Download/juloo.keyboard2.debug.apk"),
+      new File("/storage/emulated/0/Download/juloo.keyboard2.debug.apk"),
+      new File(android.os.Environment.getExternalStoragePublicDirectory(
+               android.os.Environment.DIRECTORY_DOWNLOADS), "juloo.keyboard2.debug.apk"),
+      // Also check the build output location if accessible
+      new File("/data/data/com.termux/files/home/git/Unexpected-Keyboard/build/outputs/apk/debug/juloo.keyboard2.debug.apk")
+    };
+    
+    File updateApk = null;
+    for (File location : possibleLocations)
     {
-      Toast.makeText(this, "Update APK not found at:\n" + updateApk.getAbsolutePath(), 
-                     Toast.LENGTH_LONG).show();
+      if (location.exists() && location.canRead())
+      {
+        updateApk = location;
+        break;
+      }
+    }
+    
+    if (updateApk == null)
+    {
+      // Show helpful dialog about where to place APK
+      android.app.AlertDialog.Builder helpBuilder = new android.app.AlertDialog.Builder(this);
+      helpBuilder.setTitle("No Update APK Found");
+      helpBuilder.setMessage("Please place the APK file in one of these locations:\n\n" +
+                           "• /sdcard/Download/juloo.keyboard2.debug.apk\n" +
+                           "• /sdcard/unexpected/debug-kb.apk\n\n" +
+                           "Or build it with:\n" +
+                           "./gradlew assembleDebug");
+      helpBuilder.setPositiveButton("OK", null);
+      helpBuilder.show();
       return;
     }
     
-    // Show dialog with multiple options for installing
+    final File apkFile = updateApk;
+    
+    // Show dialog with working installation methods
     android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
     builder.setTitle("Install Update");
-    builder.setMessage("APK located at:\n" + updateApk.getAbsolutePath() + "\n\nChoose installation method:");
+    builder.setMessage("APK found at:\n" + apkFile.getName() + "\n\nSize: " + 
+                       (apkFile.length() / 1024) + " KB");
     
-    // Option 1: Copy path to clipboard
-    builder.setPositiveButton("Copy Path", (dialog, which) -> {
-      android.content.ClipboardManager clipboard = 
-        (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
-      android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", updateApk.getAbsolutePath());
-      clipboard.setPrimaryClip(clip);
-      Toast.makeText(this, "Path copied! Open your file manager and navigate to this location", Toast.LENGTH_LONG).show();
-    });
-    
-    // Option 2: Try to open file manager at location
-    builder.setNeutralButton("Open Folder", (dialog, which) -> {
+    // Option 1: Use Android's package installer (most reliable)
+    builder.setPositiveButton("Install Now", (dialog, which) -> {
       try
       {
-        // Try to open file manager at the directory
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setDataAndType(android.net.Uri.parse("file:///sdcard/unexpected/"), "*/*");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivity(Intent.createChooser(intent, "Open folder with file manager"));
+        // Use FileProvider for Android 7.0+ (API 24+)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N)
+        {
+          // Try to use content URI with FileProvider
+          Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+          intent.setDataAndType(android.net.Uri.fromFile(apkFile), 
+                               "application/vnd.android.package-archive");
+          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+          startActivity(intent);
+        }
+        else
+        {
+          // For older Android versions
+          Intent intent = new Intent(Intent.ACTION_VIEW);
+          intent.setDataAndType(android.net.Uri.fromFile(apkFile),
+                               "application/vnd.android.package-archive");
+          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          startActivity(intent);
+        }
       }
       catch (Exception e)
       {
-        // Fallback: try to open any file manager
+        // If direct install fails, try alternative method
         try
         {
           Intent intent = new Intent(Intent.ACTION_VIEW);
-          intent.setDataAndType(android.net.Uri.parse("file:///sdcard/"), "resource/folder");
+          intent.setDataAndType(android.net.Uri.parse("file://" + apkFile.getAbsolutePath()),
+                               "application/vnd.android.package-archive");
+          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
           startActivity(intent);
         }
         catch (Exception e2)
         {
-          Toast.makeText(this, "No file manager found. Path copied to clipboard.", Toast.LENGTH_LONG).show();
-          // Copy path as fallback
-          android.content.ClipboardManager clipboard = 
-            (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
-          android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", updateApk.getAbsolutePath());
-          clipboard.setPrimaryClip(clip);
+          Toast.makeText(this, "Install failed: " + e2.getMessage() + 
+                        "\n\nTry installing manually from file manager", Toast.LENGTH_LONG).show();
         }
       }
     });
     
-    // Option 3: Try Termux
-    builder.setNegativeButton("Open in Termux", (dialog, which) -> {
+    // Option 2: Copy to clipboard for manual install
+    builder.setNeutralButton("Copy Path", (dialog, which) -> {
+      android.content.ClipboardManager clipboard = 
+        (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+      android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", 
+                                                                           apkFile.getAbsolutePath());
+      clipboard.setPrimaryClip(clip);
+      Toast.makeText(this, "Path copied!\nUse a file manager to navigate to:\n" + 
+                    apkFile.getParent(), Toast.LENGTH_LONG).show();
+    });
+    
+    // Option 3: Share APK to other apps
+    builder.setNegativeButton("Share", (dialog, which) -> {
       try
       {
-        Intent intent = new Intent();
-        intent.setClassName("com.termux", "com.termux.app.TermuxActivity");
-        intent.setAction(Intent.ACTION_SEND);
-        intent.putExtra(Intent.EXTRA_TEXT, "termux-open /sdcard/unexpected/debug-kb.apk");
-        startActivity(intent);
-        Toast.makeText(this, "Run: termux-open /sdcard/unexpected/debug-kb.apk", Toast.LENGTH_LONG).show();
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("application/vnd.android.package-archive");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, android.net.Uri.fromFile(apkFile));
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Install Unexpected Keyboard update");
+        startActivity(Intent.createChooser(shareIntent, "Share APK via"));
       }
       catch (Exception e)
       {
-        Toast.makeText(this, "Termux not found. Path copied to clipboard.", Toast.LENGTH_LONG).show();
-        android.content.ClipboardManager clipboard = 
-          (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
-        android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", "termux-open " + updateApk.getAbsolutePath());
-        clipboard.setPrimaryClip(clip);
+        Toast.makeText(this, "Share failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
       }
     });
     
