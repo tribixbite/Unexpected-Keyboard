@@ -35,6 +35,17 @@ public class SwipeTypingEngine
   }
   
   /**
+   * Set keyboard dimensions for DTW normalization
+   */
+  public void setKeyboardDimensions(float width, float height)
+  {
+    if (_dtwPredictor != null)
+    {
+      _dtwPredictor.setKeyboardDimensions(width, height);
+    }
+  }
+  
+  /**
    * Update configuration
    */
   public void setConfig(Config config)
@@ -93,20 +104,24 @@ public class SwipeTypingEngine
   {
     List<ScoredCandidate> allCandidates = new ArrayList<>();
     
-    // Get DTW predictions if available
+    // Get DTW predictions using actual coordinates
     if (_dtwPredictor != null && input.coordinates.size() > 2)
     {
       try
       {
-        List<String> dtwPredictions = _dtwPredictor.predictWords(input.keySequence);
-        android.util.Log.d("SwipeTypingEngine", "DTW predictions: " + dtwPredictions);
+        DTWPredictor.DTWResult dtwResult = _dtwPredictor.predictWithCoordinates(
+          input.coordinates, input.touchedKeys);
         
-        // Convert to scored candidates with DTW boost
-        for (int i = 0; i < dtwPredictions.size(); i++)
+        android.util.Log.d("SwipeTypingEngine", "DTW predictions: " + dtwResult.words);
+        android.util.Log.d("SwipeTypingEngine", "DTW confidence: " + dtwResult.confidence);
+        
+        // Convert to scored candidates with DTW boost based on confidence
+        for (int i = 0; i < dtwResult.words.size(); i++)
         {
-          String word = dtwPredictions.get(i);
-          // Give DTW predictions higher base score, decreasing by rank
-          float dtwScore = 5000 * (1.0f - (i * 0.15f));
+          String word = dtwResult.words.get(i);
+          float baseScore = dtwResult.scores.get(i);
+          // Boost score based on DTW confidence
+          float dtwScore = baseScore * (1.0f + dtwResult.confidence);
           allCandidates.add(new ScoredCandidate(word, dtwScore, "DTW"));
         }
       }

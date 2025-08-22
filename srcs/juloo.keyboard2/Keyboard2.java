@@ -176,6 +176,13 @@ public class Keyboard2 extends InputMethodService
       {
         _dtwPredictor = new DTWPredictor(_wordPredictor);
         _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
+        
+        // Set keyboard dimensions if available
+        if (_keyboardView != null)
+        {
+          _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+        }
+        
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
       }
     }
@@ -374,6 +381,13 @@ public class Keyboard2 extends InputMethodService
         android.util.Log.d("Keyboard2", "Initializing DTW predictor in onStartInputView");
         _dtwPredictor = new DTWPredictor(_wordPredictor);
         _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
+        
+        // Set keyboard dimensions
+        if (_keyboardView != null)
+        {
+          _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+        }
+        
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
       }
       
@@ -836,6 +850,10 @@ public class Keyboard2 extends InputMethodService
       }
       // Initialize engine on the fly
       _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
+      if (_keyboardView != null)
+      {
+        _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+      }
     }
     
     // Mark that last input was a swipe for ML data collection

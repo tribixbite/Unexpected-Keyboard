@@ -18,6 +18,8 @@ public class DTWPredictor
   private final Map<String, List<PointF>> _wordPaths;
   private final Map<String, Integer> _wordFrequencies;
   private final WordPredictor _fallbackPredictor;
+  private float _keyboardWidth = 1.0f;
+  private float _keyboardHeight = 1.0f;
   
   // QWERTY layout key positions (normalized 0-1)
   private static final Map<Character, PointF> KEY_POSITIONS = new HashMap<>();
@@ -117,7 +119,126 @@ public class DTWPredictor
   }
   
   /**
-   * Predict words using DTW algorithm
+   * Set keyboard dimensions for coordinate normalization
+   */
+  public void setKeyboardDimensions(float width, float height)
+  {
+    _keyboardWidth = width;
+    _keyboardHeight = height;
+  }
+  
+  /**
+   * Predict words using actual swipe coordinates
+   */
+  public DTWResult predictWithCoordinates(List<PointF> rawCoordinates, List<KeyboardData.Key> touchedKeys)
+  {
+    if (rawCoordinates == null || rawCoordinates.size() < 2)
+    {
+      return new DTWResult(new ArrayList<>(), new ArrayList<>(), 0.5f);
+    }
+    
+    android.util.Log.d("DTWPredictor", "Predicting with " + rawCoordinates.size() + " coordinates");
+    
+    // Normalize coordinates to 0-1 range
+    List<PointF> normalizedPath = normalizeCoordinates(rawCoordinates);
+    
+    // Simplify path to reduce noise and computation
+    normalizedPath = simplifyPath(normalizedPath, Math.min(10, normalizedPath.size()));
+    
+    List<WordScore> candidates = new ArrayList<>();
+    
+    // Calculate DTW distance for each word in dictionary
+    for (Map.Entry<String, List<PointF>> entry : _wordPaths.entrySet())
+    {
+      String word = entry.getKey();
+      List<PointF> wordPath = entry.getValue();
+      
+      // Skip words that are too different in length
+      if (Math.abs(word.length() - touchedKeys.size()) > touchedKeys.size() / 2 + 2)
+        continue;
+      
+      // Calculate DTW distance
+      float distance = calculateDTW(normalizedPath, wordPath);
+      
+      // Convert distance to score (lower distance = higher score)
+      int frequency = _wordFrequencies.getOrDefault(word, 1000);
+      float score = (1.0f / (1.0f + distance)) * frequency;
+      
+      candidates.add(new WordScore(word, score, distance));
+    }
+    
+    // Sort by score
+    Collections.sort(candidates, new Comparator<WordScore>() {
+      @Override
+      public int compare(WordScore a, WordScore b) {
+        return Float.compare(b.score, a.score);
+      }
+    });
+    
+    // Extract top predictions
+    List<String> words = new ArrayList<>();
+    List<Float> scores = new ArrayList<>();
+    
+    for (int i = 0; i < Math.min(10, candidates.size()); i++)
+    {
+      WordScore candidate = candidates.get(i);
+      words.add(candidate.word);
+      scores.add(candidate.score);
+    }
+    
+    // Calculate confidence based on top score distribution
+    float confidence = calculateConfidence(candidates);
+    
+    android.util.Log.d("DTWPredictor", "DTW predictions: " + words);
+    
+    return new DTWResult(words, scores, confidence);
+  }
+  
+  /**
+   * Normalize coordinates to 0-1 range
+   */
+  private List<PointF> normalizeCoordinates(List<PointF> coordinates)
+  {
+    List<PointF> normalized = new ArrayList<>();
+    
+    for (PointF point : coordinates)
+    {
+      float x = point.x / _keyboardWidth;
+      float y = point.y / _keyboardHeight;
+      // Clamp to 0-1 range
+      x = Math.max(0, Math.min(1, x));
+      y = Math.max(0, Math.min(1, y));
+      normalized.add(new PointF(x, y));
+    }
+    
+    return normalized;
+  }
+  
+  /**
+   * Calculate confidence based on score distribution
+   */
+  private float calculateConfidence(List<WordScore> candidates)
+  {
+    if (candidates.isEmpty())
+      return 0;
+    
+    if (candidates.size() == 1)
+      return 0.5f;
+    
+    // Confidence is higher when top score is significantly better than others
+    float topScore = candidates.get(0).score;
+    float secondScore = candidates.get(1).score;
+    
+    if (topScore <= 0)
+      return 0;
+    
+    float ratio = secondScore / topScore;
+    // ratio close to 1 = low confidence, ratio close to 0 = high confidence
+    return 1.0f - ratio;
+  }
+  
+  /**
+   * Predict words using DTW algorithm (legacy method for compatibility)
    */
   public List<String> predictWords(String keySequence)
   {
@@ -155,7 +276,7 @@ public class DTWPredictor
       int frequency = _wordFrequencies.get(word);
       float score = (1.0f / (1.0f + distance)) * frequency;
       
-      candidates.add(new WordScore(word, score));
+      candidates.add(new WordScore(word, score, distance));
     }
     
     // Sort by score
@@ -252,11 +373,30 @@ public class DTWPredictor
   {
     final String word;
     final float score;
+    final float dtwDistance;
     
-    WordScore(String word, float score)
+    WordScore(String word, float score, float dtwDistance)
     {
       this.word = word;
       this.score = score;
+      this.dtwDistance = dtwDistance;
+    }
+  }
+  
+  /**
+   * Result class for DTW predictions
+   */
+  public static class DTWResult
+  {
+    public final List<String> words;
+    public final List<Float> scores;
+    public final float confidence;
+    
+    public DTWResult(List<String> words, List<Float> scores, float confidence)
+    {
+      this.words = words;
+      this.scores = scores;
+      this.confidence = confidence;
     }
   }
 }
