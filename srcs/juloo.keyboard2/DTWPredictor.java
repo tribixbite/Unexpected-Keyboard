@@ -18,8 +18,14 @@ public class DTWPredictor
   private final Map<String, List<PointF>> _wordPaths;
   private final Map<String, Integer> _wordFrequencies;
   private final WordPredictor _fallbackPredictor;
+  private SwipePruner _pruner;
   private float _keyboardWidth = 1.0f;
   private float _keyboardHeight = 1.0f;
+  
+  // Number of points to sample/resample gestures to for consistent comparison.
+  // FlorisBoard uses 200 points - this is CRITICAL for accuracy.
+  // Using too few points (e.g. 10) loses 95% of gesture information!
+  private static final int SAMPLING_POINTS = 200;
   
   // QWERTY layout key positions (normalized 0-1)
   private static final Map<Character, PointF> KEY_POSITIONS = new HashMap<>();
@@ -63,6 +69,7 @@ public class DTWPredictor
     _wordPaths = new HashMap<>();
     _wordFrequencies = new HashMap<>();
     _fallbackPredictor = fallback;
+    _pruner = null;
   }
   
   /**
@@ -82,6 +89,10 @@ public class DTWPredictor
         _wordFrequencies.put(word, frequency);
       }
     }
+    
+    // Initialize pruner with dictionary
+    _pruner = new SwipePruner(_wordFrequencies);
+    android.util.Log.d("DTWPredictor", "Initialized pruner with " + _wordFrequencies.size() + " words");
   }
   
   /**
@@ -139,18 +150,37 @@ public class DTWPredictor
     
     android.util.Log.d("DTWPredictor", "Predicting with " + rawCoordinates.size() + " coordinates");
     
+    // Prune candidates by extremities first (like FlorisBoard)
+    List<String> prunedCandidates = null;
+    if (_pruner != null)
+    {
+      prunedCandidates = _pruner.pruneByExtremities(rawCoordinates, touchedKeys);
+      android.util.Log.d("DTWPredictor", "Pruned to " + prunedCandidates.size() + " candidates by extremities");
+      
+      // Further prune by length
+      float avgKeyWidth = _keyboardWidth / 10; // Approximate for QWERTY
+      prunedCandidates = _pruner.pruneByLength(rawCoordinates, prunedCandidates, avgKeyWidth, 8.0f);
+      android.util.Log.d("DTWPredictor", "Pruned to " + prunedCandidates.size() + " candidates by length");
+    }
+    
     // Normalize coordinates to 0-1 range
     List<PointF> normalizedPath = normalizeCoordinates(rawCoordinates);
     
-    // Simplify path to reduce noise and computation
-    normalizedPath = simplifyPath(normalizedPath, Math.min(10, normalizedPath.size()));
+    // Resample path to consistent number of points (CRITICAL for accuracy)
+    // Using 200 points like FlorisBoard - NOT 10 which loses 95% of information!
+    normalizedPath = resamplePath(normalizedPath, SAMPLING_POINTS);
     
     List<WordScore> candidates = new ArrayList<>();
     
-    // Calculate DTW distance for each word in dictionary
+    // Calculate DTW distance for pruned candidates only
     for (Map.Entry<String, List<PointF>> entry : _wordPaths.entrySet())
     {
       String word = entry.getKey();
+      
+      // Skip if not in pruned candidates
+      if (prunedCandidates != null && !prunedCandidates.contains(word))
+        continue;
+      
       List<PointF> wordPath = entry.getValue();
       
       // Skip words that are too different in length
@@ -254,8 +284,8 @@ public class DTWPredictor
       return _fallbackPredictor.predictWords(keySequence);
     }
     
-    // Simplify the input path to reduce noise
-    inputPath = simplifyPath(inputPath, 5);
+    // Resample path to consistent number of points for DTW comparison
+    inputPath = resamplePath(inputPath, Math.min(50, inputPath.size()));
     
     List<WordScore> candidates = new ArrayList<>();
     
@@ -299,23 +329,79 @@ public class DTWPredictor
   }
   
   /**
-   * Simplify a path by sampling points
+   * Resample a path to a specific number of points using linear interpolation.
+   * This is CRITICAL for DTW accuracy - maintains gesture shape information.
+   * Based on FlorisBoard's approach with 200 sample points.
    */
-  private List<PointF> simplifyPath(List<PointF> path, int targetPoints)
+  private List<PointF> resamplePath(List<PointF> path, int targetPoints)
   {
-    if (path.size() <= targetPoints)
+    if (path.size() < 2)
+      return path;
+      
+    if (path.size() == targetPoints)
       return path;
     
-    List<PointF> simplified = new ArrayList<>();
-    float step = (float)(path.size() - 1) / (targetPoints - 1);
-    
-    for (int i = 0; i < targetPoints; i++)
+    // Calculate total path length
+    float totalLength = 0;
+    for (int i = 1; i < path.size(); i++)
     {
-      int index = Math.round(i * step);
-      simplified.add(path.get(Math.min(index, path.size() - 1)));
+      PointF p1 = path.get(i - 1);
+      PointF p2 = path.get(i);
+      totalLength += distance(p1, p2);
     }
     
-    return simplified;
+    if (totalLength == 0)
+      return path;
+    
+    // Resample at equal intervals along the path
+    List<PointF> resampled = new ArrayList<>();
+    float intervalLength = totalLength / (targetPoints - 1);
+    float accumulatedLength = 0;
+    float currentSegmentStart = 0;
+    int currentSegment = 0;
+    
+    resampled.add(new PointF(path.get(0).x, path.get(0).y));
+    
+    for (int i = 1; i < targetPoints - 1; i++)
+    {
+      float targetLength = i * intervalLength;
+      
+      // Find the segment containing this point
+      while (currentSegment < path.size() - 1 && accumulatedLength + 
+             distance(path.get(currentSegment), path.get(currentSegment + 1)) < targetLength)
+      {
+        accumulatedLength += distance(path.get(currentSegment), path.get(currentSegment + 1));
+        currentSegment++;
+      }
+      
+      if (currentSegment >= path.size() - 1)
+        break;
+      
+      // Interpolate within the segment
+      PointF p1 = path.get(currentSegment);
+      PointF p2 = path.get(currentSegment + 1);
+      float segmentLength = distance(p1, p2);
+      float remainingLength = targetLength - accumulatedLength;
+      
+      if (segmentLength > 0)
+      {
+        float t = remainingLength / segmentLength;
+        float x = p1.x + t * (p2.x - p1.x);
+        float y = p1.y + t * (p2.y - p1.y);
+        resampled.add(new PointF(x, y));
+      }
+    }
+    
+    // Add last point
+    resampled.add(new PointF(path.get(path.size() - 1).x, path.get(path.size() - 1).y));
+    
+    // Ensure we have exactly targetPoints
+    while (resampled.size() < targetPoints)
+    {
+      resampled.add(new PointF(path.get(path.size() - 1).x, path.get(path.size() - 1).y));
+    }
+    
+    return resampled.subList(0, Math.min(targetPoints, resampled.size()));
   }
   
   /**

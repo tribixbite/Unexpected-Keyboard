@@ -22,6 +22,12 @@ public class SwipeGestureRecognizer
   private static final float MIN_SWIPE_DISTANCE = 50.0f;
   // Maximum time between touch points to continue swipe
   private static final long MAX_POINT_INTERVAL_MS = 500;
+  // Velocity threshold in pixels per millisecond (based on FlorisBoard's 0.10 dp/ms)
+  private static final float VELOCITY_THRESHOLD = 0.15f;
+  // Minimum distance between points to register (based on FlorisBoard's key_width/4)
+  private static final float MIN_POINT_DISTANCE = 25.0f;
+  // Minimum dwell time on a key to register it (milliseconds)
+  private static final long MIN_DWELL_TIME_MS = 30;
   
   public SwipeGestureRecognizer()
   {
@@ -76,21 +82,42 @@ public class SwipeGestureRecognizer
     float dx = x - lastPoint.x;
     float dy = y - lastPoint.y;
     float distance = (float)Math.sqrt(dx * dx + dy * dy);
+    
+    // Apply distance-based filtering (like FlorisBoard)
+    if (distance < MIN_POINT_DISTANCE && _swipePath.size() > 1)
+    {
+      // Skip this point - too close to previous
+      return;
+    }
+    
     _totalDistance += distance;
     
     _swipePath.add(new PointF(x, y));
     _timestamps.add(now);
     
+    // Calculate velocity for filtering (like FlorisBoard)
+    long timeDelta = _timestamps.size() > 0 ? 
+                     now - _timestamps.get(_timestamps.size() - 1) : 0;
+    float velocity = timeDelta > 0 ? distance / timeDelta : 0;
+    
     // Add key if it's different from the last one and is alphabetic
     if (key != null && key != _lastKey && key.keys[0] != null && isAlphabeticKey(key.keys[0]))
     {
+      // Apply velocity-based filtering (skip if moving too fast)
+      if (velocity > VELOCITY_THRESHOLD && timeDelta < MIN_DWELL_TIME_MS)
+      {
+        // Moving too fast - likely transitioning between keys
+        // android.util.Log.d("SwipeGesture", "Skipping key due to high velocity: " + velocity);
+        return;
+      }
+      
       // Check if this key is already in recent keys (avoid duplicates)
       boolean isDuplicate = false;
       int size = _touchedKeys.size();
-      if (size >= 2)
+      if (size >= 3)
       {
-        // Check last 2 keys for duplicates
-        for (int i = Math.max(0, size - 2); i < size; i++)
+        // Check last 3 keys for duplicates (increased from 2)
+        for (int i = Math.max(0, size - 3); i < size; i++)
         {
           if (_touchedKeys.get(i) == key)
           {
