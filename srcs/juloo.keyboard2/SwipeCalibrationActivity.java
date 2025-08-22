@@ -433,6 +433,7 @@ public class SwipeCalibrationActivity extends Activity
   private class KeyboardView extends View
   {
     private Paint _keyPaint;
+    private Paint _keyBorderPaint;
     private Paint _textPaint;
     private Paint _swipePaint;
     private Map<String, KeyButton> _keys;
@@ -449,19 +450,31 @@ public class SwipeCalibrationActivity extends Activity
     private void init()
     {
       _keyPaint = new Paint();
-      _keyPaint.setColor(Color.DKGRAY);
+      _keyPaint.setColor(0xFF2B2B2B); // Darker gray similar to real keyboard
       _keyPaint.setStyle(Paint.Style.FILL);
+      _keyPaint.setAntiAlias(true);
+      
+      _keyBorderPaint = new Paint();
+      _keyBorderPaint.setColor(0xFF1A1A1A); // Even darker for border
+      _keyBorderPaint.setStyle(Paint.Style.STROKE);
+      _keyBorderPaint.setStrokeWidth(2);
+      _keyBorderPaint.setAntiAlias(true);
       
       _textPaint = new Paint();
       _textPaint.setColor(Color.WHITE);
-      _textPaint.setTextSize(40);
       _textPaint.setTextAlign(Paint.Align.CENTER);
+      _textPaint.setAntiAlias(true);
+      _textPaint.setSubpixelText(true);
+      // Text size will be set in onSizeChanged based on key dimensions
       
       _swipePaint = new Paint();
       _swipePaint.setColor(Color.CYAN);
       _swipePaint.setStrokeWidth(8);
       _swipePaint.setStyle(Paint.Style.STROKE);
       _swipePaint.setAlpha(180);
+      _swipePaint.setAntiAlias(true);
+      _swipePaint.setStrokeCap(Paint.Cap.ROUND);
+      _swipePaint.setStrokeJoin(Paint.Join.ROUND);
       
       _swipePath = new Path();
       _swipePoints = new ArrayList<>();
@@ -483,7 +496,17 @@ public class SwipeCalibrationActivity extends Activity
       
       float keyWidth = width / 10f;
       float keyHeight = height / 3f;
-      float padding = 4;
+      float padding = keyWidth * 0.05f; // 5% of key width for padding
+      
+      // Calculate text size based on key dimensions (similar to real keyboard)
+      // Real keyboard uses: min(row_height - margin, (width/10 - margin) * 3/2) * characterSize * labelTextSize
+      // characterSize default is 1.15, labelTextSize is 0.33
+      float baseSize = Math.min(
+        keyHeight - padding * 2,
+        (keyWidth - padding * 2) * 3f/2f
+      );
+      float textSize = baseSize * 1.15f * 0.33f; // Match default config values
+      _textPaint.setTextSize(textSize);
       
       // Layout QWERTY keyboard
       for (int row = 0; row < KEYBOARD_LAYOUT.length; row++)
@@ -512,7 +535,7 @@ public class SwipeCalibrationActivity extends Activity
       // Draw keys
       for (KeyButton key : _keys.values())
       {
-        key.draw(canvas, _keyPaint, _textPaint);
+        key.draw(canvas, _keyPaint, _keyBorderPaint, _textPaint);
       }
       
       // Draw swipe path
@@ -601,10 +624,19 @@ public class SwipeCalibrationActivity extends Activity
       this.height = height;
     }
     
-    void draw(Canvas canvas, Paint keyPaint, Paint textPaint)
+    void draw(Canvas canvas, Paint keyPaint, Paint borderPaint, Paint textPaint)
     {
-      canvas.drawRect(x, y, x + width, y + height, keyPaint);
-      canvas.drawText(label, x + width / 2, y + height / 2 + 10, textPaint);
+      // Draw key background with rounded corners
+      android.graphics.RectF rect = new android.graphics.RectF(x, y, x + width, y + height);
+      float cornerRadius = Math.min(width, height) * 0.15f; // 15% of smallest dimension
+      canvas.drawRoundRect(rect, cornerRadius, cornerRadius, keyPaint);
+      
+      // Draw border
+      canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint);
+      
+      // Draw text centered properly (accounting for text metrics)
+      float textY = y + (height - textPaint.ascent() - textPaint.descent()) / 2f;
+      canvas.drawText(label.toUpperCase(), x + width / 2, textY, textPaint);
     }
     
     boolean contains(float px, float py)
