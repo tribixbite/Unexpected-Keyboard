@@ -23,8 +23,8 @@ Generated version info:  ()
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug
 > Task :mergeDebugResources
-> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :parseDebugLocalResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -58,5 +58,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 22s
+BUILD SUCCESSFUL in 28s
 32 actionable tasks: 32 executed
