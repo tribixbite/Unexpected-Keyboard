@@ -99,11 +99,21 @@ public class SwipeCalibrationActivity extends Activity
     _screenWidth = metrics.widthPixels;
     _screenHeight = metrics.heightPixels;
     
-    // Create UI programmatically
-    LinearLayout layout = new LinearLayout(this);
-    layout.setOrientation(LinearLayout.VERTICAL);
-    layout.setPadding(40, 40, 40, 40);
-    layout.setBackgroundColor(Color.BLACK);
+    // Calculate keyboard height (35% of screen height, same as default keyboard)
+    _keyboardHeight = (int)(_screenHeight * 0.35f);
+    
+    // Create main layout
+    android.widget.RelativeLayout mainLayout = new android.widget.RelativeLayout(this);
+    mainLayout.setBackgroundColor(Color.BLACK);
+    
+    // Create top content layout
+    LinearLayout topLayout = new LinearLayout(this);
+    topLayout.setOrientation(LinearLayout.VERTICAL);
+    topLayout.setPadding(40, 40, 40, 20);
+    android.widget.RelativeLayout.LayoutParams topParams = new android.widget.RelativeLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    topParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+    topLayout.setLayoutParams(topParams);
     
     // Title
     TextView title = new TextView(this);
@@ -111,43 +121,35 @@ public class SwipeCalibrationActivity extends Activity
     title.setTextSize(24);
     title.setTextColor(Color.WHITE);
     title.setPadding(0, 0, 0, 20);
-    layout.addView(title);
+    topLayout.addView(title);
     
     // Instructions
     _instructionText = new TextView(this);
     _instructionText.setText("Swipe the word shown below on the keyboard");
     _instructionText.setTextColor(Color.GRAY);
     _instructionText.setPadding(0, 0, 0, 10);
-    layout.addView(_instructionText);
+    topLayout.addView(_instructionText);
     
     // Current word display
     _currentWordText = new TextView(this);
     _currentWordText.setTextSize(32);
     _currentWordText.setTextColor(Color.CYAN);
     _currentWordText.setPadding(0, 20, 0, 20);
-    layout.addView(_currentWordText);
+    topLayout.addView(_currentWordText);
     
     // Progress
     _progressText = new TextView(this);
     _progressText.setTextColor(Color.WHITE);
-    layout.addView(_progressText);
+    topLayout.addView(_progressText);
     
     _progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
     _progressBar.setMax(WORDS_PER_SESSION * REPS_PER_WORD);
-    layout.addView(_progressBar);
+    topLayout.addView(_progressBar);
     
-    // Keyboard visualization
-    _keyboardView = new KeyboardView(this);
-    LinearLayout.LayoutParams keyboardParams = new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 400);
-    keyboardParams.setMargins(0, 30, 0, 30);
-    _keyboardView.setLayoutParams(keyboardParams);
-    layout.addView(_keyboardView);
-    _keyboardHeight = 400; // Store keyboard height for ML data
-    
-    // Buttons
+    // Buttons above keyboard
     LinearLayout buttonLayout = new LinearLayout(this);
     buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
+    buttonLayout.setPadding(0, 20, 0, 0);
     
     _skipButton = new Button(this);
     _skipButton.setText("Skip Word");
@@ -165,9 +167,18 @@ public class SwipeCalibrationActivity extends Activity
     _saveButton.setOnClickListener(v -> saveAndExit());
     buttonLayout.addView(_saveButton);
     
-    layout.addView(buttonLayout);
+    topLayout.addView(buttonLayout);
+    mainLayout.addView(topLayout);
     
-    setContentView(layout);
+    // Keyboard at bottom with real dimensions
+    _keyboardView = new KeyboardView(this);
+    android.widget.RelativeLayout.LayoutParams keyboardParams = new android.widget.RelativeLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, _keyboardHeight);
+    keyboardParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
+    _keyboardView.setLayoutParams(keyboardParams);
+    mainLayout.addView(_keyboardView);
+    
+    setContentView(mainLayout);
     
     // Initialize calibration
     initializeCalibration();
@@ -245,18 +256,25 @@ public class SwipeCalibrationActivity extends Activity
     }
     _calibrationData.get(_currentWord).add(pattern);
     
-    // Create ML data object
+    // Create ML data object with actual keyboard dimensions
+    // Get keyboard view position on screen for accurate coordinates
+    int[] location = new int[2];
+    _keyboardView.getLocationOnScreen(location);
+    int keyboardY = location[1];
+    
     SwipeMLData mlData = new SwipeMLData(_currentWord, "calibration",
                                          _screenWidth, _screenHeight, _keyboardHeight);
     
-    // Add trace points with timestamps
+    // Add trace points with timestamps and normalized to keyboard space
     long startTime = _swipeStartTime;
     for (int i = 0; i < points.size(); i++)
     {
       PointF p = points.get(i);
       // Estimate timestamp based on linear interpolation
       long timestamp = startTime + (duration * i / Math.max(1, points.size() - 1));
-      mlData.addRawPoint(p.x, p.y, timestamp);
+      
+      // Store both absolute coordinates and keyboard-relative coordinates
+      mlData.addRawPoint(p.x, p.y + keyboardY, timestamp);
       
       // Add registered key
       String key = _keyboardView.getKeyAt(p.x, p.y);
@@ -265,6 +283,9 @@ public class SwipeCalibrationActivity extends Activity
         mlData.addRegisteredKey(key);
       }
     }
+    
+    // Add keyboard dimensions metadata
+    mlData.setKeyboardDimensions(_screenWidth, _keyboardHeight, keyboardY);
     
     // Store ML data
     _mlDataStore.storeSwipeData(mlData);
@@ -276,6 +297,8 @@ public class SwipeCalibrationActivity extends Activity
     log.append(", duration=").append(duration).append("ms");
     log.append(", ML_trace_id=").append(mlData.getTraceId());
     log.append(", registered_keys=").append(mlData.getRegisteredKeys().size());
+    log.append(", keyboard_height=").append(_keyboardHeight);
+    log.append(", keyboard_y=").append(keyboardY);
     log.append(", path=[");
     
     for (String key : mlData.getRegisteredKeys())
@@ -286,9 +309,11 @@ public class SwipeCalibrationActivity extends Activity
     
     logMessage(log.toString());
     
-    // Enable next button
-    _nextButton.setEnabled(true);
+    // Auto-advance to next word after short delay
     Toast.makeText(this, "Swipe recorded!", Toast.LENGTH_SHORT).show();
+    _keyboardView.postDelayed(() -> {
+      nextWord();
+    }, 800); // 800ms delay to show toast
   }
   
   private void nextWord()

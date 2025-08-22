@@ -38,6 +38,7 @@ public class SwipeMLData
   private final String collectionSource; // "calibration" or "user_selection"
   private final List<TracePoint> tracePoints;
   private final List<String> registeredKeys;
+  private int keyboardOffsetY = 0; // Y offset of keyboard from top of screen
   
   // Constructor for new swipe data
   public SwipeMLData(String targetWord, String collectionSource,
@@ -128,6 +129,16 @@ public class SwipeMLData
   }
   
   /**
+   * Set keyboard dimensions for accurate position tracking
+   */
+  public void setKeyboardDimensions(int screenWidth, int keyboardHeight, int keyboardOffsetY)
+  {
+    this.keyboardOffsetY = keyboardOffsetY;
+    // Note: screenWidth and keyboardHeight are already set in constructor
+    // This method mainly records the Y offset for position normalization
+  }
+  
+  /**
    * Convert to JSON for storage and export
    */
   public JSONObject toJSON() throws JSONException
@@ -142,6 +153,7 @@ public class SwipeMLData
     metadata.put("screen_width_px", screenWidthPx);
     metadata.put("screen_height_px", screenHeightPx);
     metadata.put("keyboard_height_px", keyboardHeightPx);
+    metadata.put("keyboard_offset_y", keyboardOffsetY);
     metadata.put("collection_source", collectionSource);
     json.put("metadata", metadata);
     
