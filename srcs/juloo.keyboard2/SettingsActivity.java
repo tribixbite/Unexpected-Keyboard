@@ -10,6 +10,9 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 import java.io.File;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.Properties;
 import juloo.keyboard2.ml.SwipeMLDataStore;
 import juloo.keyboard2.ml.SwipeMLTrainer;
 import android.app.ProgressDialog;
@@ -38,6 +41,45 @@ public class SettingsActivity extends PreferenceActivity
     findPreference("horizontal_margin_landscape_unfolded").setEnabled(foldableDevice);
     findPreference("keyboard_height_unfolded").setEnabled(foldableDevice);
     findPreference("keyboard_height_landscape_unfolded").setEnabled(foldableDevice);
+    
+    // Add version info display
+    Preference versionPref = findPreference("version_info");
+    if (versionPref != null)
+    {
+      try
+      {
+        Properties versionInfo = loadVersionInfo();
+        String commit = versionInfo.getProperty("commit", "unknown");
+        String commitDate = versionInfo.getProperty("commit_date", "");
+        String buildDate = versionInfo.getProperty("build_date", "");
+        String buildNumber = versionInfo.getProperty("build_number", "");
+        
+        versionPref.setTitle("Version Info");
+        versionPref.setSummary(String.format("Build: %s\nCommit: %s (%s)\nBuilt: %s",
+          buildNumber.substring(Math.max(0, buildNumber.length() - 8)),
+          commit, commitDate, buildDate));
+      }
+      catch (Exception e)
+      {
+        versionPref.setSummary("Version info unavailable");
+        android.util.Log.e("SettingsActivity", "Failed to load version info", e);
+      }
+    }
+    
+    // Add update button
+    Preference updatePref = findPreference("update_app");
+    if (updatePref != null)
+    {
+      updatePref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          installUpdate();
+          return true;
+        }
+      });
+    }
     
     // Set up calibration preference click handler
     Preference calibrationPref = findPreference("swipe_calibration");
@@ -223,6 +265,62 @@ public class SettingsActivity extends PreferenceActivity
     
     // Start training
     trainer.startTraining();
+  }
+  
+  private Properties loadVersionInfo()
+  {
+    Properties props = new Properties();
+    try
+    {
+      BufferedReader reader = new BufferedReader(
+        new InputStreamReader(getResources().openRawResource(
+          getResources().getIdentifier("version_info", "raw", getPackageName()))));
+      props.load(reader);
+      reader.close();
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("SettingsActivity", "Failed to load version info", e);
+    }
+    return props;
+  }
+  
+  private void installUpdate()
+  {
+    File updateApk = new File("/sdcard/unexpected/debug-kb.apk");
+    if (!updateApk.exists())
+    {
+      Toast.makeText(this, "Update APK not found at:\n" + updateApk.getAbsolutePath(), 
+                     Toast.LENGTH_LONG).show();
+      return;
+    }
+    
+    try
+    {
+      Intent intent = new Intent(Intent.ACTION_VIEW);
+      intent.setDataAndType(android.net.Uri.parse("file://" + updateApk.getAbsolutePath()),
+                            "application/vnd.android.package-archive");
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      startActivity(intent);
+    }
+    catch (Exception e)
+    {
+      // Try alternate approach using file manager
+      try
+      {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(android.net.Uri.parse("content://com.android.externalstorage.documents/document/primary%3Aunexpected%2Fdebug-kb.apk"),
+                              "application/vnd.android.package-archive");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(intent);
+      }
+      catch (Exception e2)
+      {
+        Toast.makeText(this, "Failed to open APK installer. Please install manually from:\n" + 
+                       updateApk.getAbsolutePath(), Toast.LENGTH_LONG).show();
+        android.util.Log.e("SettingsActivity", "Failed to install update", e2);
+      }
+    }
   }
   
   void fallbackEncrypted()

@@ -6,19 +6,23 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 
 > Task :copyLayoutDefinitions UP-TO-DATE
 > Task :copyRawQwertyUS UP-TO-DATE
+
+> Task :generateVersionInfo
+Generated version info:  ()
+
 > Task :initDebugKeystore UP-TO-DATE
-> Task :preBuild UP-TO-DATE
-> Task :preDebugBuild UP-TO-DATE
+> Task :preBuild
+> Task :preDebugBuild
 > Task :mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :javaPreCompileDebug
 > Task :checkDebugAarMetadata
 > Task :generateDebugResValues
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
+> Task :mergeDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug
-> Task :mergeDebugResources
 > Task :processDebugMainManifest
 > Task :parseDebugLocalResources
 > Task :processDebugManifest
@@ -26,18 +30,18 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :processDebugJavaRes NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :compressDebugAssets
+> Task :processDebugJavaRes NO-SOURCE
 > Task :desugarDebugFileDependencies
 > Task :mergeDebugJniLibFolders
 > Task :checkDebugDuplicateClasses
 > Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug
-> Task :writeDebugAppMetadata
 > Task :mergeLibDexDebug
+> Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugJavaResource
 > Task :processDebugResources
 > Task :mergeExtDexDebug
@@ -54,5 +58,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 16s
-31 actionable tasks: 31 executed
+BUILD SUCCESSFUL in 18s
+32 actionable tasks: 32 executed

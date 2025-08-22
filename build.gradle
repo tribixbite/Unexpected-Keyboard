@@ -151,10 +151,32 @@ tasks.register('compileComposeSequences') {
   }
 }
 
+tasks.register('generateVersionInfo') {
+  doLast {
+    def gitCommit = 'git rev-parse --short HEAD'.execute().text.trim()
+    def gitCommitFull = 'git rev-parse HEAD'.execute().text.trim()
+    def gitDate = 'git log -1 --format=%cd --date=short'.execute().text.trim()
+    def buildDate = new Date().format('yyyy-MM-dd HH:mm:ss')
+    def buildNumber = System.currentTimeMillis().toString()
+    
+    def versionFile = file("build/generated-resources/raw/version_info.txt")
+    versionFile.parentFile.mkdirs()
+    versionFile.text = """commit=$gitCommit
+commit_full=$gitCommitFull
+commit_date=$gitDate
+build_date=$buildDate
+build_number=$buildNumber
+"""
+    
+    println "Generated version info: $gitCommit ($gitDate)"
+  }
+}
+
 tasks.named("preBuild") {
   dependsOn += "initDebugKeystore"
   dependsOn += "copyRawQwertyUS"
   dependsOn += "copyLayoutDefinitions"
+  dependsOn += "generateVersionInfo"
 }
 
 tasks.register('initDebugKeystore') {

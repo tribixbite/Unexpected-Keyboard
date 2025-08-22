@@ -117,6 +117,19 @@ if [ -f "$APK_PATH" ]; then
     ls -lh "$APK_PATH"
     echo
     
+    # Copy to /sdcard/unexpected/ for easy updates
+    if [ "$BUILD_TYPE_LOWER" = "debug" ]; then
+        echo "Copying APK to /sdcard/unexpected/ for updates..."
+        mkdir -p /sdcard/unexpected
+        cp "$APK_PATH" /sdcard/unexpected/debug-kb.apk
+        if [ -f "/sdcard/unexpected/debug-kb.apk" ]; then
+            echo "APK copied to: /sdcard/unexpected/debug-kb.apk"
+            ls -lh /sdcard/unexpected/debug-kb.apk
+        else
+            echo "Warning: Failed to copy APK to /sdcard/unexpected/"
+        fi
+    fi
+    
     # Auto-install using our new script
     if [ -f "./auto-install.sh" ]; then
         ./auto-install.sh
