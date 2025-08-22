@@ -21,11 +21,21 @@ public class WordPredictor
   private static final int MAX_PREDICTIONS_TYPING = 5;
   private static final int MAX_PREDICTIONS_SWIPE = 10;
   private static final int MAX_EDIT_DISTANCE = 2;
+  private Config _config;
   
   public WordPredictor()
   {
     _dictionary = new HashMap<>();
     _adjacentKeys = buildAdjacentKeysMap();
+    _config = null;
+  }
+  
+  /**
+   * Set the config for weight access
+   */
+  public void setConfig(Config config)
+  {
+    _config = config;
   }
   
   /**
@@ -129,11 +139,21 @@ public class WordPredictor
   
   /**
    * Predict words based on the sequence of touched keys
+   * Returns list of predictions (for backward compatibility)
    */
   public List<String> predictWords(String keySequence)
   {
+    PredictionResult result = predictWordsWithScores(keySequence);
+    return result.words;
+  }
+  
+  /**
+   * Predict words and return with their scores
+   */
+  public PredictionResult predictWordsWithScores(String keySequence)
+  {
     if (keySequence == null || keySequence.isEmpty())
-      return new ArrayList<>();
+      return new PredictionResult(new ArrayList<>(), new ArrayList<>());
       
     // TWO-PASS PRIORITIZED SYSTEM
     List<WordCandidate> priorityMatches = new ArrayList<>();  // First+last matches
@@ -173,25 +193,49 @@ public class WordPredictor
             int innerMatches = countInnerMatches(word, lowerSequence);
             // NO FREQUENCY MULTIPLICATION for priority matches
             // Score based purely on match quality
-            int score = 10000 + (innerMatches * 100);
-            priorityMatches.add(new WordCandidate(word, score));
-            android.util.Log.d("WordPredictor", "PRIORITY match: " + word + " (inner=" + innerMatches + ", score=" + score + ")");
+            int baseScore = 10000 + (innerMatches * 100);
+            if (_config != null)
+            {
+              // Apply first letter weight
+              baseScore = (int)(baseScore * _config.swipe_first_letter_weight);
+              // Apply last letter weight
+              baseScore = (int)(baseScore * _config.swipe_last_letter_weight);
+              // Apply endpoint bonus weight (both match)
+              baseScore = (int)(baseScore * _config.swipe_endpoint_bonus_weight);
+            }
+            priorityMatches.add(new WordCandidate(word, baseScore));
+            android.util.Log.d("WordPredictor", "PRIORITY match: " + word + " (inner=" + innerMatches + ", score=" + baseScore + ")");
           }
           // SECONDARY: Partial endpoint match (first OR last)
           else if (firstChar == seqFirst || lastChar == seqLast)
           {
+            // Skip if strict endpoint mode is enabled
+            if (_config != null && _config.swipe_require_endpoints)
+            {
+              continue; // Skip words that don't match BOTH endpoints in strict mode
+            }
+            
             int innerMatches = countInnerMatches(word, lowerSequence);
             if (innerMatches >= 1) // At least one inner match required
             {
               // Lower tier scoring with frequency consideration
-              int score = 1000 + (innerMatches * 50);
-              otherMatches.add(new WordCandidate(word, score * frequency));
-              android.util.Log.d("WordPredictor", "Partial match: " + word + " (inner=" + innerMatches + ", score=" + score + ")");
+              int baseScore = 1000 + (innerMatches * 50);
+              if (_config != null)
+              {
+                // Apply appropriate weight based on which endpoint matched
+                if (firstChar == seqFirst)
+                  baseScore = (int)(baseScore * _config.swipe_first_letter_weight);
+                if (lastChar == seqLast)
+                  baseScore = (int)(baseScore * _config.swipe_last_letter_weight);
+              }
+              otherMatches.add(new WordCandidate(word, baseScore * frequency));
+              android.util.Log.d("WordPredictor", "Partial match: " + word + " (inner=" + innerMatches + ", score=" + baseScore + ")");
             }
           }
           // OTHER: Standard swipe candidates
-          else if (couldBeFormedFrom(word, lowerSequence))
+          else if (!(_config != null && _config.swipe_require_endpoints) && couldBeFormedFrom(word, lowerSequence))
           {
+            // Skip in strict mode since endpoints don't match
             int score = calculateSwipeScore(word, lowerSequence, frequency);
             if (score > 0)
             {
@@ -233,11 +277,13 @@ public class WordPredictor
     
     // Combine lists with PRIORITY matches FIRST
     List<String> predictions = new ArrayList<>();
+    List<Integer> scores = new ArrayList<>();
     
     // Add ALL priority matches (up to max)
     for (WordCandidate candidate : priorityMatches)
     {
       predictions.add(candidate.word);
+      scores.add(candidate.score);
       if (predictions.size() >= maxPredictions) break;
     }
     
@@ -248,12 +294,14 @@ public class WordPredictor
       if (!predictions.contains(candidate.word)) // Avoid duplicates
       {
         predictions.add(candidate.word);
+        scores.add(candidate.score);
       }
     }
     
     android.util.Log.d("WordPredictor", "Final predictions (" + predictions.size() + "): " + predictions);
+    android.util.Log.d("WordPredictor", "Scores: " + scores);
     
-    return predictions;
+    return new PredictionResult(predictions, scores);
   }
   
   /**
@@ -464,6 +512,21 @@ public class WordPredictor
     {
       this.word = word;
       this.score = score;
+    }
+  }
+  
+  /**
+   * Result class containing predictions and their scores
+   */
+  public static class PredictionResult
+  {
+    public final List<String> words;
+    public final List<Integer> scores;
+    
+    public PredictionResult(List<String> words, List<Integer> scores)
+    {
+      this.words = words;
+      this.scores = scores;
     }
   }
 }

@@ -30,16 +30,16 @@ Generated version info:  ()
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :processDebugJavaRes NO-SOURCE
-> Task :compressDebugAssets
-> Task :desugarDebugFileDependencies
-> Task :mergeDebugJniLibFolders
-> Task :checkDebugDuplicateClasses
-> Task :mergeDebugNativeLibs NO-SOURCE
 > Task :processDebugManifestForPackage
+> Task :compressDebugAssets
+> Task :processDebugJavaRes NO-SOURCE
+> Task :desugarDebugFileDependencies
+> Task :checkDebugDuplicateClasses
+> Task :mergeDebugJniLibFolders
+> Task :mergeLibDexDebug
+> Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug
-> Task :mergeLibDexDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
 > Task :mergeDebugJavaResource

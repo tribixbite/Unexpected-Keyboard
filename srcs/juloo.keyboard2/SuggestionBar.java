@@ -21,8 +21,10 @@ public class SuggestionBar extends LinearLayout
   private final List<TextView> _suggestionViews;
   private OnSuggestionSelectedListener _listener;
   private List<String> _currentSuggestions;
+  private List<Integer> _currentScores;
   private int _selectedIndex = -1;
   private Theme _theme;
+  private boolean _showDebugScores = false;
   
   public interface OnSuggestionSelectedListener
   {
@@ -39,6 +41,7 @@ public class SuggestionBar extends LinearLayout
     super(context);
     _suggestionViews = new ArrayList<>();
     _currentSuggestions = new ArrayList<>();
+    _currentScores = new ArrayList<>();
     _theme = theme;
     initialize(context);
   }
@@ -48,6 +51,7 @@ public class SuggestionBar extends LinearLayout
     super(context, attrs);
     _suggestionViews = new ArrayList<>();
     _currentSuggestions = new ArrayList<>();
+    _currentScores = new ArrayList<>();
     // Initialize theme to get colors
     _theme = new Theme(context, attrs);
     initialize(context);
@@ -111,7 +115,7 @@ public class SuggestionBar extends LinearLayout
       textView.setTextColor(Color.WHITE);
     }
     textView.setPadding(dpToPx(context, 8), 0, dpToPx(context, 8), 0);
-    textView.setMaxLines(1);
+    textView.setMaxLines(2);
     textView.setClickable(true);
     textView.setFocusable(true);
     
@@ -149,14 +153,35 @@ public class SuggestionBar extends LinearLayout
   }
   
   /**
+   * Set whether to show debug scores
+   */
+  public void setShowDebugScores(boolean show)
+  {
+    _showDebugScores = show;
+  }
+  
+  /**
    * Update the displayed suggestions
    */
   public void setSuggestions(List<String> suggestions)
   {
+    setSuggestionsWithScores(suggestions, null);
+  }
+  
+  /**
+   * Update the displayed suggestions with scores
+   */
+  public void setSuggestionsWithScores(List<String> suggestions, List<Integer> scores)
+  {
     _currentSuggestions.clear();
+    _currentScores.clear();
     if (suggestions != null)
     {
       _currentSuggestions.addAll(suggestions);
+      if (scores != null && scores.size() == suggestions.size())
+      {
+        _currentScores.addAll(scores);
+      }
     }
     
     // Update text views
@@ -166,6 +191,14 @@ public class SuggestionBar extends LinearLayout
       if (i < _currentSuggestions.size())
       {
         String suggestion = _currentSuggestions.get(i);
+        
+        // Add debug score if enabled and available
+        if (_showDebugScores && i < _currentScores.size() && !_currentScores.isEmpty())
+        {
+          int score = _currentScores.get(i);
+          suggestion = suggestion + "\n" + score;
+        }
+        
         textView.setText(suggestion);
         textView.setVisibility(View.VISIBLE);
         

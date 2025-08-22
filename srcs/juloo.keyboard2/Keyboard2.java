@@ -58,6 +58,7 @@ public class Keyboard2 extends InputMethodService
   private DictionaryManager _dictionaryManager;
   private WordPredictor _wordPredictor;
   private DTWPredictor _dtwPredictor;
+  private SwipeTypingEngine _swipeEngine;
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
   private StringBuilder _currentWord = new StringBuilder();
@@ -167,15 +168,14 @@ public class Keyboard2 extends InputMethodService
       _dictionaryManager = new DictionaryManager(this);
       _dictionaryManager.setLanguage("en");
       _wordPredictor = new WordPredictor();
+      _wordPredictor.setConfig(_config);
       _wordPredictor.loadDictionary(this, "en");
       
       // Initialize DTW predictor for swipe typing only
       if (_config.swipe_typing_enabled)
       {
         _dtwPredictor = new DTWPredictor(_wordPredictor);
-        // DTW will use the WordPredictor's dictionary via fallback
-        // No need to load a separate small dictionary
-        
+        _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
       }
     }
@@ -304,6 +304,16 @@ public class Keyboard2 extends InputMethodService
     int prev_theme = _config.theme;
     _config.refresh(getResources(), _foldStateTracker.isUnfolded());
     refreshSubtypeImm();
+    
+    // Update swipe engine config if it exists
+    if (_swipeEngine != null)
+    {
+      _swipeEngine.setConfig(_config);
+    }
+    if (_wordPredictor != null)
+    {
+      _wordPredictor.setConfig(_config);
+    }
     // Refreshing the theme config requires re-creating the views
     if (prev_theme != _config.theme)
     {
@@ -354,6 +364,7 @@ public class Keyboard2 extends InputMethodService
         _dictionaryManager = new DictionaryManager(this);
         _dictionaryManager.setLanguage("en");
         _wordPredictor = new WordPredictor();
+        _wordPredictor.setConfig(_config);
         _wordPredictor.loadDictionary(this, "en");
         android.util.Log.d("Keyboard2", "Word predictor initialized with " + _wordPredictor.getDictionarySize() + " words");
       }
@@ -362,6 +373,7 @@ public class Keyboard2 extends InputMethodService
       {
         android.util.Log.d("Keyboard2", "Initializing DTW predictor in onStartInputView");
         _dtwPredictor = new DTWPredictor(_wordPredictor);
+        _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
       }
       
@@ -790,11 +802,12 @@ public class Keyboard2 extends InputMethodService
       String partial = _currentWord.toString();
       android.util.Log.d("Keyboard2", "Updating predictions for: " + partial);
       
-      List<String> predictions = _wordPredictor.predictWords(partial);
+      WordPredictor.PredictionResult result = _wordPredictor.predictWordsWithScores(partial);
       
-      if (!predictions.isEmpty() && _suggestionBar != null)
+      if (!result.words.isEmpty() && _suggestionBar != null)
       {
-        _suggestionBar.setSuggestions(predictions);
+        _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
+        _suggestionBar.setSuggestionsWithScores(result.words, result.scores);
       }
     }
   }
@@ -813,14 +826,17 @@ public class Keyboard2 extends InputMethodService
       return;
     }
     
-    if (_wordPredictor == null)
+    if (_swipeEngine == null)
     {
-      android.util.Log.d("Keyboard2", "Word predictor is null");
-      return;
+      // Fallback to word predictor if engine not initialized
+      if (_wordPredictor == null)
+      {
+        android.util.Log.d("Keyboard2", "No prediction engine available");
+        return;
+      }
+      // Initialize engine on the fly
+      _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
     }
-    
-    // Reset predictor for fresh swipe
-    _wordPredictor.reset();
     
     // Mark that last input was a swipe for ML data collection
     _wasLastInputSwipe = true;
@@ -881,16 +897,22 @@ public class Keyboard2 extends InputMethodService
     
     if (keySequence.length() > 0)
     {
-      // Get predictions using regular word predictor
-      // DTW needs proper implementation with actual touch coordinates
+      // Create SwipeInput with all data
+      SwipeInput swipeInput = new SwipeInput(swipePath != null ? swipePath : new ArrayList<>(),
+                                            timestamps != null ? timestamps : new ArrayList<>(),
+                                            swipedKeys);
+      
+      // Get predictions using the swipe typing engine
       long startTime = System.currentTimeMillis();
-      List<String> predictions = _wordPredictor.predictWords(keySequence.toString());
+      WordPredictor.PredictionResult result = _swipeEngine.predict(swipeInput);
       long predictionTime = System.currentTimeMillis() - startTime;
+      List<String> predictions = result.words;
       
       android.util.Log.d("Keyboard2", "Got " + predictions.size() + " predictions in " + predictionTime + "ms");
       if (predictions.size() > 0)
       {
         android.util.Log.d("Keyboard2", "Predictions: " + predictions.toString());
+        android.util.Log.d("Keyboard2", "Scores: " + result.scores.toString());
       }
       else
       {
@@ -903,6 +925,7 @@ public class Keyboard2 extends InputMethodService
         try
         {
           _logWriter.write("  Predictions: " + predictions + " (" + predictionTime + "ms)\n");
+          _logWriter.write("  Scores: " + result.scores + "\n");
           _logWriter.flush();
         }
         catch (IOException e)
@@ -915,7 +938,8 @@ public class Keyboard2 extends InputMethodService
       if (_suggestionBar != null && !predictions.isEmpty())
       {
         android.util.Log.d("Keyboard2", "Setting suggestions in bar: " + predictions);
-        _suggestionBar.setSuggestions(predictions);
+        _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
+        _suggestionBar.setSuggestionsWithScores(predictions, result.scores);
         android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION END =====");
         
         // Auto-commit the first suggestion if confidence is high

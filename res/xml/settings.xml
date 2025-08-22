@@ -24,6 +24,13 @@
       <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_velocity_std" android:title="Speed tolerance" android:summary="Variation allowed in swipe speed (%s%%)" android:defaultValue="100" min="50" max="200"/>
       <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_turning_point_threshold" android:title="Corner sensitivity" android:summary="Angle to detect direction changes (%s°)" android:defaultValue="45" min="15" max="90"/>
     </PreferenceScreen>
+    <PreferenceScreen android:key="swipe_endpoint_matching" android:title="Endpoint Matching" android:summary="Configure first/last letter matching" android:dependency="swipe_typing_enabled">
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_first_letter_weight" android:title="First letter weight" android:summary="Boost for matching first letter (%s%%)" android:defaultValue="150" min="0" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_last_letter_weight" android:title="Last letter weight" android:summary="Boost for matching last letter (%s%%)" android:defaultValue="150" min="0" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_endpoint_bonus_weight" android:title="Both endpoints bonus" android:summary="Extra boost when both first and last match (%s%%)" android:defaultValue="200" min="0" max="400"/>
+      <CheckBoxPreference android:key="swipe_require_endpoints" android:title="Strict endpoint matching" android:summary="Only show words matching both first AND last letters" android:defaultValue="false"/>
+      <CheckBoxPreference android:key="swipe_show_debug_scores" android:title="Show prediction scores" android:summary="Display confidence scores below predictions for debugging" android:defaultValue="false"/>
+    </PreferenceScreen>
     <PreferenceScreen android:key="export_swipe_ml_data" android:title="@string/pref_export_swipe_ml_data_title" android:summary="@string/pref_export_swipe_ml_data_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="train_swipe_ml_model" android:title="@string/pref_train_swipe_ml_title" android:summary="@string/pref_train_swipe_ml_summary" android:dependency="swipe_typing_enabled"/>
     <ListPreference android:key="swipe_dist" android:title="@string/pref_swipe_dist_title" android:summary="@string/pref_swipe_dist_summary" android:defaultValue="15" android:entries="@array/pref_swipe_dist_entries" android:entryValues="@array/pref_swipe_dist_values"/>

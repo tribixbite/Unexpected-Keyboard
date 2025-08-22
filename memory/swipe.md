@@ -292,3 +292,26 @@ Input B (Key Path) → Embedding(16) → Masking → GRU(64)
 3. Test with collected data
 4. Deploy TFLite model
 5. Integrate inference engine
+
+## Recent Commit Review (2025-01-22)
+
+### Issues Found
+1. **DTWPredictor not integrated**: While DTWPredictor class exists, all predictions currently route through WordPredictor only
+2. **Unused confidence weights**: Config has 4 swipe confidence weights that aren't applied in scoring
+3. **Missing debug visualization**: No way to see prediction scores for testing weight effectiveness
+4. **Calibration data not used**: SwipeCalibrationActivity collects data but doesn't affect predictions yet
+
+### Positive Findings
+1. **First/last letter matching implemented**: WordPredictor already has priority system for endpoint matches
+2. **Two-pass scoring system**: Separates priority (first+last) matches from other candidates
+3. **Proper swipe duration tracking**: Fixed to use actual swipe time instead of arbitrary delay
+
+### Algorithm Improvements Needed
+1. **Configurable endpoint weights**: 
+   - Separate weights for first letter match
+   - Separate weights for last letter match
+   - Bonus weight when both match
+   - Option to restrict to ONLY endpoint matches
+2. **Debug score display**: Show confidence values below predictions
+3. **Weight integration**: Apply all Config weights to scoring algorithm
+4. **DTW integration**: Use DTWPredictor for coordinate-based matching
