@@ -295,32 +295,73 @@ public class SettingsActivity extends PreferenceActivity
       return;
     }
     
-    try
-    {
-      Intent intent = new Intent(Intent.ACTION_VIEW);
-      intent.setDataAndType(android.net.Uri.parse("file://" + updateApk.getAbsolutePath()),
-                            "application/vnd.android.package-archive");
-      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      startActivity(intent);
-    }
-    catch (Exception e)
-    {
-      // Try alternate approach using file manager
+    // Show dialog with multiple options for installing
+    android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+    builder.setTitle("Install Update");
+    builder.setMessage("APK located at:\n" + updateApk.getAbsolutePath() + "\n\nChoose installation method:");
+    
+    // Option 1: Copy path to clipboard
+    builder.setPositiveButton("Copy Path", (dialog, which) -> {
+      android.content.ClipboardManager clipboard = 
+        (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+      android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", updateApk.getAbsolutePath());
+      clipboard.setPrimaryClip(clip);
+      Toast.makeText(this, "Path copied! Open your file manager and navigate to this location", Toast.LENGTH_LONG).show();
+    });
+    
+    // Option 2: Try to open file manager at location
+    builder.setNeutralButton("Open Folder", (dialog, which) -> {
       try
       {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(android.net.Uri.parse("content://com.android.externalstorage.documents/document/primary%3Aunexpected%2Fdebug-kb.apk"),
-                              "application/vnd.android.package-archive");
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(intent);
+        // Try to open file manager at the directory
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setDataAndType(android.net.Uri.parse("file:///sdcard/unexpected/"), "*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivity(Intent.createChooser(intent, "Open folder with file manager"));
       }
-      catch (Exception e2)
+      catch (Exception e)
       {
-        Toast.makeText(this, "Failed to open APK installer. Please install manually from:\n" + 
-                       updateApk.getAbsolutePath(), Toast.LENGTH_LONG).show();
-        android.util.Log.e("SettingsActivity", "Failed to install update", e2);
+        // Fallback: try to open any file manager
+        try
+        {
+          Intent intent = new Intent(Intent.ACTION_VIEW);
+          intent.setDataAndType(android.net.Uri.parse("file:///sdcard/"), "resource/folder");
+          startActivity(intent);
+        }
+        catch (Exception e2)
+        {
+          Toast.makeText(this, "No file manager found. Path copied to clipboard.", Toast.LENGTH_LONG).show();
+          // Copy path as fallback
+          android.content.ClipboardManager clipboard = 
+            (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+          android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", updateApk.getAbsolutePath());
+          clipboard.setPrimaryClip(clip);
+        }
       }
-    }
+    });
+    
+    // Option 3: Try Termux
+    builder.setNegativeButton("Open in Termux", (dialog, which) -> {
+      try
+      {
+        Intent intent = new Intent();
+        intent.setClassName("com.termux", "com.termux.app.TermuxActivity");
+        intent.setAction(Intent.ACTION_SEND);
+        intent.putExtra(Intent.EXTRA_TEXT, "termux-open /sdcard/unexpected/debug-kb.apk");
+        startActivity(intent);
+        Toast.makeText(this, "Run: termux-open /sdcard/unexpected/debug-kb.apk", Toast.LENGTH_LONG).show();
+      }
+      catch (Exception e)
+      {
+        Toast.makeText(this, "Termux not found. Path copied to clipboard.", Toast.LENGTH_LONG).show();
+        android.content.ClipboardManager clipboard = 
+          (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+        android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", "termux-open " + updateApk.getAbsolutePath());
+        clipboard.setPrimaryClip(clip);
+      }
+    });
+    
+    builder.show();
   }
   
   void fallbackEncrypted()
