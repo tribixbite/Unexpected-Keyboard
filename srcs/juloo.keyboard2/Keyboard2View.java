@@ -137,6 +137,14 @@ public class Keyboard2View extends View
     _compose_kv = KeyValue.getKeyByName("compose");
     _compose_key = _keyboard.findKeyWithValue(_compose_kv);
     KeyModifier.set_modmap(_keyboard.modmap);
+    
+    // Set keyboard for swipe recognizer's probabilistic detection
+    if (_swipeRecognizer != null && _keyboard != null)
+    {
+      DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
+      _swipeRecognizer.setKeyboard(_keyboard, dm.widthPixels, dm.heightPixels);
+    }
+    
     reset();
   }
 

@@ -16,6 +16,8 @@ public class ImprovedSwipeGestureRecognizer
   private final List<KeyboardData.Key> _touchedKeys;
   private final List<Long> _timestamps;
   private final Queue<KeyboardData.Key> _recentKeys;
+  private ProbabilisticKeyDetector _probabilisticDetector;
+  private KeyboardData _currentKeyboard;
   
   private boolean _isSwipeTyping;
   private long _startTime;
@@ -45,6 +47,18 @@ public class ImprovedSwipeGestureRecognizer
     _timestamps = new ArrayList<>();
     _recentKeys = new LinkedList<>();
     _isSwipeTyping = false;
+  }
+  
+  /**
+   * Set the current keyboard for probabilistic detection
+   */
+  public void setKeyboard(KeyboardData keyboard, float width, float height)
+  {
+    _currentKeyboard = keyboard;
+    if (keyboard != null)
+    {
+      _probabilisticDetector = new ProbabilisticKeyDetector(keyboard, width, height);
+    }
   }
   
   /**
@@ -223,11 +237,38 @@ public class ImprovedSwipeGestureRecognizer
     
     if (_isSwipeTyping && _touchedKeys.size() >= 2)
     {
-      // Apply final filtering pass
-      List<KeyboardData.Key> filteredKeys = applyFinalFiltering(_touchedKeys);
+      List<KeyboardData.Key> finalKeys;
+      
+      // Try probabilistic detection if available
+      if (_probabilisticDetector != null && _smoothedPath.size() > 5)
+      {
+        // Apply Ramer-Douglas-Peucker simplification first
+        List<PointF> simplifiedPath = ProbabilisticKeyDetector.simplifyPath(_smoothedPath, 15.0f);
+        
+        // Get probabilistic key detection
+        List<KeyboardData.Key> probabilisticKeys = _probabilisticDetector.detectKeys(simplifiedPath);
+        
+        // If probabilistic detection gives good results, use it
+        if (probabilisticKeys != null && probabilisticKeys.size() >= 2)
+        {
+          finalKeys = probabilisticKeys;
+          android.util.Log.d("SwipeRecognizer", "Using probabilistic keys: " + probabilisticKeys.size());
+        }
+        else
+        {
+          // Fall back to traditional detection
+          finalKeys = applyFinalFiltering(_touchedKeys);
+          android.util.Log.d("SwipeRecognizer", "Using traditional keys: " + finalKeys.size());
+        }
+      }
+      else
+      {
+        // Use traditional detection
+        finalKeys = applyFinalFiltering(_touchedKeys);
+      }
       
       return new SwipeResult(
-        filteredKeys,
+        finalKeys,
         new ArrayList<>(_smoothedPath),
         new ArrayList<>(_timestamps),
         _totalDistance,
