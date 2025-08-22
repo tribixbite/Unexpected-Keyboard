@@ -30,14 +30,14 @@ public final class Pointers implements Handler.Callback
   private ArrayList<Pointer> _ptrs = new ArrayList<Pointer>();
   private IPointerEventHandler _handler;
   private Config _config;
-  public final SwipeGestureRecognizer _swipeRecognizer;
+  public final ImprovedSwipeGestureRecognizer _swipeRecognizer;
 
   public Pointers(IPointerEventHandler h, Config c)
   {
     _longpress_handler = new Handler(this);
     _handler = h;
     _config = c;
-    _swipeRecognizer = new SwipeGestureRecognizer();
+    _swipeRecognizer = new ImprovedSwipeGestureRecognizer();
   }
 
   /** Return the list of modifiers currently activated. */
@@ -861,9 +861,9 @@ public final class Pointers implements Handler.Callback
     public void onPointerHold(KeyValue k, Modifiers mods);
     
     /** Track swipe movement for swipe typing. */
-    public void onSwipeMove(float x, float y, SwipeGestureRecognizer recognizer);
+    public void onSwipeMove(float x, float y, ImprovedSwipeGestureRecognizer recognizer);
     
     /** Swipe typing gesture completed. */
-    public void onSwipeEnd(SwipeGestureRecognizer recognizer);
+    public void onSwipeEnd(ImprovedSwipeGestureRecognizer recognizer);
   }
 }

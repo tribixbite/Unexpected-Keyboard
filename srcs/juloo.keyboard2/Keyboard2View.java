@@ -44,7 +44,7 @@ public class Keyboard2View extends View
 
   private Config _config;
   
-  private SwipeGestureRecognizer _swipeRecognizer;
+  private ImprovedSwipeGestureRecognizer _swipeRecognizer;
   private Paint _swipeTrailPaint;
   
   // Swipe typing integration
@@ -217,7 +217,7 @@ public class Keyboard2View extends View
     _config.handler.mods_changed(_mods);
   }
   
-  public void onSwipeMove(float x, float y, SwipeGestureRecognizer recognizer)
+  public void onSwipeMove(float x, float y, ImprovedSwipeGestureRecognizer recognizer)
   {
     KeyboardData.Key key = getKeyAtPosition(x, y);
     recognizer.addPoint(x, y, key);
@@ -227,18 +227,20 @@ public class Keyboard2View extends View
     }
   }
   
-  public void onSwipeEnd(SwipeGestureRecognizer recognizer)
+  public void onSwipeEnd(ImprovedSwipeGestureRecognizer recognizer)
   {
     if (recognizer.isSwipeTyping())
     {
-      List<KeyboardData.Key> swipedKeys = recognizer.endSwipe();
-      if (_keyboard2 != null && swipedKeys != null && !swipedKeys.isEmpty())
+      ImprovedSwipeGestureRecognizer.SwipeResult result = recognizer.endSwipe();
+      if (_keyboard2 != null && result != null && result.keys != null && !result.keys.isEmpty())
       {
         // Pass full swipe data for ML collection
-        List<PointF> swipePath = recognizer.getSwipePath();
-        List<Long> timestamps = recognizer.getTimestamps();
-        _keyboard2.handleSwipeTyping(swipedKeys, swipePath, timestamps);
+        _keyboard2.handleSwipeTyping(result.keys, result.path, result.timestamps);
       }
+    }
+    else
+    {
+      recognizer.endSwipe(); // Clean up even if not swipe typing
     }
     recognizer.reset();
     invalidate(); // Clear the trail
