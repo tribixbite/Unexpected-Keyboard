@@ -184,24 +184,11 @@ public class SwipeCalibrationActivity extends Activity
     _keyboardHeight = (int)(_screenHeight * keyboardHeightPercent);
     
     // Load user's text and margin settings
-    try {
-      _characterSize = Float.valueOf(prefs.getString("character_size", "1.15"));
-    } catch (NumberFormatException e) {
-      _characterSize = 1.15f;
-    }
+    _characterSize = prefs.getFloat("character_size", 1.15f);
     _labelTextSize = 0.33f; // Default label text size
+    _keyVerticalMargin = prefs.getFloat("key_vertical_margin", 1.5f) / 100;
     
-    try {
-      _keyVerticalMargin = Float.valueOf(prefs.getString("key_vertical_margin", "1.5")) / 100;
-    } catch (NumberFormatException e) {
-      _keyVerticalMargin = 0.015f;
-    }
-    
-    try {
-      _keyHorizontalMargin = Float.valueOf(prefs.getString("key_horizontal_margin", "2")) / 100;
-    } catch (NumberFormatException e) {
-      _keyHorizontalMargin = 0.02f;
-    }
+    _keyHorizontalMargin = prefs.getFloat("key_horizontal_margin", 2.0f) / 100;
     
     // Create main layout
     android.widget.RelativeLayout mainLayout = new android.widget.RelativeLayout(this);

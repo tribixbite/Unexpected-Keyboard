@@ -39,16 +39,22 @@ adb_wireless_connect() {
     set +e
     
     # Get host IP
-    HOST=${1:-$(ifconfig wlan0 2>/dev/null | awk '/inet /{print $2; exit}')}
-    
-    if [ -z "$HOST" ]; then
-        # Try to get IP from other interfaces
-        HOST=$(ip addr show 2>/dev/null | awk '/inet / && !/127.0.0.1/{print $2; exit}' | cut -d/ -f1)
+    if [ -n "$1" ]; then
+        HOST="$1"
+    else
+        # Try to get wlan0 IP
+        HOST=$(ifconfig 2>/dev/null | awk '/wlan0/{getline; if(/inet /) print $2}')
+        
+        # Fallback to any non-loopback interface
+        if [ -z "$HOST" ]; then
+            HOST=$(ifconfig 2>/dev/null | awk '/inet / && !/127.0.0.1/{print $2; exit}')
+        fi
     fi
     
     if [ -z "$HOST" ]; then
         echo -e "${RED}Could not determine network IP${NC}"
         echo "Please provide host IP: $0 <apk> <host_ip>"
+        echo "Example: $0 $APK_PATH 192.168.1.100"
         [ -n "$was_e" ] && set -e
         return 1
     fi
@@ -107,8 +113,8 @@ if adb_wireless_connect "$HOST_IP"; then
     echo -e "${GREEN}✅ Connected to: $CONNECTED_DEVICE${NC}"
     
     # Get device info
-    MODEL=$(adb shell getprop ro.product.model 2>/dev/null)
-    ANDROID=$(adb shell getprop ro.build.version.release 2>/dev/null)
+    MODEL=$(adb shell getprop ro.product.model 2>/dev/null | tr -d '\r\n')
+    ANDROID=$(adb shell getprop ro.build.version.release 2>/dev/null | tr -d '\r\n')
     echo -e "📱 Device: ${MODEL} (Android ${ANDROID})"
     echo
     

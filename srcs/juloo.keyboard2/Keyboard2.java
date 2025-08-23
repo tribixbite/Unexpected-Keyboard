@@ -62,6 +62,7 @@ public class Keyboard2 extends InputMethodService
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
   private StringBuilder _currentWord = new StringBuilder();
+  private List<String> _contextWords = new ArrayList<>(); // Track previous words for context
   private BufferedWriter _logWriter = null;
   
   // ML data collection
@@ -685,6 +686,26 @@ public class Keyboard2 extends InputMethodService
   }
   
   // SuggestionBar.OnSuggestionSelectedListener implementation
+  /**
+   * Update context with a completed word
+   */
+  private void updateContext(String word)
+  {
+    if (word == null || word.isEmpty())
+      return;
+    
+    // Add word to context
+    _contextWords.add(word.toLowerCase());
+    
+    // Keep only last 2 words for bigram context
+    while (_contextWords.size() > 2)
+    {
+      _contextWords.remove(0);
+    }
+    
+    android.util.Log.d("Keyboard2", "Context updated: " + _contextWords);
+  }
+  
   @Override
   public void onSuggestionSelected(String word)
   {
@@ -742,6 +763,9 @@ public class Keyboard2 extends InputMethodService
       // Commit the selected word with a space
       ic.commitText(word + " ", 1);
       
+      // Update context with the selected word
+      updateContext(word);
+      
       // Clear current word and suggestions
       _currentWord.setLength(0);
       if (_suggestionBar != null)
@@ -773,8 +797,18 @@ public class Keyboard2 extends InputMethodService
     }
     else if (text.length() == 1 && !Character.isLetter(text.charAt(0)))
     {
-      // Any non-letter character - reset predictor and clear current word
-      android.util.Log.d("Keyboard2", "Non-letter character '" + text + "' detected, resetting predictor");
+      // Any non-letter character - update context and reset current word
+      android.util.Log.d("Keyboard2", "Non-letter character '" + text + "' detected");
+      
+      // If we had a word being typed, add it to context before clearing
+      if (_currentWord.length() > 0)
+      {
+        String completedWord = _currentWord.toString();
+        updateContext(completedWord);
+        android.util.Log.d("Keyboard2", "Added word to context: " + completedWord);
+      }
+      
+      // Reset current word
       _currentWord.setLength(0);
       if (_wordPredictor != null)
       {
@@ -828,9 +862,10 @@ public class Keyboard2 extends InputMethodService
     if (_currentWord.length() > 0)
     {
       String partial = _currentWord.toString();
-      android.util.Log.d("Keyboard2", "Updating predictions for: " + partial);
+      android.util.Log.d("Keyboard2", "Updating predictions for: " + partial + " with context: " + _contextWords);
       
-      WordPredictor.PredictionResult result = _wordPredictor.predictWordsWithScores(partial);
+      // Use contextual prediction
+      WordPredictor.PredictionResult result = _wordPredictor.predictWordsWithContext(partial, _contextWords);
       
       if (!result.words.isEmpty() && _suggestionBar != null)
       {

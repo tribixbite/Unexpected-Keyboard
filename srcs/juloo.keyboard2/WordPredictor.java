@@ -18,6 +18,7 @@ public class WordPredictor
 {
   private final Map<String, Integer> _dictionary;
   private final Map<Character, List<Character>> _adjacentKeys;
+  private BigramModel _bigramModel;
   private static final int MAX_PREDICTIONS_TYPING = 5;
   private static final int MAX_PREDICTIONS_SWIPE = 10;
   private static final int MAX_EDIT_DISTANCE = 2;
@@ -27,6 +28,7 @@ public class WordPredictor
   {
     _dictionary = new HashMap<>();
     _adjacentKeys = buildAdjacentKeysMap();
+    _bigramModel = new BigramModel();
     _config = null;
   }
   
@@ -148,9 +150,76 @@ public class WordPredictor
   }
   
   /**
-   * Predict words and return with their scores
+   * Predict words with context
+   */
+  public PredictionResult predictWordsWithContext(String keySequence, List<String> context)
+  {
+    if (keySequence == null || keySequence.isEmpty())
+      return new PredictionResult(new ArrayList<>(), new ArrayList<>());
+    
+    PerformanceProfiler.start("Type.predictWithContext");
+    
+    // Get base predictions
+    PredictionResult baseResult = predictWordsWithScoresInternal(keySequence);
+    
+    // Apply contextual reranking if context is available
+    if (context != null && !context.isEmpty() && _bigramModel != null)
+    {
+      List<WordCandidate> candidates = new ArrayList<>();
+      for (int i = 0; i < baseResult.words.size(); i++)
+      {
+        String word = baseResult.words.get(i);
+        int baseScore = baseResult.scores.get(i);
+        
+        // Get context multiplier from bigram model
+        float contextMultiplier = _bigramModel.getContextMultiplier(word, context);
+        
+        // Apply context boost/penalty
+        int adjustedScore = (int)(baseScore * contextMultiplier);
+        candidates.add(new WordCandidate(word, adjustedScore));
+      }
+      
+      // Re-sort by adjusted scores
+      Collections.sort(candidates, new Comparator<WordCandidate>()
+      {
+        @Override
+        public int compare(WordCandidate a, WordCandidate b)
+        {
+          return Integer.compare(b.score, a.score); // Descending order
+        }
+      });
+      
+      // Extract top predictions
+      List<String> contextualWords = new ArrayList<>();
+      List<Integer> contextualScores = new ArrayList<>();
+      int limit = Math.min(candidates.size(), MAX_PREDICTIONS_TYPING);
+      
+      for (int i = 0; i < limit; i++)
+      {
+        contextualWords.add(candidates.get(i).word);
+        contextualScores.add(candidates.get(i).score);
+      }
+      
+      PerformanceProfiler.end("Type.predictWithContext");
+      return new PredictionResult(contextualWords, contextualScores);
+    }
+    
+    PerformanceProfiler.end("Type.predictWithContext");
+    return baseResult;
+  }
+  
+  /**
+   * Predict words and return with their scores (no context)
    */
   public PredictionResult predictWordsWithScores(String keySequence)
+  {
+    return predictWordsWithContext(keySequence, null);
+  }
+  
+  /**
+   * Internal prediction logic
+   */
+  private PredictionResult predictWordsWithScoresInternal(String keySequence)
   {
     if (keySequence == null || keySequence.isEmpty())
       return new PredictionResult(new ArrayList<>(), new ArrayList<>());

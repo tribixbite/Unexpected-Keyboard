@@ -68,6 +68,9 @@ Features:
 - Scans ports 5555 and 30000-50000 for ADB
 - Uninstalls old version before installing
 - Shows device info and installation instructions
+- Fixed IP detection using ifconfig (works on Termux)
+- Removed Shizuku dependencies - pure ADB implementation
+- Tested and working with Samsung devices on Android 15
 - Prevents common build errors and environment issues
 
 ### Standard Build (FOR REFERENCE ONLY - DO NOT USE DIRECTLY)

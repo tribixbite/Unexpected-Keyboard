@@ -14,11 +14,22 @@ connect_adb_wireless() {
     set +e
     
     # Get host IP from wlan0 or use provided host
-    HOST=${1:-$(ifconfig wlan0 2>/dev/null | awk '/inet /{print $2; exit}')}
+    if [ -n "$1" ]; then
+        HOST="$1"
+    else
+        # Try to get wlan0 IP
+        HOST=$(ifconfig 2>/dev/null | awk '/wlan0/{getline; if(/inet /) print $2}')
+        
+        # Fallback to any non-loopback interface
+        if [ -z "$HOST" ]; then
+            HOST=$(ifconfig 2>/dev/null | awk '/inet / && !/127.0.0.1/{print $2; exit}')
+        fi
+    fi
     
     if [ -z "$HOST" ]; then
-        echo "❌ Could not determine wlan0 IP address"
+        echo "❌ Could not determine device IP address"
         echo "   Please provide host IP as argument: $0 <host_ip>"
+        echo "   Example: $0 192.168.1.100"
         [ -n "$was_e" ] && set -e
         return 1
     fi

@@ -141,10 +141,21 @@ if [ -f "$APK_PATH" ]; then
         set +e
         
         # Get host IP from wlan0 or use provided host
-        HOST=${1:-$(ifconfig wlan0 2>/dev/null | awk '/inet /{print $2; exit}')}
+        if [ -n "$1" ]; then
+            HOST="$1"
+        else
+            # Try to get wlan0 IP
+            HOST=$(ifconfig 2>/dev/null | awk '/wlan0/{getline; if(/inet /) print $2}')
+            
+            # Fallback to any non-loopback interface
+            if [ -z "$HOST" ]; then
+                HOST=$(ifconfig 2>/dev/null | awk '/inet / && !/127.0.0.1/{print $2; exit}')
+            fi
+        fi
         
         if [ -z "$HOST" ]; then
-            echo "Could not determine wlan0 IP address"
+            echo "Could not determine network IP address"
+            echo "You may need to provide the device IP manually"
             [ -n "$was_e" ] && set -e
             return 1
         fi
@@ -231,10 +242,7 @@ if [ -f "$APK_PATH" ]; then
     fi
     
     # Fallback options if ADB fails
-    if [ -f "./auto-install.sh" ]; then
-        echo "Trying auto-install script..."
-        ./auto-install.sh
-    elif command -v termux-open &>/dev/null; then
+    if command -v termux-open &>/dev/null; then
         # Fallback to termux-open if available
         echo "Opening APK for installation..."
         termux-open "$APK_PATH" 2>/dev/null || {
