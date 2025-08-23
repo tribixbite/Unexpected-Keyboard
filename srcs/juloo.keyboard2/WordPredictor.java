@@ -154,6 +154,8 @@ public class WordPredictor
   {
     if (keySequence == null || keySequence.isEmpty())
       return new PredictionResult(new ArrayList<>(), new ArrayList<>());
+    
+    PerformanceProfiler.start("Type.predictWordsWithScores");
       
     // TWO-PASS PRIORITIZED SYSTEM
     List<WordCandidate> priorityMatches = new ArrayList<>();  // First+last matches
@@ -301,6 +303,7 @@ public class WordPredictor
     android.util.Log.d("WordPredictor", "Final predictions (" + predictions.size() + "): " + predictions);
     android.util.Log.d("WordPredictor", "Scores: " + scores);
     
+    PerformanceProfiler.end("Type.predictWordsWithScores");
     return new PredictionResult(predictions, scores);
   }
   

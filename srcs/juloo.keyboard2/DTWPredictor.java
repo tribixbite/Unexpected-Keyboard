@@ -162,6 +162,7 @@ public class DTWPredictor
       return new DTWResult(new ArrayList<>(), new ArrayList<>(), 0.5f);
     }
     
+    PerformanceProfiler.start("DTW.predictWithCoordinates");
     android.util.Log.d("DTWPredictor", "Predicting with " + rawCoordinates.size() + " coordinates");
     
     // Prune candidates by extremities first (like FlorisBoard)
@@ -202,13 +203,19 @@ public class DTWPredictor
         continue;
       
       // Calculate DTW distance
+      PerformanceProfiler.start("DTW.calculateDTW");
       float distance = calculateDTW(normalizedPath, wordPath);
+      PerformanceProfiler.end("DTW.calculateDTW");
       
       // Calculate Gaussian probability score
+      PerformanceProfiler.start("Gaussian.getWordConfidence");
       float gaussianScore = _gaussianModel.getWordConfidence(word, normalizedPath);
+      PerformanceProfiler.end("Gaussian.getWordConfidence");
       
       // Calculate N-gram language model score
+      PerformanceProfiler.start("Ngram.scoreWord");
       float ngramScore = _ngramModel.scoreWord(word);
+      PerformanceProfiler.end("Ngram.scoreWord");
       
       // Convert distance to score (lower distance = higher score)
       int frequency = _wordFrequencies.getOrDefault(word, 1000);
@@ -259,6 +266,8 @@ public class DTWPredictor
     
     android.util.Log.d("DTWPredictor", "DTW predictions: " + words);
     
+    PerformanceProfiler.end("DTW.predictWithCoordinates");
+    PerformanceProfiler.report(); // Print performance report
     return new DTWResult(words, scores, confidence);
   }
   

@@ -48,6 +48,26 @@ Unexpected-Keyboard/
 - Automatically sets up correct environment variables
 - Handles ARM64 AAPT2 emulation correctly
 - Ensures consistent builds every time
+- **NEW**: Includes ADB wireless auto-connection and installation
+
+### ADB Wireless Installation (NEW!)
+The build script now includes automatic ADB wireless connection with port scanning:
+```bash
+# Build and auto-install via ADB
+./build-on-termux.sh
+
+# Install existing APK via ADB
+./install-via-adb.sh /sdcard/unexpected/debug-kb.apk [device_ip]
+
+# Connect to ADB wireless with port scanning
+./adb-wireless-connect.sh [device_ip]
+```
+
+Features:
+- Automatically disconnects and reconnects to find working ports
+- Scans ports 5555 and 30000-50000 for ADB
+- Uninstalls old version before installing
+- Shows device info and installation instructions
 - Prevents common build errors and environment issues
 
 ### Standard Build (FOR REFERENCE ONLY - DO NOT USE DIRECTLY)
