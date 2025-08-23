@@ -130,8 +130,109 @@ if [ -f "$APK_PATH" ]; then
         fi
     fi
     
-    # Auto-install using our new script
+    # Try ADB wireless connection
+    echo
+    echo "Step 5: Attempting ADB wireless connection..."
+    
+    # Function to find and connect to ADB wireless
+    connect_adb_wireless() {
+        # Save shell's errexit state
+        case $- in *e*) was_e=1;; esac
+        set +e
+        
+        # Get host IP from wlan0 or use provided host
+        HOST=${1:-$(ifconfig wlan0 2>/dev/null | awk '/inet /{print $2; exit}')}
+        
+        if [ -z "$HOST" ]; then
+            echo "Could not determine wlan0 IP address"
+            [ -n "$was_e" ] && set -e
+            return 1
+        fi
+        
+        echo "Scanning for ADB on host: $HOST"
+        
+        # Disconnect any existing connections
+        adb disconnect -a >/dev/null 2>&1
+        
+        # Try standard port first, then scan for open ports
+        PORTS="5555"
+        
+        # Check if nmap is available for port scanning
+        if command -v nmap &>/dev/null; then
+            echo "Scanning ports 30000-50000 for ADB..."
+            SCANNED_PORTS=$(nmap -p 30000-50000 --open -oG - "$HOST" 2>/dev/null | \
+                awk -F"Ports: " '/Ports:/{
+                    n=split($2,a,/, /); 
+                    for(i=1;i<=n;i++){ 
+                        if (a[i] ~ /open/){ 
+                            split(a[i],f,"/"); 
+                            print f[1] 
+                        } 
+                    }
+                }')
+            PORTS="$PORTS $SCANNED_PORTS"
+        fi
+        
+        # Try to connect to each port
+        for port in $PORTS; do
+            echo -n "Trying $HOST:$port... "
+            
+            if adb connect "$HOST:$port" >/dev/null 2>&1; then
+                # Wait and verify connection
+                for i in 1 2 3; do
+                    sleep 0.5
+                    if adb devices | grep -q "^$HOST:$port[[:space:]]*device"; then
+                        echo "connected!"
+                        [ -n "$was_e" ] && set -e
+                        return 0
+                    fi
+                done
+                echo "failed to verify"
+                adb disconnect "$HOST:$port" >/dev/null 2>&1
+            else
+                echo "no response"
+            fi
+        done
+        
+        echo "No working ADB port found on $HOST"
+        [ -n "$was_e" ] && set -e
+        return 1
+    }
+    
+    # Try to connect and install via ADB
+    if command -v adb &>/dev/null; then
+        if connect_adb_wireless; then
+            echo "Installing APK via ADB..."
+            
+            # Uninstall old version if it's a debug build
+            if [ "$BUILD_TYPE_LOWER" = "debug" ]; then
+                echo "Uninstalling previous debug version..."
+                adb uninstall juloo.keyboard2.debug 2>/dev/null || true
+            fi
+            
+            # Install the new APK
+            if adb install -r "$APK_PATH"; then
+                echo
+                echo "=== APK INSTALLED SUCCESSFULLY! ==="
+                echo "The keyboard has been installed on your device."
+                echo
+                echo "To enable it:"
+                echo "  1. Go to Settings → System → Languages & input → Virtual keyboard"
+                echo "  2. Enable 'Unexpected Keyboard'"
+                echo "  3. Switch to it using the keyboard selector"
+            else
+                echo "ADB install failed, falling back to manual installation"
+            fi
+        else
+            echo "Could not establish ADB connection"
+        fi
+    else
+        echo "ADB not found. Install with: pkg install android-tools"
+    fi
+    
+    # Fallback options if ADB fails
     if [ -f "./auto-install.sh" ]; then
+        echo "Trying auto-install script..."
         ./auto-install.sh
     elif command -v termux-open &>/dev/null; then
         # Fallback to termux-open if available
