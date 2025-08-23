@@ -273,7 +273,7 @@ gh issue create --title "Bug: ..." --body "..."
    - Duplicate detection during import
    - Statistics update after import
 
-### ✅ Completed (2025-01-23): User Interface Improvements
+### ✅ Completed (2025-01-23): User Interface & Performance Improvements
 1. **Suggestion Bar Opacity Slider** - User-configurable transparency for the word suggestion bar
    - Added IntSlideBarPreference in settings.xml (0-100% opacity)
    - Added config field suggestion_bar_opacity in Config.java
@@ -283,17 +283,37 @@ gh issue create --title "Bug: ..." --body "..."
 2. **Build System Documentation** - Enforced use of build-on-termux.sh for all builds
    - Updated pm.md with critical build requirement warning
    - Clear explanation of why the wrapper script is mandatory
+3. **Performance Profiling System** - Track and optimize prediction hot paths
+   - Created PerformanceProfiler class with timing statistics
+   - Instrumented DTW calculation, Gaussian model, N-gram scoring
+   - Tracks min/max/avg execution times with configurable thresholds
+   - Identified bottlenecks: DTW calculation is main performance bottleneck
+4. **Markov Chain Analysis** - Gemini consultation on contextual prediction
+   - Confirmed N-gram models (Markov chains) essential for context
+   - Current unigram model misses contextual cues entirely
+   - Bigram/trigram models would provide 50-70% accuracy improvement
+   - Memory cost: 20-100MB for bigram, several hundred MB for trigram
 
 ### 🚧 Next Steps: ML Model Development
 1. Python training script implementation
 2. TensorFlow Lite conversion pipeline
 3. On-device model integration
 
-### 📋 Remaining TODOs (From Gemini Review)
-1. **Async Processing** - Prevent UI blocking during prediction
-2. **User Adaptation** - Learn from selection history
-3. **Performance Profiling** - Optimize hot paths in prediction pipeline
+### 📋 Remaining TODOs (Priority Order)
+1. **Implement N-gram Model** - Add contextual prediction using bigram/trigram
+   - Need to track previous 1-2 words for context
+   - Pass context to both WordPredictor and DTWPredictor
+   - Implement efficient data structure (trie or sorted array)
+   - Start with bigram for memory efficiency
+2. **Async Processing** - Prevent UI blocking during prediction
+   - Use thread pool for prediction tasks
+   - Cancel pending predictions on new input
+3. **User Adaptation** - Learn from selection history
+   - Track which predictions user selects
+   - Adjust word frequencies based on usage
 4. **Multi-language Support** - Extend N-gram model to other languages
+   - Support language-specific dictionaries
+   - Handle different keyboard layouts
 
 ### Week 3-4: Model Deployment
 1. Convert to TensorFlow Lite
