@@ -83,6 +83,7 @@ public final class Config
   public boolean swipe_require_endpoints;
   public boolean swipe_show_debug_scores;
   public boolean word_prediction_enabled;
+  public int suggestion_bar_opacity; // 0 - 100
 
   // Dynamically set
   public boolean shouldOfferVoiceTyping;
@@ -207,6 +208,7 @@ public final class Config
     swipe_require_endpoints = _prefs.getBoolean("swipe_require_endpoints", false);
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
+    suggestion_bar_opacity = _prefs.getInt("suggestion_bar_opacity", 90);
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;

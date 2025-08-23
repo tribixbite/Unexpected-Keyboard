@@ -25,6 +25,7 @@ public class SuggestionBar extends LinearLayout
   private int _selectedIndex = -1;
   private Theme _theme;
   private boolean _showDebugScores = false;
+  private int _opacity = 90; // default opacity
   
   public interface OnSuggestionSelectedListener
   {
@@ -62,21 +63,8 @@ public class SuggestionBar extends LinearLayout
     setOrientation(HORIZONTAL);
     setGravity(Gravity.CENTER_VERTICAL);
     
-    // Use theme colors with proper contrast
-    if (_theme != null && _theme.colorKey != 0)
-    {
-      int backgroundColor = _theme.colorKey;
-      // Adjust alpha to make it more opaque
-      backgroundColor = Color.argb(230, Color.red(backgroundColor), 
-                                   Color.green(backgroundColor), 
-                                   Color.blue(backgroundColor));
-      setBackgroundColor(backgroundColor);
-    }
-    else
-    {
-      // Fallback colors if theme is not properly initialized
-      setBackgroundColor(Color.argb(230, 50, 50, 50)); // Dark grey background
-    }
+    updateBackgroundOpacity();
+    
     
     int padding = dpToPx(context, 8);
     setPadding(padding, padding, padding, padding);
@@ -158,6 +146,40 @@ public class SuggestionBar extends LinearLayout
   public void setShowDebugScores(boolean show)
   {
     _showDebugScores = show;
+  }
+  
+  /**
+   * Set the opacity of the suggestion bar
+   * @param opacity Opacity value from 0 to 100
+   */
+  public void setOpacity(int opacity)
+  {
+    _opacity = Math.max(0, Math.min(100, opacity));
+    updateBackgroundOpacity();
+  }
+  
+  /**
+   * Update the background color with the current opacity
+   */
+  private void updateBackgroundOpacity()
+  {
+    // Calculate alpha value from opacity percentage (0-100 -> 0-255)
+    int alpha = (_opacity * 255) / 100;
+    
+    // Use theme colors with user-defined opacity
+    if (_theme != null && _theme.colorKey != 0)
+    {
+      int backgroundColor = _theme.colorKey;
+      backgroundColor = Color.argb(alpha, Color.red(backgroundColor), 
+                                   Color.green(backgroundColor), 
+                                   Color.blue(backgroundColor));
+      setBackgroundColor(backgroundColor);
+    }
+    else
+    {
+      // Fallback colors if theme is not properly initialized
+      setBackgroundColor(Color.argb(alpha, 50, 50, 50)); // Dark grey background
+    }
   }
   
   /**

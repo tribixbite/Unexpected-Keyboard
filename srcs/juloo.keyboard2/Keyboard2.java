@@ -410,6 +410,7 @@ public class Keyboard2 extends InputMethodService
         Theme theme = _keyboardView != null ? _keyboardView.getTheme() : null;
         _suggestionBar = theme != null ? new SuggestionBar(this, theme) : new SuggestionBar(this);
         _suggestionBar.setOnSuggestionSelectedListener(this);
+        _suggestionBar.setOpacity(_config.suggestion_bar_opacity);
         LinearLayout.LayoutParams suggestionParams = new LinearLayout.LayoutParams(
           LinearLayout.LayoutParams.MATCH_PARENT,
           (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40,
@@ -540,6 +541,11 @@ public class Keyboard2 extends InputMethodService
   {
     refresh_config();
     _keyboardView.setKeyboard(current_layout());
+    // Update suggestion bar opacity if it exists
+    if (_suggestionBar != null)
+    {
+      _suggestionBar.setOpacity(_config.suggestion_bar_opacity);
+    }
   }
 
   @Override

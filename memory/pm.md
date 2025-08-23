@@ -34,13 +34,29 @@ Unexpected-Keyboard/
 
 ## Build Commands
 
-### Standard Build
+### 🚨 CRITICAL: ALWAYS USE build-on-termux.sh FOR ALL BUILDS 🚨
+**MANDATORY**: Never use gradlew directly. Always build with:
 ```bash
-# Debug build
+# Debug build (ALWAYS USE THIS)
+./build-on-termux.sh
+
+# Release build  
+./build-on-termux.sh release
+```
+
+### Why build-on-termux.sh is REQUIRED
+- Automatically sets up correct environment variables
+- Handles ARM64 AAPT2 emulation correctly
+- Ensures consistent builds every time
+- Prevents common build errors and environment issues
+
+### Standard Build (FOR REFERENCE ONLY - DO NOT USE DIRECTLY)
+```bash
+# Debug build - DO NOT USE, use ./build-on-termux.sh instead
 ./gradlew assembleDebug
 # Output: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
-# Release build
+# Release build - DO NOT USE, use ./build-on-termux.sh release instead
 ./gradlew assembleRelease
 # Output: build/outputs/apk/release/juloo.keyboard2.apk
 
@@ -63,19 +79,14 @@ Unexpected-Keyboard/
 ./gradlew compileComposeSequences
 ```
 
-### Termux ARM64 Build
+### Termux ARM64 Build Setup
 ```bash
-# One-time setup
+# One-time setup (if needed)
 ./setup-arm64-buildtools.sh
 
-# Build using convenience script
-./build-on-termux.sh        # Debug APK
-./build-on-termux.sh release # Release APK
-
-# Manual build with environment
+# Environment variables (automatically handled by build-on-termux.sh)
 export ANDROID_HOME="$HOME/android-sdk"
 export JAVA_HOME="/data/data/com.termux/files/usr/lib/jvm/java-17-openjdk"
-./gradlew assembleDebug
 ```
 
 ## Git Workflow
@@ -241,6 +252,17 @@ gh issue create --title "Bug: ..." --body "..."
    - File picker dialog with common locations
    - Duplicate detection during import
    - Statistics update after import
+
+### ✅ Completed (2025-01-23): User Interface Improvements
+1. **Suggestion Bar Opacity Slider** - User-configurable transparency for the word suggestion bar
+   - Added IntSlideBarPreference in settings.xml (0-100% opacity)
+   - Added config field suggestion_bar_opacity in Config.java
+   - Implemented setOpacity() and updateBackgroundOpacity() methods in SuggestionBar
+   - Applied opacity on creation and settings change in Keyboard2.java
+   - Default value: 90% opacity for good visibility with background transparency
+2. **Build System Documentation** - Enforced use of build-on-termux.sh for all builds
+   - Updated pm.md with critical build requirement warning
+   - Clear explanation of why the wrapper script is mandatory
 
 ### 🚧 Next Steps: ML Model Development
 1. Python training script implementation

@@ -14,6 +14,7 @@
   </PreferenceCategory>
   <PreferenceCategory android:title="@string/pref_category_typing">
     <CheckBoxPreference android:key="word_prediction_enabled" android:title="@string/pref_word_prediction_title" android:summary="@string/pref_word_prediction_summary" android:defaultValue="false"/>
+    <juloo.keyboard2.prefs.IntSlideBarPreference android:key="suggestion_bar_opacity" android:title="@string/pref_suggestion_bar_opacity_title" android:summary="%s%%" android:defaultValue="90" min="0" max="100" android:dependency="word_prediction_enabled"/>
     <CheckBoxPreference android:key="swipe_typing_enabled" android:title="@string/pref_swipe_typing_title" android:summary="@string/pref_swipe_typing_summary" android:defaultValue="false"/>
     <PreferenceScreen android:key="swipe_calibration" android:title="@string/pref_swipe_calibration_title" android:summary="@string/pref_swipe_calibration_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="swipe_confidence_calibration" android:title="@string/pref_swipe_confidence_calibration_title" android:summary="@string/pref_swipe_confidence_calibration_summary" android:dependency="swipe_typing_enabled">
