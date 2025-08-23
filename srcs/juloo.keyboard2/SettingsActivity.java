@@ -125,6 +125,21 @@ public class SettingsActivity extends PreferenceActivity
       });
     }
     
+    // Import ML Data
+    Preference importMLDataPref = findPreference("import_swipe_ml_data");
+    if (importMLDataPref != null)
+    {
+      importMLDataPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          importSwipeMLData();
+          return true;
+        }
+      });
+    }
+    
     // Set up ML training preference (PreferenceScreen type)
     Preference trainMLModelPref = findPreference("train_swipe_ml_model");
     if (trainMLModelPref != null)
@@ -198,6 +213,92 @@ public class SettingsActivity extends PreferenceActivity
     {
       Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
       android.util.Log.e("SettingsActivity", "Failed to export ML data", e);
+    }
+  }
+  
+  private void importSwipeMLData()
+  {
+    // Create file picker dialog
+    android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+    builder.setTitle("Import Swipe Data");
+    builder.setMessage("Select JSON file to import from:");
+    
+    // Check common locations for exported files
+    File[] possibleFiles = new File[] {
+      new File("/sdcard/Android/data/juloo.keyboard2.debug/files/swipe_ml_export/"),
+      new File("/storage/emulated/0/Android/data/juloo.keyboard2.debug/files/swipe_ml_export/"),
+      new File("/sdcard/Download/"),
+      new File("/storage/emulated/0/Download/")
+    };
+    
+    // Find existing JSON files
+    java.util.List<File> jsonFiles = new java.util.ArrayList<>();
+    for (File dir : possibleFiles)
+    {
+      if (dir.exists() && dir.isDirectory())
+      {
+        File[] files = dir.listFiles((dir1, name) -> name.endsWith(".json"));
+        if (files != null)
+        {
+          for (File f : files)
+          {
+            jsonFiles.add(f);
+          }
+        }
+      }
+    }
+    
+    if (jsonFiles.isEmpty())
+    {
+      Toast.makeText(this, "No JSON files found in common locations", Toast.LENGTH_LONG).show();
+      return;
+    }
+    
+    // Create list of file names
+    String[] fileNames = new String[jsonFiles.size()];
+    for (int i = 0; i < jsonFiles.size(); i++)
+    {
+      fileNames[i] = jsonFiles.get(i).getName() + "\n(" + jsonFiles.get(i).getParent() + ")";
+    }
+    
+    builder.setItems(fileNames, (dialog, which) -> {
+      File selectedFile = jsonFiles.get(which);
+      performImport(selectedFile);
+    });
+    
+    builder.setNegativeButton("Cancel", null);
+    builder.show();
+  }
+  
+  private void performImport(File jsonFile)
+  {
+    try
+    {
+      SwipeMLDataStore dataStore = SwipeMLDataStore.getInstance(this);
+      int importedCount = dataStore.importFromJSON(jsonFile);
+      
+      if (importedCount > 0)
+      {
+        Toast.makeText(this, "Successfully imported " + importedCount + " swipe samples", 
+                      Toast.LENGTH_LONG).show();
+        
+        // Update export preference summary
+        Preference exportPref = findPreference("export_swipe_ml_data");
+        if (exportPref != null)
+        {
+          SwipeMLDataStore.DataStatistics stats = dataStore.getStatistics();
+          exportPref.setSummary("Export all collected swipe data (" + stats.totalCount + " samples)");
+        }
+      }
+      else
+      {
+        Toast.makeText(this, "No new samples imported (duplicates skipped)", Toast.LENGTH_SHORT).show();
+      }
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Import failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+      android.util.Log.e("SettingsActivity", "Failed to import ML data", e);
     }
   }
   

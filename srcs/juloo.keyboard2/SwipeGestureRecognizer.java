@@ -17,6 +17,7 @@ public class SwipeGestureRecognizer
   private long _startTime;
   private float _totalDistance;
   private KeyboardData.Key _lastKey;
+  private LoopGestureDetector _loopDetector;
   
   // Minimum distance to consider it a swipe typing gesture
   private static final float MIN_SWIPE_DISTANCE = 50.0f;
@@ -35,6 +36,17 @@ public class SwipeGestureRecognizer
     _touchedKeys = new ArrayList<>();
     _timestamps = new ArrayList<>();
     _isSwipeTyping = false;
+    // Initialize loop detector with approximate key dimensions
+    // These will be updated when actual keyboard dimensions are known
+    _loopDetector = new LoopGestureDetector(100.0f, 80.0f);
+  }
+  
+  /**
+   * Set keyboard dimensions for loop detection
+   */
+  public void setKeyboardDimensions(float keyWidth, float keyHeight)
+  {
+    _loopDetector = new LoopGestureDetector(keyWidth, keyHeight);
   }
   
   /**
@@ -235,6 +247,28 @@ public class SwipeGestureRecognizer
       }
     }
     return sb.toString();
+  }
+  
+  /**
+   * Get the enhanced key sequence with loop detection for repeated letters
+   */
+  public String getEnhancedKeySequence()
+  {
+    String baseSequence = getKeySequence();
+    if (baseSequence.isEmpty() || _swipePath.size() < 10)
+      return baseSequence;
+    
+    // Detect loops in the swipe path
+    List<LoopGestureDetector.Loop> loops = _loopDetector.detectLoops(_swipePath, _touchedKeys);
+    
+    if (loops.isEmpty())
+      return baseSequence;
+    
+    // Apply loop detection to enhance the sequence
+    String enhanced = _loopDetector.applyLoops(baseSequence, loops, _swipePath);
+    
+    // android.util.Log.d("SwipeGesture", "Enhanced sequence: " + baseSequence + " -> " + enhanced);
+    return enhanced;
   }
   
   /**

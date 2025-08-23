@@ -177,6 +177,10 @@ public class Keyboard2 extends InputMethodService
         _dtwPredictor = new DTWPredictor(_wordPredictor);
         _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
         
+        // Load and set weight configuration
+        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+        _swipeEngine.setWeightConfig(weightConfig);
+        
         // Set keyboard dimensions if available
         if (_keyboardView != null)
         {
@@ -381,6 +385,10 @@ public class Keyboard2 extends InputMethodService
         android.util.Log.d("Keyboard2", "Initializing DTW predictor in onStartInputView");
         _dtwPredictor = new DTWPredictor(_wordPredictor);
         _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
+        
+        // Load and set weight configuration
+        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+        _swipeEngine.setWeightConfig(weightConfig);
         
         // Set keyboard dimensions
         if (_keyboardView != null)
@@ -850,6 +858,11 @@ public class Keyboard2 extends InputMethodService
       }
       // Initialize engine on the fly
       _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
+      
+      // Load and set weight configuration
+      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+      _swipeEngine.setWeightConfig(weightConfig);
+      
       if (_keyboardView != null)
       {
         _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());

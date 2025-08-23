@@ -84,6 +84,14 @@ public class SwipeCalibrationActivity extends Activity
   private Button _deleteButton;
   private LinearLayout _scoreLayout;
   
+  // Real-time accuracy metrics components
+  private LinearLayout _metricsLayout;
+  private TextView _sessionAccuracyText;
+  private TextView _overallAccuracyText;
+  private TextView _wpmText;
+  private TextView _confusionPatternsText;
+  private ProgressBar _accuracyProgressBar;
+  
   // Calibration state
   private int _currentIndex = 0;
   private int _currentRep = 0;
@@ -98,6 +106,15 @@ public class SwipeCalibrationActivity extends Activity
   private int _screenHeight;
   private int _keyboardHeight;
   private DTWPredictor _dtwPredictor;
+  
+  // Accuracy metrics tracking
+  private int _sessionCorrectCount = 0;
+  private int _sessionTotalCount = 0;
+  private int _overallCorrectCount = 0;
+  private int _overallTotalCount = 0;
+  private List<Long> _swipeDurations = new ArrayList<>();
+  private Map<String, Integer> _confusionMatrix = new HashMap<>();
+  private long _sessionStartTime;
   private Handler _uiHandler;
   private Path _displayedSwipePath;
   private boolean _showingSwipeOverlay;
@@ -105,6 +122,21 @@ public class SwipeCalibrationActivity extends Activity
   private float _labelTextSize;
   private float _keyVerticalMargin;
   private float _keyHorizontalMargin;
+  
+  // Algorithm weight controls
+  private LinearLayout _weightsLayout;
+  private android.widget.SeekBar _dtwWeightSlider;
+  private android.widget.SeekBar _gaussianWeightSlider;
+  private android.widget.SeekBar _ngramWeightSlider;
+  private android.widget.SeekBar _frequencyWeightSlider;
+  private TextView _dtwWeightText;
+  private TextView _gaussianWeightText;
+  private TextView _ngramWeightText;
+  private TextView _frequencyWeightText;
+  private float _dtwWeight = 0.4f;
+  private float _gaussianWeight = 0.3f;
+  private float _ngramWeight = 0.2f;
+  private float _frequencyWeight = 0.1f;
   
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -119,6 +151,8 @@ public class SwipeCalibrationActivity extends Activity
     
     // Initialize DTW predictor for scoring
     _dtwPredictor = new DTWPredictor(null);
+    SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+    _dtwPredictor.setWeightConfig(weightConfig);
     
     // Initialize UI handler for delayed operations
     _uiHandler = new Handler();
@@ -231,6 +265,205 @@ public class SwipeCalibrationActivity extends Activity
     
     topLayout.addView(_scoreLayout);
     
+    // Real-time accuracy metrics display
+    _metricsLayout = new LinearLayout(this);
+    _metricsLayout.setOrientation(LinearLayout.VERTICAL);
+    _metricsLayout.setPadding(0, 15, 0, 10);
+    _metricsLayout.setBackgroundColor(0x33000000); // Semi-transparent background
+    
+    TextView metricsTitle = new TextView(this);
+    metricsTitle.setText("📊 Real-Time Metrics");
+    metricsTitle.setTextColor(Color.WHITE);
+    metricsTitle.setTextSize(16);
+    metricsTitle.setPadding(10, 5, 10, 5);
+    _metricsLayout.addView(metricsTitle);
+    
+    // Session accuracy
+    LinearLayout sessionAccuracyLayout = new LinearLayout(this);
+    sessionAccuracyLayout.setOrientation(LinearLayout.HORIZONTAL);
+    sessionAccuracyLayout.setPadding(10, 5, 10, 5);
+    
+    TextView sessionLabel = new TextView(this);
+    sessionLabel.setText("Session Accuracy: ");
+    sessionLabel.setTextColor(Color.GRAY);
+    sessionAccuracyLayout.addView(sessionLabel);
+    
+    _sessionAccuracyText = new TextView(this);
+    _sessionAccuracyText.setText("0%");
+    _sessionAccuracyText.setTextColor(Color.CYAN);
+    _sessionAccuracyText.setTextSize(18);
+    sessionAccuracyLayout.addView(_sessionAccuracyText);
+    
+    _metricsLayout.addView(sessionAccuracyLayout);
+    
+    // Overall accuracy with progress bar
+    LinearLayout overallAccuracyLayout = new LinearLayout(this);
+    overallAccuracyLayout.setOrientation(LinearLayout.HORIZONTAL);
+    overallAccuracyLayout.setPadding(10, 5, 10, 5);
+    
+    TextView overallLabel = new TextView(this);
+    overallLabel.setText("Overall Accuracy: ");
+    overallLabel.setTextColor(Color.GRAY);
+    overallAccuracyLayout.addView(overallLabel);
+    
+    _overallAccuracyText = new TextView(this);
+    _overallAccuracyText.setText("0%");
+    _overallAccuracyText.setTextColor(Color.GREEN);
+    _overallAccuracyText.setTextSize(18);
+    overallAccuracyLayout.addView(_overallAccuracyText);
+    
+    _metricsLayout.addView(overallAccuracyLayout);
+    
+    _accuracyProgressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+    _accuracyProgressBar.setMax(100);
+    _accuracyProgressBar.setProgress(0);
+    LinearLayout.LayoutParams progParams = new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, 10);
+    progParams.setMargins(10, 0, 10, 5);
+    _accuracyProgressBar.setLayoutParams(progParams);
+    _metricsLayout.addView(_accuracyProgressBar);
+    
+    // Words per minute
+    LinearLayout wpmLayout = new LinearLayout(this);
+    wpmLayout.setOrientation(LinearLayout.HORIZONTAL);
+    wpmLayout.setPadding(10, 5, 10, 5);
+    
+    TextView wpmLabel = new TextView(this);
+    wpmLabel.setText("Speed (WPM): ");
+    wpmLabel.setTextColor(Color.GRAY);
+    wpmLayout.addView(wpmLabel);
+    
+    _wpmText = new TextView(this);
+    _wpmText.setText("0");
+    _wpmText.setTextColor(Color.YELLOW);
+    _wpmText.setTextSize(16);
+    wpmLayout.addView(_wpmText);
+    
+    _metricsLayout.addView(wpmLayout);
+    
+    // Confusion patterns
+    _confusionPatternsText = new TextView(this);
+    _confusionPatternsText.setText("Common errors will appear here");
+    _confusionPatternsText.setTextColor(Color.LTGRAY);
+    _confusionPatternsText.setTextSize(12);
+    _confusionPatternsText.setPadding(10, 5, 10, 5);
+    _metricsLayout.addView(_confusionPatternsText);
+    
+    topLayout.addView(_metricsLayout);
+    
+    // Algorithm weight controls
+    _weightsLayout = new LinearLayout(this);
+    _weightsLayout.setOrientation(LinearLayout.VERTICAL);
+    _weightsLayout.setPadding(0, 10, 0, 10);
+    
+    TextView weightsTitle = new TextView(this);
+    weightsTitle.setText("Algorithm Weights:");
+    weightsTitle.setTextColor(Color.WHITE);
+    weightsTitle.setTextSize(14);
+    _weightsLayout.addView(weightsTitle);
+    
+    // DTW Weight
+    LinearLayout dtwLayout = new LinearLayout(this);
+    dtwLayout.setOrientation(LinearLayout.HORIZONTAL);
+    _dtwWeightText = new TextView(this);
+    _dtwWeightText.setText("DTW: 40%");
+    _dtwWeightText.setTextColor(Color.GRAY);
+    _dtwWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
+    dtwLayout.addView(_dtwWeightText);
+    _dtwWeightSlider = new android.widget.SeekBar(this);
+    _dtwWeightSlider.setMax(100);
+    _dtwWeightSlider.setProgress(40);
+    _dtwWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    _dtwWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        _dtwWeight = progress / 100.0f;
+        _dtwWeightText.setText("DTW: " + progress + "%");
+        normalizeWeights();
+      }
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+    });
+    dtwLayout.addView(_dtwWeightSlider);
+    _weightsLayout.addView(dtwLayout);
+    
+    // Gaussian Weight
+    LinearLayout gaussianLayout = new LinearLayout(this);
+    gaussianLayout.setOrientation(LinearLayout.HORIZONTAL);
+    _gaussianWeightText = new TextView(this);
+    _gaussianWeightText.setText("Gaussian: 30%");
+    _gaussianWeightText.setTextColor(Color.GRAY);
+    _gaussianWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
+    gaussianLayout.addView(_gaussianWeightText);
+    _gaussianWeightSlider = new android.widget.SeekBar(this);
+    _gaussianWeightSlider.setMax(100);
+    _gaussianWeightSlider.setProgress(30);
+    _gaussianWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    _gaussianWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        _gaussianWeight = progress / 100.0f;
+        _gaussianWeightText.setText("Gaussian: " + progress + "%");
+        normalizeWeights();
+      }
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+    });
+    gaussianLayout.addView(_gaussianWeightSlider);
+    _weightsLayout.addView(gaussianLayout);
+    
+    // N-gram Weight
+    LinearLayout ngramLayout = new LinearLayout(this);
+    ngramLayout.setOrientation(LinearLayout.HORIZONTAL);
+    _ngramWeightText = new TextView(this);
+    _ngramWeightText.setText("N-gram: 20%");
+    _ngramWeightText.setTextColor(Color.GRAY);
+    _ngramWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
+    ngramLayout.addView(_ngramWeightText);
+    _ngramWeightSlider = new android.widget.SeekBar(this);
+    _ngramWeightSlider.setMax(100);
+    _ngramWeightSlider.setProgress(20);
+    _ngramWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    _ngramWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        _ngramWeight = progress / 100.0f;
+        _ngramWeightText.setText("N-gram: " + progress + "%");
+        normalizeWeights();
+      }
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+    });
+    ngramLayout.addView(_ngramWeightSlider);
+    _weightsLayout.addView(ngramLayout);
+    
+    // Frequency Weight
+    LinearLayout freqLayout = new LinearLayout(this);
+    freqLayout.setOrientation(LinearLayout.HORIZONTAL);
+    _frequencyWeightText = new TextView(this);
+    _frequencyWeightText.setText("Frequency: 10%");
+    _frequencyWeightText.setTextColor(Color.GRAY);
+    _frequencyWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
+    freqLayout.addView(_frequencyWeightText);
+    _frequencyWeightSlider = new android.widget.SeekBar(this);
+    _frequencyWeightSlider.setMax(100);
+    _frequencyWeightSlider.setProgress(10);
+    _frequencyWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    _frequencyWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        _frequencyWeight = progress / 100.0f;
+        _frequencyWeightText.setText("Frequency: " + progress + "%");
+        normalizeWeights();
+      }
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+    });
+    freqLayout.addView(_frequencyWeightSlider);
+    _weightsLayout.addView(freqLayout);
+    
+    topLayout.addView(_weightsLayout);
+    
     // Buttons above keyboard
     LinearLayout buttonLayout = new LinearLayout(this);
     buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
@@ -275,6 +508,79 @@ public class SwipeCalibrationActivity extends Activity
     
     // Initialize calibration
     initializeCalibration();
+    
+    // Load saved weights
+    loadSavedWeights();
+  }
+  
+  /**
+   * Normalize weights to sum to 100%
+   */
+  private void normalizeWeights()
+  {
+    float total = _dtwWeight + _gaussianWeight + _ngramWeight + _frequencyWeight;
+    if (total > 0)
+    {
+      // Update display text with normalized values
+      int dtwPercent = Math.round(_dtwWeight / total * 100);
+      int gaussianPercent = Math.round(_gaussianWeight / total * 100);
+      int ngramPercent = Math.round(_ngramWeight / total * 100);
+      int freqPercent = Math.round(_frequencyWeight / total * 100);
+      
+      // Ensure they sum to 100
+      int sum = dtwPercent + gaussianPercent + ngramPercent + freqPercent;
+      if (sum != 100)
+      {
+        dtwPercent += (100 - sum);
+      }
+      
+      _dtwWeightText.setText("DTW: " + dtwPercent + "%");
+      _gaussianWeightText.setText("Gaussian: " + gaussianPercent + "%");
+      _ngramWeightText.setText("N-gram: " + ngramPercent + "%");
+      _frequencyWeightText.setText("Frequency: " + freqPercent + "%");
+    }
+    
+    // Save weights and update DTW predictor
+    saveWeights();
+    
+    // Update DTW predictor with new weights
+    SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+    weightConfig.saveWeights(_dtwWeight, _gaussianWeight, _ngramWeight, _frequencyWeight);
+    _dtwPredictor.setWeightConfig(weightConfig);
+  }
+  
+  /**
+   * Save algorithm weights to preferences
+   */
+  private void saveWeights()
+  {
+    SharedPreferences prefs = getSharedPreferences("swipe_weights", Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.putFloat("dtw_weight", _dtwWeight);
+    editor.putFloat("gaussian_weight", _gaussianWeight);
+    editor.putFloat("ngram_weight", _ngramWeight);
+    editor.putFloat("frequency_weight", _frequencyWeight);
+    editor.apply();
+  }
+  
+  /**
+   * Load saved algorithm weights
+   */
+  private void loadSavedWeights()
+  {
+    SharedPreferences prefs = getSharedPreferences("swipe_weights", Context.MODE_PRIVATE);
+    _dtwWeight = prefs.getFloat("dtw_weight", 0.4f);
+    _gaussianWeight = prefs.getFloat("gaussian_weight", 0.3f);
+    _ngramWeight = prefs.getFloat("ngram_weight", 0.2f);
+    _frequencyWeight = prefs.getFloat("frequency_weight", 0.1f);
+    
+    // Update sliders
+    _dtwWeightSlider.setProgress(Math.round(_dtwWeight * 100));
+    _gaussianWeightSlider.setProgress(Math.round(_gaussianWeight * 100));
+    _ngramWeightSlider.setProgress(Math.round(_ngramWeight * 100));
+    _frequencyWeightSlider.setProgress(Math.round(_frequencyWeight * 100));
+    
+    normalizeWeights();
   }
   
   private void initializeLogging()
@@ -295,6 +601,10 @@ public class SwipeCalibrationActivity extends Activity
   {
     _calibrationData = new HashMap<>();
     _currentSwipePoints = new ArrayList<>();
+    _sessionStartTime = System.currentTimeMillis();
+    
+    // Load overall accuracy from preferences
+    loadOverallAccuracy();
     
     // Select words from top 30% most frequent
     if (_frequentWords.isEmpty())
@@ -649,6 +959,10 @@ public class SwipeCalibrationActivity extends Activity
     if (_dtwPredictor == null || _currentWord == null)
       return;
     
+    // Track swipe duration
+    long swipeDuration = System.currentTimeMillis() - _swipeStartTime;
+    _swipeDurations.add(swipeDuration);
+    
     // Set keyboard dimensions for DTW predictor
     _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
     
@@ -679,6 +993,8 @@ public class SwipeCalibrationActivity extends Activity
     // Find ranking of correct word
     int rank = -1;
     float score = 0.0f;
+    String topPrediction = result.words.isEmpty() ? "" : result.words.get(0);
+    
     for (int i = 0; i < result.words.size(); i++)
     {
       if (result.words.get(i).equals(_currentWord))
@@ -688,6 +1004,25 @@ public class SwipeCalibrationActivity extends Activity
         break;
       }
     }
+    
+    // Update accuracy metrics
+    _sessionTotalCount++;
+    _overallTotalCount++;
+    
+    if (rank == 1)
+    {
+      _sessionCorrectCount++;
+      _overallCorrectCount++;
+    }
+    else if (!topPrediction.isEmpty())
+    {
+      // Track confusion patterns
+      String confusionKey = _currentWord + "→" + topPrediction;
+      _confusionMatrix.put(confusionKey, _confusionMatrix.getOrDefault(confusionKey, 0) + 1);
+    }
+    
+    // Update metrics display
+    updateMetricsDisplay();
     
     // Display score
     _scoreLayout.setVisibility(View.VISIBLE);
@@ -722,6 +1057,155 @@ public class SwipeCalibrationActivity extends Activity
                (rank > 0 ? "Rank #" + rank : "Not found") +
                ", Top 3: " + (result.words.size() >= 3 ?
                               result.words.subList(0, 3) : result.words));
+    
+    // Save overall accuracy periodically
+    if (_overallTotalCount % 5 == 0)
+    {
+      saveOverallAccuracy();
+    }
+  }
+  
+  /**
+   * Update the real-time metrics display
+   */
+  private void updateMetricsDisplay()
+  {
+    // Calculate session accuracy
+    float sessionAccuracy = _sessionTotalCount > 0 ? 
+      (float)_sessionCorrectCount / _sessionTotalCount * 100 : 0;
+    _sessionAccuracyText.setText(String.format("%.1f%%", sessionAccuracy));
+    
+    // Color code session accuracy
+    if (sessionAccuracy >= 80)
+      _sessionAccuracyText.setTextColor(Color.GREEN);
+    else if (sessionAccuracy >= 60)
+      _sessionAccuracyText.setTextColor(Color.YELLOW);
+    else
+      _sessionAccuracyText.setTextColor(Color.RED);
+    
+    // Calculate overall accuracy
+    float overallAccuracy = _overallTotalCount > 0 ?
+      (float)_overallCorrectCount / _overallTotalCount * 100 : 0;
+    _overallAccuracyText.setText(String.format("%.1f%%", overallAccuracy));
+    _accuracyProgressBar.setProgress(Math.round(overallAccuracy));
+    
+    // Calculate WPM (words per minute)
+    if (!_swipeDurations.isEmpty())
+    {
+      long avgDuration = 0;
+      for (Long duration : _swipeDurations)
+      {
+        avgDuration += duration;
+      }
+      avgDuration /= _swipeDurations.size();
+      
+      // Calculate WPM (60000 ms per minute / avg duration per word)
+      int wpm = avgDuration > 0 ? (int)(60000 / avgDuration) : 0;
+      _wpmText.setText(String.valueOf(wpm));
+      
+      // Color code WPM
+      if (wpm >= 40)
+        _wpmText.setTextColor(Color.GREEN);
+      else if (wpm >= 25)
+        _wpmText.setTextColor(Color.YELLOW);
+      else
+        _wpmText.setTextColor(Color.WHITE);
+    }
+    
+    // Update confusion patterns display
+    updateConfusionPatterns();
+  }
+  
+  /**
+   * Update the confusion patterns display
+   */
+  private void updateConfusionPatterns()
+  {
+    if (_confusionMatrix.isEmpty())
+    {
+      _confusionPatternsText.setText("No errors yet - great job!");
+      _confusionPatternsText.setTextColor(Color.GREEN);
+      return;
+    }
+    
+    // Find top 3 confusion patterns
+    List<Map.Entry<String, Integer>> sortedConfusions = new ArrayList<>(_confusionMatrix.entrySet());
+    Collections.sort(sortedConfusions, new Comparator<Map.Entry<String, Integer>>() {
+      @Override
+      public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
+        return b.getValue().compareTo(a.getValue());
+      }
+    });
+    
+    StringBuilder patterns = new StringBuilder("Common errors: ");
+    int count = 0;
+    for (Map.Entry<String, Integer> entry : sortedConfusions)
+    {
+      if (count >= 3) break;
+      if (count > 0) patterns.append(", ");
+      patterns.append(entry.getKey()).append(" (").append(entry.getValue()).append("×)");
+      count++;
+    }
+    
+    _confusionPatternsText.setText(patterns.toString());
+    _confusionPatternsText.setTextColor(Color.LTGRAY);
+  }
+  
+  /**
+   * Load overall accuracy from preferences
+   */
+  private void loadOverallAccuracy()
+  {
+    SharedPreferences prefs = getSharedPreferences("swipe_metrics", Context.MODE_PRIVATE);
+    _overallCorrectCount = prefs.getInt("overall_correct", 0);
+    _overallTotalCount = prefs.getInt("overall_total", 0);
+    
+    // Load confusion matrix
+    String confusionData = prefs.getString("confusion_matrix", "");
+    if (!confusionData.isEmpty())
+    {
+      String[] pairs = confusionData.split(";");
+      for (String pair : pairs)
+      {
+        String[] parts = pair.split(":");
+        if (parts.length == 2)
+        {
+          try
+          {
+            _confusionMatrix.put(parts[0], Integer.parseInt(parts[1]));
+          }
+          catch (NumberFormatException e)
+          {
+            // Ignore invalid entries
+          }
+        }
+      }
+    }
+    
+    // Update display with loaded data
+    updateMetricsDisplay();
+  }
+  
+  /**
+   * Save overall accuracy to preferences
+   */
+  private void saveOverallAccuracy()
+  {
+    SharedPreferences prefs = getSharedPreferences("swipe_metrics", Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.putInt("overall_correct", _overallCorrectCount);
+    editor.putInt("overall_total", _overallTotalCount);
+    
+    // Save confusion matrix
+    StringBuilder confusionData = new StringBuilder();
+    for (Map.Entry<String, Integer> entry : _confusionMatrix.entrySet())
+    {
+      if (confusionData.length() > 0) confusionData.append(";");
+      confusionData.append(entry.getKey()).append(":").append(entry.getValue());
+    }
+    editor.putString("confusion_matrix", confusionData.toString());
+    
+    editor.apply();
   }
   
   /**

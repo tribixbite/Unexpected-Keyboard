@@ -81,6 +81,7 @@
   </PreferenceCategory>
   <PreferenceCategory android:title="Swipe ML Data">
     <Preference android:key="export_swipe_ml_data" android:title="Export ML Data" android:summary="Export collected swipe data for training"/>
+    <Preference android:key="import_swipe_ml_data" android:title="Import ML Data" android:summary="Import swipe data from file"/>
     <Preference android:key="train_swipe_ml_model" android:title="Train ML Model" android:summary="Train swipe prediction model"/>
   </PreferenceCategory>
   <PreferenceCategory android:title="About">

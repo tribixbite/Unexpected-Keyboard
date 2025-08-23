@@ -433,6 +433,83 @@ public class SwipeMLDataStore extends SQLiteOpenHelper
   }
   
   /**
+   * Import swipe data from JSON file
+   * @param jsonFile File containing exported JSON data
+   * @return Number of records imported
+   */
+  public int importFromJSON(File jsonFile) throws IOException, JSONException
+  {
+    if (!jsonFile.exists())
+    {
+      throw new IOException("Import file does not exist: " + jsonFile.getPath());
+    }
+    
+    // Read file content
+    java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(jsonFile));
+    StringBuilder jsonContent = new StringBuilder();
+    String line;
+    while ((line = reader.readLine()) != null)
+    {
+      jsonContent.append(line);
+    }
+    reader.close();
+    
+    // Parse JSON
+    JSONObject root = new JSONObject(jsonContent.toString());
+    JSONArray swipes = root.getJSONArray("swipes");
+    
+    int importedCount = 0;
+    SQLiteDatabase db = getWritableDatabase();
+    db.beginTransaction();
+    
+    try
+    {
+      for (int i = 0; i < swipes.length(); i++)
+      {
+        JSONObject swipe = swipes.getJSONObject(i);
+        
+        // Check if trace already exists
+        String traceId = swipe.getString("trace_id");
+        Cursor cursor = db.query(TABLE_SWIPES, new String[]{COL_ID},
+          COL_TRACE_ID + "=?", new String[]{traceId},
+          null, null, null);
+        
+        if (!cursor.moveToFirst())
+        {
+          // Insert new record
+          android.content.ContentValues values = new android.content.ContentValues();
+          values.put(COL_TRACE_ID, traceId);
+          values.put(COL_TARGET_WORD, swipe.getString("target_word"));
+          values.put(COL_TIMESTAMP, swipe.getLong("timestamp_utc"));
+          values.put(COL_SOURCE, swipe.getString("source"));
+          values.put(COL_JSON_DATA, swipe.toString());
+          values.put(COL_IS_EXPORTED, 1); // Mark as already exported
+          
+          db.insert(TABLE_SWIPES, null, values);
+          importedCount++;
+        }
+        cursor.close();
+      }
+      
+      db.setTransactionSuccessful();
+      Log.d(TAG, "Imported " + importedCount + " swipe records from " + jsonFile.getName());
+    }
+    finally
+    {
+      db.endTransaction();
+    }
+    
+    // Update statistics
+    SharedPreferences prefs = _context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    int total = prefs.getInt(PREF_TOTAL_COUNT, 0);
+    editor.putInt(PREF_TOTAL_COUNT, total + importedCount);
+    editor.apply();
+    
+    return importedCount;
+  }
+  
+  /**
    * Mark all entries as exported
    */
   private void markAllAsExported()

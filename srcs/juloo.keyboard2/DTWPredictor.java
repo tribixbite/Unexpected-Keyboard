@@ -21,6 +21,7 @@ public class DTWPredictor
   private SwipePruner _pruner;
   private GaussianKeyModel _gaussianModel;
   private NgramModel _ngramModel;
+  private SwipeWeightConfig _weightConfig;
   private float _keyboardWidth = 1.0f;
   private float _keyboardHeight = 1.0f;
   
@@ -74,6 +75,15 @@ public class DTWPredictor
     _pruner = null;
     _gaussianModel = new GaussianKeyModel();
     _ngramModel = new NgramModel();
+    _weightConfig = null; // Will be set when context available
+  }
+  
+  /**
+   * Set weight configuration
+   */
+  public void setWeightConfig(SwipeWeightConfig config)
+  {
+    _weightConfig = config;
   }
   
   /**
@@ -203,14 +213,24 @@ public class DTWPredictor
       // Convert distance to score (lower distance = higher score)
       int frequency = _wordFrequencies.getOrDefault(word, 1000);
       
-      // Combined scoring with weights:
-      // 40% DTW distance, 30% Gaussian probability, 20% N-gram, 10% frequency
+      // Combined scoring with configurable weights
       float dtwScore = 1.0f / (1.0f + distance);
       float freqScore = Math.min(1.0f, frequency / 10000.0f);
-      float score = (dtwScore * 0.4f + 
-                    gaussianScore * 0.3f + 
-                    ngramScore / 100.0f * 0.2f + 
-                    freqScore * 0.1f) * 1000;
+      float ngramNorm = ngramScore / 100.0f;
+      
+      float score;
+      if (_weightConfig != null)
+      {
+        score = _weightConfig.computeWeightedScore(dtwScore, gaussianScore, ngramNorm, freqScore) * 1000;
+      }
+      else
+      {
+        // Fallback to default weights
+        score = (dtwScore * 0.4f + 
+                gaussianScore * 0.3f + 
+                ngramNorm * 0.2f + 
+                freqScore * 0.1f) * 1000;
+      }
       
       candidates.add(new WordScore(word, score, distance));
     }
@@ -424,8 +444,28 @@ public class DTWPredictor
   
   /**
    * Calculate Dynamic Time Warping distance between two paths
+   * Uses Sakoe-Chiba band optimization to reduce computation
    */
   private float calculateDTW(List<PointF> path1, List<PointF> path2)
+  {
+    int n = path1.size();
+    int m = path2.size();
+    
+    // Use optimized version for large paths
+    if (n > 50 || m > 50)
+    {
+      return calculateDTWWithBand(path1, path2);
+    }
+    
+    // Original implementation for small paths
+    return calculateDTWFull(path1, path2);
+  }
+  
+  /**
+   * Full DTW calculation without optimization
+   * Used for small paths where optimization overhead isn't worth it
+   */
+  private float calculateDTWFull(List<PointF> path1, List<PointF> path2)
   {
     int n = path1.size();
     int m = path2.size();
@@ -458,6 +498,90 @@ public class DTWPredictor
     
     // Normalize by path length
     return dtw[n][m] / Math.max(n, m);
+  }
+  
+  /**
+   * Optimized DTW with Sakoe-Chiba band
+   * Only calculates values within a band around the diagonal
+   * Reduces complexity from O(n*m) to O(n*w) where w is band width
+   */
+  private float calculateDTWWithBand(List<PointF> path1, List<PointF> path2)
+  {
+    int n = path1.size();
+    int m = path2.size();
+    
+    // Calculate band width (typically 10-20% of sequence length)
+    int bandWidth = Math.max(Math.abs(n - m), Math.min(n, m) / 5);
+    bandWidth = Math.max(bandWidth, 5); // Minimum band width
+    
+    // Create compact DTW matrix (only stores the band)
+    // Using a sliding window approach to save memory
+    float[][] dtw = new float[n + 1][2 * bandWidth + 1];
+    
+    // Initialize with MAX_VALUE
+    for (int i = 0; i <= n; i++)
+    {
+      for (int j = 0; j < 2 * bandWidth + 1; j++)
+      {
+        dtw[i][j] = Float.MAX_VALUE;
+      }
+    }
+    
+    // Set starting point
+    dtw[0][bandWidth] = 0;
+    
+    // Fill DTW matrix within the band
+    for (int i = 1; i <= n; i++)
+    {
+      // Calculate j range within the band
+      int jStart = Math.max(1, i - bandWidth);
+      int jEnd = Math.min(m, i + bandWidth);
+      
+      for (int j = jStart; j <= jEnd; j++)
+      {
+        // Map j to band index
+        int bandIndex = j - i + bandWidth;
+        if (bandIndex < 0 || bandIndex >= 2 * bandWidth + 1)
+          continue;
+        
+        float cost = distance(path1.get(i - 1), path2.get(j - 1));
+        
+        // Calculate minimum from three neighbors (if within band)
+        float minCost = Float.MAX_VALUE;
+        
+        // From (i-1, j) - insertion
+        if (i > 0 && j - (i - 1) + bandWidth >= 0 && j - (i - 1) + bandWidth < 2 * bandWidth + 1)
+        {
+          minCost = Math.min(minCost, dtw[i - 1][j - (i - 1) + bandWidth]);
+        }
+        
+        // From (i, j-1) - deletion
+        if (j > 1 && bandIndex - 1 >= 0)
+        {
+          minCost = Math.min(minCost, dtw[i][bandIndex - 1]);
+        }
+        
+        // From (i-1, j-1) - match
+        if (i > 0 && j > 0 && (j - 1) - (i - 1) + bandWidth >= 0 && 
+            (j - 1) - (i - 1) + bandWidth < 2 * bandWidth + 1)
+        {
+          minCost = Math.min(minCost, dtw[i - 1][(j - 1) - (i - 1) + bandWidth]);
+        }
+        
+        dtw[i][bandIndex] = cost + minCost;
+      }
+    }
+    
+    // Get final result
+    int finalBandIndex = m - n + bandWidth;
+    if (finalBandIndex < 0 || finalBandIndex >= 2 * bandWidth + 1)
+    {
+      // If final position is outside band, fall back to full DTW
+      return calculateDTWFull(path1, path2);
+    }
+    
+    // Normalize by path length
+    return dtw[n][finalBandIndex] / Math.max(n, m);
   }
   
   /**

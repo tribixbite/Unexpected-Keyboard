@@ -18,6 +18,7 @@ public class SwipeTypingEngine
   private final SwipeDetector _swipeDetector;
   private final SwipeScorer _scorer;
   private Config _config;
+  private SwipeWeightConfig _weightConfig;
   
   public SwipeTypingEngine(DTWPredictor dtwPredictor, WordPredictor sequencePredictor, Config config)
   {
@@ -26,11 +27,24 @@ public class SwipeTypingEngine
     _swipeDetector = new SwipeDetector();
     _scorer = new SwipeScorer();
     _config = config;
+    _weightConfig = null;
     
     // Ensure predictors have config
     if (_sequencePredictor != null)
     {
       _sequencePredictor.setConfig(config);
+    }
+  }
+  
+  /**
+   * Set weight configuration for DTW predictor
+   */
+  public void setWeightConfig(SwipeWeightConfig weightConfig)
+  {
+    _weightConfig = weightConfig;
+    if (_dtwPredictor != null)
+    {
+      _dtwPredictor.setWeightConfig(weightConfig);
     }
   }
   
