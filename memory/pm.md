@@ -276,7 +276,7 @@ gh issue create --title "Bug: ..." --body "..."
    - Duplicate detection during import
    - Statistics update after import
 
-### ✅ Completed (2025-01-23): User Interface & Performance Improvements
+### ✅ Completed (2025-01-23): Contextual Predictions & Performance
 1. **Suggestion Bar Opacity Slider** - User-configurable transparency for the word suggestion bar
    - Added IntSlideBarPreference in settings.xml (0-100% opacity)
    - Added config field suggestion_bar_opacity in Config.java
@@ -296,6 +296,19 @@ gh issue create --title "Bug: ..." --body "..."
    - Current unigram model misses contextual cues entirely
    - Bigram/trigram models would provide 50-70% accuracy improvement
    - Memory cost: 20-100MB for bigram, several hundred MB for trigram
+5. **N-gram Model Implementation** ✅ - Added contextual word predictions
+   - Created BigramModel.java with word-level bigram probabilities
+   - Includes common English bigrams (the|first, a|lot, to|be, etc.)
+   - Linear interpolation between bigram and unigram probabilities
+   - Modified WordPredictor.java to support contextual predictions
+   - Added context tracking to Keyboard2.java (maintains last 2 words)
+   - Context updated on word completion (space/punctuation) and suggestion selection
+   - getContextMultiplier() method adjusts scores based on previous words
+6. **Calibration Screen Fix** ✅ - Fixed preference type mismatch crash
+   - Fixed SwipeCalibrationActivity ClassCastException (Float vs String)
+   - Changed from getString() to getFloat() for character_size preferences
+   - Fixed key_vertical_margin and key_horizontal_margin preference access
+   - Tested and verified calibration screen now works without crashes
 
 ### 🚧 Next Steps: ML Model Development
 1. Python training script implementation
@@ -303,12 +316,7 @@ gh issue create --title "Bug: ..." --body "..."
 3. On-device model integration
 
 ### 📋 Remaining TODOs (Priority Order)
-1. **Implement N-gram Model** - Add contextual prediction using bigram/trigram
-   - Need to track previous 1-2 words for context
-   - Pass context to both WordPredictor and DTWPredictor
-   - Implement efficient data structure (trie or sorted array)
-   - Start with bigram for memory efficiency
-2. **Async Processing** - Prevent UI blocking during prediction
+1. **Async Processing** - Prevent UI blocking during prediction
    - Use thread pool for prediction tasks
    - Cancel pending predictions on new input
 3. **User Adaptation** - Learn from selection history
