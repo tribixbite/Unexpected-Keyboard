@@ -309,6 +309,21 @@ gh issue create --title "Bug: ..." --body "..."
    - Changed from getString() to getFloat() for character_size preferences
    - Fixed key_vertical_margin and key_horizontal_margin preference access
    - Tested and verified calibration screen now works without crashes
+7. **Calibration Data Loading** ✅ - Implemented calibration data usage in predictions
+   - Added loadCalibrationData() method to DTWPredictor
+   - Modified prediction algorithm to use calibration traces when available
+   - Blends calibration data (70%) with dictionary paths (30%)
+   - Applies 20% score boost to calibrated words
+   - Loads calibration data on keyboard initialization
+8. **Advanced Trainable Parameters** ✅ - Created SwipeAdvancedSettings class
+   - Gaussian model parameters (sigma X/Y factors, min probability)
+   - DTW parameters (sampling points, Sakoe-Chiba band width)
+   - Calibration blending weights and boost factors
+   - Path pruning ratios (min/max length ratios)
+   - Loop detection parameters (threshold, min points)
+   - Turning point detection threshold
+   - N-gram model parameters (smoothing, context window)
+   - All parameters have validation and persist to SharedPreferences
 
 ### 🚧 Next Steps: ML Model Development
 1. Python training script implementation
@@ -319,7 +334,7 @@ gh issue create --title "Bug: ..." --body "..."
 1. **Async Processing** - Prevent UI blocking during prediction
    - Use thread pool for prediction tasks
    - Cancel pending predictions on new input
-3. **User Adaptation** - Learn from selection history
+2. **User Adaptation** - Learn from selection history
    - Track which predictions user selects
    - Adjust word frequencies based on usage
 4. **Multi-language Support** - Extend N-gram model to other languages

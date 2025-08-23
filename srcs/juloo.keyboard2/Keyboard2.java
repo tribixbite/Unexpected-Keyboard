@@ -182,6 +182,9 @@ public class Keyboard2 extends InputMethodService
         SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
         _swipeEngine.setWeightConfig(weightConfig);
         
+        // Load calibration data to improve accuracy
+        _dtwPredictor.loadCalibrationData(this);
+        
         // Set keyboard dimensions if available
         if (_keyboardView != null)
         {
@@ -390,6 +393,9 @@ public class Keyboard2 extends InputMethodService
         // Load and set weight configuration
         SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
         _swipeEngine.setWeightConfig(weightConfig);
+        
+        // Load calibration data to improve accuracy
+        _dtwPredictor.loadCalibrationData(this);
         
         // Set keyboard dimensions
         if (_keyboardView != null)

@@ -153,6 +153,7 @@ public class SwipeCalibrationActivity extends Activity
     _dtwPredictor = new DTWPredictor(null);
     SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
     _dtwPredictor.setWeightConfig(weightConfig);
+    // Note: Don't load calibration data here as DTW predictor needs keyboard dimensions first
     
     // Initialize UI handler for delayed operations
     _uiHandler = new Handler();
@@ -952,6 +953,7 @@ public class SwipeCalibrationActivity extends Activity
     
     // Set keyboard dimensions for DTW predictor
     _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+    _dtwPredictor.loadCalibrationData(this); // Load calibration data after setting dimensions
     
     // Get touched keys from keyboard view
     List<KeyboardData.Key> touchedKeys = new ArrayList<>();

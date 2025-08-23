@@ -24,6 +24,7 @@ public class DTWPredictor
   private SwipeWeightConfig _weightConfig;
   private float _keyboardWidth = 1.0f;
   private float _keyboardHeight = 1.0f;
+  private Map<String, List<List<PointF>>> _calibrationData; // Store calibration traces per word
   
   // Number of points to sample/resample gestures to for consistent comparison.
   // FlorisBoard uses 200 points - this is CRITICAL for accuracy.
@@ -76,6 +77,7 @@ public class DTWPredictor
     _gaussianModel = new GaussianKeyModel();
     _ngramModel = new NgramModel();
     _weightConfig = null; // Will be set when context available
+    _calibrationData = new HashMap<>();
   }
   
   /**
@@ -84,6 +86,55 @@ public class DTWPredictor
   public void setWeightConfig(SwipeWeightConfig config)
   {
     _weightConfig = config;
+  }
+  
+  /**
+   * Load calibration data from the ML data store
+   * This loads user-specific swipe patterns to improve accuracy
+   */
+  public void loadCalibrationData(Context context)
+  {
+    try
+    {
+      juloo.keyboard2.ml.SwipeMLDataStore dataStore = 
+        juloo.keyboard2.ml.SwipeMLDataStore.getInstance(context);
+      
+      // Load calibration samples
+      List<juloo.keyboard2.ml.SwipeMLData> calibrationSamples = 
+        dataStore.loadDataBySource("calibration");
+      
+      _calibrationData.clear();
+      
+      for (juloo.keyboard2.ml.SwipeMLData sample : calibrationSamples)
+      {
+        String word = sample.getTargetWord().toLowerCase();
+        
+        // Convert ML data trace to PointF list
+        List<PointF> trace = new ArrayList<>();
+        for (juloo.keyboard2.ml.SwipeMLData.TracePoint point : sample.getTracePoints())
+        {
+          // Already normalized in SwipeMLData (x and y are 0-1)
+          float normX = point.x;
+          float normY = point.y;
+          trace.add(new PointF(normX, normY));
+        }
+        
+        // Add to calibration data
+        if (!_calibrationData.containsKey(word))
+        {
+          _calibrationData.put(word, new ArrayList<>());
+        }
+        _calibrationData.get(word).add(trace);
+      }
+      
+      android.util.Log.d("DTWPredictor", "Loaded calibration data for " + 
+                         _calibrationData.size() + " words with " + 
+                         calibrationSamples.size() + " total samples");
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("DTWPredictor", "Error loading calibration data", e);
+    }
   }
   
   /**
@@ -204,7 +255,34 @@ public class DTWPredictor
       
       // Calculate DTW distance
       PerformanceProfiler.start("DTW.calculateDTW");
-      float distance = calculateDTW(normalizedPath, wordPath);
+      float distance;
+      
+      // Check if we have calibration data for this word
+      if (_calibrationData.containsKey(word))
+      {
+        // Use calibration data - find best matching trace
+        List<List<PointF>> calibrationTraces = _calibrationData.get(word);
+        float minDistance = Float.MAX_VALUE;
+        
+        for (List<PointF> calibrationTrace : calibrationTraces)
+        {
+          float calibDist = calculateDTW(normalizedPath, calibrationTrace);
+          minDistance = Math.min(minDistance, calibDist);
+        }
+        
+        // Blend calibration distance with dictionary distance
+        float dictDistance = calculateDTW(normalizedPath, wordPath);
+        // Give more weight to calibration data (70% calibration, 30% dictionary)
+        distance = minDistance * 0.7f + dictDistance * 0.3f;
+        
+        // Boost score for calibrated words
+        distance = distance * 0.8f; // 20% boost
+      }
+      else
+      {
+        // No calibration data, use dictionary path
+        distance = calculateDTW(normalizedPath, wordPath);
+      }
       PerformanceProfiler.end("DTW.calculateDTW");
       
       // Calculate Gaussian probability score
