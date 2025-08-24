@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import juloo.keyboard2.DirectBootAwarePreferences;
+import juloo.keyboard2.FoldStateTracker;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -23,6 +25,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -64,11 +68,12 @@ public class SwipeCalibrationActivity extends Activity
   private List<String> _frequentWords = new ArrayList<>();
   private Map<String, Integer> _wordFrequencies = new HashMap<>();
   
-  // QWERTY layout with actual key positions
+  // QWERTY layout with actual key positions - 4 rows including bottom row
   private static final String[][] KEYBOARD_LAYOUT = {
     {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"},
     {"a", "s", "d", "f", "g", "h", "j", "k", "l"},
-    {"z", "x", "c", "v", "b", "n", "m"}
+    {"shift", "z", "x", "c", "v", "b", "n", "m", "backspace"},
+    {"?123", ",", "space", ".", "enter"}
   };
   
   // UI Components
@@ -82,6 +87,7 @@ public class SwipeCalibrationActivity extends Activity
   private Button _skipButton;
   private Button _saveButton;
   private Button _deleteButton;
+  private Button _exportButton;
   private LinearLayout _scoreLayout;
   
   // Real-time accuracy metrics components
@@ -100,6 +106,7 @@ public class SwipeCalibrationActivity extends Activity
   private Map<String, List<SwipePattern>> _calibrationData;
   private BufferedWriter _logWriter;
   private List<PointF> _currentSwipePoints;
+  private List<Long> _currentSwipeTimestamps;
   private long _swipeStartTime;
   private SwipeMLDataStore _mlDataStore;
   private int _screenWidth;
@@ -167,22 +174,60 @@ public class SwipeCalibrationActivity extends Activity
     _screenWidth = metrics.widthPixels;
     _screenHeight = metrics.heightPixels;
     
-    // Load user's keyboard configuration from preferences
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    // Load user's keyboard configuration from proper device-protected preferences
+    // Use DirectBootAwarePreferences to match the main keyboard's storage location
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+    
+    // Debug: Log all preference keys and values
+    Log.d(TAG, "=== DEBUG: Reading preferences ===");
+    Log.d(TAG, "Preference keys found: " + prefs.getAll().keySet());
+    Log.d(TAG, "All preferences: " + prefs.getAll());
+    
+    // Try to read keyboard_height in different ways
+    try {
+      int kh = prefs.getInt("keyboard_height", -1);
+      Log.d(TAG, "keyboard_height as int: " + kh);
+    } catch (Exception e) {
+      Log.d(TAG, "Failed to read keyboard_height as int: " + e.getMessage());
+      try {
+        String kh = prefs.getString("keyboard_height", "null");
+        Log.d(TAG, "keyboard_height as string: " + kh);
+      } catch (Exception e2) {
+        Log.d(TAG, "Failed to read keyboard_height as string: " + e2.getMessage());
+      }
+    }
+    
+    // Check for foldable device state
+    FoldStateTracker foldTracker = new FoldStateTracker(this);
+    boolean foldableUnfolded = foldTracker.isUnfolded();
+    Log.d(TAG, "Foldable device unfolded: " + foldableUnfolded);
     
     // Get keyboard height percentage from user settings
-    int keyboardHeightPref = prefs.getInt("keyboard_height", 35);
     // Check for landscape mode
     boolean isLandscape = getResources().getConfiguration().orientation == 
                           android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    Log.d(TAG, "Is landscape: " + isLandscape);
+    
+    int keyboardHeightPref;
     if (isLandscape)
     {
-      keyboardHeightPref = prefs.getInt("keyboard_height_landscape", 50);
+      // Check for foldable unfolded state first, then regular landscape
+      String key = foldableUnfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape";
+      keyboardHeightPref = prefs.getInt(key, 50);
+      Log.d(TAG, "Reading landscape height from key '" + key + "': " + keyboardHeightPref);
+    }
+    else
+    {
+      // Check for foldable unfolded state first, then regular portrait
+      String key = foldableUnfolded ? "keyboard_height_unfolded" : "keyboard_height";
+      keyboardHeightPref = prefs.getInt(key, 35);
+      Log.d(TAG, "Reading portrait height from key '" + key + "': " + keyboardHeightPref);
     }
     
     // Calculate keyboard height
     float keyboardHeightPercent = keyboardHeightPref / 100.0f;
     _keyboardHeight = (int)(_screenHeight * keyboardHeightPercent);
+    Log.d(TAG, "Calculated keyboard height: " + _keyboardHeight + " pixels (" + keyboardHeightPref + "% of " + _screenHeight + ")");
     
     // Load user's text and margin settings
     _characterSize = prefs.getFloat("character_size", 1.15f);
@@ -481,6 +526,11 @@ public class SwipeCalibrationActivity extends Activity
     _deleteButton.setOnClickListener(v -> confirmDeleteSamples());
     buttonLayout.addView(_deleteButton);
     
+    _exportButton = new Button(this);
+    _exportButton.setText("Export to Clipboard");
+    _exportButton.setOnClickListener(v -> exportToClipboard());
+    buttonLayout.addView(_exportButton);
+    
     topLayout.addView(buttonLayout);
     mainLayout.addView(topLayout);
     
@@ -542,7 +592,8 @@ public class SwipeCalibrationActivity extends Activity
    */
   private void saveWeights()
   {
-    SharedPreferences prefs = getSharedPreferences("swipe_weights", Context.MODE_PRIVATE);
+    // Use device-protected storage for weights to be consistent
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     SharedPreferences.Editor editor = prefs.edit();
     editor.putFloat("dtw_weight", _dtwWeight);
     editor.putFloat("gaussian_weight", _gaussianWeight);
@@ -556,7 +607,8 @@ public class SwipeCalibrationActivity extends Activity
    */
   private void loadSavedWeights()
   {
-    SharedPreferences prefs = getSharedPreferences("swipe_weights", Context.MODE_PRIVATE);
+    // Use device-protected storage for weights to be consistent
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     _dtwWeight = prefs.getFloat("dtw_weight", 0.4f);
     _gaussianWeight = prefs.getFloat("gaussian_weight", 0.3f);
     _ngramWeight = prefs.getFloat("ngram_weight", 0.2f);
@@ -589,15 +641,18 @@ public class SwipeCalibrationActivity extends Activity
   {
     _calibrationData = new HashMap<>();
     _currentSwipePoints = new ArrayList<>();
+    _currentSwipeTimestamps = new ArrayList<>();
     _sessionStartTime = System.currentTimeMillis();
     
     // Load overall accuracy from preferences
     loadOverallAccuracy();
     
     // Select words from top 30% most frequent
+    Log.d(TAG, "Selecting calibration words. Dictionary size: " + _frequentWords.size());
     if (_frequentWords.isEmpty())
     {
       // Fallback if dictionary didn't load
+      Log.w(TAG, "Dictionary is empty! Using fallback words");
       _sessionWords = new ArrayList<>(FALLBACK_WORDS);
       Collections.shuffle(_sessionWords);
       _sessionWords = _sessionWords.subList(0, Math.min(WORDS_PER_SESSION, _sessionWords.size()));
@@ -675,24 +730,17 @@ public class SwipeCalibrationActivity extends Activity
     _calibrationData.get(_currentWord).add(pattern);
     
     // Create ML data object with actual keyboard dimensions
-    // Get keyboard view position on screen for accurate coordinates
-    int[] location = new int[2];
-    _keyboardView.getLocationOnScreen(location);
-    int keyboardY = location[1];
-    
     SwipeMLData mlData = new SwipeMLData(_currentWord, "calibration",
                                          _screenWidth, _screenHeight, _keyboardHeight);
     
-    // Add trace points with timestamps and normalized to keyboard space
-    long startTime = _swipeStartTime;
-    for (int i = 0; i < points.size(); i++)
+    // Add trace points with actual timestamps in keyboard-relative coordinates
+    for (int i = 0; i < points.size() && i < _currentSwipeTimestamps.size(); i++)
     {
       PointF p = points.get(i);
-      // Estimate timestamp based on linear interpolation
-      long timestamp = startTime + (duration * i / Math.max(1, points.size() - 1));
+      long timestamp = _currentSwipeTimestamps.get(i);
       
-      // Store both absolute coordinates and keyboard-relative coordinates
-      mlData.addRawPoint(p.x, p.y + keyboardY, timestamp);
+      // Store keyboard-relative coordinates (already relative from KeyboardView)
+      mlData.addRawPoint(p.x, p.y, timestamp);
       
       // Add registered key
       String key = _keyboardView.getKeyAt(p.x, p.y);
@@ -702,7 +750,8 @@ public class SwipeCalibrationActivity extends Activity
       }
     }
     
-    // Add keyboard dimensions metadata
+    // Add keyboard dimensions metadata (keyboard is at bottom, so Y is screenHeight - keyboardHeight)
+    int keyboardY = _screenHeight - _keyboardHeight;
     mlData.setKeyboardDimensions(_screenWidth, _keyboardHeight, keyboardY);
     
     // Store ML data
@@ -768,7 +817,8 @@ public class SwipeCalibrationActivity extends Activity
   
   private void saveCalibrationData()
   {
-    SharedPreferences prefs = getSharedPreferences("swipe_calibration", Context.MODE_PRIVATE);
+    // Use device-protected storage for calibration data
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     SharedPreferences.Editor editor = prefs.edit();
     
     // Save calibration data
@@ -839,7 +889,7 @@ public class SwipeCalibrationActivity extends Activity
     try
     {
       BufferedReader reader = new BufferedReader(
-        new InputStreamReader(getAssets().open("dictionaries/en_US_enhanced.txt")));
+        new InputStreamReader(getAssets().open("dictionaries/en_enhanced.txt")));
       
       List<WordFrequency> wordList = new ArrayList<>();
       String line;
@@ -870,10 +920,15 @@ public class SwipeCalibrationActivity extends Activity
       _dtwPredictor.loadDictionary(_wordFrequencies);
       
       Log.d(TAG, "Loaded " + _frequentWords.size() + " words from dictionary");
+      if (_frequentWords.size() > 0)
+      {
+        Log.d(TAG, "First 20 frequent words: " + _frequentWords.subList(0, Math.min(20, _frequentWords.size())));
+      }
     }
     catch (IOException e)
     {
-      Log.e(TAG, "Failed to load dictionary: " + e.getMessage());
+      Log.e(TAG, "Failed to load dictionary: " + e.getMessage(), e);
+      e.printStackTrace();
       _frequentWords.clear();
     }
   }
@@ -898,6 +953,78 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
+   * Export calibration data to clipboard for debugging
+   */
+  private void exportToClipboard()
+  {
+    try
+    {
+      // Create JSON export of calibration data
+      StringBuilder export = new StringBuilder();
+      export.append("{\n");
+      export.append("  \"timestamp\": ").append(System.currentTimeMillis()).append(",\n");
+      export.append("  \"keyboard_height\": ").append(_keyboardHeight).append(",\n");
+      export.append("  \"screen_width\": ").append(_screenWidth).append(",\n");
+      export.append("  \"screen_height\": ").append(_screenHeight).append(",\n");
+      export.append("  \"weights\": {\n");
+      export.append("    \"dtw\": ").append(_dtwWeight).append(",\n");
+      export.append("    \"gaussian\": ").append(_gaussianWeight).append(",\n");
+      export.append("    \"ngram\": ").append(_ngramWeight).append(",\n");
+      export.append("    \"frequency\": ").append(_frequencyWeight).append("\n");
+      export.append("  },\n");
+      export.append("  \"calibration_data\": [\n");
+      
+      boolean first = true;
+      for (Map.Entry<String, List<SwipePattern>> entry : _calibrationData.entrySet())
+      {
+        String word = entry.getKey();
+        for (SwipePattern pattern : entry.getValue())
+        {
+          if (!first) export.append(",\n");
+          export.append("    {\n");
+          export.append("      \"word\": \"").append(word).append("\",\n");
+          export.append("      \"duration\": ").append(pattern.duration).append(",\n");
+          export.append("      \"points\": [");
+          
+          boolean firstPoint = true;
+          for (PointF p : pattern.points)
+          {
+            if (!firstPoint) export.append(", ");
+            export.append("[").append(p.x).append(", ").append(p.y).append("]");
+            firstPoint = false;
+          }
+          
+          export.append("]\n");
+          export.append("    }");
+          first = false;
+        }
+      }
+      
+      export.append("\n  ],\n");
+      export.append("  \"accuracy_metrics\": {\n");
+      export.append("    \"session_correct\": ").append(_sessionCorrectCount).append(",\n");
+      export.append("    \"session_total\": ").append(_sessionTotalCount).append(",\n");
+      export.append("    \"overall_correct\": ").append(_overallCorrectCount).append(",\n");
+      export.append("    \"overall_total\": ").append(_overallTotalCount).append("\n");
+      export.append("  }\n");
+      export.append("}");
+      
+      // Copy to clipboard
+      ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+      ClipData clip = ClipData.newPlainText("Swipe Calibration Data", export.toString());
+      clipboard.setPrimaryClip(clip);
+      
+      Toast.makeText(this, "Calibration data exported to clipboard", Toast.LENGTH_LONG).show();
+      logMessage("Calibration data exported to clipboard: " + export.length() + " bytes");
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Failed to export calibration data: " + e.getMessage());
+      Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    }
+  }
+  
+  /**
    * Delete all stored calibration samples
    */
   private void deleteStoredSamples()
@@ -905,8 +1032,8 @@ public class SwipeCalibrationActivity extends Activity
     // Clear ML data store
     _mlDataStore.clearAllData();
     
-    // Clear SharedPreferences
-    SharedPreferences prefs = getSharedPreferences("swipe_calibration", Context.MODE_PRIVATE);
+    // Clear SharedPreferences from device-protected storage
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     prefs.edit().clear().apply();
     
     // Clear current session data
@@ -951,25 +1078,32 @@ public class SwipeCalibrationActivity extends Activity
     long swipeDuration = System.currentTimeMillis() - _swipeStartTime;
     _swipeDurations.add(swipeDuration);
     
-    // Set keyboard dimensions for DTW predictor
-    _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
-    _dtwPredictor.loadCalibrationData(this); // Load calibration data after setting dimensions
+    // Ensure DTW predictor is properly initialized before use
+    if (_keyboardView.getWidth() > 0 && _keyboardView.getHeight() > 0)
+    {
+      _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+      _dtwPredictor.loadCalibrationData(this);
+    }
     
-    // Get touched keys from keyboard view
+    // Get touched keys from keyboard view with position data
     List<KeyboardData.Key> touchedKeys = new ArrayList<>();
+    Map<String, KeyButton> keyPositions = _keyboardView.getKeyPositions();
+    
     for (PointF p : points)
     {
       String keyChar = _keyboardView.getKeyAt(p.x, p.y);
-      if (keyChar != null)
+      if (keyChar != null && keyPositions.containsKey(keyChar))
       {
-        // Create a simple Key object for DTW predictor
+        KeyButton keyButton = keyPositions.get(keyChar);
+        // Create a Key object with position data for DTW predictor
         KeyValue kv = KeyValue.makeStringKey(keyChar);
+        // Store position in shift and width for DTW to use
         KeyboardData.Key key = new KeyboardData.Key(
           new KeyValue[]{kv, null, null, null, null},
           null, // anticircle
           0,    // flags
-          1.0f, // width
-          0.0f, // shift
+          keyButton.width / _keyboardView.getWidth(), // normalized width
+          keyButton.x / _keyboardView.getWidth(), // normalized x position in shift
           null  // indication
         );
         touchedKeys.add(key);
@@ -1145,7 +1279,8 @@ public class SwipeCalibrationActivity extends Activity
    */
   private void loadOverallAccuracy()
   {
-    SharedPreferences prefs = getSharedPreferences("swipe_metrics", Context.MODE_PRIVATE);
+    // Use device-protected storage for metrics
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     _overallCorrectCount = prefs.getInt("overall_correct", 0);
     _overallTotalCount = prefs.getInt("overall_total", 0);
     
@@ -1180,7 +1315,8 @@ public class SwipeCalibrationActivity extends Activity
    */
   private void saveOverallAccuracy()
   {
-    SharedPreferences prefs = getSharedPreferences("swipe_metrics", Context.MODE_PRIVATE);
+    // Use device-protected storage for metrics
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     SharedPreferences.Editor editor = prefs.edit();
     editor.putInt("overall_correct", _overallCorrectCount);
     editor.putInt("overall_total", _overallTotalCount);
@@ -1311,7 +1447,7 @@ public class SwipeCalibrationActivity extends Activity
       
       // Use user's configuration for dimensions
       float keyWidth = width / 10f;
-      float rowHeight = height / 3f; // 3 rows for QWERTY
+      float rowHeight = height / 4f; // 4 rows now including bottom row
       float verticalMargin = _keyVerticalMargin * rowHeight;
       float horizontalMargin = _keyHorizontalMargin * keyWidth;
       
@@ -1327,21 +1463,87 @@ public class SwipeCalibrationActivity extends Activity
       float textSize = baseSize * characterSize * labelTextSize;
       _textPaint.setTextSize(textSize);
       
-      // Layout QWERTY keyboard
+      // Layout QWERTY keyboard with 4 rows
       for (int row = 0; row < KEYBOARD_LAYOUT.length; row++)
       {
         String[] rowKeys = KEYBOARD_LAYOUT[row];
-        float rowOffset = row == 1 ? keyWidth * 0.5f : (row == 2 ? keyWidth : 0);
         
-        for (int col = 0; col < rowKeys.length; col++)
+        if (row == 0) // Top row - numbers row (q-p)
         {
-          String key = rowKeys[col];
-          float x = rowOffset + col * keyWidth + horizontalMargin / 2;
-          float y = row * rowHeight + verticalMargin / 2;
-          
-          KeyButton button = new KeyButton(key, x, y, 
-            keyWidth - horizontalMargin, rowHeight - verticalMargin);
-          _keys.put(key, button);
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float x = col * keyWidth + horizontalMargin / 2;
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, x, y, 
+              keyWidth - horizontalMargin, rowHeight - verticalMargin);
+            _keys.put(key, button);
+          }
+        }
+        else if (row == 1) // Second row (a-l) - offset by half key
+        {
+          float rowOffset = keyWidth * 0.5f;
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float x = rowOffset + col * keyWidth + horizontalMargin / 2;
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, x, y, 
+              keyWidth - horizontalMargin, rowHeight - verticalMargin);
+            _keys.put(key, button);
+          }
+        }
+        else if (row == 2) // Third row (shift, z-m, backspace)
+        {
+          float currentX = horizontalMargin / 2;
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float keyW = keyWidth - horizontalMargin;
+            
+            // Special keys are wider
+            if (key.equals("shift") || key.equals("backspace"))
+            {
+              keyW = keyWidth * 1.5f - horizontalMargin;
+            }
+            
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, currentX, y, 
+              keyW, rowHeight - verticalMargin);
+            _keys.put(key, button);
+            
+            currentX += keyW + horizontalMargin;
+          }
+        }
+        else if (row == 3) // Bottom row (?123, comma, space, period, enter)
+        {
+          float currentX = horizontalMargin / 2;
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float keyW = keyWidth - horizontalMargin;
+            
+            // Special key widths
+            if (key.equals("space"))
+            {
+              keyW = keyWidth * 5f - horizontalMargin; // Space bar is 5 keys wide
+            }
+            else if (key.equals("?123") || key.equals("enter"))
+            {
+              keyW = keyWidth * 1.5f - horizontalMargin;
+            }
+            
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, currentX, y, 
+              keyW, rowHeight - verticalMargin);
+            _keys.put(key, button);
+            
+            currentX += keyW + horizontalMargin;
+          }
         }
       }
     }
@@ -1385,6 +1587,8 @@ public class SwipeCalibrationActivity extends Activity
           _swipePath.moveTo(x, y);
           _swipePoints.clear();
           _swipePoints.add(new PointF(x, y));
+          _currentSwipeTimestamps.clear();
+          _currentSwipeTimestamps.add(System.currentTimeMillis());
           invalidate();
           return true;
           
@@ -1393,6 +1597,7 @@ public class SwipeCalibrationActivity extends Activity
           {
             _swipePath.lineTo(x, y);
             _swipePoints.add(new PointF(x, y));
+            _currentSwipeTimestamps.add(System.currentTimeMillis());
             invalidate();
           }
           return true;
@@ -1405,6 +1610,7 @@ public class SwipeCalibrationActivity extends Activity
             {
               recordSwipe(new ArrayList<>(_swipePoints));
             }
+            _currentSwipeTimestamps.clear();
           }
           return true;
       }
@@ -1416,6 +1622,7 @@ public class SwipeCalibrationActivity extends Activity
     {
       _swipePath.reset();
       _swipePoints.clear();
+      _currentSwipeTimestamps.clear();
       _overlayPath = null;
       invalidate();
     }
@@ -1443,12 +1650,17 @@ public class SwipeCalibrationActivity extends Activity
       }
       return null;
     }
+    
+    public Map<String, KeyButton> getKeyPositions()
+    {
+      return new HashMap<>(_keys);
+    }
   }
   
   /**
    * Represents a keyboard key
    */
-  private static class KeyButton
+  static class KeyButton
   {
     String label;
     float x, y, width, height;
@@ -1473,8 +1685,36 @@ public class SwipeCalibrationActivity extends Activity
       canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint);
       
       // Draw text centered properly (accounting for text metrics)
+      String displayLabel = label;
+      
+      // Handle special key labels
+      if (label.equals("space"))
+      {
+        displayLabel = " "; // Space bar typically has no label or just a space
+      }
+      else if (label.equals("shift"))
+      {
+        displayLabel = "⇧"; // Shift arrow symbol
+      }
+      else if (label.equals("backspace"))
+      {
+        displayLabel = "⌫"; // Backspace symbol
+      }
+      else if (label.equals("enter"))
+      {
+        displayLabel = "↵"; // Enter/return symbol
+      }
+      else if (label.equals("?123"))
+      {
+        displayLabel = "?123"; // Keep as is
+      }
+      else
+      {
+        displayLabel = label.toUpperCase(); // Regular keys in uppercase
+      }
+      
       float textY = y + (height - textPaint.ascent() - textPaint.descent()) / 2f;
-      canvas.drawText(label.toUpperCase(), x + width / 2, textY, textPaint);
+      canvas.drawText(displayLabel, x + width / 2, textY, textPaint);
     }
     
     boolean contains(float px, float py)

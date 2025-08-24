@@ -541,3 +541,88 @@ adb shell dumpsys batterystats --charged juloo.keyboard2.debug
 - `WordPredictor.java` - Dictionary-based word prediction
 - Opt-in data collection
 - No personal information in exports
+## Latest Updates (2025-08-23)
+
+### Critical Calibration Fix
+Fixed major issue where calibration wasn't producing accurate predictions regardless of weight adjustments.
+
+#### Root Causes Identified (with Gemini AI analysis):
+1. **Coordinate Space Mismatch** - Calibration was recording absolute screen coordinates with Y offset, but DTW predictor expected keyboard-relative coordinates
+2. **Missing Key Position Data** - Key objects passed to DTW predictor had no position information, only character values
+3. **Initialization Order Bug** - DTW predictor dimensions and calibration data loaded after prediction attempt
+4. **Timestamp Interpolation** - Linear interpolation didn't capture actual swipe dynamics
+
+#### Fixes Implemented:
+- ✅ Changed to keyboard-relative coordinate system throughout
+- ✅ Added key position data to DTW predictor Key objects
+- ✅ Fixed initialization order in onCreate() and calculateAndShowScore()
+- ✅ Captured actual timestamps from touch events instead of interpolating
+- ✅ Added calibration data export to clipboard for debugging
+- ✅ Verified keyboard height respects user settings (was already correct)
+
+#### Next Steps:
+- [ ] Test on device to verify improved predictions
+- [ ] Fine-tune weight parameters with working coordinate system
+- [ ] Consider adding more sophisticated calibration word selection
+
+### Files Modified:
+- `srcs/juloo.keyboard2/SwipeCalibrationActivity.java` - Major refactor of coordinate handling
+
+### Keyboard Height Fix (2025-08-23 - Part 2)
+
+#### Root Cause Identified (with Gemini Expert Analysis):
+The calibration activity was using the WRONG SharedPreferences storage location!
+
+**The Problem**: 
+- SwipeCalibrationActivity used `PreferenceManager.getDefaultSharedPreferences(this)`
+- Main keyboard uses `DirectBootAwarePreferences.get_shared_preferences(this)` 
+- On Android 24+, these are COMPLETELY DIFFERENT storage locations:
+  - Default preferences: credential-protected storage (only accessible after unlock)
+  - DirectBootAware preferences: device-protected storage (accessible before unlock for IME)
+
+**Additional Issues Found**:
+- Missing foldable device state handling
+- Not checking all 4 possible preference keys:
+  - keyboard_height
+  - keyboard_height_landscape
+  - keyboard_height_unfolded
+  - keyboard_height_landscape_unfolded
+
+#### Fix Implemented:
+- ✅ Changed all SharedPreferences usage to DirectBootAwarePreferences.get_shared_preferences()
+- ✅ Added FoldStateTracker to detect foldable device state
+- ✅ Now checking all 4 preference keys based on orientation and fold state
+- ✅ Applied fix to all preference operations (weights, calibration data, metrics)
+
+### Complete List of Fixes Today:
+1. Coordinate space mismatch - FIXED
+2. Missing key position data - FIXED
+3. DTW initialization order - FIXED
+4. Timestamp interpolation - FIXED
+5. SharedPreferences storage location - FIXED
+6. Foldable device support - FIXED
+7. Export to clipboard - ADDED
+
+The calibration activity should now properly respect user keyboard height settings and provide accurate swipe predictions!
+
+## Async Prediction Implementation (2025-08-24)
+
+### Completed Features
+- ✅ Created AsyncPredictionHandler class with dedicated worker thread
+- ✅ Implemented request cancellation for new swipe inputs
+- ✅ Added callback interface for prediction results
+- ✅ Integrated async handler into Keyboard2 service
+- ✅ Modified handleSwipeTyping to use async predictions
+- ✅ Added proper cleanup in onDestroy
+
+### Benefits
+- **No UI blocking**: Predictions run on separate thread
+- **Responsive typing**: New swipes cancel pending predictions
+- **Better performance**: UI remains smooth during complex predictions
+- **Fallback support**: Synchronous mode still available as backup
+
+### Technical Details
+- Uses HandlerThread for worker thread management
+- Atomic request IDs for cancellation tracking
+- Main thread callbacks for UI updates
+- Thread-safe message passing between threads

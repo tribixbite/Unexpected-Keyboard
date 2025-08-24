@@ -59,6 +59,7 @@ public class Keyboard2 extends InputMethodService
   private WordPredictor _wordPredictor;
   private DTWPredictor _dtwPredictor;
   private SwipeTypingEngine _swipeEngine;
+  private AsyncPredictionHandler _asyncPredictionHandler;
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
   private StringBuilder _currentWord = new StringBuilder();
@@ -182,6 +183,9 @@ public class Keyboard2 extends InputMethodService
         SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
         _swipeEngine.setWeightConfig(weightConfig);
         
+        // Initialize async prediction handler
+        _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
+        
         // Load calibration data to improve accuracy
         _dtwPredictor.loadCalibrationData(this);
         
@@ -201,6 +205,13 @@ public class Keyboard2 extends InputMethodService
     super.onDestroy();
 
     _foldStateTracker.close();
+    
+    // Cleanup async prediction handler
+    if (_asyncPredictionHandler != null)
+    {
+      _asyncPredictionHandler.shutdown();
+      _asyncPredictionHandler = null;
+    }
   }
 
   private List<InputMethodSubtype> getEnabledSubtypes(InputMethodManager imm)
@@ -393,6 +404,9 @@ public class Keyboard2 extends InputMethodService
         // Load and set weight configuration
         SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
         _swipeEngine.setWeightConfig(weightConfig);
+        
+        // Initialize async prediction handler
+        _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
         
         // Load calibration data to improve accuracy
         _dtwPredictor.loadCalibrationData(this);
@@ -712,6 +726,48 @@ public class Keyboard2 extends InputMethodService
     android.util.Log.d("Keyboard2", "Context updated: " + _contextWords);
   }
   
+  /**
+   * Handle prediction results from async prediction handler
+   */
+  private void handlePredictionResults(List<String> predictions, List<Float> scores)
+  {
+    android.util.Log.d("Keyboard2", "Got " + predictions.size() + " async predictions");
+    
+    if (predictions.isEmpty())
+    {
+      android.util.Log.d("Keyboard2", "No predictions to show");
+      if (_suggestionBar != null)
+      {
+        _suggestionBar.clearSuggestions();
+      }
+      return;
+    }
+    
+    // Log predictions for debugging
+    for (int i = 0; i < Math.min(5, predictions.size()); i++)
+    {
+      android.util.Log.d("Keyboard2", String.format("Prediction %d: %s (score: %.3f)", 
+                                                     i + 1, predictions.get(i), 
+                                                     i < scores.size() ? scores.get(i) : 0.0f));
+    }
+    
+    // Update suggestion bar (convert Float scores to Integer)
+    if (_suggestionBar != null)
+    {
+      android.util.Log.d("Keyboard2", "Setting suggestions in bar: " + predictions);
+      _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
+      
+      // Convert Float scores to Integer
+      List<Integer> intScores = new ArrayList<>();
+      for (Float score : scores)
+      {
+        intScores.add(Math.round(score));
+      }
+      _suggestionBar.setSuggestionsWithScores(predictions, intScores);
+      android.util.Log.d("Keyboard2", "===== ASYNC SWIPE PREDICTION END =====");
+    }
+  }
+  
   @Override
   public void onSuggestionSelected(String word)
   {
@@ -910,6 +966,12 @@ public class Keyboard2 extends InputMethodService
       SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
       _swipeEngine.setWeightConfig(weightConfig);
       
+      // Initialize async handler if not already done
+      if (_asyncPredictionHandler == null)
+      {
+        _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
+      }
+      
       if (_keyboardView != null)
       {
         _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
@@ -980,9 +1042,41 @@ public class Keyboard2 extends InputMethodService
                                             timestamps != null ? timestamps : new ArrayList<>(),
                                             swipedKeys);
       
-      // Get predictions using the swipe typing engine
-      long startTime = System.currentTimeMillis();
-      WordPredictor.PredictionResult result = _swipeEngine.predict(swipeInput);
+      // Cancel any pending predictions first
+      if (_asyncPredictionHandler != null)
+      {
+        _asyncPredictionHandler.cancelPendingPredictions();
+      }
+      
+      // Request predictions asynchronously
+      if (_asyncPredictionHandler != null)
+      {
+        _asyncPredictionHandler.requestPredictions(swipeInput, new AsyncPredictionHandler.PredictionCallback()
+        {
+          @Override
+          public void onPredictionsReady(List<String> predictions, List<Float> scores)
+          {
+            // Process predictions on UI thread
+            handlePredictionResults(predictions, scores);
+          }
+          
+          @Override
+          public void onPredictionError(String error)
+          {
+            android.util.Log.e("Keyboard2", "Prediction error: " + error);
+            // Clear suggestions on error
+            if (_suggestionBar != null)
+            {
+              _suggestionBar.clearSuggestions();
+            }
+          }
+        });
+      }
+      else
+      {
+        // Fallback to synchronous prediction if async handler not available
+        long startTime = System.currentTimeMillis();
+        WordPredictor.PredictionResult result = _swipeEngine.predict(swipeInput);
       long predictionTime = System.currentTimeMillis() - startTime;
       List<String> predictions = result.words;
       
@@ -1033,6 +1127,7 @@ public class Keyboard2 extends InputMethodService
         android.util.Log.d("Keyboard2", "predictions.isEmpty() = " + predictions.isEmpty());
         android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION END (no display) =====");
       }
+      } // Close fallback else block
     }
     else
     {
