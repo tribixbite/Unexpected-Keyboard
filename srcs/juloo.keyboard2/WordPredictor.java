@@ -19,9 +19,13 @@ public class WordPredictor
   private final Map<String, Integer> _dictionary;
   private final Map<Character, List<Character>> _adjacentKeys;
   private BigramModel _bigramModel;
+  private LanguageDetector _languageDetector;
+  private String _currentLanguage;
+  private List<String> _recentWords; // For language detection
   private static final int MAX_PREDICTIONS_TYPING = 5;
   private static final int MAX_PREDICTIONS_SWIPE = 10;
   private static final int MAX_EDIT_DISTANCE = 2;
+  private static final int MAX_RECENT_WORDS = 20; // Keep last 20 words for language detection
   private Config _config;
   private UserAdaptationManager _adaptationManager;
   
@@ -30,6 +34,9 @@ public class WordPredictor
     _dictionary = new HashMap<>();
     _adjacentKeys = buildAdjacentKeysMap();
     _bigramModel = new BigramModel();
+    _languageDetector = new LanguageDetector();
+    _currentLanguage = "en"; // Default to English
+    _recentWords = new ArrayList<>();
     _config = null;
   }
   
@@ -47,6 +54,103 @@ public class WordPredictor
   public void setUserAdaptationManager(UserAdaptationManager adaptationManager)
   {
     _adaptationManager = adaptationManager;
+  }
+  
+  /**
+   * Set the active language for N-gram predictions
+   */
+  public void setLanguage(String language)
+  {
+    _currentLanguage = language;
+    if (_bigramModel != null)
+    {
+      _bigramModel.setLanguage(language);
+      android.util.Log.d("WordPredictor", "N-gram language set to: " + language);
+    }
+  }
+  
+  /**
+   * Get the current active language
+   */
+  public String getCurrentLanguage()
+  {
+    return _bigramModel != null ? _bigramModel.getCurrentLanguage() : "en";
+  }
+  
+  /**
+   * Check if a language is supported by the N-gram model
+   */
+  public boolean isLanguageSupported(String language)
+  {
+    return _bigramModel != null ? _bigramModel.isLanguageSupported(language) : false;
+  }
+  
+  /**
+   * Add a word to the recent words list for language detection
+   */
+  public void addWordToContext(String word)
+  {
+    if (word == null || word.trim().isEmpty())
+      return;
+    
+    word = word.toLowerCase().trim();
+    _recentWords.add(word);
+    
+    // Keep only the most recent words
+    while (_recentWords.size() > MAX_RECENT_WORDS)
+    {
+      _recentWords.remove(0);
+    }
+    
+    // Try to detect language change if we have enough words
+    if (_recentWords.size() >= 5)
+    {
+      tryAutoLanguageDetection();
+    }
+  }
+  
+  /**
+   * Try to automatically detect and switch language based on recent words
+   */
+  private void tryAutoLanguageDetection()
+  {
+    if (_languageDetector == null)
+      return;
+    
+    String detectedLanguage = _languageDetector.detectLanguageFromWords(_recentWords);
+    if (detectedLanguage != null && !detectedLanguage.equals(_currentLanguage))
+    {
+      // Only switch if the detected language is supported by our N-gram model
+      if (_bigramModel.isLanguageSupported(detectedLanguage))
+      {
+        android.util.Log.d("WordPredictor", "Auto-detected language change from " + _currentLanguage + " to " + detectedLanguage);
+        setLanguage(detectedLanguage);
+      }
+    }
+  }
+  
+  /**
+   * Manually detect language from a text sample
+   */
+  public String detectLanguage(String text)
+  {
+    return _languageDetector != null ? _languageDetector.detectLanguage(text) : null;
+  }
+  
+  /**
+   * Get the list of recent words used for language detection
+   */
+  public List<String> getRecentWords()
+  {
+    return new ArrayList<>(_recentWords);
+  }
+  
+  /**
+   * Clear the recent words context
+   */
+  public void clearContext()
+  {
+    _recentWords.clear();
   }
   
   /**
@@ -86,6 +190,9 @@ public class WordPredictor
       android.util.Log.e("WordPredictor", "Failed to load enhanced dictionary: " + filename + ", error: " + e.getMessage());
       // Don't fall back to basic dictionary - keep dictionary empty if enhanced not found
     }
+    
+    // Set the N-gram model language to match the dictionary
+    setLanguage(language);
   }
   
   /**

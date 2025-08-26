@@ -730,6 +730,12 @@ public class Keyboard2 extends InputMethodService
       _contextWords.remove(0);
     }
     
+    // Add word to WordPredictor for language detection
+    if (_wordPredictor != null)
+    {
+      _wordPredictor.addWordToContext(word);
+    }
+    
     android.util.Log.d("Keyboard2", "Context updated: " + _contextWords);
   }
   
