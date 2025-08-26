@@ -48,8 +48,8 @@ public final class ClipboardHistoryService
 
   /** The maximum size limits the amount of user data stored in memory but also
       gives a sense to the user that the history is not persisted and can be
-      forgotten as soon as the app stops. */
-  public static final int MAX_HISTORY_SIZE = 6;
+      forgotten as soon as the app stops. 
+      Now configurable - 0 means unlimited. */
   /** Time in ms until history entries expire. */
   public static final long HISTORY_TTL_MS = 5 * 60 * 1000;
 
@@ -114,8 +114,12 @@ public final class ClipboardHistoryService
     int size = _history.size();
     if (clip.equals("") || (size > 0 && _history.get(size - 1).content.equals(clip)))
       return;
-    if (size >= MAX_HISTORY_SIZE)
+    
+    // Get configurable limit from settings (0 means unlimited)
+    int maxHistorySize = Config.globalConfig().clipboard_history_limit;
+    if (maxHistorySize > 0 && size >= maxHistorySize)
       _history.remove(0);
+    
     _history.add(new HistoryEntry(clip));
     if (_listener != null)
       _listener.on_clipboard_history_change();

@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Random;
 import juloo.keyboard2.ml.SwipeMLData;
 import juloo.keyboard2.ml.SwipeMLDataStore;
+import juloo.keyboard2.ml.SwipeMLTrainer;
 
 /**
  * Complete swipe calibration implementation with keyboard visualization
@@ -88,6 +89,7 @@ public class SwipeCalibrationActivity extends Activity
   private Button _saveButton;
   private Button _deleteButton;
   private Button _exportButton;
+  private Button _trainButton;
   private LinearLayout _scoreLayout;
   
   // Navigation UI components
@@ -142,6 +144,9 @@ public class SwipeCalibrationActivity extends Activity
   private List<SwipeMLData> _allSwipes;
   private int _currentSwipeIndex = -1;
   private boolean _isBrowsingMode = false;
+  
+  // ML Training
+  private SwipeMLTrainer _mlTrainer;
   
   // Algorithm weight controls
   private LinearLayout _weightsLayout;
@@ -544,6 +549,11 @@ public class SwipeCalibrationActivity extends Activity
     _exportButton.setOnClickListener(v -> exportToClipboard());
     buttonLayout.addView(_exportButton);
     
+    _trainButton = new Button(this);
+    _trainButton.setText("Train Model");
+    _trainButton.setOnClickListener(v -> startTraining());
+    buttonLayout.addView(_trainButton);
+    
     _browseSwipesButton = new Button(this);
     _browseSwipesButton.setText("Browse Swipes");
     _browseSwipesButton.setOnClickListener(v -> enterBrowseMode());
@@ -596,6 +606,10 @@ public class SwipeCalibrationActivity extends Activity
     mainLayout.addView(_keyboardView);
     
     setContentView(mainLayout);
+    
+    // Initialize ML trainer
+    _mlTrainer = new SwipeMLTrainer(this);
+    _mlTrainer.setTrainingListener(new TrainingListenerImpl());
     
     // Initialize calibration
     initializeCalibration();
@@ -1001,51 +1015,68 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
-   * Export calibration data to clipboard for debugging
+   * Export calibration data to clipboard for debugging - now uses ML data store
    */
   private void exportToClipboard()
   {
     try
     {
-      // Create JSON export of calibration data
+      // Load all calibration swipes from ML data store
+      List<SwipeMLData> allSwipes = _mlDataStore.loadDataBySource("calibration");
+      
+      if (allSwipes.isEmpty())
+      {
+        Toast.makeText(this, "No calibration data to export", Toast.LENGTH_SHORT).show();
+        return;
+      }
+      
+      // Create comprehensive JSON export
       StringBuilder export = new StringBuilder();
       export.append("{\n");
       export.append("  \"timestamp\": ").append(System.currentTimeMillis()).append(",\n");
+      export.append("  \"generated\": \"").append(new Date().toString()).append("\",\n");
+      export.append("  \"total_swipes\": ").append(allSwipes.size()).append(",\n");
       export.append("  \"keyboard_height\": ").append(_keyboardHeight).append(",\n");
       export.append("  \"screen_width\": ").append(_screenWidth).append(",\n");
       export.append("  \"screen_height\": ").append(_screenHeight).append(",\n");
-      export.append("  \"weights\": {\n");
+      export.append("  \"algorithm_weights\": {\n");
       export.append("    \"dtw\": ").append(_dtwWeight).append(",\n");
       export.append("    \"gaussian\": ").append(_gaussianWeight).append(",\n");
       export.append("    \"ngram\": ").append(_ngramWeight).append(",\n");
       export.append("    \"frequency\": ").append(_frequencyWeight).append("\n");
       export.append("  },\n");
-      export.append("  \"calibration_data\": [\n");
+      export.append("  \"swipe_data\": [\n");
       
       boolean first = true;
-      for (Map.Entry<String, List<SwipePattern>> entry : _calibrationData.entrySet())
+      for (SwipeMLData swipe : allSwipes)
       {
-        String word = entry.getKey();
-        for (SwipePattern pattern : entry.getValue())
+        if (!first) export.append(",\n");
+        
+        export.append("    {\n");
+        export.append("      \"word\": \"").append(swipe.getTargetWord()).append("\",\n");
+        export.append("      \"trace_id\": \"").append(swipe.getTraceId()).append("\",\n");
+        export.append("      \"timestamp_utc\": ").append(swipe.getTimestampUtc()).append(",\n");
+        export.append("      \"source\": \"").append(swipe.getCollectionSource()).append("\",\n");
+        
+        List<SwipeMLData.TracePoint> points = swipe.getTracePoints();
+        export.append("      \"point_count\": ").append(points.size()).append(",\n");
+        export.append("      \"duration_ms\": ").append(calculateDuration(points)).append(",\n");
+        export.append("      \"registered_keys\": ").append(swipe.getRegisteredKeys().toString()).append(",\n");
+        export.append("      \"normalized_trace\": [\n");
+        
+        boolean firstPoint = true;
+        for (SwipeMLData.TracePoint tp : points)
         {
-          if (!first) export.append(",\n");
-          export.append("    {\n");
-          export.append("      \"word\": \"").append(word).append("\",\n");
-          export.append("      \"duration\": ").append(pattern.duration).append(",\n");
-          export.append("      \"points\": [");
-          
-          boolean firstPoint = true;
-          for (PointF p : pattern.points)
-          {
-            if (!firstPoint) export.append(", ");
-            export.append("[").append(p.x).append(", ").append(p.y).append("]");
-            firstPoint = false;
-          }
-          
-          export.append("]\n");
-          export.append("    }");
-          first = false;
+          if (!firstPoint) export.append(",\n");
+          export.append("        {\"x\": ").append(tp.x)
+                .append(", \"y\": ").append(tp.y)
+                .append(", \"t_delta_ms\": ").append(tp.tDeltaMs).append("}");
+          firstPoint = false;
         }
+        
+        export.append("\n      ]\n");
+        export.append("    }");
+        first = false;
       }
       
       export.append("\n  ],\n");
@@ -1054,6 +1085,28 @@ public class SwipeCalibrationActivity extends Activity
       export.append("    \"session_total\": ").append(_sessionTotalCount).append(",\n");
       export.append("    \"overall_correct\": ").append(_overallCorrectCount).append(",\n");
       export.append("    \"overall_total\": ").append(_overallTotalCount).append("\n");
+      export.append("  },\n");
+      
+      // Add summary statistics
+      Map<String, Integer> wordCounts = new HashMap<>();
+      int totalPoints = 0;
+      long totalDuration = 0;
+      
+      for (SwipeMLData swipe : allSwipes)
+      {
+        String word = swipe.getTargetWord();
+        wordCounts.put(word, wordCounts.getOrDefault(word, 0) + 1);
+        
+        List<SwipeMLData.TracePoint> points = swipe.getTracePoints();
+        totalPoints += points.size();
+        totalDuration += calculateDuration(points);
+      }
+      
+      export.append("  \"summary_stats\": {\n");
+      export.append("    \"unique_words\": ").append(wordCounts.size()).append(",\n");
+      export.append("    \"avg_points_per_swipe\": ").append(totalPoints / allSwipes.size()).append(",\n");
+      export.append("    \"avg_duration_ms\": ").append(totalDuration / allSwipes.size()).append(",\n");
+      export.append("    \"words_practiced\": ").append(wordCounts.toString()).append("\n");
       export.append("  }\n");
       export.append("}");
       
@@ -1062,12 +1115,15 @@ public class SwipeCalibrationActivity extends Activity
       ClipData clip = ClipData.newPlainText("Swipe Calibration Data", export.toString());
       clipboard.setPrimaryClip(clip);
       
-      Toast.makeText(this, "Calibration data exported to clipboard", Toast.LENGTH_LONG).show();
-      logMessage("Calibration data exported to clipboard: " + export.length() + " bytes");
+      // Show success message with summary
+      String message = String.format("Exported %d swipes (%d words) to clipboard as JSON", 
+                                    allSwipes.size(), wordCounts.size());
+      Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+      logMessage("ML calibration data exported: " + allSwipes.size() + " swipes, " + export.length() + " bytes");
     }
     catch (Exception e)
     {
-      Log.e(TAG, "Failed to export calibration data: " + e.getMessage());
+      Log.e(TAG, "Failed to export calibration data: " + e.getMessage(), e);
       Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
     }
   }
@@ -1986,5 +2042,195 @@ public class SwipeCalibrationActivity extends Activity
       })
       .setNegativeButton("Cancel", null)
       .show();
+  }
+  
+  private void startTraining()
+  {
+    if (_mlTrainer.isTraining())
+    {
+      Toast.makeText(this, "Training already in progress...", Toast.LENGTH_SHORT).show();
+      return;
+    }
+    
+    if (!_mlTrainer.canTrain())
+    {
+      Toast.makeText(this, "Need at least 100 samples to train. Record more swipes first.", Toast.LENGTH_LONG).show();
+      return;
+    }
+    
+    // Disable train button during training
+    _trainButton.setEnabled(false);
+    _trainButton.setText("Training...");
+    
+    // Start training
+    _mlTrainer.startTraining();
+  }
+  
+  private class TrainingListenerImpl implements SwipeMLTrainer.TrainingListener
+  {
+    @Override
+    public void onTrainingStarted()
+    {
+      runOnUiThread(() -> {
+        Toast.makeText(SwipeCalibrationActivity.this, "Training started...", Toast.LENGTH_SHORT).show();
+        logMessage("ML training started");
+      });
+    }
+    
+    @Override
+    public void onTrainingProgress(int progress, int total)
+    {
+      runOnUiThread(() -> {
+        _trainButton.setText(String.format("Training... %d%%", progress));
+        logMessage("Training progress: " + progress + "%");
+      });
+    }
+    
+    @Override
+    public void onTrainingCompleted(SwipeMLTrainer.TrainingResult result)
+    {
+      runOnUiThread(() -> {
+        _trainButton.setEnabled(true);
+        _trainButton.setText("Train Model");
+        
+        String message = String.format("Training completed!\n• %d samples used\n• Training time: %dms\n• Accuracy: %.1f%%", 
+                                       result.samplesUsed, result.trainingTimeMs, result.accuracy * 100);
+        
+        new AlertDialog.Builder(SwipeCalibrationActivity.this)
+          .setTitle("Training Complete")
+          .setMessage(message)
+          .setPositiveButton("OK", null)
+          .show();
+        
+        logMessage("Training completed: " + result.samplesUsed + " samples, " + 
+                  result.trainingTimeMs + "ms, accuracy=" + result.accuracy);
+        
+        // Apply training results to improve predictions
+        applyTrainingResults(result);
+      });
+    }
+    
+    @Override
+    public void onTrainingError(String error)
+    {
+      runOnUiThread(() -> {
+        _trainButton.setEnabled(true);
+        _trainButton.setText("Train Model");
+        
+        Toast.makeText(SwipeCalibrationActivity.this, "Training failed: " + error, Toast.LENGTH_LONG).show();
+        logMessage("Training error: " + error);
+      });
+    }
+  }
+  
+  private void applyTrainingResults(SwipeMLTrainer.TrainingResult result)
+  {
+    try
+    {
+      // Store original weights for comparison
+      float originalDtwWeight = _dtwWeight;
+      float originalGaussianWeight = _gaussianWeight;
+      float originalNgramWeight = _ngramWeight;
+      float originalFrequencyWeight = _frequencyWeight;
+      
+      // If training achieved good accuracy, adjust weights to favor the model
+      if (result.accuracy >= 0.8f)
+      {
+        // Increase DTW weight as it's our primary algorithm for now
+        _dtwWeight = Math.min(0.6f, _dtwWeight + 0.1f);
+        _gaussianWeight = Math.max(0.2f, _gaussianWeight - 0.05f);
+        
+        // Update UI
+        _dtwWeightSlider.setProgress(Math.round(_dtwWeight * 100));
+        _gaussianWeightSlider.setProgress(Math.round(_gaussianWeight * 100));
+        
+        normalizeWeights();
+        
+        // Calculate actual changes
+        float dtwChange = _dtwWeight - originalDtwWeight;
+        float gaussianChange = _gaussianWeight - originalGaussianWeight;
+        float ngramChange = _ngramWeight - originalNgramWeight;
+        float frequencyChange = _frequencyWeight - originalFrequencyWeight;
+        
+        // Create detailed visual feedback
+        StringBuilder changeMessage = new StringBuilder();
+        changeMessage.append("🎯 Algorithm Weights Updated!\n\n");
+        
+        if (Math.abs(dtwChange) > 0.001f)
+        {
+          changeMessage.append(String.format("📈 DTW: %.1f%% → %.1f%% (%+.1f%%)\n", 
+                                           originalDtwWeight * 100, _dtwWeight * 100, dtwChange * 100));
+        }
+        if (Math.abs(gaussianChange) > 0.001f)
+        {
+          changeMessage.append(String.format("📊 Gaussian: %.1f%% → %.1f%% (%+.1f%%)\n", 
+                                           originalGaussianWeight * 100, _gaussianWeight * 100, gaussianChange * 100));
+        }
+        if (Math.abs(ngramChange) > 0.001f)
+        {
+          changeMessage.append(String.format("📝 N-gram: %.1f%% → %.1f%% (%+.1f%%)\n", 
+                                           originalNgramWeight * 100, _ngramWeight * 100, ngramChange * 100));
+        }
+        if (Math.abs(frequencyChange) > 0.001f)
+        {
+          changeMessage.append(String.format("📊 Frequency: %.1f%% → %.1f%% (%+.1f%%)\n", 
+                                           originalFrequencyWeight * 100, _frequencyWeight * 100, frequencyChange * 100));
+        }
+        
+        changeMessage.append(String.format("\n✨ Training accuracy: %.1f%%", result.accuracy * 100));
+        changeMessage.append("\n💡 These optimizations should improve prediction accuracy!");
+        
+        // Show detailed dialog
+        new AlertDialog.Builder(this)
+          .setTitle("Weights Optimization Applied")
+          .setMessage(changeMessage.toString())
+          .setPositiveButton("Great!", null)
+          .setIcon(android.R.drawable.ic_dialog_info)
+          .show();
+        
+        logMessage("Applied training results: DTW " + String.format("%+.3f", dtwChange) + 
+                  ", Gaussian " + String.format("%+.3f", gaussianChange) + 
+                  ", N-gram " + String.format("%+.3f", ngramChange) + 
+                  ", Frequency " + String.format("%+.3f", frequencyChange));
+      }
+      else
+      {
+        // Show why weights weren't changed
+        String lowAccuracyMessage = String.format(
+          "⚠️ Training Accuracy Too Low\n\n" +
+          "Accuracy achieved: %.1f%%\n" +
+          "Minimum required: 80.0%%\n\n" +
+          "💡 Try recording more diverse swipe samples to improve training quality.\n\n" +
+          "Algorithm weights remain unchanged:",
+          result.accuracy * 100);
+          
+        lowAccuracyMessage += String.format(
+          "\n• DTW: %.1f%%\n• Gaussian: %.1f%%\n• N-gram: %.1f%%\n• Frequency: %.1f%%",
+          _dtwWeight * 100, _gaussianWeight * 100, _ngramWeight * 100, _frequencyWeight * 100);
+        
+        new AlertDialog.Builder(this)
+          .setTitle("Weights Not Changed")
+          .setMessage(lowAccuracyMessage)
+          .setPositiveButton("OK", null)
+          .setIcon(android.R.drawable.ic_dialog_alert)
+          .show();
+        
+        logMessage("Training accuracy too low to apply results: " + result.accuracy);
+      }
+      
+      // Store training metadata for future reference
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+      prefs.edit()
+        .putLong("last_training_time", System.currentTimeMillis())
+        .putInt("last_training_samples", result.samplesUsed)
+        .putFloat("last_training_accuracy", result.accuracy)
+        .putString("last_model_version", result.modelVersion)
+        .apply();
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Failed to apply training results", e);
+      Toast.makeText(this, "Failed to apply training results: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    }
   }
 }

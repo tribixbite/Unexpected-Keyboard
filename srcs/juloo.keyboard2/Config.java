@@ -70,6 +70,7 @@ public final class Config
   public boolean borderConfig;
   public int circle_sensitivity;
   public boolean clipboard_history_enabled;
+  public int clipboard_history_limit;
   public boolean swipe_typing_enabled;
   public float swipe_confidence_shape_weight;
   public float swipe_confidence_location_weight;
@@ -195,6 +196,7 @@ public final class Config
     current_layout_wide = _prefs.getInt("current_layout_landscape", 0);
     circle_sensitivity = Integer.valueOf(_prefs.getString("circle_sensitivity", "2"));
     clipboard_history_enabled = _prefs.getBoolean("clipboard_history_enabled", false);
+    clipboard_history_limit = _prefs.getInt("clipboard_history_limit", 6);
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
     swipe_confidence_shape_weight = _prefs.getInt("swipe_confidence_shape_weight", 90) / 100.f;
     swipe_confidence_location_weight = _prefs.getInt("swipe_confidence_location_weight", 130) / 100.f;
@@ -237,6 +239,12 @@ public final class Config
   {
     clipboard_history_enabled = e;
     _prefs.edit().putBoolean("clipboard_history_enabled", e).commit();
+  }
+
+  public void set_clipboard_history_limit(int limit)
+  {
+    clipboard_history_limit = limit;
+    _prefs.edit().putInt("clipboard_history_limit", limit).commit();
   }
 
   private float get_dip_pref(DisplayMetrics dm, String pref_name, float def)

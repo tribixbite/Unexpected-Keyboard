@@ -579,4 +579,41 @@ public class Keyboard2View extends View
   {
     return _theme;
   }
+  
+  /**
+   * Find the key at the given coordinates
+   */
+  private KeyboardData.Key getKeyAt(float x, float y)
+  {
+    if (_keyboard == null)
+      return null;
+    
+    float yPos = _tc.margin_top;
+    for (KeyboardData.Row row : _keyboard.rows)
+    {
+      yPos += row.shift * _tc.row_height;
+      float keyH = row.height * _tc.row_height - _tc.vertical_margin;
+      
+      // Check if y coordinate is within this row
+      if (y >= yPos && y < yPos + keyH)
+      {
+        float xPos = _marginLeft + _tc.margin_left;
+        for (KeyboardData.Key key : row.keys)
+        {
+          xPos += key.shift * _keyWidth;
+          float keyW = _keyWidth * key.width - _tc.horizontal_margin;
+          
+          // Check if x coordinate is within this key
+          if (x >= xPos && x < xPos + keyW)
+          {
+            return key;
+          }
+          xPos += _keyWidth * key.width;
+        }
+        break; // Y is in this row but X didn't match any key
+      }
+      yPos += row.height * _tc.row_height;
+    }
+    return null;
+  }
 }
