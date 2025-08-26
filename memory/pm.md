@@ -626,3 +626,98 @@ The calibration activity should now properly respect user keyboard height settin
 - Atomic request IDs for cancellation tracking
 - Main thread callbacks for UI updates
 - Thread-safe message passing between threads
+
+## Calibration & System Improvements Plan (2025-08-24)
+
+### Calibration Page Enhancements
+
+#### 1. No Repeated Words (20 Unique Words) ✅ COMPLETED
+**Current Issue**: With 10 words × 2 reps, users swipe the same words twice
+**Solution**: 
+- Changed to 20 unique words × 1 rep each
+- Select from top 30% most frequent words randomly
+- Removed _currentRep variable and repetition logic
+**Implementation Details**:
+- Changed WORDS_PER_SESSION from 10 to 20
+- Changed REPS_PER_WORD from 2 to 1
+- Updated progress display to show "Word X of 20" instead of rep count
+- Simplified nextWord() and skipWord() methods
+
+#### 2. Browse/Navigate Recorded Swipes
+**Feature**: Arrow key navigation through recorded swipes
+**Implementation**:
+- Add left/right arrow buttons (or swipe gestures)
+- Display current swipe index (e.g., "Swipe 5 of 47")
+- Show swipe trace overlay on keyboard when browsing
+- Display metadata: word, timestamp, accuracy score
+- Highlight the path taken on keyboard keys
+
+#### 3. Delete Individual Swipes
+**Feature**: Remove specific recorded swipes from storage
+**Implementation**:
+- Add delete button when viewing a swipe
+- Confirmation dialog before deletion
+- Update indices after deletion
+- Option to delete all swipes for a specific word
+
+#### 4. Fix Export to Clipboard
+**Current Issue**: Export button exists but doesn't work properly
+**Solution**:
+- Ensure proper JSON formatting of export data
+- Use ClipboardManager correctly
+- Include all relevant data: traces, words, timestamps, scores
+- Show success toast when copied
+- Format data for easy import/analysis
+
+#### 5. Working Train Function
+**Current Issue**: Train button exists but doesn't actually train/improve model
+**Solution**:
+- Implement actual model training from calibration data
+- Calculate personalized key offsets per user
+- Adjust DTW templates based on user patterns
+- Store trained parameters persistently
+- Apply trained model to predictions
+- Show training progress/results
+
+#### 6. Unlimited Clipboard History
+**Current Issue**: Clipboard has limited memory
+**Solution**:
+- Remove size limits on clipboard history
+- Implement persistent storage for clipboard items
+- Add search/filter for clipboard history
+- Option to pin frequently used items
+- Clear old items manually or by date
+
+### Technical Implementation Details
+
+#### Database Schema for Swipes
+```sql
+CREATE TABLE calibration_swipes (
+  id INTEGER PRIMARY KEY,
+  word TEXT NOT NULL,
+  trace_points TEXT NOT NULL,  -- JSON array
+  timestamps TEXT NOT NULL,     -- JSON array
+  accuracy_score REAL,
+  created_at INTEGER,
+  session_id TEXT
+);
+```
+
+#### Navigation State Management
+- Current swipe index in SharedPreferences
+- Load swipes lazily for performance
+- Cache nearby swipes for smooth navigation
+
+#### Training Algorithm
+- Calculate average path per word from calibration
+- Detect user-specific key press patterns
+- Adjust probability distributions
+- Weight personalization vs general model
+
+### Testing Requirements
+- Test with 100+ calibration swipes
+- Verify no data loss during navigation
+- Ensure clipboard works with large datasets
+- Validate training improves accuracy
+- Test memory usage with unlimited clipboard
+

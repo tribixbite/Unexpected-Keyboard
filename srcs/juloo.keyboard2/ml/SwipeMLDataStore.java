@@ -290,6 +290,30 @@ public class SwipeMLDataStore extends SQLiteOpenHelper
   }
   
   /**
+   * Delete a specific swipe entry from the database
+   */
+  public void deleteEntry(SwipeMLData data)
+  {
+    if (data == null) return;
+    
+    SQLiteDatabase db = getWritableDatabase();
+    
+    // Delete by matching the word and approximate timestamp
+    String word = data.getTargetWord();
+    long timestamp = data.getTimestampUtc();
+    
+    // Allow 1 second tolerance for timestamp matching
+    long minTime = timestamp - 1000;
+    long maxTime = timestamp + 1000;
+    
+    int deleted = db.delete(TABLE_SWIPES,
+      COL_TARGET_WORD + "=? AND " + COL_TIMESTAMP + " BETWEEN ? AND ?",
+      new String[]{word, String.valueOf(minTime), String.valueOf(maxTime)});
+    
+    Log.d(TAG, "Deleted " + deleted + " entries for word: " + word);
+  }
+  
+  /**
    * Export all data to JSON file
    */
   public File exportToJSON() throws IOException, JSONException

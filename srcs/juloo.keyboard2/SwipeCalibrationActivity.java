@@ -54,8 +54,8 @@ public class SwipeCalibrationActivity extends Activity
   private static final String LOG_FILE = "/data/data/com.termux/files/home/calibration_log.txt";
   
   // Calibration settings
-  private static final int WORDS_PER_SESSION = 10;
-  private static final int REPS_PER_WORD = 2;
+  private static final int WORDS_PER_SESSION = 20;  // Changed: 20 unique words instead of 10×2
+  private static final int REPS_PER_WORD = 1;      // Changed: No repetitions
   
   // Test words for calibration - will be replaced by frequency-based selection
   private static final List<String> FALLBACK_WORDS = Arrays.asList(
@@ -90,6 +90,14 @@ public class SwipeCalibrationActivity extends Activity
   private Button _exportButton;
   private LinearLayout _scoreLayout;
   
+  // Navigation UI components
+  private LinearLayout _navigationLayout;
+  private Button _prevSwipeButton;
+  private Button _nextSwipeButton;
+  private TextView _swipeNavText;
+  private Button _deleteSwipeButton;
+  private Button _browseSwipesButton;
+  
   // Real-time accuracy metrics components
   private LinearLayout _metricsLayout;
   private TextView _sessionAccuracyText;
@@ -100,7 +108,7 @@ public class SwipeCalibrationActivity extends Activity
   
   // Calibration state
   private int _currentIndex = 0;
-  private int _currentRep = 0;
+  // private int _currentRep = 0;  // No longer used - we have 20 unique words instead
   private String _currentWord;
   private List<String> _sessionWords;
   private Map<String, List<SwipePattern>> _calibrationData;
@@ -129,6 +137,11 @@ public class SwipeCalibrationActivity extends Activity
   private float _labelTextSize;
   private float _keyVerticalMargin;
   private float _keyHorizontalMargin;
+  
+  // Swipe navigation state
+  private List<SwipeMLData> _allSwipes;
+  private int _currentSwipeIndex = -1;
+  private boolean _isBrowsingMode = false;
   
   // Algorithm weight controls
   private LinearLayout _weightsLayout;
@@ -277,7 +290,7 @@ public class SwipeCalibrationActivity extends Activity
     topLayout.addView(_progressText);
     
     _progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-    _progressBar.setMax(WORDS_PER_SESSION * REPS_PER_WORD);
+    _progressBar.setMax(WORDS_PER_SESSION);  // Total words = 20
     topLayout.addView(_progressBar);
     
     // Score display layout
@@ -531,7 +544,47 @@ public class SwipeCalibrationActivity extends Activity
     _exportButton.setOnClickListener(v -> exportToClipboard());
     buttonLayout.addView(_exportButton);
     
+    _browseSwipesButton = new Button(this);
+    _browseSwipesButton.setText("Browse Swipes");
+    _browseSwipesButton.setOnClickListener(v -> enterBrowseMode());
+    buttonLayout.addView(_browseSwipesButton);
+    
     topLayout.addView(buttonLayout);
+    
+    // Navigation controls (initially hidden)
+    _navigationLayout = new LinearLayout(this);
+    _navigationLayout.setOrientation(LinearLayout.HORIZONTAL);
+    _navigationLayout.setPadding(10, 10, 10, 10);
+    _navigationLayout.setGravity(android.view.Gravity.CENTER);
+    _navigationLayout.setVisibility(View.GONE);
+    
+    _prevSwipeButton = new Button(this);
+    _prevSwipeButton.setText("◀ Previous");
+    _prevSwipeButton.setOnClickListener(v -> navigatePreviousSwipe());
+    _navigationLayout.addView(_prevSwipeButton);
+    
+    _swipeNavText = new TextView(this);
+    _swipeNavText.setText("Swipe 0 of 0");
+    _swipeNavText.setTextColor(Color.WHITE);
+    _swipeNavText.setPadding(20, 0, 20, 0);
+    _navigationLayout.addView(_swipeNavText);
+    
+    _nextSwipeButton = new Button(this);
+    _nextSwipeButton.setText("Next ▶");
+    _nextSwipeButton.setOnClickListener(v -> navigateNextSwipe());
+    _navigationLayout.addView(_nextSwipeButton);
+    
+    _deleteSwipeButton = new Button(this);
+    _deleteSwipeButton.setText("Delete This");
+    _deleteSwipeButton.setOnClickListener(v -> deleteCurrentSwipe());
+    _navigationLayout.addView(_deleteSwipeButton);
+    
+    Button exitBrowse = new Button(this);
+    exitBrowse.setText("Exit Browse");
+    exitBrowse.setOnClickListener(v -> exitBrowseMode());
+    _navigationLayout.addView(exitBrowse);
+    
+    topLayout.addView(_navigationLayout);
     mainLayout.addView(topLayout);
     
     // Keyboard at bottom with real dimensions
@@ -682,7 +735,7 @@ public class SwipeCalibrationActivity extends Activity
     
     // Start with first word
     _currentIndex = 0;
-    _currentRep = 0;
+    // _currentRep = 0;  // No longer used
     showNextWord();
   }
   
@@ -698,16 +751,15 @@ public class SwipeCalibrationActivity extends Activity
     _currentWord = _sessionWords.get(_currentIndex);
     _currentWordText.setText(_currentWord);
     
-    int totalProgress = _currentIndex * REPS_PER_WORD + _currentRep;
+    int totalProgress = _currentIndex;  // No reps, just word index
     _progressBar.setProgress(totalProgress);
-    _progressText.setText(String.format("Word %d of %d, Rep %d of %d",
-      _currentIndex + 1, _sessionWords.size(),
-      _currentRep + 1, REPS_PER_WORD));
+    _progressText.setText(String.format("Word %d of %d",
+      _currentIndex + 1, _sessionWords.size()));  // Simplified: no rep count
     
     _nextButton.setEnabled(false);
     _keyboardView.reset();
     
-    logMessage("Showing word: " + _currentWord + " (rep " + (_currentRep + 1) + ")");
+    logMessage("Showing word: " + _currentWord + " (word " + (_currentIndex + 1) + " of " + _sessionWords.size() + ")");
   }
   
   private void recordSwipe(List<PointF> points)
@@ -792,19 +844,15 @@ public class SwipeCalibrationActivity extends Activity
   
   private void nextWord()
   {
-    _currentRep++;
-    if (_currentRep >= REPS_PER_WORD)
-    {
-      _currentRep = 0;
-      _currentIndex++;
-    }
+    // No repetitions - just move to next word
+    _currentIndex++;
     showNextWord();
   }
   
   private void skipWord()
   {
     logMessage("Skipped word: " + _currentWord);
-    _currentRep = 0;
+    // No repetitions - just move to next word
     _currentIndex++;
     showNextWord();
   }
@@ -1655,6 +1703,27 @@ public class SwipeCalibrationActivity extends Activity
     {
       return new HashMap<>(_keys);
     }
+    
+    public void displaySwipeTrace(List<PointF> points)
+    {
+      if (points == null || points.isEmpty()) return;
+      
+      _overlayPath = new Path();
+      _overlayPath.moveTo(points.get(0).x, points.get(0).y);
+      
+      for (int i = 1; i < points.size(); i++)
+      {
+        _overlayPath.lineTo(points.get(i).x, points.get(i).y);
+      }
+      
+      invalidate();
+    }
+    
+    public void clearSwipeOverlay()
+    {
+      _overlayPath = null;
+      invalidate();
+    }
   }
   
   /**
@@ -1749,5 +1818,173 @@ public class SwipeCalibrationActivity extends Activity
       }
       return sb.toString();
     }
+  }
+  
+  // Helper methods for trace point conversion
+  private List<PointF> convertToNormalizedPoints(List<SwipeMLData.TracePoint> tracePoints)
+  {
+    List<PointF> points = new ArrayList<>();
+    for (SwipeMLData.TracePoint tp : tracePoints)
+    {
+      points.add(new PointF(tp.x, tp.y));  // Use public fields, not getters
+    }
+    return points;
+  }
+  
+  private long calculateDuration(List<SwipeMLData.TracePoint> tracePoints)
+  {
+    if (tracePoints.isEmpty()) return 0;
+    
+    // Duration is sum of all deltaMs values
+    long duration = 0;
+    for (SwipeMLData.TracePoint tp : tracePoints)
+    {
+      duration += tp.tDeltaMs;  // Use public field, not getter
+    }
+    return duration;
+  }
+  
+  // Navigation methods for browsing recorded swipes
+  private void enterBrowseMode()
+  {
+    _isBrowsingMode = true;
+    
+    // Load all swipes from database
+    _allSwipes = _mlDataStore.loadDataBySource("calibration");
+    
+    if (_allSwipes.isEmpty())
+    {
+      Toast.makeText(this, "No recorded swipes to browse", Toast.LENGTH_SHORT).show();
+      return;
+    }
+    
+    // Show navigation controls, hide normal controls
+    _navigationLayout.setVisibility(View.VISIBLE);
+    _nextButton.setEnabled(false);
+    _skipButton.setEnabled(false);
+    _instructionText.setText("Browsing recorded swipes - use arrows to navigate");
+    
+    // Start at first swipe
+    _currentSwipeIndex = 0;
+    displaySwipeAtIndex(0);
+    
+    Log.d(TAG, "Entered browse mode with " + _allSwipes.size() + " swipes");
+  }
+  
+  private void exitBrowseMode()
+  {
+    _isBrowsingMode = false;
+    _navigationLayout.setVisibility(View.GONE);
+    _nextButton.setEnabled(true);
+    _skipButton.setEnabled(true);
+    _instructionText.setText("Swipe the word shown below - auto-advances on completion");
+    
+    // Clear displayed trace
+    _keyboardView.clearSwipeOverlay();
+    
+    // Return to normal calibration
+    showNextWord();
+  }
+  
+  private void navigatePreviousSwipe()
+  {
+    if (_currentSwipeIndex > 0)
+    {
+      _currentSwipeIndex--;
+      displaySwipeAtIndex(_currentSwipeIndex);
+    }
+    else
+    {
+      Toast.makeText(this, "At first swipe", Toast.LENGTH_SHORT).show();
+    }
+  }
+  
+  private void navigateNextSwipe()
+  {
+    if (_currentSwipeIndex < _allSwipes.size() - 1)
+    {
+      _currentSwipeIndex++;
+      displaySwipeAtIndex(_currentSwipeIndex);
+    }
+    else
+    {
+      Toast.makeText(this, "At last swipe", Toast.LENGTH_SHORT).show();
+    }
+  }
+  
+  private void displaySwipeAtIndex(int index)
+  {
+    if (index < 0 || index >= _allSwipes.size()) return;
+    
+    SwipeMLData data = _allSwipes.get(index);
+    
+    // Update navigation text
+    _swipeNavText.setText(String.format("Swipe %d of %d", index + 1, _allSwipes.size()));
+    
+    // Show target word
+    _currentWordText.setText(data.getTargetWord());
+    
+    // Convert normalized points to screen points and display trace
+    List<PointF> screenPoints = new ArrayList<>();
+    List<PointF> normalizedPoints = convertToNormalizedPoints(data.getTracePoints());
+    
+    for (PointF p : normalizedPoints)
+    {
+      // Convert from normalized [0,1] to keyboard coordinates
+      float screenX = p.x * _keyboardView.getWidth();
+      float screenY = p.y * _keyboardView.getHeight();
+      screenPoints.add(new PointF(screenX, screenY));
+    }
+    
+    // Display the trace on keyboard
+    _keyboardView.displaySwipeTrace(screenPoints);
+    
+    // Show metadata
+    long duration = calculateDuration(data.getTracePoints());
+    int pointCount = normalizedPoints.size();
+    _scoreText.setText(String.format("Duration: %dms, Points: %d", duration, pointCount));
+    _scoreLayout.setVisibility(View.VISIBLE);
+    
+    // Update navigation button states
+    _prevSwipeButton.setEnabled(index > 0);
+    _nextSwipeButton.setEnabled(index < _allSwipes.size() - 1);
+  }
+  
+  private void deleteCurrentSwipe()
+  {
+    if (_currentSwipeIndex < 0 || _currentSwipeIndex >= _allSwipes.size()) return;
+    
+    SwipeMLData toDelete = _allSwipes.get(_currentSwipeIndex);
+    
+    // Confirm deletion
+    new AlertDialog.Builder(this)
+      .setTitle("Delete Swipe")
+      .setMessage("Delete this swipe for '" + toDelete.getTargetWord() + "'?")
+      .setPositiveButton("Delete", (dialog, which) -> {
+        // Remove from database
+        _mlDataStore.deleteEntry(toDelete);
+        
+        // Remove from list
+        _allSwipes.remove(_currentSwipeIndex);
+        
+        // Adjust index and display
+        if (_allSwipes.isEmpty())
+        {
+          exitBrowseMode();
+          Toast.makeText(this, "No more swipes to browse", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+          if (_currentSwipeIndex >= _allSwipes.size())
+          {
+            _currentSwipeIndex = _allSwipes.size() - 1;
+          }
+          displaySwipeAtIndex(_currentSwipeIndex);
+        }
+        
+        Toast.makeText(this, "Swipe deleted", Toast.LENGTH_SHORT).show();
+      })
+      .setNegativeButton("Cancel", null)
+      .show();
   }
 }
