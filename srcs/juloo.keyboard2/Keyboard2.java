@@ -70,6 +70,9 @@ public class Keyboard2 extends InputMethodService
   private SwipeMLDataStore _mlDataStore;
   private SwipeMLData _currentSwipeData;
   private boolean _wasLastInputSwipe = false;
+  
+  // User adaptation
+  private UserAdaptationManager _adaptationManager;
 
   /** Layout currently visible before it has been modified. */
   KeyboardData current_layout_unmodified()
@@ -152,6 +155,9 @@ public class Keyboard2 extends InputMethodService
     // Initialize ML data store
     _mlDataStore = SwipeMLDataStore.getInstance(this);
     
+    // Initialize user adaptation manager
+    _adaptationManager = UserAdaptationManager.getInstance(this);
+    
     // Initialize log writer for swipe analysis
     try
     {
@@ -171,6 +177,7 @@ public class Keyboard2 extends InputMethodService
       _dictionaryManager.setLanguage("en");
       _wordPredictor = new WordPredictor();
       _wordPredictor.setConfig(_config);
+      _wordPredictor.setUserAdaptationManager(_adaptationManager);
       _wordPredictor.loadDictionary(this, "en");
       
       // Initialize DTW predictor for swipe typing only
@@ -771,6 +778,13 @@ public class Keyboard2 extends InputMethodService
   @Override
   public void onSuggestionSelected(String word)
   {
+    // Record user selection for adaptation learning
+    if (_adaptationManager != null && word != null && !word.trim().isEmpty())
+    {
+      _adaptationManager.recordSelection(word.trim());
+      android.util.Log.d("Keyboard2", "Recorded user selection for adaptation: " + word.trim());
+    }
+    
     // Store ML data if this was a swipe prediction selection
     if (_wasLastInputSwipe && _currentSwipeData != null && _mlDataStore != null)
     {

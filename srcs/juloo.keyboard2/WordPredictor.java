@@ -23,6 +23,7 @@ public class WordPredictor
   private static final int MAX_PREDICTIONS_SWIPE = 10;
   private static final int MAX_EDIT_DISTANCE = 2;
   private Config _config;
+  private UserAdaptationManager _adaptationManager;
   
   public WordPredictor()
   {
@@ -38,6 +39,14 @@ public class WordPredictor
   public void setConfig(Config config)
   {
     _config = config;
+  }
+  
+  /**
+   * Set the user adaptation manager for frequency adjustment
+   */
+  public void setUserAdaptationManager(UserAdaptationManager adaptationManager)
+  {
+    _adaptationManager = adaptationManager;
   }
   
   /**
@@ -274,6 +283,14 @@ public class WordPredictor
               // Apply endpoint bonus weight (both match)
               baseScore = (int)(baseScore * _config.swipe_endpoint_bonus_weight);
             }
+            
+            // Apply user adaptation multiplier
+            if (_adaptationManager != null)
+            {
+              float adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
+              baseScore = (int)(baseScore * adaptationMultiplier);
+            }
+            
             priorityMatches.add(new WordCandidate(word, baseScore));
             android.util.Log.d("WordPredictor", "PRIORITY match: " + word + " (inner=" + innerMatches + ", score=" + baseScore + ")");
           }
@@ -299,6 +316,14 @@ public class WordPredictor
                 if (lastChar == seqLast)
                   baseScore = (int)(baseScore * _config.swipe_last_letter_weight);
               }
+              
+              // Apply user adaptation multiplier before frequency multiplication
+              if (_adaptationManager != null)
+              {
+                float adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
+                baseScore = (int)(baseScore * adaptationMultiplier);
+              }
+              
               otherMatches.add(new WordCandidate(word, baseScore * frequency));
               android.util.Log.d("WordPredictor", "Partial match: " + word + " (inner=" + innerMatches + ", score=" + baseScore + ")");
             }
@@ -308,6 +333,14 @@ public class WordPredictor
           {
             // Skip in strict mode since endpoints don't match
             int score = calculateSwipeScore(word, lowerSequence, frequency);
+            
+            // Apply user adaptation multiplier
+            if (score > 0 && _adaptationManager != null)
+            {
+              float adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
+              score = (int)(score * adaptationMultiplier);
+            }
+            
             if (score > 0)
             {
               otherMatches.add(new WordCandidate(word, score));
@@ -325,6 +358,13 @@ public class WordPredictor
         int score = calculateMatchScore(word, lowerSequence);
         if (score > 0)
         {
+          // Apply user adaptation multiplier before frequency multiplication
+          if (_adaptationManager != null)
+          {
+            float adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
+            score = (int)(score * adaptationMultiplier);
+          }
+          
           // For regular typing, keep frequency multiplication
           otherMatches.add(new WordCandidate(word, score * frequency));
         }

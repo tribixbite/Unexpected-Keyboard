@@ -156,6 +156,16 @@ public class Keyboard2View extends View
     invalidate();
   }
 
+  /**
+   * Clear swipe typing state after suggestion selection
+   */
+  public void clearSwipeState()
+  {
+    // Clear any ongoing swipe gestures
+    _pointers.clear();
+    invalidate();
+  }
+
   void set_fake_ptr_latched(KeyboardData.Key key, KeyValue kv, boolean latched,
       boolean lock)
   {
