@@ -221,6 +221,31 @@ Input B (Key Path) → Embedding(16) → Masking → GRU(64)
 - Model loading: <500ms
 - Memory usage: <20MB
 
+## Design Specifications
+
+### Swipe Prediction Quality Standards
+
+#### Minimum Word Length Requirements ✅ DESIGN SPEC
+**Core Principle**: Swipe gestures represent intentional multi-character word input and should never suggest single letters or abbreviations.
+
+**Requirements**:
+- **Swipe predictions MUST be ≥3 characters minimum**
+- **Never show 1 or 2 character suggestions after swipe input**
+- **Preserve all lengths for regular typing predictions** (non-swipe input)
+- **Maintain Markov chain functionality** for contextual predictions in normal typing
+
+**Rationale**:
+- Swipe typing is designed for complete words, not individual characters
+- Single/double character suggestions provide poor user experience for swipe input
+- Users expect meaningful word completions from gesture-based input
+- Regular typing still needs short predictions for efficiency (articles, conjunctions, etc.)
+
+**Implementation**:
+- Filter swipe prediction results by word length before displaying
+- Apply filtering only to swipe-triggered predictions
+- Preserve full prediction spectrum for keyboard tap input
+- Ensure contextual N-gram predictions remain active for non-swipe scenarios
+
 ### Known Issues & Considerations
 
 1. **Timestamp Reconstruction**: Current implementation estimates timestamps during ML data creation

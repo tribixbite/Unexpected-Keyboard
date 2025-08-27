@@ -183,20 +183,31 @@ public class SwipeTypingEngine
       }
     });
     
-    // Convert to result format
+    // Convert to result format with swipe-specific filtering
     List<String> words = new ArrayList<>();
     List<Integer> scores = new ArrayList<>();
     
     int maxResults = _config.swipe_typing_enabled ? 10 : 5;
-    for (int i = 0; i < Math.min(maxResults, allCandidates.size()); i++)
+    int resultCount = 0;
+    for (ScoredCandidate candidate : allCandidates)
     {
-      ScoredCandidate candidate = allCandidates.get(i);
+      // DESIGN SPEC: Swipe predictions must be ≥3 characters minimum
+      if (candidate.word.length() < 3)
+      {
+        android.util.Log.d("SwipeTypingEngine", String.format(
+          "Filtered short word: '%s' (length=%d)", candidate.word, candidate.word.length()));
+        continue;  // Skip 1-2 character words for swipe predictions
+      }
+      
       words.add(candidate.word);
       scores.add((int)candidate.finalScore);
       
       android.util.Log.d("SwipeTypingEngine", String.format(
         "Result %d: %s (score=%.0f, source=%s)", 
-        i + 1, candidate.word, candidate.finalScore, candidate.source));
+        resultCount + 1, candidate.word, candidate.finalScore, candidate.source));
+      
+      resultCount++;
+      if (resultCount >= maxResults) break;
     }
     
     android.util.Log.d("SwipeTypingEngine", "=== PREDICTION END ===");
@@ -212,17 +223,31 @@ public class SwipeTypingEngine
     // Get base predictions
     WordPredictor.PredictionResult result = _sequencePredictor.predictWordsWithScores(input.keySequence);
     
-    // Apply swipe-specific scoring adjustments
+    // Apply swipe-specific filtering and scoring adjustments
+    List<String> filteredWords = new ArrayList<>();
     List<Integer> adjustedScores = new ArrayList<>();
-    for (int i = 0; i < result.scores.size(); i++)
+    
+    for (int i = 0; i < result.words.size(); i++)
     {
+      String word = result.words.get(i);
+      
+      // DESIGN SPEC: Swipe predictions must be ≥3 characters minimum
+      if (word.length() < 3)
+      {
+        android.util.Log.d("SwipeTypingEngine", String.format(
+          "Filtered short word in enhanced sequence: '%s' (length=%d)", word, word.length()));
+        continue;  // Skip 1-2 character words for swipe predictions
+      }
+      
       int baseScore = result.scores.get(i);
       // Apply confidence-based adjustment
       float adjustment = 1.0f + (classification.confidence * 0.5f);
+      
+      filteredWords.add(word);
       adjustedScores.add((int)(baseScore * adjustment));
     }
     
-    return new WordPredictor.PredictionResult(result.words, adjustedScores);
+    return new WordPredictor.PredictionResult(filteredWords, adjustedScores);
   }
   
   /**
