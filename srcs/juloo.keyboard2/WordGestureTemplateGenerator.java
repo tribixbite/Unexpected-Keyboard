@@ -33,7 +33,7 @@ public class WordGestureTemplateGenerator
     
     // Middle row (ASDFGHJKL)
     double middleY = 500;
-    double[] middleX = {150, 250, 350, 450, 550, 650, 750, 850, 900};
+    double[] middleX = {150, 250, 350, 450, 550, 650, 750, 850, 950};
     char[] middleChars = {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'};
     for (int i = 0; i < middleChars.length; i++)
     {

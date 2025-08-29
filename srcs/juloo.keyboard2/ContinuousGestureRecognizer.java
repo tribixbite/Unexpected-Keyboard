@@ -394,7 +394,7 @@ public class ContinuousGestureRecognizer
     double[] outArray = new double[numTargetPoints * 2];
     resample(inArray, outArray, points.size(), numTargetPoints);
     
-    for (int i = 0; i < outArray.length - 1; i += 2)
+    for (int i = 0; i < outArray.length; i += 2)
     {
       r.add(new Point(outArray[i], outArray[i + 1]));
     }
@@ -575,7 +575,7 @@ public class ContinuousGestureRecognizer
       for (List<Point> pts : pattern.segments)
       {
         List<Point> newPts = deepCopyPts(pts);
-        normalize(newPts);
+        // Remove double normalization - segments are already from normalized template
         segments.add(resample(newPts, getResamplingPointCount(newPts, SAMPLE_POINT_DISTANCE)));
       }
       pattern.segments = segments;

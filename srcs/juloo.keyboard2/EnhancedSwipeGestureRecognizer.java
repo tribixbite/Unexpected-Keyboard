@@ -126,7 +126,7 @@ public class EnhancedSwipeGestureRecognizer
     reset();
     _swipePath.add(new PointF(x, y));
     
-    if (key != null && key.keys[0] != null && isAlphabeticKey(key.keys[0]))
+    if (key != null && key.keys != null && key.keys.length > 0 && key.keys[0] != null && isAlphabeticKey(key.keys[0]))
     {
       _touchedKeys.add(key);
       _lastKey = key;
@@ -178,7 +178,7 @@ public class EnhancedSwipeGestureRecognizer
                      now - _timestamps.get(_timestamps.size() - 1) : 0;
     float velocity = timeDelta > 0 ? distance / timeDelta : 0;
     
-    if (key != null && key != _lastKey && key.keys[0] != null && isAlphabeticKey(key.keys[0]))
+    if (key != null && key != _lastKey && key.keys != null && key.keys.length > 0 && key.keys[0] != null && isAlphabeticKey(key.keys[0]))
     {
       if (velocity > VELOCITY_THRESHOLD && timeDelta < MIN_DWELL_TIME_MS)
       {
@@ -288,7 +288,7 @@ public class EnhancedSwipeGestureRecognizer
       
     for (KeyboardData.Key key : _touchedKeys)
     {
-      if (key.keys[0] == null || !isAlphabeticKey(key.keys[0]))
+      if (key.keys == null || key.keys.length == 0 || key.keys[0] == null || !isAlphabeticKey(key.keys[0]))
         return false;
     }
     
