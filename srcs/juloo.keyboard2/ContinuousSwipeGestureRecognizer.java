@@ -23,7 +23,7 @@ public class ContinuousSwipeGestureRecognizer
   private final List<ContinuousGestureRecognizer.Result> results;
   private boolean newTouch;
   private boolean gestureActive;
-  private int minPointsForPrediction = 6; // Start predictions after 6 points (reduced from 8)
+  private int minPointsForPrediction = 4; // Start predictions after 4 points (lowered for short swipes)
   
   // Performance optimization fields
   private HandlerThread backgroundThread;

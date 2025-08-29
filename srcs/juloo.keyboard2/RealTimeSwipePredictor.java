@@ -39,7 +39,7 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
     
     // Set up gesture recognizer callbacks
     gestureRecognizer.setOnGesturePredictionListener(this);
-    gestureRecognizer.setMinPointsForPrediction(6); // Start after 2+ chars swiped (reduced for better responsiveness)
+    gestureRecognizer.setMinPointsForPrediction(4); // Start after minimal swipe (lowered for better coverage)
   }
   
   /**
@@ -197,15 +197,24 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
     // Convert CGR results to word predictions
     currentPredictions.clear();
     
+    android.util.Log.d("RealTimeSwipePredictor", 
+      "Real-time predictions received: " + predictions.size() + 
+      " results, best prob: " + (predictions.isEmpty() ? "none" : predictions.get(0).prob));
+    
     int maxPredictions = Math.min(5, predictions.size()); // Show top 5 predictions
     for (int i = 0; i < maxPredictions; i++)
     {
       ContinuousGestureRecognizer.Result result = predictions.get(i);
-      if (result.prob > 0.1) // Only show predictions with reasonable confidence
+      if (result.prob > 0.001) // Lowered threshold for 3000-word vocabulary (was 0.1)
       {
         currentPredictions.add(result.template.id);
+        android.util.Log.d("RealTimeSwipePredictor", 
+          "Adding real-time prediction: " + result.template.id + " (prob: " + result.prob + ")");
       }
     }
+    
+    android.util.Log.d("RealTimeSwipePredictor", 
+      "Real-time predictions to show: " + currentPredictions.size() + " words");
     
     // Only update UI if we're not in persistent mode and we have predictions
     if (!predictionsPersisting && !currentPredictions.isEmpty())
@@ -223,15 +232,24 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
     // Convert final results to persistent predictions
     persistentPredictions.clear();
     
+    android.util.Log.d("RealTimeSwipePredictor", 
+      "Final predictions received: " + finalPredictions.size() + 
+      " results, best prob: " + (finalPredictions.isEmpty() ? "none" : finalPredictions.get(0).prob));
+    
     int maxPredictions = Math.min(5, finalPredictions.size());
     for (int i = 0; i < maxPredictions; i++)
     {
       ContinuousGestureRecognizer.Result result = finalPredictions.get(i);
-      if (result.prob > 0.05) // Slightly lower threshold for final predictions
+      if (result.prob > 0.0005) // Lowered threshold for final predictions with large vocabulary (was 0.05)
       {
         persistentPredictions.add(result.template.id);
+        android.util.Log.d("RealTimeSwipePredictor", 
+          "Adding final prediction: " + result.template.id + " (prob: " + result.prob + ")");
       }
     }
+    
+    android.util.Log.d("RealTimeSwipePredictor", 
+      "Final predictions to persist: " + persistentPredictions.size() + " words");
     
     // Enable persistence if we have good predictions
     if (!persistentPredictions.isEmpty())
@@ -249,6 +267,7 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
     else
     {
       // No good predictions, clear everything
+      android.util.Log.d("RealTimeSwipePredictor", "No final predictions met threshold - clearing");
       if (predictionListener != null)
       {
         predictionListener.onSwipePredictionCleared();
