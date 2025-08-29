@@ -76,19 +76,17 @@ public class WordGestureTemplateGenerator
       
       while ((line = reader.readLine()) != null && wordCount < 5000) // Limit to top 5000 words
       {
-        String[] parts = line.trim().split("\t");
-        if (parts.length >= 2)
+        // Skip comments and empty lines
+        if (line.startsWith("#") || line.trim().isEmpty()) continue;
+        
+        String word = line.trim().toLowerCase();
+        
+        // Only include words with letters (3-12 characters for comprehensive gesture typing)
+        if (word.matches("[a-z]+") && word.length() >= 3 && word.length() <= 12)
         {
-          String word = parts[0].toLowerCase();
-          int frequency = Integer.parseInt(parts[1]);
-          
-          // Only include words with letters (3-10 characters for practical gesture typing)
-          if (word.matches("[a-z]+") && word.length() >= 3 && word.length() <= 10)
-          {
-            dictionary.add(word);
-            wordFrequencies.put(word, frequency);
-            wordCount++;
-          }
+          dictionary.add(word);
+          wordFrequencies.put(word, 1000); // Default frequency since no frequencies in new format
+          wordCount++;
         }
       }
       reader.close();

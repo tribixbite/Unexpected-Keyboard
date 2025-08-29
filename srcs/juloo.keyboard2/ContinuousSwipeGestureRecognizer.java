@@ -31,7 +31,7 @@ public class ContinuousSwipeGestureRecognizer
   private Handler mainHandler;
   private final AtomicBoolean recognitionInProgress = new AtomicBoolean(false);
   private long lastPredictionTime = 0;
-  private static final long PREDICTION_THROTTLE_MS = 200; // Predict every 200ms (reasonable frequency)
+  private static final long PREDICTION_THROTTLE_MS = 300; // Predict every 300ms (reduced frequency to minimize lag)
   
   // Callback interface for real-time predictions
   public interface OnGesturePredictionListener
