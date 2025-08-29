@@ -23,7 +23,7 @@ public class ContinuousSwipeGestureRecognizer
   private final List<ContinuousGestureRecognizer.Result> results;
   private boolean newTouch;
   private boolean gestureActive;
-  private int minPointsForPrediction = 8; // Start predictions after 8 points (avoid punctuation interference)
+  private int minPointsForPrediction = 6; // Start predictions after 6 points (reduced from 8)
   
   // Performance optimization fields
   private HandlerThread backgroundThread;
@@ -31,9 +31,7 @@ public class ContinuousSwipeGestureRecognizer
   private Handler mainHandler;
   private final AtomicBoolean recognitionInProgress = new AtomicBoolean(false);
   private long lastPredictionTime = 0;
-  private static final long PREDICTION_THROTTLE_MS = 100; // Only predict every 100ms
-  private int touchEventCounter = 0;
-  private static final int TOUCH_SKIP_COUNT = 3; // Only process every 3rd touch event
+  private static final long PREDICTION_THROTTLE_MS = 200; // Predict every 200ms (reasonable frequency)
   
   // Callback interface for real-time predictions
   public interface OnGesturePredictionListener
@@ -107,22 +105,17 @@ public class ContinuousSwipeGestureRecognizer
     
     gesturePointsList.add(new ContinuousGestureRecognizer.Point(x, y));
     
-    // Throttle predictions to prevent UI lag
-    touchEventCounter++;
+    // Throttle predictions to reasonable frequency (record all events but predict sparingly)
     long now = System.currentTimeMillis();
     
-    // Only process predictions if:
-    // 1. We have enough points
-    // 2. Enough time has passed since last prediction 
-    // 3. We've skipped enough touch events
-    // 4. No recognition is currently running
-    if (gesturePointsList.size() >= minPointsForPrediction &&
+    // Only predict if we have enough points, enough time passed, and no recognition in progress
+    boolean shouldPredict = gesturePointsList.size() >= minPointsForPrediction &&
         now - lastPredictionTime > PREDICTION_THROTTLE_MS &&
-        touchEventCounter >= TOUCH_SKIP_COUNT &&
-        recognitionInProgress.compareAndSet(false, true))
+        recognitionInProgress.compareAndSet(false, true);
+        
+    if (shouldPredict)
     {
       lastPredictionTime = now;
-      touchEventCounter = 0;
       
       // Create copy of points for background processing
       final List<ContinuousGestureRecognizer.Point> pointsCopy = 
@@ -168,39 +161,62 @@ public class ContinuousSwipeGestureRecognizer
     {
       newTouch = false;
       
-      // Perform final recognition on background thread
+      // ALWAYS perform final recognition on background thread - guarantee prediction
       if (gesturePointsList.size() >= 2) // Need at least 2 points for recognition
       {
         final List<ContinuousGestureRecognizer.Point> finalPointsCopy = 
           new ArrayList<>(gesturePointsList);
+          
+        // Cancel any pending background recognition to prioritize final results
+        recognitionInProgress.set(false);
           
         backgroundHandler.post(() -> {
           try
           {
             List<ContinuousGestureRecognizer.Result> finalResults = cgr.recognize(finalPointsCopy);
             
-            if (finalResults != null && !finalResults.isEmpty())
-            {
-              // Post results back to main thread
-              mainHandler.post(() -> {
-                // Store results for persistence
-                results.clear();
+            // ALWAYS notify with results (even if empty) to guarantee callback
+            mainHandler.post(() -> {
+              // Store results for persistence
+              results.clear();
+              if (finalResults != null)
+              {
                 results.addAll(finalResults);
-                
-                // Notify listener of final results
-                if (predictionListener != null)
+              }
+              
+              // ALWAYS notify listener - guarantee prediction shown after swipe
+              if (predictionListener != null)
+              {
+                if (finalResults != null && !finalResults.isEmpty())
                 {
                   predictionListener.onGestureComplete(finalResults);
+                  android.util.Log.d("ContinuousSwipeGestureRecognizer", "Final prediction delivered: " + finalResults.size() + " results");
                 }
-                
-                // Debug logging (like CGR_printResults in Lua)
+                else
+                {
+                  // Even if no good results, still notify (may show fallback)
+                  predictionListener.onGestureComplete(new ArrayList<>());
+                  android.util.Log.d("ContinuousSwipeGestureRecognizer", "No final predictions available");
+                }
+              }
+              
+              // Debug logging (like CGR_printResults in Lua)
+              if (finalResults != null && !finalResults.isEmpty())
+              {
                 printResults(finalResults);
-              });
-            }
+              }
+            });
           }
           catch (Exception e)
           {
             android.util.Log.e("ContinuousSwipeGestureRecognizer", "Recognition error on end: " + e.getMessage());
+            // Still notify listener even on error to guarantee callback
+            mainHandler.post(() -> {
+              if (predictionListener != null)
+              {
+                predictionListener.onGestureComplete(new ArrayList<>());
+              }
+            });
           }
         });
       }
@@ -332,7 +348,6 @@ public class ContinuousSwipeGestureRecognizer
     results.clear();
     gestureActive = false;
     newTouch = false;
-    touchEventCounter = 0;
     lastPredictionTime = 0;
     recognitionInProgress.set(false);
     
