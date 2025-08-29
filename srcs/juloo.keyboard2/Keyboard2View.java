@@ -19,6 +19,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,6 +50,10 @@ public class Keyboard2View extends View
   
   // Swipe typing integration
   private WordPredictor _wordPredictor;
+  
+  // CGR prediction storage
+  private List<String> _cgrPredictions = new ArrayList<>();
+  private boolean _cgrFinalPredictions = false;
   private Keyboard2 _keyboard2;
 
   private float _keyWidth;
@@ -92,31 +97,26 @@ public class Keyboard2View extends View
         @Override
         public void onSwipePredictionUpdate(List<String> predictions)
         {
-          // Forward to parent service's suggestion handling
-          if (getContext() instanceof Keyboard2)
-          {
-            ((Keyboard2) getContext()).updateSwipePredictions(predictions);
-          }
+          android.util.Log.d("Keyboard2View", "CGR real-time predictions: " + predictions.size() + " words");
+          // Need to find a way to communicate with Keyboard2 service
+          // For now, store predictions for later access
+          storeCGRPredictions(predictions, false);
         }
         
         @Override
         public void onSwipePredictionComplete(List<String> finalPredictions)
         {
-          // Forward final predictions to parent service
-          if (getContext() instanceof Keyboard2)
-          {
-            ((Keyboard2) getContext()).completeSwipePredictions(finalPredictions);
-          }
+          android.util.Log.d("Keyboard2View", "CGR final predictions: " + finalPredictions.size() + " words");
+          // Store final predictions
+          storeCGRPredictions(finalPredictions, true);
         }
         
         @Override
         public void onSwipePredictionCleared()
         {
-          // Forward clear event to parent service  
-          if (getContext() instanceof Keyboard2)
-          {
-            ((Keyboard2) getContext()).clearSwipePredictions();
-          }
+          android.util.Log.d("Keyboard2View", "CGR predictions cleared");
+          // Clear stored predictions
+          clearCGRPredictions();
         }
       });
       
@@ -728,5 +728,72 @@ public class Keyboard2View extends View
       yPos += row.height * _tc.row_height;
     }
     return null;
+  }
+  
+  /**
+   * CGR Prediction Support Methods
+   */
+  
+  /**
+   * Store CGR predictions and immediately display them
+   */
+  private void storeCGRPredictions(List<String> predictions, boolean isFinal)
+  {
+    _cgrPredictions.clear();
+    if (predictions != null)
+    {
+      _cgrPredictions.addAll(predictions);
+    }
+    _cgrFinalPredictions = isFinal;
+    
+    android.util.Log.d("Keyboard2View", "Stored " + _cgrPredictions.size() + 
+      " CGR predictions (final: " + isFinal + "): " + _cgrPredictions);
+    
+    // Immediately trigger display update by calling parent service method
+    post(() -> {
+      try
+      {
+        // Find the parent Keyboard2 service and update predictions
+        Context context = getContext();
+        while (context instanceof ContextWrapper && !(context instanceof Keyboard2))
+        {
+          context = ((ContextWrapper) context).getBaseContext();
+        }
+        if (context instanceof Keyboard2)
+        {
+          ((Keyboard2) context).checkCGRPredictions();
+        }
+      }
+      catch (Exception e)
+      {
+        android.util.Log.e("Keyboard2View", "Failed to update CGR predictions: " + e.getMessage());
+      }
+    });
+  }
+  
+  /**
+   * Clear CGR predictions
+   */
+  private void clearCGRPredictions()
+  {
+    _cgrPredictions.clear();
+    _cgrFinalPredictions = false;
+    android.util.Log.d("Keyboard2View", "Cleared CGR predictions");
+  }
+  
+  /**
+   * Get current CGR predictions (for access by keyboard service)
+   */
+  public List<String> getCGRPredictions()
+  {
+    return new ArrayList<>(_cgrPredictions);
+  }
+  
+  /**
+   * Check if CGR predictions are final (persisting)
+   */
+  public boolean areCGRPredictionsFinal()
+  {
+    return _cgrFinalPredictions;
   }
 }

@@ -1166,7 +1166,45 @@ public class Keyboard2 extends InputMethodService
    */
   
   /**
-   * Update swipe predictions in real-time during gesture
+   * Update swipe predictions by checking keyboard view for CGR results
+   */
+  public void updateCGRPredictions()
+  {
+    if (_suggestionBar != null && _keyboardView != null)
+    {
+      List<String> cgrPredictions = _keyboardView.getCGRPredictions();
+      if (!cgrPredictions.isEmpty())
+      {
+        _suggestionBar.setSuggestions(cgrPredictions);
+        android.util.Log.d("Keyboard2", "Displaying CGR predictions: " + cgrPredictions.size() + " words - " + cgrPredictions);
+      }
+    }
+  }
+  
+  /**
+   * Check and update CGR predictions (call this periodically or on swipe events)
+   */
+  public void checkCGRPredictions()
+  {
+    if (_keyboardView != null)
+    {
+      List<String> cgrPredictions = _keyboardView.getCGRPredictions();
+      boolean areFinal = _keyboardView.areCGRPredictionsFinal();
+      
+      if (!cgrPredictions.isEmpty())
+      {
+        if (_suggestionBar != null)
+        {
+          _suggestionBar.setSuggestions(cgrPredictions);
+          android.util.Log.d("Keyboard2", "Updated CGR predictions: " + cgrPredictions.size() + 
+            " words (final: " + areFinal + ")");
+        }
+      }
+    }
+  }
+  
+  /**
+   * Update swipe predictions in real-time during gesture (legacy method)
    */
   public void updateSwipePredictions(List<String> predictions)
   {
@@ -1178,7 +1216,7 @@ public class Keyboard2 extends InputMethodService
   }
   
   /**
-   * Complete swipe predictions after gesture ends
+   * Complete swipe predictions after gesture ends (legacy method)
    */
   public void completeSwipePredictions(List<String> finalPredictions)
   {
@@ -1194,7 +1232,7 @@ public class Keyboard2 extends InputMethodService
   }
   
   /**
-   * Clear swipe predictions
+   * Clear swipe predictions (legacy method)
    */
   public void clearSwipePredictions()
   {
