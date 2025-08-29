@@ -1,14 +1,20 @@
 package juloo.keyboard2;
 
 import android.graphics.PointF;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Continuous Swipe Gesture Recognizer Integration
  * 
  * Based on Main.lua usage patterns, this class integrates the CGR library
  * with Android touch handling for swipe typing recognition.
+ * 
+ * PERFORMANCE OPTIMIZED: Uses background thread and throttling to prevent UI lag
  */
 public class ContinuousSwipeGestureRecognizer
 {
@@ -18,6 +24,16 @@ public class ContinuousSwipeGestureRecognizer
   private boolean newTouch;
   private boolean gestureActive;
   private int minPointsForPrediction = 8; // Start predictions after 8 points (avoid punctuation interference)
+  
+  // Performance optimization fields
+  private HandlerThread backgroundThread;
+  private Handler backgroundHandler;
+  private Handler mainHandler;
+  private final AtomicBoolean recognitionInProgress = new AtomicBoolean(false);
+  private long lastPredictionTime = 0;
+  private static final long PREDICTION_THROTTLE_MS = 100; // Only predict every 100ms
+  private int touchEventCounter = 0;
+  private static final int TOUCH_SKIP_COUNT = 3; // Only process every 3rd touch event
   
   // Callback interface for real-time predictions
   public interface OnGesturePredictionListener
@@ -36,6 +52,12 @@ public class ContinuousSwipeGestureRecognizer
     results = new ArrayList<>(); // Pre-allocated results list like in Lua
     gestureActive = false;
     newTouch = false;
+    
+    // Initialize background processing
+    backgroundThread = new HandlerThread("CGR-Recognition");
+    backgroundThread.start();
+    backgroundHandler = new Handler(backgroundThread.getLooper());
+    mainHandler = new Handler(Looper.getMainLooper());
     
     // Initialize with directional templates for testing
     // This will be replaced with word templates later
@@ -77,6 +99,7 @@ public class ContinuousSwipeGestureRecognizer
   
   /**
    * Handle touch move event (equivalent to CurrentTouch.state == MOVING)
+   * OPTIMIZED: Uses throttling and background processing to prevent UI lag
    */
   public void onTouchMoved(float x, float y)
   {
@@ -84,29 +107,56 @@ public class ContinuousSwipeGestureRecognizer
     
     gesturePointsList.add(new ContinuousGestureRecognizer.Point(x, y));
     
-    // Provide real-time predictions if we have enough points
-    if (gesturePointsList.size() >= minPointsForPrediction)
+    // Throttle predictions to prevent UI lag
+    touchEventCounter++;
+    long now = System.currentTimeMillis();
+    
+    // Only process predictions if:
+    // 1. We have enough points
+    // 2. Enough time has passed since last prediction 
+    // 3. We've skipped enough touch events
+    // 4. No recognition is currently running
+    if (gesturePointsList.size() >= minPointsForPrediction &&
+        now - lastPredictionTime > PREDICTION_THROTTLE_MS &&
+        touchEventCounter >= TOUCH_SKIP_COUNT &&
+        recognitionInProgress.compareAndSet(false, true))
     {
-      try
-      {
-        List<ContinuousGestureRecognizer.Result> currentResults = cgr.recognize(gesturePointsList);
-        
-        // Only send prediction updates if we have results and a listener
-        if (currentResults != null && !currentResults.isEmpty() && predictionListener != null)
+      lastPredictionTime = now;
+      touchEventCounter = 0;
+      
+      // Create copy of points for background processing
+      final List<ContinuousGestureRecognizer.Point> pointsCopy = 
+        new ArrayList<>(gesturePointsList);
+      
+      // Run recognition on background thread
+      backgroundHandler.post(() -> {
+        try
         {
-          predictionListener.onGesturePrediction(currentResults);
+          List<ContinuousGestureRecognizer.Result> currentResults = cgr.recognize(pointsCopy);
+          
+          // Post results back to main thread
+          if (currentResults != null && !currentResults.isEmpty() && predictionListener != null)
+          {
+            mainHandler.post(() -> {
+              predictionListener.onGesturePrediction(currentResults);
+            });
+          }
         }
-      }
-      catch (Exception e)
-      {
-        // Handle any recognition errors gracefully
-        android.util.Log.w("ContinuousSwipeGestureRecognizer", "Recognition error during move: " + e.getMessage());
-      }
+        catch (Exception e)
+        {
+          android.util.Log.w("ContinuousSwipeGestureRecognizer", "Recognition error during move: " + e.getMessage());
+        }
+        finally
+        {
+          recognitionInProgress.set(false);
+        }
+      });
     }
   }
   
   /**
    * Handle touch end event (equivalent to CurrentTouch.state == ENDED)
+   * OPTIMIZED: Uses background processing for final recognition
    */
   public void onTouchEnded(float x, float y)
   {
@@ -118,33 +168,41 @@ public class ContinuousSwipeGestureRecognizer
     {
       newTouch = false;
       
-      // Perform final recognition like in the Lua version
-      try
+      // Perform final recognition on background thread
+      if (gesturePointsList.size() >= 2) // Need at least 2 points for recognition
       {
-        if (gesturePointsList.size() >= 2) // Need at least 2 points for recognition
-        {
-          List<ContinuousGestureRecognizer.Result> finalResults = cgr.recognize(gesturePointsList);
+        final List<ContinuousGestureRecognizer.Point> finalPointsCopy = 
+          new ArrayList<>(gesturePointsList);
           
-          if (finalResults != null && !finalResults.isEmpty())
+        backgroundHandler.post(() -> {
+          try
           {
-            // Store results for persistence
-            results.clear();
-            results.addAll(finalResults);
+            List<ContinuousGestureRecognizer.Result> finalResults = cgr.recognize(finalPointsCopy);
             
-            // Notify listener of final results
-            if (predictionListener != null)
+            if (finalResults != null && !finalResults.isEmpty())
             {
-              predictionListener.onGestureComplete(finalResults);
+              // Post results back to main thread
+              mainHandler.post(() -> {
+                // Store results for persistence
+                results.clear();
+                results.addAll(finalResults);
+                
+                // Notify listener of final results
+                if (predictionListener != null)
+                {
+                  predictionListener.onGestureComplete(finalResults);
+                }
+                
+                // Debug logging (like CGR_printResults in Lua)
+                printResults(finalResults);
+              });
             }
-            
-            // Debug logging (like CGR_printResults in Lua)
-            printResults(finalResults);
           }
-        }
-      }
-      catch (Exception e)
-      {
-        android.util.Log.e("ContinuousSwipeGestureRecognizer", "Recognition error on end: " + e.getMessage());
+          catch (Exception e)
+          {
+            android.util.Log.e("ContinuousSwipeGestureRecognizer", "Recognition error on end: " + e.getMessage());
+          }
+        });
       }
     }
     
@@ -274,10 +332,34 @@ public class ContinuousSwipeGestureRecognizer
     results.clear();
     gestureActive = false;
     newTouch = false;
+    touchEventCounter = 0;
+    lastPredictionTime = 0;
+    recognitionInProgress.set(false);
     
     if (predictionListener != null)
     {
       predictionListener.onGestureCleared();
+    }
+  }
+  
+  /**
+   * Clean up background thread (call when done with recognizer)
+   */
+  public void cleanup()
+  {
+    if (backgroundThread != null)
+    {
+      backgroundThread.quitSafely();
+      try
+      {
+        backgroundThread.join();
+      }
+      catch (InterruptedException e)
+      {
+        Thread.currentThread().interrupt();
+      }
+      backgroundThread = null;
+      backgroundHandler = null;
     }
   }
 }
