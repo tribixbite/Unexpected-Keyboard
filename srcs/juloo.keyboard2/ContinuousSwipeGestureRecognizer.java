@@ -17,7 +17,7 @@ public class ContinuousSwipeGestureRecognizer
   private final List<ContinuousGestureRecognizer.Result> results;
   private boolean newTouch;
   private boolean gestureActive;
-  private int minPointsForPrediction = 3; // Start predictions after 3 points (2+ chars)
+  private int minPointsForPrediction = 8; // Start predictions after 8 points (avoid punctuation interference)
   
   // Callback interface for real-time predictions
   public interface OnGesturePredictionListener

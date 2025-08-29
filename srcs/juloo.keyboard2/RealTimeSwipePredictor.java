@@ -39,7 +39,7 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
     
     // Set up gesture recognizer callbacks
     gestureRecognizer.setOnGesturePredictionListener(this);
-    gestureRecognizer.setMinPointsForPrediction(3); // Start after 2+ chars swiped
+    gestureRecognizer.setMinPointsForPrediction(8); // Start after 2+ chars swiped (avoid punctuation interference)
   }
   
   /**
