@@ -57,9 +57,9 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
       {
         templateGenerator.loadDictionary(context);
         
-        // Generate templates for most frequent words (reduced for performance and testing)
+        // Generate templates for most frequent words (practical vocabulary size)
         List<ContinuousGestureRecognizer.Template> templates = 
-          templateGenerator.generateBalancedWordTemplates(100); // Reduced to 100 for stability
+          templateGenerator.generateBalancedWordTemplates(3000); // Practical vocabulary for swipe typing
         
         // Set templates in gesture recognizer
         gestureRecognizer.setTemplateSet(templates);
