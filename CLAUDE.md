@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 2. BUILD AFTER EVERY CODE CHANGE
 **MANDATORY**: After EVERY code modification:
 ```bash
-./gradlew assembleDebug
+./build-on-termux.sh
 ```
 - NEVER proceed without confirming successful build
 - Fix ALL compilation errors immediately

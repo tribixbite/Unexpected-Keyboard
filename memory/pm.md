@@ -345,7 +345,66 @@ gh issue create --title "Bug: ..." --body "..."
 2. TensorFlow Lite conversion pipeline
 3. On-device model integration
 
-### ✅ Recently Completed (2025-08-27): Swipe Prediction Quality Improvements
+### ✅ Recently Completed (2025-08-27): Core Prediction & Storage Improvements  
+**Successfully implemented critical fixes for prediction behavior and clipboard storage reliability.**
+
+#### 1. Fixed Markov Chain Prefix Predictions ✅
+**Problem**: Typing "req" showed incorrect suggestions like [r, re, are, real] instead of prefix matches
+**Solution**: Enforced strict prefix matching for regular typing input
+
+**Technical Implementation**:
+- Modified `WordPredictor.java` regular typing logic to use `startsWith()` filtering
+- Added `calculatePrefixScore()` method for proper prefix-based scoring algorithm
+- Preserved legacy `calculateMatchScore()` for swipe sequence matching
+- Enhanced scoring with completion ratio, prefix bonus, and length penalties
+
+**Results**:
+- ✅ Typing "req" now only shows words starting with "req" (require, request, etc.)
+- ✅ Proper Markov chain behavior: suggestions match typed prefix exactly
+- ✅ Contextual N-gram predictions remain fully functional for prefix matches
+- ✅ Swipe prediction quality preserved with separate scoring logic
+
+#### 2. Robust SQLite Clipboard Database Storage ✅
+**Problem**: Clipboard items constantly disappearing due to in-memory storage limitations
+**Solution**: Complete migration to persistent SQLite database storage system
+
+**ClipboardDatabase.java Features**:
+- **Persistent Storage**: Survives app restarts and system memory pressure
+- **Duplicate Detection**: Content hash-based duplicate prevention with timestamp consideration
+- **Expiry Management**: Automatic cleanup of expired entries with configurable TTL
+- **Pinning Support**: Pin important items to prevent expiration
+- **Size Limits**: Configurable limits with smart oldest-entry removal
+- **Performance**: Database indexes for efficient querying and operations
+- **Statistics**: Entry counts, storage stats, and usage monitoring
+
+**ClipboardHistoryService.java Migration**:
+- Replaced in-memory `List<HistoryEntry>` with database operations
+- Enhanced `add_clip()`, `remove_history_entry()`, `clear_history()` methods
+- Added `set_pinned_status()` for item pinning functionality
+- Automatic cleanup on startup and size limit enforcement
+- Comprehensive error handling and logging for reliability
+
+#### User Experience Impact ✅
+**Prediction Improvements**:
+1. **Correct Prefix Matching**: Typing now works like traditional keyboards - "req" suggests "require", "request", "required"
+2. **Faster Text Input**: No more irrelevant short suggestions cluttering the prediction bar  
+3. **Predictable Behavior**: Users can rely on prefix-based word completion as expected
+4. **Maintained Context**: N-gram predictions still provide contextual suggestions for prefix matches
+
+**Clipboard Reliability**:
+1. **No More Lost Items**: Clipboard history persists across app restarts and system events
+2. **Enhanced Functionality**: Pin important items to prevent them from expiring
+3. **Better Organization**: Duplicate detection prevents clutter in clipboard history
+4. **Configurable Limits**: Users can set unlimited or specific size limits based on needs
+5. **Performance**: Database indexes ensure smooth operation even with large clipboards
+
+#### Build Status ✅
+- ✅ **Compilation**: All builds successful with no errors
+- ✅ **Database Migration**: SQLite schema properly initialized with indexes
+- ✅ **Backwards Compatibility**: Existing clipboard functionality fully preserved
+- ✅ **Performance**: No impact on typing speed or prediction latency
+
+### ✅ Previously Completed: Swipe Prediction Quality Improvements
 **Successfully implemented minimum word length filtering for swipe predictions to enhance user experience and prediction quality.**
 
 #### Design Specification Implementation ✅

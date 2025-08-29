@@ -320,8 +320,25 @@ public class Keyboard2View extends View
   {
     KeyboardData.Row row = getRowAtPosition(ty);
     float x = _marginLeft;
-    if (row == null || tx < x)
+    if (row == null)
       return null;
+    
+    // Handle touch zones extending to screen edges for 'a' and 'l' keys
+    KeyboardData.Key firstKey = null;
+    KeyboardData.Key lastKey = null;
+    if (!row.keys.isEmpty()) {
+      firstKey = row.keys.get(0);
+      lastKey = row.keys.get(row.keys.size() - 1);
+    }
+    
+    // Check if touch is before the first key - extend 'a' key's touch zone to left edge
+    if (tx < x && firstKey != null && isCharacterKey(firstKey, 'a')) {
+      return firstKey;
+    }
+    
+    if (tx < x)
+      return null;
+      
     for (KeyboardData.Key key : row.keys)
     {
       float xLeft = x + key.shift * _keyWidth;
@@ -332,7 +349,24 @@ public class Keyboard2View extends View
         return key;
       x = xRight;
     }
+    
+    // Check if touch is after the last key - extend 'l' key's touch zone to right edge
+    if (lastKey != null && isCharacterKey(lastKey, 'l')) {
+      return lastKey;
+    }
+    
     return null;
+  }
+  
+  /**
+   * Check if a key represents the specified character
+   */
+  private boolean isCharacterKey(KeyboardData.Key key, char character) {
+    if (key.keys[0] == null) 
+      return false;
+    KeyValue kv = key.keys[0];
+    return kv != null && kv.getKind() == KeyValue.Kind.Char && 
+           kv.getChar() == character;
   }
 
   private void vibrate()
