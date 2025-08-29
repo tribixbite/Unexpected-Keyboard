@@ -30,14 +30,14 @@ public final class Pointers implements Handler.Callback
   private ArrayList<Pointer> _ptrs = new ArrayList<Pointer>();
   private IPointerEventHandler _handler;
   private Config _config;
-  public final ImprovedSwipeGestureRecognizer _swipeRecognizer;
+  public final EnhancedSwipeGestureRecognizer _swipeRecognizer;
 
   public Pointers(IPointerEventHandler h, Config c)
   {
     _longpress_handler = new Handler(this);
     _handler = h;
     _config = c;
-    _swipeRecognizer = new ImprovedSwipeGestureRecognizer();
+    _swipeRecognizer = new EnhancedSwipeGestureRecognizer();
   }
 
   /** Return the list of modifiers currently activated. */

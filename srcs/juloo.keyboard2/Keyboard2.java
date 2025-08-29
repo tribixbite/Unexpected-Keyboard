@@ -1159,4 +1159,49 @@ public class Keyboard2 extends InputMethodService
   {
     return View.inflate(new ContextThemeWrapper(this, _config.theme), layout, null);
   }
+  
+  /**
+   * CGR Prediction Integration Methods
+   * These methods are called by the EnhancedSwipeGestureRecognizer to display predictions
+   */
+  
+  /**
+   * Update swipe predictions in real-time during gesture
+   */
+  public void updateSwipePredictions(List<String> predictions)
+  {
+    if (_suggestionBar != null && predictions != null && !predictions.isEmpty())
+    {
+      _suggestionBar.setSuggestions(predictions);
+      android.util.Log.d("Keyboard2", "CGR real-time predictions updated: " + predictions.size() + " words");
+    }
+  }
+  
+  /**
+   * Complete swipe predictions after gesture ends
+   */
+  public void completeSwipePredictions(List<String> finalPredictions)
+  {
+    if (_suggestionBar != null && finalPredictions != null && !finalPredictions.isEmpty())
+    {
+      _suggestionBar.setSuggestions(finalPredictions);
+      android.util.Log.d("Keyboard2", "CGR final predictions completed: " + finalPredictions.size() + " words");
+    }
+    else
+    {
+      android.util.Log.d("Keyboard2", "No CGR predictions to display");
+    }
+  }
+  
+  /**
+   * Clear swipe predictions
+   */
+  public void clearSwipePredictions()
+  {
+    if (_suggestionBar != null)
+    {
+      _suggestionBar.clearSuggestions();
+      android.util.Log.d("Keyboard2", "CGR predictions cleared");
+    }
+  }
 }

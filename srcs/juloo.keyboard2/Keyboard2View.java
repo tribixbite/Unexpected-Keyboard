@@ -44,7 +44,7 @@ public class Keyboard2View extends View
 
   private Config _config;
   
-  private ImprovedSwipeGestureRecognizer _swipeRecognizer;
+  private EnhancedSwipeGestureRecognizer _swipeRecognizer;
   private Paint _swipeTrailPaint;
   
   // Swipe typing integration
@@ -80,6 +80,49 @@ public class Keyboard2View extends View
     _config = Config.globalConfig();
     _pointers = new Pointers(this, _config);
     _swipeRecognizer = _pointers._swipeRecognizer; // Share the recognizer
+    
+    // Initialize CGR prediction system now that we have context
+    if (_swipeRecognizer != null)
+    {
+      _swipeRecognizer.initializePredictionSystem(getContext());
+      
+      // Connect CGR predictions to UI (note: suggestion bar will be available via parent service)
+      _swipeRecognizer.setOnSwipePredictionListener(new EnhancedSwipeGestureRecognizer.OnSwipePredictionListener()
+      {
+        @Override
+        public void onSwipePredictionUpdate(List<String> predictions)
+        {
+          // Forward to parent service's suggestion handling
+          if (getContext() instanceof Keyboard2)
+          {
+            ((Keyboard2) getContext()).updateSwipePredictions(predictions);
+          }
+        }
+        
+        @Override
+        public void onSwipePredictionComplete(List<String> finalPredictions)
+        {
+          // Forward final predictions to parent service
+          if (getContext() instanceof Keyboard2)
+          {
+            ((Keyboard2) getContext()).completeSwipePredictions(finalPredictions);
+          }
+        }
+        
+        @Override
+        public void onSwipePredictionCleared()
+        {
+          // Forward clear event to parent service  
+          if (getContext() instanceof Keyboard2)
+          {
+            ((Keyboard2) getContext()).clearSwipePredictions();
+          }
+        }
+      });
+      
+      android.util.Log.d("Keyboard2View", "CGR prediction system initialized with UI integration");
+    }
+    
     initSwipeTrailPaint();
     refresh_navigation_bar(context);
     setOnTouchListener(this);
@@ -138,11 +181,18 @@ public class Keyboard2View extends View
     _compose_key = _keyboard.findKeyWithValue(_compose_kv);
     KeyModifier.set_modmap(_keyboard.modmap);
     
-    // Set keyboard for swipe recognizer's probabilistic detection
+    // Initialize CGR swipe recognizer if not already created
+    if (_swipeRecognizer == null)
+    {
+      _swipeRecognizer = new EnhancedSwipeGestureRecognizer();
+      _swipeRecognizer.initializePredictionSystem(getContext());
+    }
+    
+    // Set keyboard for swipe recognizer's probabilistic detection  
     if (_swipeRecognizer != null && _keyboard != null)
     {
       DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-      _swipeRecognizer.setKeyboard(_keyboard, dm.widthPixels, dm.heightPixels);
+      // Parent class handles keyboard setup - no need for setKeyboardDimensions
     }
     
     reset();
