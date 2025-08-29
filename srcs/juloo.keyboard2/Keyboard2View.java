@@ -323,17 +323,22 @@ public class Keyboard2View extends View
     if (row == null)
       return null;
     
-    // Handle touch zones extending to screen edges for 'a' and 'l' keys
-    KeyboardData.Key firstKey = null;
-    KeyboardData.Key lastKey = null;
-    if (!row.keys.isEmpty()) {
-      firstKey = row.keys.get(0);
-      lastKey = row.keys.get(row.keys.size() - 1);
+    // Check if this row contains 'a' and 'l' keys (middle letter row in QWERTY)
+    boolean hasAAndLKeys = rowContainsAAndL(row);
+    KeyboardData.Key aKey = null;
+    KeyboardData.Key lKey = null;
+    
+    if (hasAAndLKeys) {
+      // Find the 'a' and 'l' keys in this row
+      for (KeyboardData.Key key : row.keys) {
+        if (isCharacterKey(key, 'a')) aKey = key;
+        if (isCharacterKey(key, 'l')) lKey = key;
+      }
     }
     
-    // Check if touch is before the first key - extend 'a' key's touch zone to left edge
-    if (tx < x && firstKey != null && isCharacterKey(firstKey, 'a')) {
-      return firstKey;
+    // Check if touch is before the first key and we have 'a' key - extend its touch zone
+    if (tx < x && aKey != null) {
+      return aKey;
     }
     
     if (tx < x)
@@ -350,12 +355,26 @@ public class Keyboard2View extends View
       x = xRight;
     }
     
-    // Check if touch is after the last key - extend 'l' key's touch zone to right edge
-    if (lastKey != null && isCharacterKey(lastKey, 'l')) {
-      return lastKey;
+    // Check if touch is after the last key and we have 'l' key - extend its touch zone
+    if (lKey != null) {
+      return lKey;
     }
     
     return null;
+  }
+  
+  /**
+   * Check if this row contains both 'a' and 'l' keys (the middle QWERTY row)
+   */
+  private boolean rowContainsAAndL(KeyboardData.Row row) {
+    boolean hasA = false;
+    boolean hasL = false;
+    for (KeyboardData.Key key : row.keys) {
+      if (isCharacterKey(key, 'a')) hasA = true;
+      if (isCharacterKey(key, 'l')) hasL = true;
+      if (hasA && hasL) return true;
+    }
+    return false;
   }
   
   /**
