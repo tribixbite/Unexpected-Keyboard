@@ -458,23 +458,24 @@ public class WordPredictor
       }
       else
       {
-        // Regular typing - strict length matching
-        if (Math.abs(word.length() - lowerSequence.length()) > 2)
-          continue;
+        // Regular typing - STRICT PREFIX MATCHING for Markov chain behavior
+        // Only suggest words that start with the typed sequence
+        if (!word.startsWith(lowerSequence))
+          continue;  // Skip words that don't start with typed prefix
           
-        int score = calculateMatchScore(word, lowerSequence);
-        if (score > 0)
+        // Calculate score based on exact prefix match
+        int score = calculatePrefixScore(word, lowerSequence);
+        
+        // Apply user adaptation multiplier before frequency multiplication
+        if (_adaptationManager != null)
         {
-          // Apply user adaptation multiplier before frequency multiplication
-          if (_adaptationManager != null)
-          {
-            float adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
-            score = (int)(score * adaptationMultiplier);
-          }
-          
-          // For regular typing, keep frequency multiplication
-          otherMatches.add(new WordCandidate(word, score * frequency));
+          float adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
+          score = (int)(score * adaptationMultiplier);
         }
+        
+        // For regular typing, keep frequency multiplication
+        otherMatches.add(new WordCandidate(word, score * frequency));
+        android.util.Log.d("WordPredictor", "PREFIX match: " + word + " (score=" + score + ", freq=" + frequency + ")");
       }
     }
     
@@ -524,7 +525,37 @@ public class WordPredictor
   }
   
   /**
-   * Calculate how well a word matches the key sequence
+   * Calculate score for prefix-based matching (regular typing)
+   */
+  private int calculatePrefixScore(String word, String keySequence)
+  {
+    // Direct match is highest score
+    if (word.equals(keySequence))
+      return 1000;
+      
+    // Word starts with sequence (this is guaranteed by caller, but score based on completion ratio)
+    if (word.startsWith(keySequence))
+    {
+      // Score based on how much of the word is already typed
+      float completionRatio = (float)keySequence.length() / word.length();
+      
+      // Higher score for more completion, but prefer shorter completions
+      int baseScore = 800;
+      
+      // Bonus for more typed characters (longer prefix = more specific)
+      int prefixBonus = keySequence.length() * 50;
+      
+      // Slight penalty for very long words to prefer common shorter words
+      int lengthPenalty = Math.max(0, (word.length() - 6) * 10);
+      
+      return baseScore + prefixBonus - lengthPenalty;
+    }
+    
+    return 0; // Should not reach here due to prefix check in caller
+  }
+  
+  /**
+   * Calculate how well a word matches the key sequence (legacy - used for swipe sequences)
    */
   private int calculateMatchScore(String word, String keySequence)
   {

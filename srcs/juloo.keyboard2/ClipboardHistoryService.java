@@ -57,52 +57,46 @@ public final class ClipboardHistoryService
   static ClipboardPasteCallback _paste_callback = null;
 
   ClipboardManager _cm;
-  List<HistoryEntry> _history;
+  ClipboardDatabase _database;
   OnClipboardHistoryChange _listener = null;
 
   ClipboardHistoryService(Context ctx)
   {
-    _history = new ArrayList<HistoryEntry>();
+    _database = ClipboardDatabase.getInstance(ctx);
     _cm = (ClipboardManager)ctx.getSystemService(Context.CLIPBOARD_SERVICE);
     _cm.addPrimaryClipChangedListener(this.new SystemListener());
+    
+    // Clean up expired entries on startup
+    _database.cleanupExpiredEntries();
   }
 
   public List<String> clear_expired_and_get_history()
   {
-    long now_ms = System.currentTimeMillis();
-    List<String> dst = new ArrayList<String>();
-    Iterator<HistoryEntry> it = _history.iterator();
-    while (it.hasNext())
-    {
-      HistoryEntry ent = it.next();
-      if (ent.expiry_timestamp <= now_ms)
-        it.remove();
-      else
-        dst.add(ent.content);
-    }
-    return dst;
+    // Clean up expired entries and return active ones
+    _database.cleanupExpiredEntries();
+    return _database.getActiveClipboardEntries();
   }
 
   /** This will call [on_clipboard_history_change]. */
   public void remove_history_entry(String clip)
   {
-    int last_pos = _history.size() - 1;
-    for (int pos = last_pos; pos >= 0; pos--)
+    // Check if this is the most recent clipboard entry
+    List<String> currentHistory = _database.getActiveClipboardEntries();
+    boolean isCurrentClip = !currentHistory.isEmpty() && currentHistory.get(0).equals(clip);
+    
+    // If removing the current clipboard, clear the system clipboard
+    if (isCurrentClip)
     {
-      if (!_history.get(pos).content.equals(clip))
-        continue;
-      // Removing the current clipboard, clear the system clipboard.
-      if (pos == last_pos)
-      {
-        if (VERSION.SDK_INT >= 28)
-          _cm.clearPrimaryClip();
-        else
-          _cm.setText("");
-      }
-      _history.remove(pos);
-      if (_listener != null)
-        _listener.on_clipboard_history_change();
+      if (VERSION.SDK_INT >= 28)
+        _cm.clearPrimaryClip();
+      else
+        _cm.setText("");
     }
+    
+    // Remove from database
+    boolean removed = _database.removeClipboardEntry(clip);
+    if (removed && _listener != null)
+      _listener.on_clipboard_history_change();
   }
 
   /** Add clipboard entries to the history, skipping consecutive duplicates and
@@ -111,28 +105,54 @@ public final class ClipboardHistoryService
   {
     if (!Config.globalConfig().clipboard_history_enabled)
       return;
-    int size = _history.size();
-    if (clip.equals("") || (size > 0 && _history.get(size - 1).content.equals(clip)))
+    
+    if (clip == null || clip.trim().isEmpty())
       return;
     
-    // Get configurable limit from settings (0 means unlimited)
-    int maxHistorySize = Config.globalConfig().clipboard_history_limit;
-    if (maxHistorySize > 0 && size >= maxHistorySize)
-      _history.remove(0);
+    // Calculate expiry time
+    long expiryTime = System.currentTimeMillis() + HISTORY_TTL_MS;
     
-    _history.add(new HistoryEntry(clip));
-    if (_listener != null)
-      _listener.on_clipboard_history_change();
+    // Add to database (handles duplicate detection automatically)
+    boolean added = _database.addClipboardEntry(clip, expiryTime);
+    
+    if (added)
+    {
+      // Apply size limits if configured
+      int maxHistorySize = Config.globalConfig().clipboard_history_limit;
+      if (maxHistorySize > 0)
+      {
+        _database.applySizeLimit(maxHistorySize);
+      }
+      
+      if (_listener != null)
+        _listener.on_clipboard_history_change();
+    }
   }
 
   public void clear_history()
   {
-    _history.clear();
+    _database.clearAllEntries();
     if (_listener != null)
       _listener.on_clipboard_history_change();
   }
 
   public void set_on_clipboard_history_change(OnClipboardHistoryChange l) { _listener = l; }
+  
+  /** Pin or unpin a clipboard entry to prevent it from expiring */
+  public void set_pinned_status(String clip, boolean isPinned)
+  {
+    boolean updated = _database.setPinnedStatus(clip, isPinned);
+    if (updated && _listener != null)
+      _listener.on_clipboard_history_change();
+  }
+  
+  /** Get statistics about clipboard storage */
+  public String getStorageStats()
+  {
+    int total = _database.getTotalEntryCount();
+    int active = _database.getActiveEntryCount();
+    return String.format("Clipboard: %d active entries (%d total in database)", active, total);
+  }
 
   public static interface OnClipboardHistoryChange
   {
@@ -165,19 +185,7 @@ public final class ClipboardHistoryService
     }
   }
 
-  static final class HistoryEntry
-  {
-    public final String content;
-
-    /** Time at which the entry expires. */
-    public final long expiry_timestamp;
-
-    public HistoryEntry(String c)
-    {
-      content = c;
-      expiry_timestamp = System.currentTimeMillis() + HISTORY_TTL_MS;
-    }
-  }
+  // HistoryEntry class removed - now using SQLite database storage
 
   public interface ClipboardPasteCallback
   {
