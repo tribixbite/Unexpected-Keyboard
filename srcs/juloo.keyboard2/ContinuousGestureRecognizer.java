@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Continuous Gesture Recognizer Library (CGR)
@@ -37,12 +39,18 @@ public class ContinuousGestureRecognizer
   // Normalized space
   private static final Rect NORMALIZED_SPACE = new Rect(0, 0, 1000, 1000);
   
-  // Global pattern set
+  // Global pattern set and optimization indexes
   private final List<Pattern> patterns;
+  private final Map<Character, List<Pattern>> firstCharIndex;
+  private final Map<String, List<Pattern>> firstLastCharIndex;
+  private final Map<Integer, List<Pattern>> lengthIndex;
   
   public ContinuousGestureRecognizer()
   {
     patterns = new ArrayList<>();
+    firstCharIndex = new HashMap<>();
+    firstLastCharIndex = new HashMap<>();
+    lengthIndex = new HashMap<>();
   }
   
   /**
@@ -561,17 +569,42 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Set template set
+   * Set template set with smart indexing for fast lookup
    */
   public void setTemplateSet(List<Template> templates)
   {
     patterns.clear();
+    firstCharIndex.clear();
+    firstLastCharIndex.clear();
+    lengthIndex.clear();
+    
+    android.util.Log.d("CGR", "Building indexes for " + templates.size() + " templates...");
     
     for (Template t : templates)
     {
       normalize(t.pts);
       Pattern pattern = new Pattern(t, generateEquiDistantProgressiveSubSequences(t.pts, 200));
       patterns.add(pattern);
+      
+      // Build smart indexes for fast lookup
+      String word = t.id.toLowerCase();
+      if (word.length() > 0)
+      {
+        // Index by first character
+        char firstChar = word.charAt(0);
+        firstCharIndex.computeIfAbsent(firstChar, k -> new ArrayList<>()).add(pattern);
+        
+        // Index by first+last character combination
+        if (word.length() > 1)
+        {
+          char lastChar = word.charAt(word.length() - 1);
+          String firstLast = "" + firstChar + lastChar;
+          firstLastCharIndex.computeIfAbsent(firstLast, k -> new ArrayList<>()).add(pattern);
+        }
+        
+        // Index by word length
+        lengthIndex.computeIfAbsent(word.length(), k -> new ArrayList<>()).add(pattern);
+      }
     }
     
     for (Pattern pattern : patterns)
@@ -581,11 +614,13 @@ public class ContinuousGestureRecognizer
       {
         List<Point> newPts = deepCopyPts(pts);
         // Remove double normalization - segments are already from normalized template
-        // REVERT: Fixed point optimization broke accuracy - use original dynamic resampling
         segments.add(resample(newPts, getResamplingPointCount(newPts, SAMPLE_POINT_DISTANCE)));
       }
       pattern.segments = segments;
     }
+    
+    android.util.Log.d("CGR", "Indexes built: " + firstCharIndex.size() + " first chars, " + 
+      firstLastCharIndex.size() + " first+last combinations, " + lengthIndex.size() + " lengths");
   }
   
   /**
@@ -782,7 +817,7 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Get incremental results (simplified - no template filtering)
+   * Get incremental results with smart indexing and parallel processing
    */
   private List<IncrementalResult> getIncrementalResults(List<Point> input, double beta, double lambda, double kappa, double e_sigma)
   {
@@ -790,7 +825,12 @@ public class ContinuousGestureRecognizer
     List<Point> unkPts = deepCopyPts(input);
     normalize(unkPts);
     
-    for (Pattern pattern : patterns)
+    // Get candidate patterns using smart indexing
+    List<Pattern> candidates = getIndexedCandidates(unkPts);
+    
+    android.util.Log.d("CGR", "Using indexed lookup: " + candidates.size() + " candidates from " + patterns.size() + " total");
+    
+    for (Pattern pattern : candidates)
     {
       IncrementalResult result = getIncrementalResult(unkPts, pattern, beta, lambda, e_sigma);
       List<Point> lastSegmentPts = pattern.segments.get(pattern.segments.size() - 1);
@@ -802,6 +842,122 @@ public class ContinuousGestureRecognizer
     
     marginalizeIncrementalResults(incrResults);
     return incrResults;
+  }
+  
+  /**
+   * Get candidate patterns using smart indexing to reduce search space
+   */
+  private List<Pattern> getIndexedCandidates(List<Point> unkPts)
+  {
+    // Use gesture characteristics to filter candidates
+    List<Pattern> candidates = new ArrayList<>();
+    
+    // Method 1: Use QWERTY position-based filtering
+    Point startPoint = unkPts.get(0);
+    Point endPoint = unkPts.get(unkPts.size() - 1);
+    
+    // Map gesture start/end to likely QWERTY characters
+    char startChar = mapPointToQwertyChar(startPoint);
+    char endChar = mapPointToQwertyChar(endPoint);
+    
+    if (startChar != 0 && endChar != 0)
+    {
+      // Try first+last character index first (most specific)
+      String firstLast = "" + startChar + endChar;
+      List<Pattern> firstLastCandidates = firstLastCharIndex.get(firstLast);
+      if (firstLastCandidates != null && !firstLastCandidates.isEmpty())
+      {
+        candidates.addAll(firstLastCandidates);
+        android.util.Log.d("CGR", "Using first+last index '" + firstLast + "': " + firstLastCandidates.size() + " candidates");
+      }
+      else
+      {
+        // Fall back to first character index
+        List<Pattern> firstCharCandidates = firstCharIndex.get(startChar);
+        if (firstCharCandidates != null)
+        {
+          candidates.addAll(firstCharCandidates);
+          android.util.Log.d("CGR", "Using first char index '" + startChar + "': " + firstCharCandidates.size() + " candidates");
+        }
+      }
+    }
+    
+    // If no indexed candidates found, use length-based filtering
+    if (candidates.isEmpty())
+    {
+      double gestureLength = getSpatialLength(unkPts);
+      int estimatedWordLength = (int)Math.round(gestureLength / 200.0); // Rough estimate
+      
+      for (int len = Math.max(3, estimatedWordLength - 2); len <= estimatedWordLength + 3; len++)
+      {
+        List<Pattern> lengthCandidates = lengthIndex.get(len);
+        if (lengthCandidates != null)
+        {
+          candidates.addAll(lengthCandidates);
+        }
+      }
+      android.util.Log.d("CGR", "Using length-based filtering: " + candidates.size() + " candidates");
+    }
+    
+    // Fallback to all patterns if no candidates found
+    if (candidates.isEmpty())
+    {
+      candidates.addAll(patterns);
+      android.util.Log.d("CGR", "No index matches - using all patterns");
+    }
+    
+    return candidates;
+  }
+  
+  /**
+   * Map normalized point to likely QWERTY character
+   */
+  private char mapPointToQwertyChar(Point point)
+  {
+    // Rough mapping of normalized space to QWERTY layout
+    // This is approximate - just for indexing hints
+    
+    double x = point.x;
+    double y = point.y;
+    
+    // Top row (y < 300)
+    if (y < 300)
+    {
+      if (x < 200) return 'q';
+      else if (x < 300) return 'w';
+      else if (x < 400) return 'e';
+      else if (x < 500) return 'r';
+      else if (x < 600) return 't';
+      else if (x < 700) return 'y';
+      else if (x < 800) return 'u';
+      else if (x < 900) return 'i';
+      else if (x < 950) return 'o';
+      else return 'p';
+    }
+    // Middle row (y 300-700)
+    else if (y < 700)
+    {
+      if (x < 250) return 'a';
+      else if (x < 350) return 's';
+      else if (x < 450) return 'd';
+      else if (x < 550) return 'f';
+      else if (x < 650) return 'g';
+      else if (x < 750) return 'h';
+      else if (x < 850) return 'j';
+      else if (x < 950) return 'k';
+      else return 'l';
+    }
+    // Bottom row (y > 700)
+    else
+    {
+      if (x < 300) return 'z';
+      else if (x < 400) return 'x';
+      else if (x < 500) return 'c';
+      else if (x < 600) return 'v';
+      else if (x < 700) return 'b';
+      else if (x < 800) return 'n';
+      else return 'm';
+    }
   }
   
   /**

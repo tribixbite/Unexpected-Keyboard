@@ -148,8 +148,13 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
   public void clearPredictions()
   {
     currentPredictions.clear();
-    clearPersistentPredictions();
+    // Don't clear persistent predictions UI - just clear internal state
+    persistentPredictions.clear();
+    predictionsPersisting = false;
     gestureRecognizer.clearResults();
+    
+    // Don't call clearPersistentPredictions() which triggers UI clearing
+    android.util.Log.d("RealTimeSwipePredictor", "Cleared predictions internally (UI kept stable)");
   }
   
   /**

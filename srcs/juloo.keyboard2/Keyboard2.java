@@ -1244,8 +1244,9 @@ public class Keyboard2 extends InputMethodService
   {
     if (_suggestionBar != null)
     {
-      _suggestionBar.clearSuggestions();
-      android.util.Log.d("Keyboard2", "CGR predictions cleared");
+      // Don't actually clear - just show empty suggestions to keep bar visible
+      _suggestionBar.setSuggestions(new ArrayList<>());
+      android.util.Log.d("Keyboard2", "CGR predictions cleared (bar kept visible)");
     }
   }
 }

@@ -273,7 +273,15 @@ public class SuggestionBar extends LinearLayout
    */
   public void clearSuggestions()
   {
-    setSuggestions(null);
+    if (_alwaysVisible)
+    {
+      // Don't actually clear - show empty suggestions to keep bar visible
+      setSuggestions(new ArrayList<>());
+    }
+    else
+    {
+      setSuggestions(null);
+    }
   }
   
   /**
