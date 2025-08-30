@@ -31,13 +31,13 @@ Generated version info:  ()
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
-> Task :mergeDebugResources
 > Task :parseDebugLocalResources
-> Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeExtDexDebug FROM-CACHE
-> Task :mergeLibDexDebug FROM-CACHE
+> Task :checkDebugDuplicateClasses
 > Task :mergeDebugJniLibFolders
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :mergeDebugResources
+> Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug

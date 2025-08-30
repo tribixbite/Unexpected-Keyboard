@@ -567,6 +567,9 @@ public class SwipeCalibrationActivity extends Activity
     // Initialize template generator for comparison
     _templateGenerator = new WordGestureTemplateGenerator();
     _templateGenerator.loadDictionary(this);
+    
+    // Keyboard dimensions will be set when view is laid out (see showNextWord())
+    
     _comparisonData = new StringBuilder();
     
     // Initialize ML trainer
@@ -2241,13 +2244,13 @@ public class SwipeCalibrationActivity extends Activity
       float keyboardWidth = _keyboardView.getWidth();
       float keyboardHeight = _keyboardView.getHeight();
       
+      // Set DYNAMIC keyboard dimensions for template generation
+      _templateGenerator.setKeyboardDimensions(keyboardWidth, keyboardHeight);
+      
       for (PointF p : userSwipe)
       {
-        // Transform user coordinates to match keyboard-proportional template space
-        // Templates now use keyboard-matched bounding box, so simple scaling works
-        double templateX = (p.x / keyboardWidth) * 1000.0;
-        double templateY = (p.y / keyboardHeight) * 1000.0;
-        userPoints.add(new ContinuousGestureRecognizer.Point(templateX, templateY));
+        // NO TRANSFORMATION NEEDED - both template and user in same screen coordinate space
+        userPoints.add(new ContinuousGestureRecognizer.Point(p.x, p.y));
       }
       
       // FULL CGR TESTING: Use same 3000 template set as normal keyboard

@@ -10,49 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Generates gesture templates for words based on QWERTY keyboard layout
- * Converts words from dictionary into gesture patterns for CGR recognition
+ * Generates gesture templates for words based on ACTUAL keyboard layout
+ * Uses real keyboard dimensions and layout calculations for accurate templates
  */
 public class WordGestureTemplateGenerator
 {
-  // QWERTY keyboard layout coordinates (normalized to 1000x1000 space)
-  private static final Map<Character, ContinuousGestureRecognizer.Point> QWERTY_COORDS;
-  
-  static
-  {
-    QWERTY_COORDS = new HashMap<>();
-    
-    // KEYBOARD-PROPORTIONAL coordinates - template bounding box matches keyboard dimensions
-    // Standard QWERTY layout proportional to actual keyboard geometry
-    
-    // Top row (QWERTYUIOP) - evenly distributed across keyboard width
-    double topY = 0;  // Top of keyboard
-    char[] topChars = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'};
-    for (int i = 0; i < topChars.length; i++)
-    {
-      double x = (i + 0.5) * (1000.0 / 10.0); // Center of each key in 10-column layout
-      QWERTY_COORDS.put(topChars[i], new ContinuousGestureRecognizer.Point(x, topY + 167)); // 1/3 row height
-    }
-    
-    // Middle row (ASDFGHJKL) - with half-key offset
-    double middleY = 333;  // 1/3 down keyboard
-    char[] middleChars = {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'};
-    for (int i = 0; i < middleChars.length; i++)
-    {
-      // MATCH UI: rowOffset + col * keyWidth = 0.5*100 + i*100 = 50 + i*100  
-      double x = 50 + (i * 100); // Match UI calculation exactly
-      QWERTY_COORDS.put(middleChars[i], new ContinuousGestureRecognizer.Point(x + 50, middleY + 167));
-    }
-    
-    // Bottom row (ZXCVBNM) - centered with proper spacing
-    double bottomY = 667;  // 2/3 down keyboard
-    char[] bottomChars = {'z', 'x', 'c', 'v', 'b', 'n', 'm'};
-    for (int i = 0; i < bottomChars.length; i++)
-    {
-      double x = (i + 1.5) * (1000.0 / 10.0); // Centered for 7 keys
-      QWERTY_COORDS.put(bottomChars[i], new ContinuousGestureRecognizer.Point(x, bottomY + 167));
-    }
-  }
+  // Dynamic QWERTY coordinates based on actual keyboard rendering
+  private Map<Character, ContinuousGestureRecognizer.Point> keyboardCoords;
   
   private final List<String> dictionary;
   private final Map<String, Integer> wordFrequencies;
@@ -61,6 +25,86 @@ public class WordGestureTemplateGenerator
   {
     dictionary = new ArrayList<>();
     wordFrequencies = new HashMap<>();
+    keyboardCoords = new HashMap<>();
+  }
+  
+  /**
+   * Set keyboard dimensions for dynamic template generation
+   * Uses ACTUAL keyboard layout calculations (not fixed 1000x1000)
+   */
+  public void setKeyboardDimensions(float keyboardWidth, float keyboardHeight)
+  {
+    keyboardCoords.clear();
+    
+    // Use EXACT same layout calculation as SwipeCalibrationActivity.KeyboardView
+    float keyWidth = keyboardWidth / 10f;
+    float rowHeight = keyboardHeight / 4f; // 4 rows 
+    float verticalMargin = 0.1f * rowHeight;   // Match keyboard rendering
+    float horizontalMargin = 0.05f * keyWidth; // Match keyboard rendering
+    
+    // QWERTY layout using IDENTICAL calculations as keyboard rendering
+    String[][] KEYBOARD_LAYOUT = {
+      {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"},
+      {"a", "s", "d", "f", "g", "h", "j", "k", "l"},
+      {"z", "x", "c", "v", "b", "n", "m"}
+    };
+    
+    for (int row = 0; row < 3; row++) // Only letter rows
+    {
+      String[] rowKeys = KEYBOARD_LAYOUT[row];
+      
+      if (row == 0) // Top row (q-p)
+      {
+        for (int col = 0; col < rowKeys.length; col++)
+        {
+          String key = rowKeys[col];
+          float x = col * keyWidth + horizontalMargin / 2;
+          float y = row * rowHeight + verticalMargin / 2;
+          
+          // Use CENTER of key for template coordinate
+          float centerX = x + (keyWidth - horizontalMargin) / 2;
+          float centerY = y + (rowHeight - verticalMargin) / 2;
+          
+          keyboardCoords.put(key.charAt(0), new ContinuousGestureRecognizer.Point(centerX, centerY));
+        }
+      }
+      else if (row == 1) // Middle row (a-l) - with half-key offset
+      {
+        float rowOffset = keyWidth * 0.5f;
+        for (int col = 0; col < rowKeys.length; col++)
+        {
+          String key = rowKeys[col];
+          float x = rowOffset + col * keyWidth + horizontalMargin / 2;
+          float y = row * rowHeight + verticalMargin / 2;
+          
+          float centerX = x + (keyWidth - horizontalMargin) / 2;
+          float centerY = y + (rowHeight - verticalMargin) / 2;
+          
+          keyboardCoords.put(key.charAt(0), new ContinuousGestureRecognizer.Point(centerX, centerY));
+        }
+      }
+      else if (row == 2) // Bottom row (z-m)
+      {
+        // Calculate starting position to center 7 keys
+        float totalKeysWidth = 7 * keyWidth;
+        float startX = (keyboardWidth - totalKeysWidth) / 2;
+        
+        for (int col = 0; col < rowKeys.length; col++)
+        {
+          String key = rowKeys[col];
+          float x = startX + col * keyWidth + horizontalMargin / 2;
+          float y = row * rowHeight + verticalMargin / 2;
+          
+          float centerX = x + (keyWidth - horizontalMargin) / 2;
+          float centerY = y + (rowHeight - verticalMargin) / 2;
+          
+          keyboardCoords.put(key.charAt(0), new ContinuousGestureRecognizer.Point(centerX, centerY));
+        }
+      }
+    }
+    
+    android.util.Log.d("WordGestureTemplateGenerator", 
+      String.format("Generated dynamic keyboard coordinates for %.0fx%.0f keyboard", keyboardWidth, keyboardHeight));
   }
   
   /**
@@ -114,7 +158,7 @@ public class WordGestureTemplateGenerator
     
     for (char c : word.toCharArray())
     {
-      ContinuousGestureRecognizer.Point coord = QWERTY_COORDS.get(c);
+      ContinuousGestureRecognizer.Point coord = keyboardCoords.get(c);
       if (coord != null)
       {
         points.add(new ContinuousGestureRecognizer.Point(coord.x, coord.y));
@@ -210,11 +254,11 @@ public class WordGestureTemplateGenerator
   }
   
   /**
-   * Get coordinate for a character
+   * Get coordinate for a character (requires keyboard dimensions to be set)
    */
-  public static ContinuousGestureRecognizer.Point getCharacterCoordinate(char c)
+  public ContinuousGestureRecognizer.Point getCharacterCoordinate(char c)
   {
-    ContinuousGestureRecognizer.Point coord = QWERTY_COORDS.get(Character.toLowerCase(c));
+    ContinuousGestureRecognizer.Point coord = keyboardCoords.get(Character.toLowerCase(c));
     return coord != null ? new ContinuousGestureRecognizer.Point(coord.x, coord.y) : null;
   }
   
@@ -229,7 +273,7 @@ public class WordGestureTemplateGenerator
     
     for (char c : word.toCharArray())
     {
-      ContinuousGestureRecognizer.Point point = QWERTY_COORDS.get(c);
+      ContinuousGestureRecognizer.Point point = keyboardCoords.get(c);
       if (point != null)
       {
         if (prevPoint != null)
