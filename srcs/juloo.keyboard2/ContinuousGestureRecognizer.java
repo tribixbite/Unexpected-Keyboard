@@ -32,6 +32,7 @@ public class ContinuousGestureRecognizer
   
   private static final int MAX_RESAMPLING_PTS = 1000;
   private static final int SAMPLE_POINT_DISTANCE = 10;
+  private static final int FIXED_POINT_COUNT = 64; // Standardized point count for all templates and inputs
   
   // Normalized space
   private static final Rect NORMALIZED_SPACE = new Rect(0, 0, 1000, 1000);
@@ -576,7 +577,8 @@ public class ContinuousGestureRecognizer
       {
         List<Point> newPts = deepCopyPts(pts);
         // Remove double normalization - segments are already from normalized template
-        segments.add(resample(newPts, getResamplingPointCount(newPts, SAMPLE_POINT_DISTANCE)));
+        // OPTIMIZATION: Use fixed point count instead of dynamic resampling
+        segments.add(resample(newPts, FIXED_POINT_COUNT));
       }
       pattern.segments = segments;
     }
@@ -709,7 +711,7 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Get incremental result
+   * Get incremental result (ORIGINAL - kept for compatibility)
    */
   private IncrementalResult getIncrementalResult(List<Point> unkPts, Pattern pattern, double beta, double lambda, double e_sigma)
   {
@@ -723,6 +725,31 @@ public class ContinuousGestureRecognizer
       int samplingPtCount = pts.size();
       List<Point> unkResampledPts = resample(unkPts, samplingPtCount);
       double prob = getLikelihoodOfMatch(unkResampledPts, pts, e_sigma, e_sigma / beta, lambda);
+      
+      if (prob > maxProb)
+      {
+        maxProb = prob;
+        maxIndex = i;
+      }
+    }
+    
+    return new IncrementalResult(pattern, maxProb, maxIndex);
+  }
+  
+  /**
+   * Get incremental result (OPTIMIZED - no repeated resampling)
+   */
+  private IncrementalResult getIncrementalResultOptimized(List<Point> standardizedInput, Pattern pattern, double beta, double lambda, double e_sigma)
+  {
+    List<List<Point>> segments = pattern.segments;
+    double maxProb = 0.0;
+    int maxIndex = -1;
+    
+    for (int i = 0; i < segments.size(); i++)
+    {
+      List<Point> pts = segments.get(i);
+      // OPTIMIZATION: Use pre-resampled standardized input (all segments now have FIXED_POINT_COUNT)
+      double prob = getLikelihoodOfMatch(standardizedInput, pts, e_sigma, e_sigma / beta, lambda);
       
       if (prob > maxProb)
       {
@@ -751,7 +778,7 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Get incremental results
+   * Get incremental results (OPTIMIZED for large vocabularies)
    */
   private List<IncrementalResult> getIncrementalResults(List<Point> input, double beta, double lambda, double kappa, double e_sigma)
   {
@@ -759,11 +786,15 @@ public class ContinuousGestureRecognizer
     List<Point> unkPts = deepCopyPts(input);
     normalize(unkPts);
     
+    // OPTIMIZATION: Resample input gesture ONCE to fixed point count (outside loop)
+    List<Point> standardizedInput = resample(unkPts, FIXED_POINT_COUNT);
+    
     for (Pattern pattern : patterns)
     {
-      IncrementalResult result = getIncrementalResult(unkPts, pattern, beta, lambda, e_sigma);
+      IncrementalResult result = getIncrementalResultOptimized(standardizedInput, pattern, beta, lambda, e_sigma);
       List<Point> lastSegmentPts = pattern.segments.get(pattern.segments.size() - 1);
-      double completeProb = getLikelihoodOfMatch(resample(unkPts, lastSegmentPts.size()), lastSegmentPts, e_sigma, e_sigma / beta, lambda);
+      // Use standardized input for final comparison too (all segments now have FIXED_POINT_COUNT)
+      double completeProb = getLikelihoodOfMatch(standardizedInput, lastSegmentPts, e_sigma, e_sigma / beta, lambda);
       double x = 1 - completeProb;
       result.prob = (1 + kappa * Math.exp(-x * x)) * result.prob;
       incrResults.add(result);

@@ -19,10 +19,10 @@ Generated version info:  ()
 > Task :generateDebugResValues
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
-> Task :mergeDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug
+> Task :mergeDebugResources
 > Task :processDebugMainManifest
 > Task :parseDebugLocalResources
 > Task :processDebugManifest
