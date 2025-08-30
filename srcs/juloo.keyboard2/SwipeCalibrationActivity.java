@@ -417,32 +417,62 @@ public class SwipeCalibrationActivity extends Activity
     analysisTitle.setPadding(0, 0, 0, 12);
     cgrAnalysisLayout.addView(analysisTitle);
     
-    // Real-time CGR results display
+    // Real-time CGR results display - FIXED LAYOUT
     _cgrResultsDisplay = new TextView(this);
-    _cgrResultsDisplay.setText("Swipe words to see detailed CGR prediction analysis...");
-    _cgrResultsDisplay.setTextSize(12);
-    _cgrResultsDisplay.setTextColor(Color.CYAN);
+    _cgrResultsDisplay.setText("Ready for CGR analysis.\nSwipe words to see predictions...");
+    _cgrResultsDisplay.setTextSize(13);
+    _cgrResultsDisplay.setTextColor(Color.WHITE);
     _cgrResultsDisplay.setTypeface(android.graphics.Typeface.MONOSPACE);
-    _cgrResultsDisplay.setBackgroundColor(0xFF0F0F0F);
-    _cgrResultsDisplay.setPadding(12, 12, 12, 12);
-    _cgrResultsDisplay.setMaxLines(8);
+    _cgrResultsDisplay.setBackgroundColor(0xFF2D2D2D);
+    _cgrResultsDisplay.setPadding(16, 16, 16, 16);
+    _cgrResultsDisplay.setMaxLines(Integer.MAX_VALUE);
     _cgrResultsDisplay.setSingleLine(false);
+    _cgrResultsDisplay.setVerticalScrollBarEnabled(true);
+    
     android.widget.ScrollView cgrScrollView = new android.widget.ScrollView(this);
     cgrScrollView.addView(_cgrResultsDisplay);
     cgrScrollView.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 250));
+      ViewGroup.LayoutParams.MATCH_PARENT, 350)); // Increased height
+    cgrScrollView.setPadding(8, 8, 8, 8);
+    cgrScrollView.setBackgroundColor(0xFF1A1A1A);
     cgrAnalysisLayout.addView(cgrScrollView);
     
     topLayout.addView(cgrAnalysisLayout);
     
+    // Current word display - PROMINENT
+    LinearLayout currentWordLayout = new LinearLayout(this);
+    currentWordLayout.setOrientation(LinearLayout.VERTICAL);
+    currentWordLayout.setPadding(16, 24, 16, 16);
+    currentWordLayout.setBackgroundColor(0xFF0D47A1); // Blue background
+    
+    TextView currentWordLabel = new TextView(this);
+    currentWordLabel.setText("SWIPE THIS WORD:");
+    currentWordLabel.setTextSize(14);
+    currentWordLabel.setTextColor(Color.WHITE);
+    currentWordLabel.setGravity(android.view.Gravity.CENTER);
+    currentWordLayout.addView(currentWordLabel);
+    
+    _currentWordText = new TextView(this);
+    _currentWordText.setText("LOADING...");
+    _currentWordText.setTextSize(28);
+    _currentWordText.setTextColor(Color.YELLOW);
+    _currentWordText.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+    _currentWordText.setGravity(android.view.Gravity.CENTER);
+    _currentWordText.setPadding(0, 8, 0, 0);
+    currentWordLayout.addView(_currentWordText);
+    
+    topLayout.addView(currentWordLayout);
+    
     // Buttons above keyboard
     LinearLayout buttonLayout = new LinearLayout(this);
     buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
-    buttonLayout.setPadding(0, 20, 0, 0);
+    buttonLayout.setPadding(16, 16, 16, 8);
+    buttonLayout.setGravity(android.view.Gravity.CENTER);
     
     _skipButton = new Button(this);
     _skipButton.setText("Skip Word");
     _skipButton.setOnClickListener(v -> skipWord());
+    _skipButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
     buttonLayout.addView(_skipButton);
     
     _nextButton = new Button(this);
@@ -452,11 +482,13 @@ public class SwipeCalibrationActivity extends Activity
       _keyboardView.reset();
       Toast.makeText(this, "Try swiping again", Toast.LENGTH_SHORT).show();
     });
+    _nextButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
     buttonLayout.addView(_nextButton);
     
     _saveButton = new Button(this);
     _saveButton.setText("Save & Exit");
     _saveButton.setOnClickListener(v -> saveAndExit());
+    _saveButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
     buttonLayout.addView(_saveButton);
     
     _deleteButton = new Button(this);
@@ -2457,42 +2489,51 @@ public class SwipeCalibrationActivity extends Activity
                                        double templateLength, double userLength)
   {
     StringBuilder analysis = new StringBuilder();
-    analysis.append("📝 WORD: ").append(word.toUpperCase()).append("\n\n");
+    analysis.append("=== WORD: ").append(word.toUpperCase()).append(" ===\n");
     
     if (results.isEmpty())
     {
-      analysis.append("❌ No CGR results\n");
+      analysis.append("\n❌ NO CGR RESULTS\n");
+      analysis.append("Check template generation and\n");
+      analysis.append("coordinate alignment.\n");
     }
     else
     {
-      // Show top 3 results with detailed attributes
-      analysis.append("🏆 TOP 3 CGR PREDICTIONS:\n");
+      // Show prediction summary
+      ContinuousGestureRecognizer.Result topResult = results.get(0);
+      boolean isCorrect = topResult.template.id.equals(word);
+      
+      analysis.append(String.format("\n🎯 PREDICTION: %s\n", isCorrect ? "✅ CORRECT" : "❌ INCORRECT"));
+      analysis.append(String.format("Confidence: %.1f%%\n", topResult.prob * 100));
+      analysis.append(String.format("Target: %s | Got: %s\n\n", word, topResult.template.id));
+      
+      // Top 3 predictions with clean formatting
+      analysis.append("TOP 3 PREDICTIONS:\n");
+      analysis.append("Rank | Word      | Confidence\n");
+      analysis.append("-----|-----------|----------\n");
       for (int i = 0; i < Math.min(3, results.size()); i++)
       {
         ContinuousGestureRecognizer.Result result = results.get(i);
-        double resultTemplateLength = calculatePathLength(result.template.pts);
-        
-        analysis.append(String.format("%d. %s (%.3f)\n", i + 1, result.template.id, result.prob));
-        analysis.append(String.format("   Len: %.0f, Pts: %d\n", resultTemplateLength, result.template.pts.size()));
-        
-        if (i == 0) // Show equation factors for top result
-        {
-          double lengthRatio = templateLength / userLength;
-          analysis.append(String.format("   Length ratio: %.3f\n", lengthRatio));
-          analysis.append(String.format("   %s match\n", result.template.id.equals(word) ? "✅ CORRECT" : "❌ WRONG"));
-        }
+        analysis.append(String.format(" %d   | %-9s | %6.2f%%\n", 
+                       i + 1, result.template.id, result.prob * 100));
       }
       
-      // Show prediction equation impact factors
-      ContinuousGestureRecognizer.Result topResult = results.get(0);
-      analysis.append("\n📊 EQUATION FACTORS:\n");
-      analysis.append(String.format("Template length: %.0f\n", templateLength));
-      analysis.append(String.format("User gesture length: %.0f\n", userLength));
-      analysis.append(String.format("Length similarity: %.3f\n", 1.0 - Math.abs(templateLength - userLength) / Math.max(templateLength, userLength)));
+      // Gesture analysis
+      analysis.append(String.format("\nGESTURE ANALYSIS:\n"));
+      analysis.append(String.format("Template length: %.0f px\n", templateLength));
+      analysis.append(String.format("User length: %.0f px\n", userLength));
+      analysis.append(String.format("Length ratio: %.3f\n", templateLength / userLength));
       
-      boolean isCorrect = topResult.template.id.equals(word);
-      analysis.append(String.format("\n🎯 RESULT: %s (%.1f%% confidence)", 
-                     isCorrect ? "CORRECT" : "INCORRECT", topResult.prob * 100));
+      double lengthSimilarity = 1.0 - Math.abs(templateLength - userLength) / Math.max(templateLength, userLength);
+      analysis.append(String.format("Length similarity: %.3f\n", lengthSimilarity));
+      
+      // Recognition quality assessment
+      analysis.append(String.format("\nQUALITY: "));
+      if (topResult.prob > 0.8) analysis.append("EXCELLENT");
+      else if (topResult.prob > 0.6) analysis.append("GOOD");
+      else if (topResult.prob > 0.4) analysis.append("FAIR");
+      else if (topResult.prob > 0.2) analysis.append("POOR");
+      else analysis.append("VERY POOR");
     }
     
     // Update the display
