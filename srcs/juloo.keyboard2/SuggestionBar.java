@@ -26,6 +26,7 @@ public class SuggestionBar extends LinearLayout
   private Theme _theme;
   private boolean _showDebugScores = false;
   private int _opacity = 90; // default opacity
+  private boolean _alwaysVisible = false; // Keep bar visible even when empty
   
   public interface OnSuggestionSelectedListener
   {
@@ -149,6 +150,19 @@ public class SuggestionBar extends LinearLayout
   }
   
   /**
+   * Set whether the suggestion bar should always remain visible
+   * This prevents UI rerendering issues from constant appear/disappear
+   */
+  public void setAlwaysVisible(boolean alwaysVisible)
+  {
+    _alwaysVisible = alwaysVisible;
+    if (_alwaysVisible)
+    {
+      setVisibility(View.VISIBLE);
+    }
+  }
+  
+  /**
    * Set the opacity of the suggestion bar
    * @param opacity Opacity value from 0 to 100
    */
@@ -243,8 +257,15 @@ public class SuggestionBar extends LinearLayout
       }
     }
     
-    // Show or hide the entire bar based on suggestions
-    setVisibility(_currentSuggestions.isEmpty() ? View.GONE : View.VISIBLE);
+    // Show or hide the entire bar based on suggestions (unless always visible mode)
+    if (_alwaysVisible)
+    {
+      setVisibility(View.VISIBLE); // Always keep visible to prevent UI rerendering
+    }
+    else
+    {
+      setVisibility(_currentSuggestions.isEmpty() ? View.GONE : View.VISIBLE);
+    }
   }
   
   /**

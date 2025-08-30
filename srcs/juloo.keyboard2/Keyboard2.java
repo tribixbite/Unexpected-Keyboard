@@ -1186,19 +1186,25 @@ public class Keyboard2 extends InputMethodService
    */
   public void checkCGRPredictions()
   {
-    if (_keyboardView != null)
+    if (_keyboardView != null && _suggestionBar != null)
     {
+      // Enable always visible mode to prevent UI flickering
+      _suggestionBar.setAlwaysVisible(true);
+      
       List<String> cgrPredictions = _keyboardView.getCGRPredictions();
       boolean areFinal = _keyboardView.areCGRPredictionsFinal();
       
       if (!cgrPredictions.isEmpty())
       {
-        if (_suggestionBar != null)
-        {
-          _suggestionBar.setSuggestions(cgrPredictions);
-          android.util.Log.d("Keyboard2", "Updated CGR predictions: " + cgrPredictions.size() + 
-            " words (final: " + areFinal + ")");
-        }
+        _suggestionBar.setSuggestions(cgrPredictions);
+        android.util.Log.d("Keyboard2", "Updated CGR predictions: " + cgrPredictions.size() + 
+          " words (final: " + areFinal + ")");
+      }
+      else
+      {
+        // Show empty suggestions but keep bar visible
+        _suggestionBar.setSuggestions(new ArrayList<>());
+        android.util.Log.d("Keyboard2", "No CGR predictions - showing empty bar");
       }
     }
   }

@@ -62,9 +62,9 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
         long dictTime = System.currentTimeMillis();
         android.util.Log.d("RealTimeSwipePredictor", "Dictionary loaded in " + (dictTime - startTime) + "ms");
         
-        // Generate templates for most frequent words (full vocabulary with optimization)
+        // Generate templates for most frequent words (reduced for stability)
         List<ContinuousGestureRecognizer.Template> templates = 
-          templateGenerator.generateBalancedWordTemplates(3000); // Full vocabulary with CGR optimization
+          templateGenerator.generateBalancedWordTemplates(200); // Reduced for debugging UI issues
         long templateTime = System.currentTimeMillis();
         android.util.Log.d("RealTimeSwipePredictor", "Templates generated in " + (templateTime - dictTime) + "ms");
         

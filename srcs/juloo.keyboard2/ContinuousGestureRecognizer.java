@@ -782,7 +782,7 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Get incremental results (PERFORMANCE OPTIMIZED via template filtering)
+   * Get incremental results (simplified - no template filtering)
    */
   private List<IncrementalResult> getIncrementalResults(List<Point> input, double beta, double lambda, double kappa, double e_sigma)
   {
@@ -790,10 +790,7 @@ public class ContinuousGestureRecognizer
     List<Point> unkPts = deepCopyPts(input);
     normalize(unkPts);
     
-    // PERFORMANCE OPTIMIZATION: Filter templates based on gesture characteristics
-    List<Pattern> candidatePatterns = filterRelevantPatterns(unkPts);
-    
-    for (Pattern pattern : candidatePatterns)
+    for (Pattern pattern : patterns)
     {
       IncrementalResult result = getIncrementalResult(unkPts, pattern, beta, lambda, e_sigma);
       List<Point> lastSegmentPts = pattern.segments.get(pattern.segments.size() - 1);
@@ -805,40 +802,6 @@ public class ContinuousGestureRecognizer
     
     marginalizeIncrementalResults(incrResults);
     return incrResults;
-  }
-  
-  /**
-   * Filter patterns to only those that could plausibly match the gesture
-   * Reduces from 3000 patterns to ~200-500 relevant candidates
-   */
-  private List<Pattern> filterRelevantPatterns(List<Point> unkPts)
-  {
-    // For now, use simple gesture length filtering to reduce template count
-    double gestureLength = getSpatialLength(unkPts);
-    List<Pattern> filtered = new ArrayList<>();
-    
-    for (Pattern pattern : patterns)
-    {
-      // Quick filter: only consider patterns with similar gesture complexity
-      Template template = pattern.template;
-      double templateLength = getSpatialLength(template.pts);
-      
-      // Allow patterns within 50% of gesture length (flexible matching)
-      double ratio = Math.min(gestureLength, templateLength) / Math.max(gestureLength, templateLength);
-      if (ratio > 0.3) // Keep patterns that are reasonably similar in length
-      {
-        filtered.add(pattern);
-      }
-    }
-    
-    // Limit to top candidates if still too many
-    if (filtered.size() > 500)
-    {
-      filtered = filtered.subList(0, 500);
-    }
-    
-    android.util.Log.d("CGR", "Filtered from " + patterns.size() + " to " + filtered.size() + " candidate patterns");
-    return filtered;
   }
   
   /**
