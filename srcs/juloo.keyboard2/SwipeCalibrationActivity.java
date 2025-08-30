@@ -2244,6 +2244,14 @@ public class SwipeCalibrationActivity extends Activity
       float keyboardWidth = _keyboardView.getWidth();
       float keyboardHeight = _keyboardView.getHeight();
       
+      // Fallback to calculated dimensions if view not measured yet
+      if (keyboardWidth <= 0 || keyboardHeight <= 0)
+      {
+        keyboardWidth = _screenWidth;
+        keyboardHeight = _keyboardHeight;
+        android.util.Log.d(TAG, "Using fallback keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
+      }
+      
       // Set DYNAMIC keyboard dimensions for template generation
       _templateGenerator.setKeyboardDimensions(keyboardWidth, keyboardHeight);
       

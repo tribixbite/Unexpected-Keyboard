@@ -34,6 +34,14 @@ public class WordGestureTemplateGenerator
    */
   public void setKeyboardDimensions(float keyboardWidth, float keyboardHeight)
   {
+    if (keyboardWidth <= 0 || keyboardHeight <= 0)
+    {
+      android.util.Log.w("WordGestureTemplateGenerator", 
+        "Invalid keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight + ", using defaults");
+      keyboardWidth = 1080f;
+      keyboardHeight = 400f;
+    }
+    
     keyboardCoords.clear();
     
     // Use EXACT same layout calculation as SwipeCalibrationActivity.KeyboardView
@@ -153,6 +161,13 @@ public class WordGestureTemplateGenerator
    */
   public ContinuousGestureRecognizer.Template generateWordTemplate(String word)
   {
+    if (keyboardCoords.isEmpty())
+    {
+      android.util.Log.w("WordGestureTemplateGenerator", 
+        "Keyboard dimensions not set - call setKeyboardDimensions() first");
+      return null;
+    }
+    
     word = word.toLowerCase();
     List<ContinuousGestureRecognizer.Point> points = new ArrayList<>();
     
