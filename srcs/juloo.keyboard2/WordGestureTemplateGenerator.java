@@ -22,31 +22,35 @@ public class WordGestureTemplateGenerator
   {
     QWERTY_COORDS = new HashMap<>();
     
-    // Top row (QWERTYUIOP) - Fixed positive coordinates in 1000x1000 space
-    double topY = 200;
-    double[] topX = {100, 200, 300, 400, 500, 600, 700, 800, 900, 950};
+    // KEYBOARD-PROPORTIONAL coordinates - template bounding box matches keyboard dimensions
+    // Standard QWERTY layout proportional to actual keyboard geometry
+    
+    // Top row (QWERTYUIOP) - evenly distributed across keyboard width
+    double topY = 0;  // Top of keyboard
     char[] topChars = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'};
     for (int i = 0; i < topChars.length; i++)
     {
-      QWERTY_COORDS.put(topChars[i], new ContinuousGestureRecognizer.Point(topX[i], topY));
+      double x = (i + 0.5) * (1000.0 / 10.0); // Center of each key in 10-column layout
+      QWERTY_COORDS.put(topChars[i], new ContinuousGestureRecognizer.Point(x, topY + 167)); // 1/3 row height
     }
     
-    // Middle row (ASDFGHJKL)
-    double middleY = 500;
-    double[] middleX = {150, 250, 350, 450, 550, 650, 750, 850, 950};
+    // Middle row (ASDFGHJKL) - with half-key offset
+    double middleY = 333;  // 1/3 down keyboard
     char[] middleChars = {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'};
     for (int i = 0; i < middleChars.length; i++)
     {
-      QWERTY_COORDS.put(middleChars[i], new ContinuousGestureRecognizer.Point(middleX[i], middleY));
+      // MATCH UI: rowOffset + col * keyWidth = 0.5*100 + i*100 = 50 + i*100  
+      double x = 50 + (i * 100); // Match UI calculation exactly
+      QWERTY_COORDS.put(middleChars[i], new ContinuousGestureRecognizer.Point(x + 50, middleY + 167));
     }
     
-    // Bottom row (ZXCVBNM)
-    double bottomY = 800;
-    double[] bottomX = {200, 300, 400, 500, 600, 700, 800};
+    // Bottom row (ZXCVBNM) - centered with proper spacing
+    double bottomY = 667;  // 2/3 down keyboard
     char[] bottomChars = {'z', 'x', 'c', 'v', 'b', 'n', 'm'};
     for (int i = 0; i < bottomChars.length; i++)
     {
-      QWERTY_COORDS.put(bottomChars[i], new ContinuousGestureRecognizer.Point(bottomX[i], bottomY));
+      double x = (i + 1.5) * (1000.0 / 10.0); // Centered for 7 keys
+      QWERTY_COORDS.put(bottomChars[i], new ContinuousGestureRecognizer.Point(x, bottomY + 167));
     }
   }
   

@@ -2243,10 +2243,11 @@ public class SwipeCalibrationActivity extends Activity
       
       for (PointF p : userSwipe)
       {
-        // Transform user coordinates from screen space to template space (0-1000)
-        double normalizedX = (p.x / keyboardWidth) * 1000.0;
-        double normalizedY = (p.y / keyboardHeight) * 1000.0;
-        userPoints.add(new ContinuousGestureRecognizer.Point(normalizedX, normalizedY));
+        // Transform user coordinates to match keyboard-proportional template space
+        // Templates now use keyboard-matched bounding box, so simple scaling works
+        double templateX = (p.x / keyboardWidth) * 1000.0;
+        double templateY = (p.y / keyboardHeight) * 1000.0;
+        userPoints.add(new ContinuousGestureRecognizer.Point(templateX, templateY));
       }
       
       // FULL CGR TESTING: Use same 3000 template set as normal keyboard

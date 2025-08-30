@@ -580,6 +580,20 @@ public class ContinuousGestureRecognizer
   }
   
   /**
+   * Center points at origin without resizing (paper's translation-only normalization)
+   */
+  private void centerAtOrigin(List<Point> pts)
+  {
+    if (pts.isEmpty()) return;
+    
+    // Calculate centroid
+    Centroid centroid = getCentroid(pts);
+    
+    // Translate all points so centroid is at origin
+    translate(pts, -centroid.x, -centroid.y);
+  }
+  
+  /**
    * Set template set (simplified for parallel processing)
    */
   public void setTemplateSet(List<Template> templates)
@@ -781,17 +795,19 @@ public class ContinuousGestureRecognizer
     for (int i = 0; i < segments.size(); i++)
     {
       List<Point> templatePts = segments.get(i);
-      // PAPER'S APPROACH: Resample user gesture to match template, then normalize both
+      // PAPER'S APPROACH: Resample user gesture to template size, then center both (no resizing)
       List<Point> userResampledToTemplate = resample(unkPts, templatePts.size());
       
-      // Apply paper's normalization: "translating them so their centroids are at origin
-      // and scaling one so diagonal of bounding box is unity whilst preserving aspect ratio"
-      List<Point> normalizedUser = deepCopyPts(userResampledToTemplate);
-      List<Point> normalizedTemplate = deepCopyPts(templatePts);
-      normalize(normalizedUser);
-      normalize(normalizedTemplate);
+      // Apply paper's normalization: "translating them so their centroids are at origin"
+      // Template bounding box already matches keyboard - just center both for translation invariance
+      List<Point> centeredUser = deepCopyPts(userResampledToTemplate);
+      List<Point> centeredTemplate = deepCopyPts(templatePts);
       
-      double prob = getLikelihoodOfMatch(normalizedUser, normalizedTemplate, e_sigma, e_sigma / beta, lambda);
+      // Center both at origin (translate centroids to 0,0) - no resizing needed
+      centerAtOrigin(centeredUser);
+      centerAtOrigin(centeredTemplate);
+      
+      double prob = getLikelihoodOfMatch(centeredUser, centeredTemplate, e_sigma, e_sigma / beta, lambda);
       
       if (prob > maxProb)
       {
