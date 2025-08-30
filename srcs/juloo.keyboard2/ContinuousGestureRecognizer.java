@@ -30,7 +30,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class ContinuousGestureRecognizer
 {
-  // Constants
+  // Configurable parameters (can be overridden from settings)
+  private double currentESigma = 200.0;
+  private double currentBeta = 400.0;
+  private double currentLambda = 0.4;
+  private double currentKappa = 1.0;
+  
+  // Default constants for fallback
   private static final double DEFAULT_E_SIGMA = 200.0;
   private static final double DEFAULT_BETA = 400.0;
   private static final double DEFAULT_LAMBDA = 0.4;
@@ -947,11 +953,25 @@ public class ContinuousGestureRecognizer
   
   
   /**
-   * Main recognition function
+   * Set CGR parameters for tuning (called from settings)
+   */
+  public void setCGRParameters(double eSigma, double beta, double lambda, double kappa)
+  {
+    currentESigma = eSigma;
+    currentBeta = beta;
+    currentLambda = lambda;
+    currentKappa = kappa;
+    
+    android.util.Log.d("CGR", String.format("Parameters updated: σₑ=%.1f, β=%.1f, λ=%.2f, κ=%.1f", 
+                      eSigma, beta, lambda, kappa));
+  }
+  
+  /**
+   * Main recognition function (uses current configurable parameters)
    */
   public List<Result> recognize(List<Point> input)
   {
-    return recognize(input, DEFAULT_BETA, DEFAULT_LAMBDA, DEFAULT_KAPPA, DEFAULT_E_SIGMA);
+    return recognize(input, currentBeta, currentLambda, currentKappa, currentESigma);
   }
   
   /**
