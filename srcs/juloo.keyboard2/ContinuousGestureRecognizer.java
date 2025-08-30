@@ -37,7 +37,7 @@ public class ContinuousGestureRecognizer
   private static final double DEFAULT_KAPPA = 1.0;
   
   private static final int MAX_RESAMPLING_PTS = 1000;
-  private static final int SAMPLE_POINT_DISTANCE = 100; // MEMORY OPTIMIZATION: 10x fewer points (was 10)
+  private static final int SAMPLE_POINT_DISTANCE = 10; // Restored original value for accuracy
   
   // Normalized space
   private static final Rect NORMALIZED_SPACE = new Rect(0, 0, 1000, 1000);
