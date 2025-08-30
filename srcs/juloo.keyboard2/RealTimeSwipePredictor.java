@@ -69,9 +69,18 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
         android.util.Log.d("RealTimeSwipePredictor", "Templates generated in " + (templateTime - dictTime) + "ms");
         
         // Set templates in gesture recognizer
-        gestureRecognizer.setTemplateSet(templates);
-        long setTime = System.currentTimeMillis();
-        android.util.Log.d("RealTimeSwipePredictor", "Templates set in " + (setTime - templateTime) + "ms");
+        long setTime;
+        try
+        {
+          gestureRecognizer.setTemplateSet(templates);
+          setTime = System.currentTimeMillis();
+          android.util.Log.d("RealTimeSwipePredictor", "Templates set in " + (setTime - templateTime) + "ms");
+        }
+        catch (Exception templateException)
+        {
+          android.util.Log.e("RealTimeSwipePredictor", "Failed to set templates: " + templateException.getMessage());
+          return; // Don't mark as initialized if template setting failed
+        }
         
         isInitialized = true;
         android.util.Log.d("RealTimeSwipePredictor", 

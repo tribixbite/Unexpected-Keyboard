@@ -45,13 +45,15 @@ public class ContinuousGestureRecognizer
   
   // Global pattern set and parallel processing
   private final List<Pattern> patterns;
-  private static final int THREAD_COUNT = Math.max(4, Runtime.getRuntime().availableProcessors()); // Use CPU cores, min 4
+  private static final int THREAD_COUNT = Math.min(16, Math.max(4, Runtime.getRuntime().availableProcessors() * 2)); // 2x CPU cores, max 16
   private static final ExecutorService parallelExecutor = Executors.newFixedThreadPool(THREAD_COUNT);
-  private static final int BATCH_SIZE = 1000;
+  private static final int BATCH_SIZE = 400; // Smaller batches for better parallelization (5000÷400 = 12.5 batches)
   
   public ContinuousGestureRecognizer()
   {
     patterns = new ArrayList<>();
+    android.util.Log.d("CGR", "Parallel executor initialized with " + THREAD_COUNT + " threads (CPU cores: " + 
+      Runtime.getRuntime().availableProcessors() + ")");
   }
   
   /**

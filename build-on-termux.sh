@@ -212,6 +212,19 @@ if [ -f "$APK_PATH" ]; then
     
     # Try to connect and install via ADB
     if command -v adb &>/dev/null; then
+        # First try direct install without connection scanning
+        echo "Attempting direct ADB install..."
+        if [ "$BUILD_TYPE_LOWER" = "debug" ]; then
+            adb uninstall juloo.keyboard2.debug 2>/dev/null || true
+        fi
+        
+        if adb install -r "$APK_PATH" 2>/dev/null; then
+            echo
+            echo "=== APK INSTALLED SUCCESSFULLY! ==="
+            echo "Direct ADB install worked!"
+            exit 0
+        fi
+        echo "Direct install failed, scanning for ADB wireless connections..."
         if connect_adb_wireless; then
             echo "Installing APK via ADB..."
             

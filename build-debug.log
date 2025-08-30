@@ -29,12 +29,12 @@ Generated version info:  ()
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :processDebugManifestForPackage
 > Task :mergeDebugAssets
-> Task :processDebugJavaRes NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :compressDebugAssets
-> Task :checkDebugDuplicateClasses
+> Task :processDebugJavaRes NO-SOURCE
 > Task :desugarDebugFileDependencies
+> Task :checkDebugDuplicateClasses
 > Task :mergeDebugJniLibFolders
 > Task :mergeLibDexDebug
 > Task :mergeDebugNativeLibs NO-SOURCE
@@ -58,5 +58,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 34s
+BUILD SUCCESSFUL in 33s
 32 actionable tasks: 32 executed
