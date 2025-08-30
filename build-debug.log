@@ -14,37 +14,37 @@ Generated version info:  ()
 > Task :preBuild
 > Task :preDebugBuild
 > Task :mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :javaPreCompileDebug
+> Task :javaPreCompileDebug FROM-CACHE
+> Task :generateDebugResValues FROM-CACHE
 > Task :checkDebugAarMetadata
-> Task :generateDebugResValues
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
-> Task :extractDeepLinksDebug
-> Task :processDebugMainManifest
-> Task :parseDebugLocalResources
-> Task :mergeDebugResources
-> Task :processDebugManifest
+> Task :extractDeepLinksDebug FROM-CACHE
+> Task :processDebugMainManifest FROM-CACHE
+> Task :processDebugManifest FROM-CACHE
+> Task :processDebugManifestForPackage FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :processDebugManifestForPackage
 > Task :mergeDebugAssets
+> Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
-> Task :compressDebugAssets
-> Task :desugarDebugFileDependencies
+> Task :parseDebugLocalResources
+> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :checkDebugDuplicateClasses
 > Task :mergeDebugJniLibFolders
+> Task :mergeDebugResources
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
-> Task :checkDebugDuplicateClasses
 > Task :writeDebugSigningConfigVersions
-> Task :mergeLibDexDebug
 > Task :mergeDebugJavaResource
 > Task :processDebugResources
-> Task :mergeExtDexDebug
 
 > Task :compileDebugJavaWithJavac
 Note: Some input files use or override a deprecated API.
@@ -58,5 +58,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 25s
-32 actionable tasks: 32 executed
+BUILD SUCCESSFUL in 31s
+32 actionable tasks: 22 executed, 10 from cache

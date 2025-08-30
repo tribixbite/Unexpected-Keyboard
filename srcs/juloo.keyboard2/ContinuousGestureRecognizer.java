@@ -43,15 +43,16 @@ public class ContinuousGestureRecognizer
   // Normalized space
   private static final Rect NORMALIZED_SPACE = new Rect(0, 0, 1000, 1000);
   
-  // Global pattern set and parallel processing
+  // Global pattern set with permanent partitioning for parallel processing
   private final List<Pattern> patterns;
-  private static final int THREAD_COUNT = Math.min(16, Math.max(4, Runtime.getRuntime().availableProcessors() * 2)); // 2x CPU cores, max 16
+  private final List<List<Pattern>> patternPartitions; // Each thread gets permanent subset
+  private static final int THREAD_COUNT = Math.min(4, Runtime.getRuntime().availableProcessors()); // Conservative: 1x CPU cores, max 4
   private static final ExecutorService parallelExecutor = Executors.newFixedThreadPool(THREAD_COUNT);
-  private static final int BATCH_SIZE = 400; // Smaller batches for better parallelization (5000÷400 = 12.5 batches)
   
   public ContinuousGestureRecognizer()
   {
     patterns = new ArrayList<>();
+    patternPartitions = new ArrayList<>();
     android.util.Log.d("CGR", "Parallel executor initialized with " + THREAD_COUNT + " threads (CPU cores: " + 
       Runtime.getRuntime().availableProcessors() + ")");
   }
@@ -599,7 +600,23 @@ public class ContinuousGestureRecognizer
       pattern.segments = segments;
     }
     
-    android.util.Log.d("CGR", "Templates ready for parallel batch processing: " + patterns.size() + " patterns");
+    // Create permanent partitions for parallel processing (no copying during recognition)
+    patternPartitions.clear();
+    int partitionSize = (patterns.size() + THREAD_COUNT - 1) / THREAD_COUNT; // Round up division
+    
+    for (int i = 0; i < THREAD_COUNT; i++)
+    {
+      int startIdx = i * partitionSize;
+      int endIdx = Math.min(startIdx + partitionSize, patterns.size());
+      
+      if (startIdx < patterns.size())
+      {
+        List<Pattern> partition = patterns.subList(startIdx, endIdx);
+        patternPartitions.add(partition);
+      }
+    }
+    
+    android.util.Log.d("CGR", "Created " + patternPartitions.size() + " permanent partitions for " + patterns.size() + " patterns");
   }
   
   /**
@@ -796,7 +813,7 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Get incremental results with parallel batch processing (5 threads × 1000 patterns each)
+   * Get incremental results (MEMORY OPTIMIZED - permanent partitions)
    */
   private List<IncrementalResult> getIncrementalResults(List<Point> input, double beta, double lambda, double kappa, double e_sigma)
   {
@@ -804,28 +821,31 @@ public class ContinuousGestureRecognizer
     List<Point> unkPts = deepCopyPts(input);
     normalize(unkPts);
     
-    // Split patterns into batches for parallel processing
-    List<List<Pattern>> batches = createBatches(patterns, BATCH_SIZE);
+    // Use permanent partitions (no copying) for memory efficiency
     List<Future<List<IncrementalResult>>> futures = new ArrayList<>();
     
-    android.util.Log.d("CGR", "Processing " + patterns.size() + " patterns in " + batches.size() + " parallel batches");
+    android.util.Log.d("CGR", "Processing " + patterns.size() + " patterns using " + patternPartitions.size() + " permanent partitions");
     
-    // Submit each batch to thread pool
-    for (List<Pattern> batch : batches)
+    // Submit each partition to thread pool (no data copying)
+    for (int i = 0; i < patternPartitions.size(); i++)
     {
+      final List<Pattern> partition = patternPartitions.get(i);
+      final int partitionId = i;
+      
       Future<List<IncrementalResult>> future = parallelExecutor.submit(() -> {
-        return processBatch(unkPts, batch, beta, lambda, kappa, e_sigma);
+        android.util.Log.d("CGR", "Thread " + partitionId + " processing " + partition.size() + " patterns");
+        return processPartition(unkPts, partition, beta, lambda, kappa, e_sigma);
       });
       futures.add(future);
     }
     
-    // Collect results from all batches
+    // Collect results from all partitions
     try
     {
       for (Future<List<IncrementalResult>> future : futures)
       {
-        List<IncrementalResult> batchResults = future.get(1000, TimeUnit.MILLISECONDS); // 1 second timeout
-        incrResults.addAll(batchResults);
+        List<IncrementalResult> partitionResults = future.get(2000, TimeUnit.MILLISECONDS); // 2 second timeout
+        incrResults.addAll(partitionResults);
       }
     }
     catch (Exception e)
@@ -840,13 +860,13 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Process a batch of patterns in parallel
+   * Process a permanent partition of patterns (no copying)
    */
-  private List<IncrementalResult> processBatch(List<Point> unkPts, List<Pattern> batch, double beta, double lambda, double kappa, double e_sigma)
+  private List<IncrementalResult> processPartition(List<Point> unkPts, List<Pattern> partition, double beta, double lambda, double kappa, double e_sigma)
   {
     List<IncrementalResult> batchResults = new ArrayList<>();
     
-    for (Pattern pattern : batch)
+    for (Pattern pattern : partition)
     {
       IncrementalResult result = getIncrementalResult(unkPts, pattern, beta, lambda, e_sigma);
       List<Point> lastSegmentPts = pattern.segments.get(pattern.segments.size() - 1);
