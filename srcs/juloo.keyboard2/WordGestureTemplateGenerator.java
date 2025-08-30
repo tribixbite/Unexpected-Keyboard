@@ -26,6 +26,9 @@ public class WordGestureTemplateGenerator
     dictionary = new ArrayList<>();
     wordFrequencies = new HashMap<>();
     keyboardCoords = new HashMap<>();
+    
+    // Initialize with default coordinates to prevent crashes
+    setKeyboardDimensions(1080f, 400f); // Default fallback dimensions
   }
   
   /**
