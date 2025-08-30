@@ -2307,11 +2307,19 @@ public class SwipeCalibrationActivity extends Activity
         Log.d(TAG, "Raw template: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
       }
       
-      // Convert user swipe to CGR format
+      // Convert user swipe to CGR format and normalize to template coordinate space
       List<ContinuousGestureRecognizer.Point> userPoints = new ArrayList<>();
+      
+      // Get keyboard dimensions for coordinate transformation
+      float keyboardWidth = _keyboardView.getWidth();
+      float keyboardHeight = _keyboardView.getHeight();
+      
       for (PointF p : userSwipe)
       {
-        userPoints.add(new ContinuousGestureRecognizer.Point(p.x, p.y));
+        // Transform user coordinates from screen space to template space (0-1000)
+        double normalizedX = (p.x / keyboardWidth) * 1000.0;
+        double normalizedY = (p.y / keyboardHeight) * 1000.0;
+        userPoints.add(new ContinuousGestureRecognizer.Point(normalizedX, normalizedY));
       }
       
       // DEBUGGING: Skip CGR processing that corrupts templates

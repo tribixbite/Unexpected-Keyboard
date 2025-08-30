@@ -582,7 +582,9 @@ public class ContinuousGestureRecognizer
     
     for (Template t : templates)
     {
-      normalize(t.pts);
+      // FIX: Don't normalize templates here - they should already be in correct coordinate space
+      // normalize(t.pts); // REMOVED: This was corrupting template coordinates
+      
       // MEMORY OPTIMIZATION: Choose between real-time vs memory efficiency
       List<List<Point>> segments;
       
@@ -595,25 +597,15 @@ public class ContinuousGestureRecognizer
       
       // OPTION 2: Memory-efficient single segment (CURRENT - prevents OutOfMemoryError)
       segments = new ArrayList<>();
-      segments.add(t.pts); // Only complete word template, no progressive segments
+      segments.add(deepCopyPts(t.pts)); // Use copy to preserve original template
       
       Pattern pattern = new Pattern(t, segments);
       patterns.add(pattern);
     }
     
-    // OPTIMIZATION: Pre-generate templates at fixed, known sizes (following paper's approach)
-    for (Pattern pattern : patterns)
-    {
-      List<List<Point>> segments = new ArrayList<>();
-      for (List<Point> pts : pattern.segments)
-      {
-        List<Point> newPts = deepCopyPts(pts);
-        // Pre-compute templates at standardized sizes - user gesture will be resampled to match
-        int standardSize = Math.min(pts.size() * 2, 100); // Reasonable standard size
-        segments.add(resample(newPts, standardSize));
-      }
-      pattern.segments = segments;
-    }
+    // FIX: Skip template preprocessing that corrupts coordinates
+    // Templates should be used as-is from WordGestureTemplateGenerator
+    // The paper's approach normalizes during comparison, not during template creation
     
     // Create permanent partitions for parallel processing (no copying during recognition)
     patternPartitions.clear();
@@ -842,8 +834,8 @@ public class ContinuousGestureRecognizer
   private List<IncrementalResult> getIncrementalResults(List<Point> input, double beta, double lambda, double kappa, double e_sigma)
   {
     List<IncrementalResult> incrResults = new ArrayList<>();
+    // FIX: Don't normalize input here - normalize during comparison per paper's approach
     List<Point> unkPts = deepCopyPts(input);
-    normalize(unkPts);
     
     // Use permanent partitions (no copying) for memory efficiency
     List<Future<List<IncrementalResult>>> futures = new ArrayList<>();
@@ -927,8 +919,8 @@ public class ContinuousGestureRecognizer
   private List<IncrementalResult> getIncrementalResultsSingleThreaded(List<Point> input, double beta, double lambda, double kappa, double e_sigma)
   {
     List<IncrementalResult> incrResults = new ArrayList<>();
+    // FIX: Don't normalize input here - normalize during comparison per paper's approach  
     List<Point> unkPts = deepCopyPts(input);
-    normalize(unkPts);
     
     for (Pattern pattern : patterns)
     {
