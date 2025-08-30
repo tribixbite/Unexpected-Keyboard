@@ -101,11 +101,14 @@ fi
 
 echo "This may take a few minutes on first run..."
 
-# Build with Termux-specific configuration
+# Build with Termux-specific configuration (optimized for speed)
 ./gradlew $GRADLE_TASK \
     -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" \
     --no-daemon \
-    --warning-mode=all \
+    --warning-mode=none \
+    --console=plain \
+    --parallel \
+    --build-cache \
     2>&1 | tee build-${BUILD_TYPE_LOWER}.log
 
 # Check build result
@@ -211,20 +214,19 @@ if [ -f "$APK_PATH" ]; then
     }
     
     # Try to connect and install via ADB
-    if command -v adb &>/dev/null; then
-        # First try direct install without connection scanning
-        echo "Attempting direct ADB install..."
-        if [ "$BUILD_TYPE_LOWER" = "debug" ]; then
-            adb uninstall juloo.keyboard2.debug 2>/dev/null || true
+    ADB_PATH="/data/data/com.termux/files/usr/bin/adb"
+    if [ -f "$ADB_PATH" ]; then
+        # Check if ADB device is already connected
+        if "$ADB_PATH" devices | grep -q "device$"; then
+            echo "ADB device detected, installing directly..."
+            if "$ADB_PATH" install "$APK_PATH"; then
+                echo
+                echo "=== APK INSTALLED SUCCESSFULLY! ==="
+                echo "Direct ADB install worked!"
+                exit 0
+            fi
         fi
-        
-        if adb install -r "$APK_PATH" 2>/dev/null; then
-            echo
-            echo "=== APK INSTALLED SUCCESSFULLY! ==="
-            echo "Direct ADB install worked!"
-            exit 0
-        fi
-        echo "Direct install failed, scanning for ADB wireless connections..."
+        echo "No ADB device connected, scanning for wireless connections..."
         if connect_adb_wireless; then
             echo "Installing APK via ADB..."
             
