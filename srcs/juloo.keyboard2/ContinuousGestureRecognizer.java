@@ -1,5 +1,7 @@
 package juloo.keyboard2;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.PointF;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -951,6 +953,31 @@ public class ContinuousGestureRecognizer
     return incrResults;
   }
   
+  
+  /**
+   * Load CGR parameters from preferences (called automatically)
+   */
+  public void loadParametersFromPreferences(Context context)
+  {
+    try
+    {
+      SharedPreferences prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
+      
+      // Load CGR algorithm parameters with immediate effect
+      currentESigma = prefs.getInt("cgr_e_sigma", 200);
+      currentBeta = prefs.getInt("cgr_beta", 400);
+      currentLambda = prefs.getInt("cgr_lambda", 40) / 100.0; // Convert percentage to decimal
+      currentKappa = prefs.getInt("cgr_kappa", 10) / 10.0; // Convert to decimal
+      
+      android.util.Log.d("CGR", String.format("Parameters loaded from settings: σₑ=%.1f, β=%.1f, λ=%.2f, κ=%.1f", 
+                        currentESigma, currentBeta, currentLambda, currentKappa));
+    }
+    catch (Exception e)
+    {
+      android.util.Log.w("CGR", "Failed to load parameters, using defaults: " + e.getMessage());
+      // Keep default values if loading fails
+    }
+  }
   
   /**
    * Set CGR parameters for tuning (called from settings)
