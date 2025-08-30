@@ -314,26 +314,46 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
   }
   
   /**
-   * Handle key press (to clear predictions on space/punctuation)
+   * Handle key press (space clears predictions but keeps UI bar visible)
    */
   public void onKeyPressed(KeyValue key)
   {
     if (key == null) return;
     
-    // Clear predictions on space or non-letter keys
+    // Clear predictions on space or non-letter keys (but keep UI bar visible)
     if (key.getKind() == KeyValue.Kind.Char)
     {
       char c = key.getChar();
       if (c == ' ' || !Character.isLetter(c))
       {
-        clearPredictions();
+        clearPredictionsKeepBarVisible();
       }
     }
     else if (key.getKind() != KeyValue.Kind.Char)
     {
       // Any non-character key (like backspace, enter, etc.)
-      clearPredictions();
+      clearPredictionsKeepBarVisible();
     }
+  }
+  
+  /**
+   * Clear predictions but keep suggestion bar visible (no UI disappearing)
+   */
+  private void clearPredictionsKeepBarVisible()
+  {
+    currentPredictions.clear();
+    persistentPredictions.clear();
+    predictionsPersisting = false;
+    gestureRecognizer.clearResults();
+    
+    // Don't call predictionListener.onSwipePredictionCleared() - that hides the UI
+    // Instead, show empty predictions to keep bar visible
+    if (predictionListener != null)
+    {
+      predictionListener.onSwipePredictionUpdate(new ArrayList<>());
+    }
+    
+    android.util.Log.d("RealTimeSwipePredictor", "Cleared predictions (UI bar kept visible)");
   }
   
   /**

@@ -19,29 +19,29 @@ Generated version info:  ()
 > Task :generateDebugResValues
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
-> Task :mergeDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug
-> Task :parseDebugLocalResources
+> Task :mergeDebugResources
 > Task :processDebugMainManifest
+> Task :parseDebugLocalResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
+> Task :processDebugManifestForPackage
 > Task :mergeDebugAssets
 > Task :processDebugJavaRes NO-SOURCE
 > Task :compressDebugAssets
+> Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies
 > Task :mergeDebugJniLibFolders
+> Task :mergeLibDexDebug
 > Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
-> Task :checkDebugDuplicateClasses
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
-> Task :mergeLibDexDebug
 > Task :mergeDebugJavaResource
 > Task :processDebugResources
 > Task :mergeExtDexDebug
@@ -58,5 +58,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 31s
+BUILD SUCCESSFUL in 34s
 32 actionable tasks: 32 executed
