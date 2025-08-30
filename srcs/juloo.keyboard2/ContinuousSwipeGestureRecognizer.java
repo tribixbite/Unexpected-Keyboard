@@ -57,9 +57,9 @@ public class ContinuousSwipeGestureRecognizer
     backgroundHandler = new Handler(backgroundThread.getLooper());
     mainHandler = new Handler(Looper.getMainLooper());
     
-    // Initialize with directional templates for testing
-    // This will be replaced with word templates later
-    cgr.setTemplateSet(ContinuousGestureRecognizer.createDirectionalTemplates());
+    // Don't initialize with directional templates - they cause issues with FIXED_POINT_COUNT
+    // Templates will be set later when word templates are loaded
+    // cgr.setTemplateSet(ContinuousGestureRecognizer.createDirectionalTemplates());
   }
   
   /**

@@ -472,12 +472,16 @@ public class ContinuousGestureRecognizer
     }
     
     int theEnd = (numTargetPoints * 2) - 2;
-    if (a < theEnd)
+    if (a < theEnd && a >= 2)
     {
       for (int i = a; i < theEnd; i += 2)
       {
-        buffer[i] = (buffer[i - 2] + template[m - 2]) / 2;
-        buffer[i + 1] = (buffer[i - 1] + template[m - 1]) / 2;
+        // Add bounds checking to prevent array access errors
+        if (i >= 2)
+        {
+          buffer[i] = (buffer[i - 2] + template[m - 2]) / 2;
+          buffer[i + 1] = (buffer[i - 1] + template[m - 1]) / 2;
+        }
       }
     }
     

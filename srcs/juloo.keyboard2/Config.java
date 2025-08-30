@@ -196,21 +196,29 @@ public final class Config
     current_layout_wide = _prefs.getInt("current_layout_landscape", 0);
     circle_sensitivity = Integer.valueOf(_prefs.getString("circle_sensitivity", "2"));
     clipboard_history_enabled = _prefs.getBoolean("clipboard_history_enabled", false);
-    clipboard_history_limit = _prefs.getInt("clipboard_history_limit", 6);
+    try {
+      clipboard_history_limit = _prefs.getInt("clipboard_history_limit", 6);
+    } catch (ClassCastException e) {
+      // Handle case where preference was stored as string
+      String stringValue = _prefs.getString("clipboard_history_limit", "6");
+      clipboard_history_limit = Integer.parseInt(stringValue);
+      android.util.Log.w("Config", "Fixed clipboard_history_limit type mismatch: " + stringValue);
+    }
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
-    swipe_confidence_shape_weight = _prefs.getInt("swipe_confidence_shape_weight", 90) / 100.f;
-    swipe_confidence_location_weight = _prefs.getInt("swipe_confidence_location_weight", 130) / 100.f;
-    swipe_confidence_frequency_weight = _prefs.getInt("swipe_confidence_frequency_weight", 80) / 100.f;
-    swipe_confidence_velocity_weight = _prefs.getInt("swipe_confidence_velocity_weight", 60) / 100.f;
-    swipe_velocity_std = _prefs.getInt("swipe_velocity_std", 100) / 100.f;
-    swipe_turning_point_threshold = _prefs.getInt("swipe_turning_point_threshold", 45);
-    swipe_first_letter_weight = _prefs.getInt("swipe_first_letter_weight", 150) / 100.f;
-    swipe_last_letter_weight = _prefs.getInt("swipe_last_letter_weight", 150) / 100.f;
-    swipe_endpoint_bonus_weight = _prefs.getInt("swipe_endpoint_bonus_weight", 200) / 100.f;
+    // Add safety for other int preferences that might have string/int type conflicts
+    swipe_confidence_shape_weight = safeGetInt(_prefs, "swipe_confidence_shape_weight", 90) / 100.f;
+    swipe_confidence_location_weight = safeGetInt(_prefs, "swipe_confidence_location_weight", 130) / 100.f;
+    swipe_confidence_frequency_weight = safeGetInt(_prefs, "swipe_confidence_frequency_weight", 80) / 100.f;
+    swipe_confidence_velocity_weight = safeGetInt(_prefs, "swipe_confidence_velocity_weight", 60) / 100.f;
+    swipe_velocity_std = safeGetInt(_prefs, "swipe_velocity_std", 100) / 100.f;
+    swipe_turning_point_threshold = safeGetInt(_prefs, "swipe_turning_point_threshold", 45);
+    swipe_first_letter_weight = safeGetInt(_prefs, "swipe_first_letter_weight", 150) / 100.f;
+    swipe_last_letter_weight = safeGetInt(_prefs, "swipe_last_letter_weight", 150) / 100.f;
+    swipe_endpoint_bonus_weight = safeGetInt(_prefs, "swipe_endpoint_bonus_weight", 200) / 100.f;
     swipe_require_endpoints = _prefs.getBoolean("swipe_require_endpoints", false);
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
-    suggestion_bar_opacity = _prefs.getInt("suggestion_bar_opacity", 90);
+    suggestion_bar_opacity = safeGetInt(_prefs, "suggestion_bar_opacity", 90);
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;
@@ -317,6 +325,25 @@ public final class Config
   public static SharedPreferences globalPrefs()
   {
     return _globalConfig._prefs;
+  }
+
+  /**
+   * Safely get integer preference, handling String/Integer type mismatches
+   */
+  private static int safeGetInt(SharedPreferences prefs, String key, int defaultValue)
+  {
+    try {
+      return prefs.getInt(key, defaultValue);
+    } catch (ClassCastException e) {
+      // Handle case where preference was stored as string
+      String stringValue = prefs.getString(key, String.valueOf(defaultValue));
+      try {
+        return Integer.parseInt(stringValue);
+      } catch (NumberFormatException nfe) {
+        android.util.Log.w("Config", "Invalid number format for " + key + ": " + stringValue + ", using default: " + defaultValue);
+        return defaultValue;
+      }
+    }
   }
 
   public static interface IKeyEventHandler
