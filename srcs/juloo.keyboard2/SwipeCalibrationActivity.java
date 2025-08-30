@@ -157,20 +157,13 @@ public class SwipeCalibrationActivity extends Activity
   // CGR analysis display
   private TextView _cgrResultsDisplay;
   
-  // Algorithm weight controls
-  private LinearLayout _weightsLayout;
-  private android.widget.SeekBar _dtwWeightSlider;
-  private android.widget.SeekBar _gaussianWeightSlider;
-  private android.widget.SeekBar _ngramWeightSlider;
-  private android.widget.SeekBar _frequencyWeightSlider;
-  private TextView _dtwWeightText;
-  private TextView _gaussianWeightText;
-  private TextView _ngramWeightText;
-  private TextView _frequencyWeightText;
+  // Weight variables (kept to prevent crashes, UI removed)
   private float _dtwWeight = 0.4f;
   private float _gaussianWeight = 0.3f;
   private float _ngramWeight = 0.2f;
   private float _frequencyWeight = 0.1f;
+  private TextView _dtwWeightText, _gaussianWeightText, _ngramWeightText, _frequencyWeightText;
+  private android.widget.SeekBar _dtwWeightSlider, _gaussianWeightSlider, _ngramWeightSlider, _frequencyWeightSlider;
   
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -579,14 +572,29 @@ public class SwipeCalibrationActivity extends Activity
     // Initialize calibration
     initializeCalibration();
     
-    // Load saved weights
+    // Initialize dummy weight UI elements to prevent crashes
+    _dtwWeightText = new TextView(this);
+    _gaussianWeightText = new TextView(this);
+    _ngramWeightText = new TextView(this);
+    _frequencyWeightText = new TextView(this);
+    _dtwWeightSlider = new android.widget.SeekBar(this);
+    _gaussianWeightSlider = new android.widget.SeekBar(this);
+    _ngramWeightSlider = new android.widget.SeekBar(this);
+    _frequencyWeightSlider = new android.widget.SeekBar(this);
+    
+    // Load saved weights (now safe)
     loadSavedWeights();
   }
   
   /**
-   * Normalize weights to sum to 100%
+   * Normalize weights to sum to 100% (DISABLED - UI removed)
    */
   private void normalizeWeights()
+  {
+    return; // DISABLED - weight UI removed, CGR analysis replaces this
+  }
+  
+  private void normalizeWeights_DISABLED()
   {
     float total = _dtwWeight + _gaussianWeight + _ngramWeight + _frequencyWeight;
     if (total > 0)
