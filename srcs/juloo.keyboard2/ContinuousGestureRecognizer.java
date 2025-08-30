@@ -747,10 +747,18 @@ public class ContinuousGestureRecognizer
       throw new IllegalArgumentException("lambda must be in the range between zero and one");
     }
     
-    // OPTIMIZATION: Paper shows turning angle alone is faster and more accurate
-    // Skip expensive Euclidean distance calculation for 2x performance improvement
+    // DEBUG: Check if turning angle calculation is causing zero probabilities
+    double x_e = getEuclideanDistanceByList(pts1, pts2);
     double x_a = getTurningAngleDistance(pts1, pts2);
-    return Math.exp(-(x_a * x_a / (aSigma * aSigma))); // Only turning angle, no Euclidean
+    
+    android.util.Log.d("CGR", String.format("Distance calc: x_e=%.6f, x_a=%.6f, eSigma=%.1f, aSigma=%.1f", 
+                      x_e, x_a, eSigma, aSigma));
+    
+    // Temporarily restore combined distance to debug
+    double result = Math.exp(-(x_e * x_e / (eSigma * eSigma) * lambda + x_a * x_a / (aSigma * aSigma) * (1 - lambda)));
+    android.util.Log.d("CGR", String.format("Probability result: %.6f", result));
+    
+    return result;
   }
   
   /**

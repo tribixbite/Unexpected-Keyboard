@@ -2322,13 +2322,18 @@ public class SwipeCalibrationActivity extends Activity
         userPoints.add(new ContinuousGestureRecognizer.Point(normalizedX, normalizedY));
       }
       
-      // DEBUGGING: Skip CGR processing that corrupts templates
-      // Instead, show raw template vs user comparison
-      List<ContinuousGestureRecognizer.Result> results = new ArrayList<>();
+      // TEST: Re-enable CGR processing with coordinate fixes
+      ContinuousGestureRecognizer cgr = new ContinuousGestureRecognizer();
+      List<ContinuousGestureRecognizer.Template> testTemplates = new ArrayList<>();
+      testTemplates.add(template);
+      // Add a few other words for comparison
+      ContinuousGestureRecognizer.Template testTemplate = _templateGenerator.generateWordTemplate("test");
+      ContinuousGestureRecognizer.Template helloTemplate = _templateGenerator.generateWordTemplate("hello");
+      if (testTemplate != null) testTemplates.add(testTemplate);
+      if (helloTemplate != null) testTemplates.add(helloTemplate);
       
-      // Create fake result to show template data
-      ContinuousGestureRecognizer.Result fakeResult = new ContinuousGestureRecognizer.Result(template, 0.0, template.pts);
-      results.add(fakeResult);
+      cgr.setTemplateSet(testTemplates);
+      List<ContinuousGestureRecognizer.Result> results = cgr.recognize(userPoints);
       
       // Build detailed comparison data
       StringBuilder comparison = new StringBuilder();
