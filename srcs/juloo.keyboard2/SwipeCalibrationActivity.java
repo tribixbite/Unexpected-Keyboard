@@ -154,6 +154,9 @@ public class SwipeCalibrationActivity extends Activity
   private Button _copyComparisonButton;
   private StringBuilder _comparisonData;
   
+  // CGR analysis display
+  private TextView _cgrResultsDisplay;
+  
   // Algorithm weight controls
   private LinearLayout _weightsLayout;
   private android.widget.SeekBar _dtwWeightSlider;
@@ -408,118 +411,36 @@ public class SwipeCalibrationActivity extends Activity
     
     topLayout.addView(_metricsLayout);
     
-    // Algorithm weight controls
-    _weightsLayout = new LinearLayout(this);
-    _weightsLayout.setOrientation(LinearLayout.VERTICAL);
-    _weightsLayout.setPadding(0, 10, 0, 10);
+    // CGR Results Analysis (replacing algorithm weights)
+    LinearLayout cgrAnalysisLayout = new LinearLayout(this);
+    cgrAnalysisLayout.setOrientation(LinearLayout.VERTICAL);
+    cgrAnalysisLayout.setPadding(16, 16, 16, 16);
+    cgrAnalysisLayout.setBackgroundColor(0xFF1E1E1E);
     
-    TextView weightsTitle = new TextView(this);
-    weightsTitle.setText("Algorithm Weights:");
-    weightsTitle.setTextColor(Color.WHITE);
-    weightsTitle.setTextSize(14);
-    _weightsLayout.addView(weightsTitle);
+    TextView analysisTitle = new TextView(this);
+    analysisTitle.setText("🔍 CGR Recognition Analysis");
+    analysisTitle.setTextColor(Color.WHITE);
+    analysisTitle.setTextSize(16);
+    analysisTitle.setPadding(0, 0, 0, 12);
+    cgrAnalysisLayout.addView(analysisTitle);
     
-    // DTW Weight
-    LinearLayout dtwLayout = new LinearLayout(this);
-    dtwLayout.setOrientation(LinearLayout.HORIZONTAL);
-    _dtwWeightText = new TextView(this);
-    _dtwWeightText.setText("DTW: 40%");
-    _dtwWeightText.setTextColor(Color.GRAY);
-    _dtwWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
-    dtwLayout.addView(_dtwWeightText);
-    _dtwWeightSlider = new android.widget.SeekBar(this);
-    _dtwWeightSlider.setMax(100);
-    _dtwWeightSlider.setProgress(40);
-    _dtwWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    _dtwWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        _dtwWeight = progress / 100.0f;
-        _dtwWeightText.setText("DTW: " + progress + "%");
-        normalizeWeights();
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    dtwLayout.addView(_dtwWeightSlider);
-    _weightsLayout.addView(dtwLayout);
+    // Real-time CGR results display
+    _cgrResultsDisplay = new TextView(this);
+    _cgrResultsDisplay.setText("Swipe words to see detailed CGR prediction analysis...");
+    _cgrResultsDisplay.setTextSize(12);
+    _cgrResultsDisplay.setTextColor(Color.CYAN);
+    _cgrResultsDisplay.setTypeface(android.graphics.Typeface.MONOSPACE);
+    _cgrResultsDisplay.setBackgroundColor(0xFF0F0F0F);
+    _cgrResultsDisplay.setPadding(12, 12, 12, 12);
+    _cgrResultsDisplay.setMaxLines(8);
+    _cgrResultsDisplay.setSingleLine(false);
+    android.widget.ScrollView cgrScrollView = new android.widget.ScrollView(this);
+    cgrScrollView.addView(_cgrResultsDisplay);
+    cgrScrollView.setLayoutParams(new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, 250));
+    cgrAnalysisLayout.addView(cgrScrollView);
     
-    // Gaussian Weight
-    LinearLayout gaussianLayout = new LinearLayout(this);
-    gaussianLayout.setOrientation(LinearLayout.HORIZONTAL);
-    _gaussianWeightText = new TextView(this);
-    _gaussianWeightText.setText("Gaussian: 30%");
-    _gaussianWeightText.setTextColor(Color.GRAY);
-    _gaussianWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
-    gaussianLayout.addView(_gaussianWeightText);
-    _gaussianWeightSlider = new android.widget.SeekBar(this);
-    _gaussianWeightSlider.setMax(100);
-    _gaussianWeightSlider.setProgress(30);
-    _gaussianWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    _gaussianWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        _gaussianWeight = progress / 100.0f;
-        _gaussianWeightText.setText("Gaussian: " + progress + "%");
-        normalizeWeights();
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    gaussianLayout.addView(_gaussianWeightSlider);
-    _weightsLayout.addView(gaussianLayout);
-    
-    // N-gram Weight
-    LinearLayout ngramLayout = new LinearLayout(this);
-    ngramLayout.setOrientation(LinearLayout.HORIZONTAL);
-    _ngramWeightText = new TextView(this);
-    _ngramWeightText.setText("N-gram: 20%");
-    _ngramWeightText.setTextColor(Color.GRAY);
-    _ngramWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
-    ngramLayout.addView(_ngramWeightText);
-    _ngramWeightSlider = new android.widget.SeekBar(this);
-    _ngramWeightSlider.setMax(100);
-    _ngramWeightSlider.setProgress(20);
-    _ngramWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    _ngramWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        _ngramWeight = progress / 100.0f;
-        _ngramWeightText.setText("N-gram: " + progress + "%");
-        normalizeWeights();
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    ngramLayout.addView(_ngramWeightSlider);
-    _weightsLayout.addView(ngramLayout);
-    
-    // Frequency Weight
-    LinearLayout freqLayout = new LinearLayout(this);
-    freqLayout.setOrientation(LinearLayout.HORIZONTAL);
-    _frequencyWeightText = new TextView(this);
-    _frequencyWeightText.setText("Frequency: 10%");
-    _frequencyWeightText.setTextColor(Color.GRAY);
-    _frequencyWeightText.setLayoutParams(new LinearLayout.LayoutParams(150, ViewGroup.LayoutParams.WRAP_CONTENT));
-    freqLayout.addView(_frequencyWeightText);
-    _frequencyWeightSlider = new android.widget.SeekBar(this);
-    _frequencyWeightSlider.setMax(100);
-    _frequencyWeightSlider.setProgress(10);
-    _frequencyWeightSlider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    _frequencyWeightSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        _frequencyWeight = progress / 100.0f;
-        _frequencyWeightText.setText("Frequency: " + progress + "%");
-        normalizeWeights();
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    freqLayout.addView(_frequencyWeightSlider);
-    _weightsLayout.addView(freqLayout);
-    
-    topLayout.addView(_weightsLayout);
+    topLayout.addView(cgrAnalysisLayout);
     
     // Buttons above keyboard
     LinearLayout buttonLayout = new LinearLayout(this);
@@ -2347,11 +2268,12 @@ public class SwipeCalibrationActivity extends Activity
       comparison.append("User swipe points: ").append(userSwipe.size()).append("\n");
       
       // Template shape analysis
+      double templateLength = 0;
       if (template.pts.size() >= 2)
       {
         ContinuousGestureRecognizer.Point first = template.pts.get(0);
         ContinuousGestureRecognizer.Point last = template.pts.get(template.pts.size() - 1);
-        double templateLength = calculatePathLength(template.pts);
+        templateLength = calculatePathLength(template.pts);
         comparison.append("Template: (").append(String.format("%.0f", first.x))
                   .append(",").append(String.format("%.0f", first.y))
                   .append(") → (").append(String.format("%.0f", last.x))
@@ -2380,14 +2302,14 @@ public class SwipeCalibrationActivity extends Activity
         ContinuousGestureRecognizer.Result result = results.get(i);
         
         // Calculate template attributes that impact prediction
-        double templateLength = calculatePathLength(result.template.pts);
+        double resultTemplateLength = calculatePathLength(result.template.pts);
         int templatePoints = result.template.pts.size();
         
         ContinuousGestureRecognizer.Point tStart = result.template.pts.get(0);
         ContinuousGestureRecognizer.Point tEnd = result.template.pts.get(result.template.pts.size() - 1);
         
         comparison.append(String.format("  #%d: %s (prob=%.6f)\n", i + 1, result.template.id, result.prob));
-        comparison.append(String.format("      Length: %.0f, Points: %d\n", templateLength, templatePoints));
+        comparison.append(String.format("      Length: %.0f, Points: %d\n", resultTemplateLength, templatePoints));
         comparison.append(String.format("      Coords: (%.0f,%.0f)→(%.0f,%.0f)\n", 
                          tStart.x, tStart.y, tEnd.x, tEnd.y));
         
@@ -2396,7 +2318,7 @@ public class SwipeCalibrationActivity extends Activity
         {
           comparison.append("      PREDICTION FACTORS:\n");
           comparison.append(String.format("      - Template vs User length ratio: %.3f\n", 
-                           templateLength / userLength));
+                           resultTemplateLength / userLength));
           comparison.append(String.format("      - Coordinate alignment score: %.3f\n", 
                            calculateCoordinateAlignment(result.template.pts, userPoints)));
         }
@@ -2428,7 +2350,10 @@ public class SwipeCalibrationActivity extends Activity
       // Add to accumulated data
       _comparisonData.append(comparison);
       
-      // Update display (show last 3 comparisons)
+      // Update main CGR analysis display (top section)
+      updateCGRAnalysisDisplay(word, results, templateLength, userLength);
+      
+      // Update detailed comparison display (bottom section)
       String[] entries = _comparisonData.toString().split("----------------------------------------");
       StringBuilder display = new StringBuilder();
       int start = Math.max(0, entries.length - 3);
@@ -2503,5 +2428,54 @@ public class SwipeCalibrationActivity extends Activity
     double maxDist = 1000.0; // Max possible distance in 1000x1000 space
     double alignmentScore = 1.0 - ((startDist + endDist) / 2.0) / maxDist;
     return Math.max(0.0, alignmentScore);
+  }
+  
+  /**
+   * Update the CGR analysis display in the top section after each swipe
+   */
+  private void updateCGRAnalysisDisplay(String word, List<ContinuousGestureRecognizer.Result> results, 
+                                       double templateLength, double userLength)
+  {
+    StringBuilder analysis = new StringBuilder();
+    analysis.append("📝 WORD: ").append(word.toUpperCase()).append("\n\n");
+    
+    if (results.isEmpty())
+    {
+      analysis.append("❌ No CGR results\n");
+    }
+    else
+    {
+      // Show top 3 results with detailed attributes
+      analysis.append("🏆 TOP 3 CGR PREDICTIONS:\n");
+      for (int i = 0; i < Math.min(3, results.size()); i++)
+      {
+        ContinuousGestureRecognizer.Result result = results.get(i);
+        double resultTemplateLength = calculatePathLength(result.template.pts);
+        
+        analysis.append(String.format("%d. %s (%.3f)\n", i + 1, result.template.id, result.prob));
+        analysis.append(String.format("   Len: %.0f, Pts: %d\n", resultTemplateLength, result.template.pts.size()));
+        
+        if (i == 0) // Show equation factors for top result
+        {
+          double lengthRatio = templateLength / userLength;
+          analysis.append(String.format("   Length ratio: %.3f\n", lengthRatio));
+          analysis.append(String.format("   %s match\n", result.template.id.equals(word) ? "✅ CORRECT" : "❌ WRONG"));
+        }
+      }
+      
+      // Show prediction equation impact factors
+      ContinuousGestureRecognizer.Result topResult = results.get(0);
+      analysis.append("\n📊 EQUATION FACTORS:\n");
+      analysis.append(String.format("Template length: %.0f\n", templateLength));
+      analysis.append(String.format("User gesture length: %.0f\n", userLength));
+      analysis.append(String.format("Length similarity: %.3f\n", 1.0 - Math.abs(templateLength - userLength) / Math.max(templateLength, userLength)));
+      
+      boolean isCorrect = topResult.template.id.equals(word);
+      analysis.append(String.format("\n🎯 RESULT: %s (%.1f%% confidence)", 
+                     isCorrect ? "CORRECT" : "INCORRECT", topResult.prob * 100));
+    }
+    
+    // Update the display
+    _cgrResultsDisplay.setText(analysis.toString());
   }
 }
