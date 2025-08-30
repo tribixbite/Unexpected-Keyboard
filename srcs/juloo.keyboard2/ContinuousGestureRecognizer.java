@@ -36,7 +36,7 @@ public class ContinuousGestureRecognizer
   private static final double DEFAULT_LAMBDA = 0.4;
   private static final double DEFAULT_KAPPA = 1.0;
   
-  private static final int MAX_RESAMPLING_PTS = 1000;
+  private static final int MAX_RESAMPLING_PTS = 5000; // Increased to support long words like 'wonderful' (was 3500)
   private static final int SAMPLE_POINT_DISTANCE = 10; // Restored original value for accuracy
   
   // Normalized space
