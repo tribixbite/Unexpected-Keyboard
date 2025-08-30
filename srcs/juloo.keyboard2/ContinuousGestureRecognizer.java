@@ -584,7 +584,10 @@ public class ContinuousGestureRecognizer
     for (Template t : templates)
     {
       normalize(t.pts);
-      Pattern pattern = new Pattern(t, generateEquiDistantProgressiveSubSequences(t.pts, 200));
+      // EXTREME MEMORY OPTIMIZATION: Skip progressive subsequences entirely for large vocabularies
+      List<List<Point>> singleSegment = new ArrayList<>();
+      singleSegment.add(t.pts); // Only use complete word template, no progressive segments
+      Pattern pattern = new Pattern(t, singleSegment);
       patterns.add(pattern);
     }
     
