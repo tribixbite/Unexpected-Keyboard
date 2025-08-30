@@ -31,7 +31,7 @@ public class ContinuousSwipeGestureRecognizer
   private Handler mainHandler;
   private final AtomicBoolean recognitionInProgress = new AtomicBoolean(false);
   private long lastPredictionTime = 0;
-  private static final long PREDICTION_THROTTLE_MS = 300; // Predict every 300ms (reduced frequency to minimize lag)
+  private static final long PREDICTION_THROTTLE_MS = 50; // Faster throttling - queue management instead of blocking
   
   // Callback interface for real-time predictions
   public interface OnGesturePredictionListener
@@ -108,10 +108,9 @@ public class ContinuousSwipeGestureRecognizer
     // Throttle predictions to reasonable frequency (record all events but predict sparingly)
     long now = System.currentTimeMillis();
     
-    // Only predict if we have enough points, enough time passed, and no recognition in progress
+    // Only predict if we have enough points and enough time passed (remove blocking check)
     boolean shouldPredict = gesturePointsList.size() >= minPointsForPrediction &&
-        now - lastPredictionTime > PREDICTION_THROTTLE_MS &&
-        recognitionInProgress.compareAndSet(false, true);
+        now - lastPredictionTime > PREDICTION_THROTTLE_MS;
         
     if (shouldPredict)
     {
@@ -141,7 +140,7 @@ public class ContinuousSwipeGestureRecognizer
         }
         finally
         {
-          recognitionInProgress.set(false);
+          // Recognition complete - no blocking state to clear
         }
       });
     }
@@ -167,8 +166,8 @@ public class ContinuousSwipeGestureRecognizer
         final List<ContinuousGestureRecognizer.Point> finalPointsCopy = 
           new ArrayList<>(gesturePointsList);
           
-        // Cancel any pending background recognition to prioritize final results
-        recognitionInProgress.set(false);
+        // Clear any pending background tasks to prioritize final results
+        backgroundHandler.removeCallbacksAndMessages(null);
           
         backgroundHandler.post(() -> {
           try
@@ -349,7 +348,6 @@ public class ContinuousSwipeGestureRecognizer
     gestureActive = false;
     newTouch = false;
     lastPredictionTime = 0;
-    recognitionInProgress.set(false);
     
     if (predictionListener != null)
     {
