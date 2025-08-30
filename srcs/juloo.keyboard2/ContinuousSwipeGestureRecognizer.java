@@ -108,42 +108,47 @@ public class ContinuousSwipeGestureRecognizer
     // Throttle predictions to reasonable frequency (record all events but predict sparingly)
     long now = System.currentTimeMillis();
     
-    // Only predict if we have enough points and enough time passed (remove blocking check)
-    boolean shouldPredict = gesturePointsList.size() >= minPointsForPrediction &&
-        now - lastPredictionTime > PREDICTION_THROTTLE_MS;
-        
-    if (shouldPredict)
-    {
-      lastPredictionTime = now;
-      
-      // Create copy of points for background processing
-      final List<ContinuousGestureRecognizer.Point> pointsCopy = 
-        new ArrayList<>(gesturePointsList);
-      
-      // Run recognition on background thread
-      backgroundHandler.post(() -> {
-        try
-        {
-          List<ContinuousGestureRecognizer.Result> currentResults = cgr.recognize(pointsCopy);
-          
-          // Post results back to main thread
-          if (currentResults != null && !currentResults.isEmpty() && predictionListener != null)
-          {
-            mainHandler.post(() -> {
-              predictionListener.onGesturePrediction(currentResults);
-            });
-          }
-        }
-        catch (Exception e)
-        {
-          android.util.Log.w("ContinuousSwipeGestureRecognizer", "Recognition error during move: " + e.getMessage());
-        }
-        finally
-        {
-          // Recognition complete - no blocking state to clear
-        }
-      });
-    }
+    // DISABLED: Real-time predictions during swipe (causes performance issues)
+    // Only predict at swipe completion to prevent memory/performance overhead
+    
+    // COMMENTED OUT FOR PERFORMANCE:
+    // boolean shouldPredict = gesturePointsList.size() >= minPointsForPrediction &&
+    //     now - lastPredictionTime > PREDICTION_THROTTLE_MS;
+    //     
+    // if (shouldPredict)
+    // {
+    //   lastPredictionTime = now;
+    //   
+    //   // Create copy of points for background processing
+    //   final List<ContinuousGestureRecognizer.Point> pointsCopy = 
+    //     new ArrayList<>(gesturePointsList);
+    //   
+    //   // Run recognition on background thread
+    //   backgroundHandler.post(() -> {
+    //     try
+    //     {
+    //       List<ContinuousGestureRecognizer.Result> currentResults = cgr.recognize(pointsCopy);
+    //       
+    //       // Post results back to main thread
+    //       if (currentResults != null && !currentResults.isEmpty() && predictionListener != null)
+    //       {
+    //         mainHandler.post(() -> {
+    //           predictionListener.onGesturePrediction(currentResults);
+    //         });
+    //       }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //       android.util.Log.w("ContinuousSwipeGestureRecognizer", "Recognition error during move: " + e.getMessage());
+    //     }
+    //     finally
+    //     {
+    //       // Recognition complete - no blocking state to clear
+    //     }
+    //   });
+    // }
+    
+    android.util.Log.d("ContinuousSwipeGestureRecognizer", "Touch move recorded (real-time prediction disabled for performance)");
   }
   
   /**
