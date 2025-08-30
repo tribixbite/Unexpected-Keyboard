@@ -22,7 +22,7 @@ public class WordGestureTemplateGenerator
   {
     QWERTY_COORDS = new HashMap<>();
     
-    // Top row (QWERTYUIOP)
+    // Top row (QWERTYUIOP) - Fixed positive coordinates in 1000x1000 space
     double topY = 200;
     double[] topX = {100, 200, 300, 400, 500, 600, 700, 800, 900, 950};
     char[] topChars = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'};

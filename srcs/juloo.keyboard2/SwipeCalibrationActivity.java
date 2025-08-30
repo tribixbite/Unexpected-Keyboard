@@ -2298,6 +2298,15 @@ public class SwipeCalibrationActivity extends Activity
         return;
       }
       
+      // DEBUGGING: Check template before any processing
+      Log.d(TAG, "Generated template for " + word + ": " + template.pts.size() + " points");
+      if (template.pts.size() >= 2)
+      {
+        ContinuousGestureRecognizer.Point first = template.pts.get(0);
+        ContinuousGestureRecognizer.Point last = template.pts.get(template.pts.size() - 1);
+        Log.d(TAG, "Raw template: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
+      }
+      
       // Convert user swipe to CGR format
       List<ContinuousGestureRecognizer.Point> userPoints = new ArrayList<>();
       for (PointF p : userSwipe)
@@ -2305,18 +2314,13 @@ public class SwipeCalibrationActivity extends Activity
         userPoints.add(new ContinuousGestureRecognizer.Point(p.x, p.y));
       }
       
-      // Perform CGR recognition to get top predictions and match calculations
-      ContinuousGestureRecognizer cgr = new ContinuousGestureRecognizer();
-      List<ContinuousGestureRecognizer.Template> testTemplates = new ArrayList<>();
-      testTemplates.add(template);
-      // Add a few other words for comparison
-      testTemplates.add(_templateGenerator.generateWordTemplate("test"));
-      testTemplates.add(_templateGenerator.generateWordTemplate("hello"));
-      testTemplates.add(_templateGenerator.generateWordTemplate("world"));
-      testTemplates.removeIf(t -> t == null); // Remove any null templates
+      // DEBUGGING: Skip CGR processing that corrupts templates
+      // Instead, show raw template vs user comparison
+      List<ContinuousGestureRecognizer.Result> results = new ArrayList<>();
       
-      cgr.setTemplateSet(testTemplates);
-      List<ContinuousGestureRecognizer.Result> results = cgr.recognize(userPoints);
+      // Create fake result to show template data
+      ContinuousGestureRecognizer.Result fakeResult = new ContinuousGestureRecognizer.Result(template, 0.0, template.pts);
+      results.add(fakeResult);
       
       // Build detailed comparison data
       StringBuilder comparison = new StringBuilder();
