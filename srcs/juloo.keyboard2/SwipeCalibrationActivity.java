@@ -2322,31 +2322,16 @@ public class SwipeCalibrationActivity extends Activity
         userPoints.add(new ContinuousGestureRecognizer.Point(normalizedX, normalizedY));
       }
       
-      // REAL CGR TESTING: Use actual CGR system with full vocabulary
+      // FULL CGR TESTING: Use same 3000 template set as normal keyboard
       ContinuousGestureRecognizer cgr = new ContinuousGestureRecognizer();
       
-      // Generate templates for target word + common comparison words
-      List<ContinuousGestureRecognizer.Template> testTemplates = new ArrayList<>();
+      // Generate FULL template set (same as normal keyboard) 
+      List<ContinuousGestureRecognizer.Template> fullTemplates = 
+        _templateGenerator.generateBalancedWordTemplates(3000);
       
-      // Always include the target word
-      testTemplates.add(template);
+      android.util.Log.d(TAG, "Testing CGR with FULL " + fullTemplates.size() + " templates (same as normal keyboard)");
       
-      // Add common words that might be confused
-      String[] comparisonWords = {"the", "and", "you", "that", "with", "for", "are", "this", "have", "not",
-                                  "test", "hello", "world", "good", "time", "work", "make", "know", "take"};
-      
-      for (String compareWord : comparisonWords)
-      {
-        ContinuousGestureRecognizer.Template compareTemplate = _templateGenerator.generateWordTemplate(compareWord);
-        if (compareTemplate != null)
-        {
-          testTemplates.add(compareTemplate);
-        }
-      }
-      
-      android.util.Log.d(TAG, "Testing CGR with " + testTemplates.size() + " templates including target: " + word);
-      
-      cgr.setTemplateSet(testTemplates);
+      cgr.setTemplateSet(fullTemplates);
       List<ContinuousGestureRecognizer.Result> results = cgr.recognize(userPoints);
       
       // Build detailed comparison data
