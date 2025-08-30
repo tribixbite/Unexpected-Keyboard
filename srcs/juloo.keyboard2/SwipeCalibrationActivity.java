@@ -619,15 +619,21 @@ public class SwipeCalibrationActivity extends Activity
     mainLayout.addView(comparisonLabel);
     
     _templateComparisonText = new TextView(this);
-    _templateComparisonText.setText("Swipe words to see template comparison data...");
-    _templateComparisonText.setTextSize(12);
-    _templateComparisonText.setPadding(16, 0, 16, 8);
-    _templateComparisonText.setMaxLines(10);
-    _templateComparisonText.setVerticalScrollBarEnabled(true);
+    _templateComparisonText.setText("Swipe words to see detailed CGR analysis...");
+    _templateComparisonText.setTextSize(11);
+    _templateComparisonText.setPadding(12, 12, 12, 12);
+    _templateComparisonText.setTextColor(Color.WHITE);
+    _templateComparisonText.setBackgroundColor(0xFF1A1A1A);
+    _templateComparisonText.setTypeface(android.graphics.Typeface.MONOSPACE); // Fixed-width font
+    _templateComparisonText.setSingleLine(false);
+    _templateComparisonText.setMaxLines(Integer.MAX_VALUE);
+    
     android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
     scrollView.addView(_templateComparisonText);
     scrollView.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 200));
+      ViewGroup.LayoutParams.MATCH_PARENT, 400)); // Increased height
+    scrollView.setPadding(8, 8, 8, 8);
+    scrollView.setBackgroundColor(0xFF2B2B2B);
     mainLayout.addView(scrollView);
     
     _copyComparisonButton = new Button(this);
@@ -2354,11 +2360,12 @@ public class SwipeCalibrationActivity extends Activity
       }
       
       // User swipe analysis
+      double userLength = 0;
       if (userSwipe.size() >= 2)
       {
         PointF first = userSwipe.get(0);
         PointF last = userSwipe.get(userSwipe.size() - 1);
-        double userLength = calculatePathLength(userSwipe);
+        userLength = calculatePathLength(userSwipe);
         comparison.append("User: (").append(String.format("%.0f", first.x))
                   .append(",").append(String.format("%.0f", first.y))
                   .append(") → (").append(String.format("%.0f", last.x))
@@ -2366,13 +2373,33 @@ public class SwipeCalibrationActivity extends Activity
                   .append(") len=").append(String.format("%.0f", userLength)).append("\n");
       }
       
-      // CGR recognition results with match calculations
+      // DETAILED CGR ANALYSIS: Show comprehensive recognition data
       comparison.append("CGR RESULTS:\n");
       for (int i = 0; i < Math.min(3, results.size()); i++)
       {
         ContinuousGestureRecognizer.Result result = results.get(i);
-        comparison.append(String.format("  #%d: %s (prob=%.6f)\n", 
-                         i + 1, result.template.id, result.prob));
+        
+        // Calculate template attributes that impact prediction
+        double templateLength = calculatePathLength(result.template.pts);
+        int templatePoints = result.template.pts.size();
+        
+        ContinuousGestureRecognizer.Point tStart = result.template.pts.get(0);
+        ContinuousGestureRecognizer.Point tEnd = result.template.pts.get(result.template.pts.size() - 1);
+        
+        comparison.append(String.format("  #%d: %s (prob=%.6f)\n", i + 1, result.template.id, result.prob));
+        comparison.append(String.format("      Length: %.0f, Points: %d\n", templateLength, templatePoints));
+        comparison.append(String.format("      Coords: (%.0f,%.0f)→(%.0f,%.0f)\n", 
+                         tStart.x, tStart.y, tEnd.x, tEnd.y));
+        
+        // Show prediction equation factors
+        if (i == 0) // Only for top result
+        {
+          comparison.append("      PREDICTION FACTORS:\n");
+          comparison.append(String.format("      - Template vs User length ratio: %.3f\n", 
+                           templateLength / userLength));
+          comparison.append(String.format("      - Coordinate alignment score: %.3f\n", 
+                           calculateCoordinateAlignment(result.template.pts, userPoints)));
+        }
       }
       
       if (results.isEmpty())
@@ -2451,5 +2478,30 @@ public class SwipeCalibrationActivity extends Activity
       length += Math.sqrt(dx * dx + dy * dy);
     }
     return length;
+  }
+  
+  /**
+   * Calculate coordinate alignment score between template and user gesture
+   */
+  private double calculateCoordinateAlignment(List<ContinuousGestureRecognizer.Point> templatePts, 
+                                            List<ContinuousGestureRecognizer.Point> userPts)
+  {
+    if (templatePts.size() < 2 || userPts.size() < 2) return 0.0;
+    
+    // Compare start and end point alignment
+    ContinuousGestureRecognizer.Point tStart = templatePts.get(0);
+    ContinuousGestureRecognizer.Point tEnd = templatePts.get(templatePts.size() - 1);
+    ContinuousGestureRecognizer.Point uStart = userPts.get(0);
+    ContinuousGestureRecognizer.Point uEnd = userPts.get(userPts.size() - 1);
+    
+    double startDist = Math.sqrt((tStart.x - uStart.x) * (tStart.x - uStart.x) + 
+                                (tStart.y - uStart.y) * (tStart.y - uStart.y));
+    double endDist = Math.sqrt((tEnd.x - uEnd.x) * (tEnd.x - uEnd.x) + 
+                              (tEnd.y - uEnd.y) * (tEnd.y - uEnd.y));
+    
+    // Convert to alignment score (lower distance = higher score)
+    double maxDist = 1000.0; // Max possible distance in 1000x1000 space
+    double alignmentScore = 1.0 - ((startDist + endDist) / 2.0) / maxDist;
+    return Math.max(0.0, alignmentScore);
   }
 }
