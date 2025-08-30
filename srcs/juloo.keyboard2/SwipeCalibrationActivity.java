@@ -148,6 +148,12 @@ public class SwipeCalibrationActivity extends Activity
   // ML Training
   private SwipeMLTrainer _mlTrainer;
   
+  // Template comparison features
+  private WordGestureTemplateGenerator _templateGenerator;
+  private TextView _templateComparisonText;
+  private Button _copyComparisonButton;
+  private StringBuilder _comparisonData;
+  
   // Algorithm weight controls
   private LinearLayout _weightsLayout;
   private android.widget.SeekBar _dtwWeightSlider;
@@ -605,7 +611,36 @@ public class SwipeCalibrationActivity extends Activity
     _keyboardView.setLayoutParams(keyboardParams);
     mainLayout.addView(_keyboardView);
     
+    // Template comparison section
+    TextView comparisonLabel = new TextView(this);
+    comparisonLabel.setText("Template vs User Gesture Comparison:");
+    comparisonLabel.setTextSize(16);
+    comparisonLabel.setPadding(16, 16, 16, 8);
+    mainLayout.addView(comparisonLabel);
+    
+    _templateComparisonText = new TextView(this);
+    _templateComparisonText.setText("Swipe words to see template comparison data...");
+    _templateComparisonText.setTextSize(12);
+    _templateComparisonText.setPadding(16, 0, 16, 8);
+    _templateComparisonText.setMaxLines(10);
+    _templateComparisonText.setVerticalScrollBarEnabled(true);
+    android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+    scrollView.addView(_templateComparisonText);
+    scrollView.setLayoutParams(new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, 200));
+    mainLayout.addView(scrollView);
+    
+    _copyComparisonButton = new Button(this);
+    _copyComparisonButton.setText("Copy Comparison Data");
+    _copyComparisonButton.setOnClickListener(v -> copyComparisonData());
+    mainLayout.addView(_copyComparisonButton);
+    
     setContentView(mainLayout);
+    
+    // Initialize template generator for comparison
+    _templateGenerator = new WordGestureTemplateGenerator();
+    _templateGenerator.loadDictionary(this);
+    _comparisonData = new StringBuilder();
     
     // Initialize ML trainer
     _mlTrainer = new SwipeMLTrainer(this);
@@ -784,6 +819,9 @@ public class SwipeCalibrationActivity extends Activity
     
     // Show the swipe path overlay
     showSwipePathOverlay(points);
+    
+    // ADD: Template comparison analysis for debugging
+    addTemplateComparison(_currentWord, points);
     
     // Create swipe pattern for legacy storage
     SwipePattern pattern = new SwipePattern(_currentWord, points, duration);
@@ -2232,5 +2270,170 @@ public class SwipeCalibrationActivity extends Activity
       Log.e(TAG, "Failed to apply training results", e);
       Toast.makeText(this, "Failed to apply training results: " + e.getMessage(), Toast.LENGTH_LONG).show();
     }
+  }
+  
+  /**
+   * Copy comparison data to clipboard
+   */
+  private void copyComparisonData()
+  {
+    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+    ClipData clip = ClipData.newPlainText("Template Comparison Data", _comparisonData.toString());
+    clipboard.setPrimaryClip(clip);
+    Toast.makeText(this, "Comparison data copied to clipboard", Toast.LENGTH_SHORT).show();
+  }
+  
+  /**
+   * Add template comparison data for a swiped word
+   */
+  private void addTemplateComparison(String word, List<PointF> userSwipe)
+  {
+    try
+    {
+      // Generate template for this word
+      ContinuousGestureRecognizer.Template template = _templateGenerator.generateWordTemplate(word);
+      if (template == null)
+      {
+        Log.w(TAG, "No template generated for word: " + word);
+        return;
+      }
+      
+      // Convert user swipe to CGR format
+      List<ContinuousGestureRecognizer.Point> userPoints = new ArrayList<>();
+      for (PointF p : userSwipe)
+      {
+        userPoints.add(new ContinuousGestureRecognizer.Point(p.x, p.y));
+      }
+      
+      // Perform CGR recognition to get top predictions and match calculations
+      ContinuousGestureRecognizer cgr = new ContinuousGestureRecognizer();
+      List<ContinuousGestureRecognizer.Template> testTemplates = new ArrayList<>();
+      testTemplates.add(template);
+      // Add a few other words for comparison
+      testTemplates.add(_templateGenerator.generateWordTemplate("test"));
+      testTemplates.add(_templateGenerator.generateWordTemplate("hello"));
+      testTemplates.add(_templateGenerator.generateWordTemplate("world"));
+      testTemplates.removeIf(t -> t == null); // Remove any null templates
+      
+      cgr.setTemplateSet(testTemplates);
+      List<ContinuousGestureRecognizer.Result> results = cgr.recognize(userPoints);
+      
+      // Build detailed comparison data
+      StringBuilder comparison = new StringBuilder();
+      comparison.append("=== WORD: ").append(word.toUpperCase()).append(" ===\n");
+      comparison.append("Template points: ").append(template.pts.size()).append("\n");
+      comparison.append("User swipe points: ").append(userSwipe.size()).append("\n");
+      
+      // Template shape analysis
+      if (template.pts.size() >= 2)
+      {
+        ContinuousGestureRecognizer.Point first = template.pts.get(0);
+        ContinuousGestureRecognizer.Point last = template.pts.get(template.pts.size() - 1);
+        double templateLength = calculatePathLength(template.pts);
+        comparison.append("Template: (").append(String.format("%.0f", first.x))
+                  .append(",").append(String.format("%.0f", first.y))
+                  .append(") → (").append(String.format("%.0f", last.x))
+                  .append(",").append(String.format("%.0f", last.y))
+                  .append(") len=").append(String.format("%.0f", templateLength)).append("\n");
+      }
+      
+      // User swipe analysis
+      if (userSwipe.size() >= 2)
+      {
+        PointF first = userSwipe.get(0);
+        PointF last = userSwipe.get(userSwipe.size() - 1);
+        double userLength = calculatePathLength(userSwipe);
+        comparison.append("User: (").append(String.format("%.0f", first.x))
+                  .append(",").append(String.format("%.0f", first.y))
+                  .append(") → (").append(String.format("%.0f", last.x))
+                  .append(",").append(String.format("%.0f", last.y))
+                  .append(") len=").append(String.format("%.0f", userLength)).append("\n");
+      }
+      
+      // CGR recognition results with match calculations
+      comparison.append("CGR RESULTS:\n");
+      for (int i = 0; i < Math.min(3, results.size()); i++)
+      {
+        ContinuousGestureRecognizer.Result result = results.get(i);
+        comparison.append(String.format("  #%d: %s (prob=%.6f)\n", 
+                         i + 1, result.template.id, result.prob));
+      }
+      
+      if (results.isEmpty())
+      {
+        comparison.append("  No CGR recognition results\n");
+      }
+      
+      // Match point calculation analysis
+      boolean correctMatch = !results.isEmpty() && results.get(0).template.id.equals(word);
+      comparison.append("MATCH ANALYSIS:\n");
+      comparison.append("  Correct recognition: ").append(correctMatch ? "YES" : "NO").append("\n");
+      if (!results.isEmpty())
+      {
+        comparison.append("  Confidence level: ");
+        double prob = results.get(0).prob;
+        if (prob > 0.5) comparison.append("HIGH");
+        else if (prob > 0.1) comparison.append("MEDIUM"); 
+        else if (prob > 0.01) comparison.append("LOW");
+        else comparison.append("VERY LOW");
+        comparison.append(String.format(" (%.6f)\n", prob));
+      }
+      
+      comparison.append("Timestamp: ").append(new Date().toString()).append("\n");
+      comparison.append("----------------------------------------\n\n");
+      
+      // Add to accumulated data
+      _comparisonData.append(comparison);
+      
+      // Update display (show last 3 comparisons)
+      String[] entries = _comparisonData.toString().split("----------------------------------------");
+      StringBuilder display = new StringBuilder();
+      int start = Math.max(0, entries.length - 3);
+      for (int i = start; i < entries.length; i++)
+      {
+        if (!entries[i].trim().isEmpty())
+        {
+          display.append(entries[i]).append("----------------------------------------\n");
+        }
+      }
+      
+      _templateComparisonText.setText(display.toString());
+      
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Error in template comparison: " + e.getMessage());
+      _templateComparisonText.setText("Error: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Calculate path length for comparison (handles both PointF and CGR Point types)
+   */
+  private double calculatePathLength(List<?> points)
+  {
+    if (points.size() < 2) return 0;
+    
+    double length = 0;
+    for (int i = 1; i < points.size(); i++)
+    {
+      double dx, dy;
+      if (points.get(0) instanceof PointF)
+      {
+        PointF p1 = (PointF) points.get(i - 1);
+        PointF p2 = (PointF) points.get(i);
+        dx = p2.x - p1.x;
+        dy = p2.y - p1.y;
+      }
+      else
+      {
+        ContinuousGestureRecognizer.Point p1 = (ContinuousGestureRecognizer.Point) points.get(i - 1);
+        ContinuousGestureRecognizer.Point p2 = (ContinuousGestureRecognizer.Point) points.get(i);
+        dx = p2.x - p1.x;
+        dy = p2.y - p1.y;
+      }
+      length += Math.sqrt(dx * dx + dy * dy);
+    }
+    return length;
   }
 }
