@@ -37,8 +37,7 @@ public class ContinuousGestureRecognizer
   private static final double DEFAULT_KAPPA = 1.0;
   
   private static final int MAX_RESAMPLING_PTS = 1000;
-  private static final int SAMPLE_POINT_DISTANCE = 10;
-  private static final int FIXED_POINT_COUNT = 64; // Standardized point count for all templates and inputs
+  private static final int SAMPLE_POINT_DISTANCE = 100; // MEMORY OPTIMIZATION: 10x fewer points (was 10)
   
   // Normalized space
   private static final Rect NORMALIZED_SPACE = new Rect(0, 0, 1000, 1000);
@@ -584,10 +583,21 @@ public class ContinuousGestureRecognizer
     for (Template t : templates)
     {
       normalize(t.pts);
-      // EXTREME MEMORY OPTIMIZATION: Skip progressive subsequences entirely for large vocabularies
-      List<List<Point>> singleSegment = new ArrayList<>();
-      singleSegment.add(t.pts); // Only use complete word template, no progressive segments
-      Pattern pattern = new Pattern(t, singleSegment);
+      // MEMORY OPTIMIZATION: Choose between real-time vs memory efficiency
+      List<List<Point>> segments;
+      
+      // OPTION 1: Real-time predictions (COMMENTED OUT due to memory constraints)
+      // TO RE-ENABLE REAL-TIME PREDICTIONS:
+      // 1. Uncomment the line below
+      // 2. Comment out the single segment option
+      // 3. Test on device with more memory or reduce vocabulary size
+      // segments = generateEquiDistantProgressiveSubSequences(t.pts, 400); // Fewer segments for memory
+      
+      // OPTION 2: Memory-efficient single segment (CURRENT - prevents OutOfMemoryError)
+      segments = new ArrayList<>();
+      segments.add(t.pts); // Only complete word template, no progressive segments
+      
+      Pattern pattern = new Pattern(t, segments);
       patterns.add(pattern);
     }
     
