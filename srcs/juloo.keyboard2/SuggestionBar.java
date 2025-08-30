@@ -26,7 +26,7 @@ public class SuggestionBar extends LinearLayout
   private Theme _theme;
   private boolean _showDebugScores = false;
   private int _opacity = 90; // default opacity
-  private boolean _alwaysVisible = false; // Keep bar visible even when empty
+  private boolean _alwaysVisible = true; // Keep bar visible even when empty (default enabled)
   
   public interface OnSuggestionSelectedListener
   {
@@ -269,19 +269,13 @@ public class SuggestionBar extends LinearLayout
   }
   
   /**
-   * Clear all suggestions
+   * Clear all suggestions (MODIFIED: always keep bar visible when CGR active)
    */
   public void clearSuggestions()
   {
-    if (_alwaysVisible)
-    {
-      // Don't actually clear - show empty suggestions to keep bar visible
-      setSuggestions(new ArrayList<>());
-    }
-    else
-    {
-      setSuggestions(null);
-    }
+    // ALWAYS show empty suggestions instead of hiding - prevents UI disappearing
+    setSuggestions(new ArrayList<>());
+    android.util.Log.d("SuggestionBar", "clearSuggestions called - showing empty list instead of hiding");
   }
   
   /**
