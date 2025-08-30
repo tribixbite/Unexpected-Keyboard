@@ -601,14 +601,16 @@ public class ContinuousGestureRecognizer
       patterns.add(pattern);
     }
     
+    // OPTIMIZATION: Pre-generate templates at fixed, known sizes (following paper's approach)
     for (Pattern pattern : patterns)
     {
       List<List<Point>> segments = new ArrayList<>();
       for (List<Point> pts : pattern.segments)
       {
         List<Point> newPts = deepCopyPts(pts);
-        // Remove double normalization - segments are already from normalized template
-        segments.add(resample(newPts, getResamplingPointCount(newPts, SAMPLE_POINT_DISTANCE)));
+        // Pre-compute templates at standardized sizes - user gesture will be resampled to match
+        int standardSize = Math.min(pts.size() * 2, 100); // Reasonable standard size
+        segments.add(resample(newPts, standardSize));
       }
       pattern.segments = segments;
     }
@@ -770,10 +772,18 @@ public class ContinuousGestureRecognizer
     
     for (int i = 0; i < segments.size(); i++)
     {
-      List<Point> pts = segments.get(i);
-      int samplingPtCount = pts.size();
-      List<Point> unkResampledPts = resample(unkPts, samplingPtCount);
-      double prob = getLikelihoodOfMatch(unkResampledPts, pts, e_sigma, e_sigma / beta, lambda);
+      List<Point> templatePts = segments.get(i);
+      // PAPER'S APPROACH: Resample user gesture to match template, then normalize both
+      List<Point> userResampledToTemplate = resample(unkPts, templatePts.size());
+      
+      // Apply paper's normalization: "translating them so their centroids are at origin
+      // and scaling one so diagonal of bounding box is unity whilst preserving aspect ratio"
+      List<Point> normalizedUser = deepCopyPts(userResampledToTemplate);
+      List<Point> normalizedTemplate = deepCopyPts(templatePts);
+      normalize(normalizedUser);
+      normalize(normalizedTemplate);
+      
+      double prob = getLikelihoodOfMatch(normalizedUser, normalizedTemplate, e_sigma, e_sigma / beta, lambda);
       
       if (prob > maxProb)
       {
@@ -884,7 +894,9 @@ public class ContinuousGestureRecognizer
     {
       IncrementalResult result = getIncrementalResult(unkPts, pattern, beta, lambda, e_sigma);
       List<Point> lastSegmentPts = pattern.segments.get(pattern.segments.size() - 1);
-      double completeProb = getLikelihoodOfMatch(resample(unkPts, lastSegmentPts.size()), lastSegmentPts, e_sigma, e_sigma / beta, lambda);
+      // PAPER'S APPROACH: Resample user gesture to match pre-computed template size
+      List<Point> userResampledToTemplate = resample(unkPts, lastSegmentPts.size());
+      double completeProb = getLikelihoodOfMatch(userResampledToTemplate, lastSegmentPts, e_sigma, e_sigma / beta, lambda);
       double x = 1 - completeProb;
       result.prob = (1 + kappa * Math.exp(-x * x)) * result.prob;
       batchResults.add(result);
@@ -922,7 +934,9 @@ public class ContinuousGestureRecognizer
     {
       IncrementalResult result = getIncrementalResult(unkPts, pattern, beta, lambda, e_sigma);
       List<Point> lastSegmentPts = pattern.segments.get(pattern.segments.size() - 1);
-      double completeProb = getLikelihoodOfMatch(resample(unkPts, lastSegmentPts.size()), lastSegmentPts, e_sigma, e_sigma / beta, lambda);
+      // PAPER'S APPROACH: Resample user gesture to match pre-computed template size
+      List<Point> userResampledToTemplate = resample(unkPts, lastSegmentPts.size());
+      double completeProb = getLikelihoodOfMatch(userResampledToTemplate, lastSegmentPts, e_sigma, e_sigma / beta, lambda);
       double x = 1 - completeProb;
       result.prob = (1 + kappa * Math.exp(-x * x)) * result.prob;
       incrResults.add(result);
