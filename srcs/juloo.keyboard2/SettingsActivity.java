@@ -573,6 +573,7 @@ public class SettingsActivity extends PreferenceActivity
     editor.putInt("cgr_lambda", 65);     // Higher Euclidean weight  
     editor.putInt("cgr_kappa", 25);      // Higher end-point bias (2.5)
     editor.putInt("cgr_beta", 400);      // Keep variance ratio
+    editor.putInt("cgr_length_filter", 80); // Strict length matching for keyboard
     editor.apply();
     
     // Force UI refresh
@@ -594,6 +595,7 @@ public class SettingsActivity extends PreferenceActivity
     editor.putInt("cgr_lambda", 40);     // Original paper value
     editor.putInt("cgr_kappa", 10);      // Original paper value (1.0)
     editor.putInt("cgr_beta", 400);      // Keep variance ratio
+    editor.putInt("cgr_length_filter", 40); // Lenient length matching for free drawing
     editor.apply();
     
     // Force UI refresh

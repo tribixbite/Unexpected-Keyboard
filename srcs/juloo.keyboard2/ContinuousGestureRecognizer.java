@@ -38,6 +38,7 @@ public class ContinuousGestureRecognizer
   private double currentBeta = 400.0;    // Keep same variance ratio
   private double currentLambda = 0.65;   // Higher Euclidean weight for predictable positions (was 0.4)
   private double currentKappa = 2.5;     // Higher end-point bias for specific keys (was 1.0)
+  private double currentLengthFilter = 0.70; // User-configurable length similarity threshold
   
   // Default constants for fallback
   private static final double DEFAULT_E_SIGMA = 200.0;
@@ -882,8 +883,8 @@ public class ContinuousGestureRecognizer
         double templateLength = getSpatialLength(pattern.template.pts);
         double lengthRatio = Math.min(templateLength, userGestureLength) / Math.max(templateLength, userGestureLength);
         
-        // Only process templates with reasonable length similarity (keyboard constraint)
-        if (lengthRatio > 0.4) // Must be within 60% length similarity
+        // Only process templates with user-configurable length similarity (keyboard constraint)
+        if (lengthRatio > currentLengthFilter) // User-configurable threshold (default 70%)
         {
           lengthFiltered.add(pattern);
         }
@@ -1009,6 +1010,7 @@ public class ContinuousGestureRecognizer
       currentBeta = prefs.getInt("cgr_beta", 400);
       currentLambda = prefs.getInt("cgr_lambda", 65) / 100.0; // Keyboard-optimal: 65%
       currentKappa = prefs.getInt("cgr_kappa", 25) / 10.0;    // Keyboard-optimal: 2.5
+      currentLengthFilter = prefs.getInt("cgr_length_filter", 70) / 100.0; // User-configurable filter
       
       android.util.Log.d("CGR", String.format("Parameters loaded from settings: σₑ=%.1f, β=%.1f, λ=%.2f, κ=%.1f", 
                         currentESigma, currentBeta, currentLambda, currentKappa));
