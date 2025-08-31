@@ -2306,21 +2306,31 @@ public class SwipeCalibrationActivity extends Activity
         userPoints.add(new ContinuousGestureRecognizer.Point(p.x, p.y));
       }
       
-      // FULL CGR TESTING: Use same 3000 template set as normal keyboard
-      ContinuousGestureRecognizer cgr = new ContinuousGestureRecognizer();
+      // NEW ALGORITHM TESTING: Use keyboard-specific recognition
+      KeyboardSwipeRecognizer keyboardRecognizer = new KeyboardSwipeRecognizer(this);
+      keyboardRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
       
-      // FORCE: Apply current settings to CGR instance 
-      cgr.loadParametersFromPreferences(this);
+      android.util.Log.d(TAG, "Testing NEW KeyboardSwipeRecognizer (replacing failed CGR)");
+      android.util.Log.d(TAG, "Using Bayesian framework with key proximity + sequence validation");
       
-      // Generate FULL template set (same as normal keyboard) 
-      List<ContinuousGestureRecognizer.Template> fullTemplates = 
-        _templateGenerator.generateBalancedWordTemplates(3000);
+      // Convert to List<String> context (empty for now)
+      List<String> context = new ArrayList<>();
       
-      android.util.Log.d(TAG, "Testing CGR with FULL " + fullTemplates.size() + " templates (same as normal keyboard)");
-      android.util.Log.d(TAG, "CGR using length filter: " + lengthFilter + "% - should eliminate poor matches");
+      // Test new algorithm
+      List<KeyboardSwipeRecognizer.RecognitionResult> newResults = 
+        keyboardRecognizer.recognizeSwipe(userSwipe, context);
       
-      cgr.setTemplateSet(fullTemplates);
-      List<ContinuousGestureRecognizer.Result> results = cgr.recognize(userPoints);
+      // Convert results for display compatibility
+      List<ContinuousGestureRecognizer.Result> results = new ArrayList<>();
+      for (KeyboardSwipeRecognizer.RecognitionResult newResult : newResults)
+      {
+        // Create compatible result for display
+        ContinuousGestureRecognizer.Template fakeTemplate = 
+          new ContinuousGestureRecognizer.Template(newResult.word, new ArrayList<>());
+        ContinuousGestureRecognizer.Result compatResult = 
+          new ContinuousGestureRecognizer.Result(fakeTemplate, newResult.totalScore, new ArrayList<>());
+        results.add(compatResult);
+      }
       
       // Build detailed comparison data
       StringBuilder comparison = new StringBuilder();
