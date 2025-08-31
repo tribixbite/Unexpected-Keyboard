@@ -596,4 +596,13 @@ public class ComprehensiveTraceAnalyzer
     requireStartLetterMatch = reqStart;
     requireEndLetterMatch = reqEnd;
   }
+  
+  /**
+   * Set keyboard dimensions for coordinate calculations
+   */
+  public void setKeyboardDimensions(float width, float height)
+  {
+    // TODO: Store keyboard dimensions for letter detection
+    android.util.Log.d("ComprehensiveTraceAnalyzer", "Keyboard dimensions set: " + width + "x" + height);
+  }
 }

@@ -24,12 +24,12 @@ import java.util.Map;
  */
 public class KeyboardSwipeRecognizer
 {
-  // Keyboard-specific cost function weights (user-configurable)
-  private double proximityWeight = 1.0;      // α - Distance to key centers
-  private double missingKeyPenalty = 10.0;   // β - Missing required letters
-  private double extraKeyPenalty = 2.0;      // γ - Passing over wrong letters  
-  private double orderPenalty = 5.0;         // δ - Out-of-order letter sequence
-  private double startPointWeight = 3.0;     // ε - Start point accuracy emphasis
+  // Keyboard-specific cost function weights (user-configurable, PUBLIC for transparency)
+  public double proximityWeight = 1.0;      // α - Distance to key centers
+  public double missingKeyPenalty = 10.0;   // β - Missing required letters
+  public double extraKeyPenalty = 2.0;      // γ - Passing over wrong letters  
+  public double orderPenalty = 5.0;         // δ - Out-of-order letter sequence
+  public double startPointWeight = 3.0;     // ε - Start point accuracy emphasis
   
   // Infrastructure components (reusing existing code)
   private WordGestureTemplateGenerator templateGenerator;
@@ -39,9 +39,9 @@ public class KeyboardSwipeRecognizer
   private SwipeWeightConfig weightConfig;
   private GaussianKeyModel gaussianModel;
   
-  // Key zone parameters (INCREASED for better detection)
-  private double keyZoneRadius = 120.0;      // Larger zone for easier key detection
-  private double pathSampleDistance = 10.0;  // More frequent sampling for better detection
+  // Key zone parameters (PUBLIC for transparency)
+  public double keyZoneRadius = 120.0;      // Larger zone for easier key detection
+  public double pathSampleDistance = 10.0;  // More frequent sampling for better detection
   
   public KeyboardSwipeRecognizer(Context context)
   {

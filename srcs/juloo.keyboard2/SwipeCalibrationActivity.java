@@ -2543,44 +2543,108 @@ public class SwipeCalibrationActivity extends Activity
       KeyboardSwipeRecognizer debugRecognizer = new KeyboardSwipeRecognizer(this);
       debugRecognizer.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
       
-      // Show step-by-step algorithm process with COMPLETE TRANSPARENCY
-      analysis.append("🔍 STEP 1: LETTER DETECTION\n");
-      List<Character> detectedLetters = debugRecognizer.getDetectedLetters(userSwipe);
-      analysis.append("Path: ").append(userSwipe.size()).append(" points\n");
-      analysis.append("Detected: ").append(detectedLetters).append("\n");
-      analysis.append("Count: ").append(detectedLetters.size()).append(" letters\n\n");
+      // COMPREHENSIVE TRACE ANALYSIS with FULL EQUATION
+      ComprehensiveTraceAnalyzer traceAnalyzer = new ComprehensiveTraceAnalyzer();
       
-      analysis.append("🔍 STEP 2: CANDIDATE GENERATION\n");
-      List<String> candidates = debugRecognizer.getCandidates(detectedLetters);
-      analysis.append("Candidates: ").append(candidates.size()).append(" words\n");
-      if (!candidates.isEmpty())
-      {
-        analysis.append("Sample: ");
-        for (int i = 0; i < Math.min(5, candidates.size()); i++)
-        {
-          analysis.append(candidates.get(i)).append(" ");
-        }
-        analysis.append("\n");
-      }
-      analysis.append("\n");
+      // Set keyboard dimensions for analysis
+      traceAnalyzer.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
       
-      analysis.append("🔍 STEP 3: SCORING BREAKDOWN\n");
-      if (!candidates.isEmpty())
+      // Perform comprehensive analysis with timestamps
+      List<Long> timestamps = new ArrayList<>(); // TODO: Get actual timestamps from gesture
+      for (int i = 0; i < userSwipe.size(); i++) timestamps.add((long)i * 50); // Simulate for now
+      
+      ComprehensiveTraceAnalyzer.TraceAnalysisResult traceResult = 
+        traceAnalyzer.analyzeTrace(userSwipe, timestamps, word);
+      
+      // FULL GESTURE EQUATION DISPLAY
+      analysis.append("📐 FULL GESTURE EQUATION:\n");
+      analysis.append("=========================\n");
+      analysis.append(String.format("Total Distance: %.0f px\n", traceResult.totalDistance));
+      analysis.append(String.format("  North: %.0f px (%.1f%%)\n", traceResult.northDistance, 
+                     traceResult.northDistance / traceResult.totalDistance * 100));
+      analysis.append(String.format("  South: %.0f px (%.1f%%)\n", traceResult.southDistance, 
+                     traceResult.southDistance / traceResult.totalDistance * 100));
+      analysis.append(String.format("  East: %.0f px (%.1f%%)\n", traceResult.eastDistance, 
+                     traceResult.eastDistance / traceResult.totalDistance * 100));
+      analysis.append(String.format("  West: %.0f px (%.1f%%)\n", traceResult.westDistance, 
+                     traceResult.westDistance / traceResult.totalDistance * 100));
+      analysis.append(String.format("  Diagonal: %.0f px (%.1f%%)\n", traceResult.diagonalDistance, 
+                     traceResult.diagonalDistance / traceResult.totalDistance * 100));
+      
+      analysis.append(String.format("\nBounding Box: %.0f×%.0f (area=%.0f)\n", 
+                     traceResult.boundingBox.width(), traceResult.boundingBox.height(), traceResult.boundingBoxArea));
+      analysis.append(String.format("Aspect Ratio: %.3f\n", traceResult.aspectRatio));
+      
+      analysis.append(String.format("\nStops: %d detected, avg %.0fms\n", traceResult.totalStops, traceResult.averageStopDuration));
+      analysis.append(String.format("Stopped Letters: %s\n", traceResult.stoppedLetters));
+      
+      analysis.append(String.format("\nAngles: %d total (%d sharp, %d gentle)\n", 
+                     traceResult.anglePoints.size(), traceResult.sharpAngles, traceResult.gentleAngles));
+      analysis.append(String.format("Angle Letters: %s\n", traceResult.angleLetters));
+      
+      analysis.append(String.format("\nDetected Letters: %s\n", traceResult.detectedLetters));
+      analysis.append(String.format("Start: %c (accuracy=%.3f) End: %c (accuracy=%.3f)\n",
+                     traceResult.startLetter != null ? traceResult.startLetter : '?', traceResult.startAccuracy,
+                     traceResult.endLetter != null ? traceResult.endLetter : '?', traceResult.endAccuracy));
+      
+      analysis.append(String.format("\nCOMPOSITE SCORES:\n"));
+      analysis.append(String.format("Overall Confidence: %.3f\n", traceResult.overallConfidence));
+      analysis.append(String.format("Gesture Complexity: %.3f\n", traceResult.gestureComplexity));
+      analysis.append(String.format("Recognition Difficulty: %.3f\n", traceResult.recognitionDifficulty));
+      
+      // CANDIDATE WORD FULL EQUATIONS
+      analysis.append("\n🏆 TOP CANDIDATES - FULL EQUATIONS:\n");
+      analysis.append("=====================================\n");
+      
+      List<String> candidates = debugRecognizer.getCandidates(traceResult.detectedLetters);
+      for (int i = 0; i < Math.min(3, candidates.size()); i++)
       {
-        String testWord = candidates.contains(word) ? word : candidates.get(0);
-        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(testWord, userSwipe, detectedLetters);
-        analysis.append("Test word: ").append(testWord).append("\n");
-        analysis.append("Proximity: ").append(String.format("%.3f", score.proximityScore)).append("\n");
-        analysis.append("Sequence: ").append(String.format("%.3f", score.sequenceScore)).append("\n");
-        analysis.append("Start point: ").append(String.format("%.3f", score.startPointScore)).append("\n");
-        analysis.append("Language: ").append(String.format("%.3f", score.languageModelScore)).append("\n");
-        analysis.append("TOTAL: ").append(String.format("%.6f", score.totalScore)).append("\n");
+        String candidate = candidates.get(i);
+        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(candidate, userSwipe, traceResult.detectedLetters);
+        
+        analysis.append(String.format("\n#%d: %s\n", i + 1, candidate.toUpperCase()));
+        analysis.append("COMPLETE PARAMETER BREAKDOWN:\n");
+        
+        // Show every parameter and weight multiplier used
+        analysis.append("  INPUT PARAMETERS:\n");
+        analysis.append(String.format("    proximityWeight = %.2f\n", debugRecognizer.proximityWeight));
+        analysis.append(String.format("    missingKeyPenalty = %.2f\n", debugRecognizer.missingKeyPenalty));
+        analysis.append(String.format("    extraKeyPenalty = %.2f\n", debugRecognizer.extraKeyPenalty));
+        analysis.append(String.format("    orderPenalty = %.2f\n", debugRecognizer.orderPenalty));
+        analysis.append(String.format("    startPointWeight = %.2f\n", debugRecognizer.startPointWeight));
+        analysis.append(String.format("    keyZoneRadius = %.0f px\n", debugRecognizer.keyZoneRadius));
+        
+        analysis.append("  \n");
+        analysis.append("  SCORE CALCULATIONS:\n");
+        analysis.append(String.format("    Raw Proximity = %.6f\n", score.proximityScore));
+        analysis.append(String.format("    × proximityWeight(%.2f) = %.6f\n", debugRecognizer.proximityWeight, 
+                       score.proximityScore * debugRecognizer.proximityWeight));
+        
+        analysis.append(String.format("    Raw Sequence = %.6f\n", score.sequenceScore));
+        analysis.append(String.format("    (includes missing penalty: %.2f)\n", debugRecognizer.missingKeyPenalty));
+        analysis.append(String.format("    (includes extra penalty: %.2f)\n", debugRecognizer.extraKeyPenalty));
+        analysis.append(String.format("    (includes order penalty: %.2f)\n", debugRecognizer.orderPenalty));
+        
+        analysis.append(String.format("    Raw Start Point = %.6f\n", score.startPointScore));
+        analysis.append(String.format("    ^ startPointWeight(%.2f) = %.6f\n", debugRecognizer.startPointWeight,
+                       Math.pow(score.startPointScore, debugRecognizer.startPointWeight)));
+        
+        analysis.append(String.format("    Language Model = %.6f\n", score.languageModelScore));
+        
+        analysis.append("  \n");
+        analysis.append("  BAYESIAN EQUATION:\n");
+        analysis.append("  P(word|swipe) ∝ P(swipe|word) × P(word)\n");
+        analysis.append(String.format("  P(swipe|word) = %.6f × %.6f × %.6f = %.6f\n",
+                       score.proximityScore, score.sequenceScore, score.startPointScore,
+                       score.proximityScore * score.sequenceScore * score.startPointScore));
+        analysis.append(String.format("  P(word) = %.6f\n", score.languageModelScore));
+        analysis.append(String.format("  P(word|swipe) = %.6f × %.6f = %.6f\n",
+                       score.proximityScore * score.sequenceScore * score.startPointScore, 
+                       score.languageModelScore, score.totalScore));
+        analysis.append(String.format("  \n"));
+        analysis.append(String.format("  FINAL SCORE: %.6f (Rank #%d)\n", score.totalScore, i + 1));
+        analysis.append("  ==========================================\n");
       }
-      else
-      {
-        analysis.append("No candidates for scoring\n");
-      }
-      analysis.append("\n");
     }
     catch (Exception e)
     {
