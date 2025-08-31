@@ -971,7 +971,7 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Fallback single-threaded processing
+   * Fallback single-threaded processing (FIXED: Now includes length filtering)
    */
   private List<IncrementalResult> getIncrementalResultsSingleThreaded(List<Point> input, double beta, double lambda, double kappa, double e_sigma)
   {
@@ -979,7 +979,26 @@ public class ContinuousGestureRecognizer
     // FIX: Don't normalize input here - normalize during comparison per paper's approach  
     List<Point> unkPts = deepCopyPts(input);
     
+    // CRITICAL FIX: Add same length filtering as parallel path
+    double userGestureLength = getSpatialLength(unkPts);
+    List<Pattern> lengthFilteredPatterns = new ArrayList<>();
+    
     for (Pattern pattern : patterns)
+    {
+      double templateLength = getSpatialLength(pattern.template.pts);
+      double lengthRatio = Math.min(templateLength, userGestureLength) / Math.max(templateLength, userGestureLength);
+      
+      // Apply same length filter as parallel processing
+      if (lengthRatio > currentLengthFilter)
+      {
+        lengthFilteredPatterns.add(pattern);
+      }
+    }
+    
+    android.util.Log.d("CGR", "FALLBACK: Length-filtered " + patterns.size() + " to " + lengthFilteredPatterns.size() + 
+                      " candidates (filter=" + String.format("%.0f", currentLengthFilter * 100) + "%)");
+    
+    for (Pattern pattern : lengthFilteredPatterns)
     {
       IncrementalResult result = getIncrementalResult(unkPts, pattern, beta, lambda, e_sigma);
       List<Point> lastSegmentPts = pattern.segments.get(pattern.segments.size() - 1);
@@ -1012,8 +1031,8 @@ public class ContinuousGestureRecognizer
       currentKappa = prefs.getInt("cgr_kappa", 25) / 10.0;    // Keyboard-optimal: 2.5
       currentLengthFilter = prefs.getInt("cgr_length_filter", 70) / 100.0; // User-configurable filter
       
-      android.util.Log.d("CGR", String.format("Parameters loaded from settings: σₑ=%.1f, β=%.1f, λ=%.2f, κ=%.1f", 
-                        currentESigma, currentBeta, currentLambda, currentKappa));
+      android.util.Log.d("CGR", String.format("Parameters loaded from settings: σₑ=%.1f, β=%.1f, λ=%.2f, κ=%.1f, LengthFilter=%.1f%%", 
+                        currentESigma, currentBeta, currentLambda, currentKappa, currentLengthFilter * 100));
     }
     catch (Exception e)
     {
