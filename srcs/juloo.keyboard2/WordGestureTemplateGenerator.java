@@ -338,9 +338,9 @@ public class WordGestureTemplateGenerator
     {
       if (count >= maxWords) break;
       
-      // Filter by gesture complexity
+      // Filter by gesture complexity - MUCH MORE SELECTIVE FOR LENGTH MATCHING
       double pathLength = calculateGesturePathLength(word);
-      if (pathLength > 100 && pathLength < 3000) // Reasonable gesture complexity
+      if (pathLength > 200 && pathLength < 2500) // Stricter complexity filtering for better length matching
       {
         ContinuousGestureRecognizer.Template template = generateWordTemplate(word);
         if (template != null)

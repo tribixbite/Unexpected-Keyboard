@@ -2530,9 +2530,13 @@ public class SwipeCalibrationActivity extends Activity
                                   (templateEnd.y - userPoints.get(userPoints.size()-1).y) * (templateEnd.y - userPoints.get(userPoints.size()-1).y));
         double avgEuclideanDist = (startDist + endDist) / 2.0;
         
-        // Turning angle factor (simplified)
+        // LENGTH-FOCUSED turning angle factor (heavily weight length matching for keyboard)
         double lengthDifference = Math.abs(resultTemplateLength - userLength);
         double turningAngleDist = lengthDifference / Math.max(resultTemplateLength, userLength);
+        
+        // KEYBOARD PENALTY: Heavily penalize length mismatches (not in original algorithm)
+        double lengthPenalty = Math.pow(turningAngleDist, 3); // Cubic penalty for length mismatch
+        turningAngleDist = turningAngleDist + lengthPenalty;
         
         // CGR equation inputs (KEYBOARD-OPTIMAL values)
         double eSigma = 120.0; // Keyboard-optimal: lower position tolerance
