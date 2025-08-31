@@ -1,29 +1,39 @@
 # Project Management - Unexpected Keyboard
 
-## CRITICAL CGR FIXES - TOP PRIORITY
+## ALGORITHM REWRITE COMPLETED ✅
 
-### 1. Fix Settings Integration
-- Settings storage mismatch - CGR looks for "settings" SharedPreferences  
-- No real-time updates - Parameters not reloaded when settings change
-- Preference key mismatch - Settings use different keys than CGR expects
+### CGR ALGORITHM ABANDONED
+- ❌ **CGR fundamentally inappropriate** for keyboard context (designed for free drawing)
+- ❌ **0% recognition accuracy** despite extensive optimization
+- ❌ **Shape recognition paradigm** wrong for key sequence matching
+- ✅ **Complete rewrite** with keyboard-specific Bayesian algorithm
 
-### 2. Implement Reset Button Functionality  
-- Reset buttons don't work - Make them actually set values
-- "Reset to Keyboard-Optimal" button needs to set: σₑ=120, λ=65%, κ=2.5
-- "Reset to Paper Defaults" button needs to set: σₑ=200, λ=40%, κ=1.0
-- Changes must apply immediately with template regeneration
+### NEW KEYBOARDSWIPERECOGNIZER IMPLEMENTED ✅
+**Bayesian Framework**: P(word | swipe) ∝ P(swipe | word) × P(word)
 
-### 3. Add Real-time Parameter Updates
-- Settings changes must trigger immediate CGR parameter reload
-- Template regeneration when parameters change
-- Live parameter effect during calibration testing
-- Settings UI must reflect actual values being used
+#### P(swipe | word) - Keyboard-Specific Likelihood:
+1. **Key Proximity Scoring**: Distance from swipe to exact key centers
+2. **Letter Sequence Validation**: Missing/extra/order penalties
+3. **Start Point Emphasis**: 3x weight (users begin precisely, end sloppily)
+4. **Configurable penalties**: Tunable weights for keyboard constraints
 
-### 4. Force Length Matching Priority
-- Length ratios 0.037, 0.160, 0.222 are terrible (should be ~1.0)
-- WINE (1381px) matches user (1513px) but gets "ass" (108px) instead
-- Heavily weight similar-length templates in recognition
-- Add length-based pre-filtering before CGR recognition
+#### P(word) - Language Model Integration:
+- **BigramModel**: Contextual prediction (existing infrastructure)
+- **UserAdaptationManager**: Personal usage patterns
+- **Word frequency**: Unigram probability foundation
+
+### EXTENSIVE CODE REUSE (70%+):
+- **WordGestureTemplateGenerator**: Template system fully integrated ✅
+- **Distance calculations**: CGR logic adapted for key proximity ✅
+- **Language models**: BigramModel, NgramModel unchanged ✅
+- **Dictionary systems**: Word filtering and generation ✅
+- **Calibration framework**: Testing infrastructure preserved ✅
+
+### CURRENT STATUS:
+- **KeyboardSwipeRecognizer** ready for testing
+- **Calibration activity** updated to use new algorithm
+- **All CGR calls replaced** with keyboard-specific recognition
+- **Ready for accuracy testing** against failed CGR baseline
 
 ## Project Overview
 Unexpected Keyboard is a lightweight, privacy-conscious virtual keyboard for Android with advanced swipe typing capabilities powered by machine learning.
