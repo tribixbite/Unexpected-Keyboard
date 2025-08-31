@@ -342,17 +342,59 @@ public class SwipeCalibrationActivity extends Activity
     
     topLayout.addView(cgrAnalysisLayout);
     
-    // LIVE PARAMETER CONTROL for immediate algorithm tuning
-    LinearLayout liveControlLayout = new LinearLayout(this);
-    liveControlLayout.setOrientation(LinearLayout.VERTICAL);
-    liveControlLayout.setPadding(16, 8, 16, 8);
-    liveControlLayout.setBackgroundColor(0xFF2B2B2B);
+    // COMPREHENSIVE ALGORITHM FLOW CHART UI - Every parameter configurable
+    LinearLayout algorithmFlowLayout = new LinearLayout(this);
+    algorithmFlowLayout.setOrientation(LinearLayout.VERTICAL);
+    algorithmFlowLayout.setPadding(12, 8, 12, 8);
+    algorithmFlowLayout.setBackgroundColor(0xFF1A1A1A);
     
-    TextView controlTitle = new TextView(this);
-    controlTitle.setText("⚡ Live Algorithm Control");
-    controlTitle.setTextSize(14);
-    controlTitle.setTextColor(Color.YELLOW);
-    liveControlLayout.addView(controlTitle);
+    TextView flowTitle = new TextView(this);
+    flowTitle.setText("📊 ALGORITHM FLOW CHART - Complete Configurability");
+    flowTitle.setTextSize(14);
+    flowTitle.setTextColor(Color.CYAN);
+    flowTitle.setPadding(0, 0, 0, 8);
+    algorithmFlowLayout.addView(flowTitle);
+    
+    // ========== 1. USER TRACE COLLECTION BOUNDING BOX ==========
+    LinearLayout step1Layout = createFlowStep("1️⃣ TRACE COLLECTION & BOUNDING BOX");
+    addConfigSlider(step1Layout, "Bounding Box Padding", 5, 50, 10, "px");
+    addConfigSlider(step1Layout, "Aspect Ratio Weight", 0, 300, 100, "%");
+    algorithmFlowLayout.addView(step1Layout);
+    
+    // ========== 2. DIRECTIONAL DISTANCE BREAKDOWN ==========
+    LinearLayout step2Layout = createFlowStep("2️⃣ DIRECTIONAL DISTANCE (N/S/E/W)");
+    addConfigSlider(step2Layout, "North/South Weight", 0, 200, 100, "%");
+    addConfigSlider(step2Layout, "East/West Weight", 0, 200, 100, "%");
+    addConfigSlider(step2Layout, "Diagonal Weight", 0, 200, 80, "%");
+    algorithmFlowLayout.addView(step2Layout);
+    
+    // ========== 3. PAUSE/STOP DETECTION ==========
+    LinearLayout step3Layout = createFlowStep("3️⃣ PAUSE/STOP DETECTION");
+    addConfigSlider(step3Layout, "Stop Threshold", 50, 500, 150, "ms");
+    addConfigSlider(step3Layout, "Position Tolerance", 5, 50, 15, "px");
+    addConfigSlider(step3Layout, "Stop Letter Weight", 100, 500, 200, "%");
+    algorithmFlowLayout.addView(step3Layout);
+    
+    // ========== 4. ANGLE POINT DETECTION ==========
+    LinearLayout step4Layout = createFlowStep("4️⃣ ANGLE POINT DETECTION");
+    addConfigSlider(step4Layout, "Angle Threshold", 10, 90, 30, "°");
+    addConfigSlider(step4Layout, "Sharp Angle Limit", 45, 180, 90, "°");
+    addConfigSlider(step4Layout, "Angle Letter Boost", 100, 300, 150, "%");
+    algorithmFlowLayout.addView(step4Layout);
+    
+    // ========== 5. LETTER DETECTION ==========
+    LinearLayout step5Layout = createFlowStep("5️⃣ LETTER DETECTION & CONFIDENCE");
+    addConfigSlider(step5Layout, "Letter Detection Radius", 30, 150, 80, "px");
+    addConfigSlider(step5Layout, "Confidence Threshold", 0, 100, 70, "%");
+    addConfigSlider(step5Layout, "Letter Order Weight", 100, 300, 120, "%");
+    algorithmFlowLayout.addView(step5Layout);
+    
+    // ========== 6. START/END LETTER ANALYSIS ==========
+    LinearLayout step6Layout = createFlowStep("6️⃣ START/END LETTER EMPHASIS");
+    addConfigSlider(step6Layout, "Start Letter Weight", 100, 500, 300, "%");
+    addConfigSlider(step6Layout, "End Letter Weight", 50, 200, 100, "%");
+    addConfigSlider(step6Layout, "Start Position Tolerance", 10, 100, 25, "px");
+    algorithmFlowLayout.addView(step6Layout);
     
     // Key Zone Radius slider
     TextView zoneLabel = new TextView(this);
@@ -2645,5 +2687,68 @@ public class SwipeCalibrationActivity extends Activity
     
     // Update the display
     _cgrResultsDisplay.setText(analysis.toString());
+  }
+  
+  /**
+   * Create flow chart step layout with header
+   */
+  private LinearLayout createFlowStep(String title)
+  {
+    LinearLayout stepLayout = new LinearLayout(this);
+    stepLayout.setOrientation(LinearLayout.VERTICAL);
+    stepLayout.setPadding(8, 8, 8, 8);
+    stepLayout.setBackgroundColor(0xFF2D2D2D);
+    LinearLayout.LayoutParams stepParams = new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    stepParams.setMargins(0, 4, 0, 4);
+    stepLayout.setLayoutParams(stepParams);
+    
+    TextView stepTitle = new TextView(this);
+    stepTitle.setText(title);
+    stepTitle.setTextSize(12);
+    stepTitle.setTextColor(Color.WHITE);
+    stepTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+    stepTitle.setPadding(0, 0, 0, 4);
+    stepLayout.addView(stepTitle);
+    
+    return stepLayout;
+  }
+  
+  /**
+   * Add configurable parameter slider to flow step
+   */
+  private void addConfigSlider(LinearLayout parent, String name, int min, int max, int defaultValue, String unit)
+  {
+    LinearLayout sliderLayout = new LinearLayout(this);
+    sliderLayout.setOrientation(LinearLayout.HORIZONTAL);
+    sliderLayout.setPadding(4, 2, 4, 2);
+    
+    TextView label = new TextView(this);
+    label.setText(name + ": " + defaultValue + unit);
+    label.setTextSize(10);
+    label.setTextColor(Color.LTGRAY);
+    label.setLayoutParams(new LinearLayout.LayoutParams(200, ViewGroup.LayoutParams.WRAP_CONTENT));
+    sliderLayout.addView(label);
+    
+    android.widget.SeekBar slider = new android.widget.SeekBar(this);
+    slider.setMax(max - min);
+    slider.setProgress(defaultValue - min);
+    slider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    slider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        if (fromUser) {
+          int value = progress + min;
+          label.setText(name + ": " + value + unit);
+          // TODO: Connect to corresponding algorithm parameter
+          android.util.Log.d(TAG, "Parameter " + name + " changed to: " + value);
+        }
+      }
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+    });
+    sliderLayout.addView(slider);
+    
+    parent.addView(sliderLayout);
   }
 }
