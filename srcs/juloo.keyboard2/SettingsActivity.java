@@ -35,8 +35,9 @@ public class SettingsActivity extends PreferenceActivity
     catch (Exception _e) { fallbackEncrypted(); return; }
     addPreferencesFromResource(R.xml.settings);
 
-    // Add CGR reset button handlers
+    // Add CGR reset button handlers and update summaries
     setupCGRResetButtons();
+    updateCGRParameterSummaries();
 
     boolean foldableDevice = FoldStateTracker.isFoldableDevice(this);
     findPreference("margin_bottom_portrait_unfolded").setEnabled(foldableDevice);
@@ -615,9 +616,12 @@ public class SettingsActivity extends PreferenceActivity
       // Parameter changes will take effect on next keyboard restart
       android.util.Log.d("SettingsActivity", "CGR parameter " + key + " changed, will take effect on restart");
       
-      // Show current value for verification
+      // Show current value for verification and update summaries
       int currentValue = prefs.getInt(key, -1);
       Toast.makeText(this, "Updated " + key + " = " + currentValue + " (takes effect immediately)", Toast.LENGTH_LONG).show();
+      
+      // Update parameter summaries to show new values
+      updateCGRParameterSummaries();
     }
     
     // No super call needed for interface method
@@ -627,8 +631,9 @@ public class SettingsActivity extends PreferenceActivity
   protected void onResume()
   {
     super.onResume();
-    // Register for preference changes
+    // Register for preference changes and update summaries
     getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    updateCGRParameterSummaries();
   }
   
   @Override
@@ -637,5 +642,53 @@ public class SettingsActivity extends PreferenceActivity
     super.onPause();
     // Unregister to prevent memory leaks
     getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+  }
+  
+  /**
+   * Update CGR parameter summaries with current values
+   */
+  private void updateCGRParameterSummaries()
+  {
+    SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+    
+    // Update E_SIGMA summary
+    Preference eSigmaPref = findPreference("cgr_e_sigma_config");
+    if (eSigmaPref != null)
+    {
+      int eSigma = prefs.getInt("cgr_e_sigma", 120);
+      eSigmaPref.setSummary("Current: " + eSigma + " (Position tolerance)");
+    }
+    
+    // Update BETA summary  
+    Preference betaPref = findPreference("cgr_beta_config");
+    if (betaPref != null)
+    {
+      int beta = prefs.getInt("cgr_beta", 400);
+      betaPref.setSummary("Current: " + beta + " (Variance ratio)");
+    }
+    
+    // Update LAMBDA summary
+    Preference lambdaPref = findPreference("cgr_lambda_config");
+    if (lambdaPref != null)
+    {
+      int lambda = prefs.getInt("cgr_lambda", 65);
+      lambdaPref.setSummary("Current: " + lambda + "% (Distance balance)");
+    }
+    
+    // Update KAPPA summary
+    Preference kappaPref = findPreference("cgr_kappa_config");
+    if (kappaPref != null)
+    {
+      int kappa = prefs.getInt("cgr_kappa", 25);
+      kappaPref.setSummary("Current: " + (kappa/10.0) + " (End-point bias)");
+    }
+    
+    // Update Length Filter summary
+    Preference lengthPref = findPreference("cgr_length_config");
+    if (lengthPref != null)
+    {
+      int lengthFilter = prefs.getInt("cgr_length_filter", 70);
+      lengthPref.setSummary("Current: " + lengthFilter + "% (Length similarity filter)");
+    }
   }
 }
