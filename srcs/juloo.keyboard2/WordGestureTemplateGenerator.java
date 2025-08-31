@@ -272,6 +272,14 @@ public class WordGestureTemplateGenerator
   }
   
   /**
+   * Get direct access to dictionary words (for efficient candidate generation)
+   */
+  public List<String> getDictionary()
+  {
+    return new ArrayList<>(dictionary);
+  }
+  
+  /**
    * Get coordinate for a character (requires keyboard dimensions to be set)
    */
   public ContinuousGestureRecognizer.Point getCharacterCoordinate(char c)

@@ -310,15 +310,15 @@ public class KeyboardSwipeRecognizer
     
     if (detectedLetters.isEmpty()) return candidates;
     
-    // REUSE: Get all templates from existing generator
-    List<ContinuousGestureRecognizer.Template> allTemplates = 
-      templateGenerator.generateBalancedWordTemplates(3000);
+    // FIXED: Use direct dictionary access instead of generating 3000 templates
+    if (templateGenerator == null) return candidates;
     
-    // Filter to words containing detected letters in approximate order
-    for (ContinuousGestureRecognizer.Template template : allTemplates)
+    List<String> dictionary = templateGenerator.getDictionary();
+    android.util.Log.d("KeyboardSwipeRecognizer", "Using dictionary with " + dictionary.size() + " words");
+    
+    // Filter dictionary words containing detected letters (much faster)
+    for (String word : dictionary)
     {
-      String word = template.id.toLowerCase();
-      
       // Check if word contains most detected letters
       if (wordContainsLetters(word, detectedLetters))
       {
@@ -333,11 +333,16 @@ public class KeyboardSwipeRecognizer
   }
   
   /**
-   * Check if word contains most of the detected letters (REUSED logic)
+   * Check if word contains detected letters (STRICTER filtering per Gemini)
    */
   private boolean wordContainsLetters(String word, List<Character> detectedLetters)
   {
-    if (detectedLetters.isEmpty()) return false;
+    if (detectedLetters.isEmpty() || word.isEmpty()) return false;
+    
+    // GEMINI SUGGESTION: First detected letter must be first letter of word
+    if (word.charAt(0) != detectedLetters.get(0)) {
+      return false;
+    }
     
     int matchCount = 0;
     int lastFoundIndex = -1;
@@ -353,9 +358,9 @@ public class KeyboardSwipeRecognizer
       }
     }
     
-    // Require at least 60% of detected letters to match
+    // STRICTER: Require 75% match instead of 60%
     double matchRatio = (double)matchCount / detectedLetters.size();
-    return matchRatio >= 0.6;
+    return matchRatio >= 0.75;
   }
   
   /**
@@ -592,5 +597,26 @@ public class KeyboardSwipeRecognizer
   public RecognitionResult getDetailedScore(String word, List<PointF> swipePath, List<Character> detectedLetters)
   {
     return calculateWordScore(word, swipePath, detectedLetters, new ArrayList<>());
+  }
+  
+  /**
+   * Live parameter setters for real-time tuning
+   */
+  public void setKeyZoneRadius(double radius)
+  {
+    keyZoneRadius = radius;
+    android.util.Log.d("KeyboardSwipeRecognizer", "Key Zone Radius updated to: " + radius);
+  }
+  
+  public void setMissingKeyPenalty(double penalty)
+  {
+    missingKeyPenalty = penalty;
+    android.util.Log.d("KeyboardSwipeRecognizer", "Missing Key Penalty updated to: " + penalty);
+  }
+  
+  public void setStartPointWeight(double weight)
+  {
+    startPointWeight = weight;
+    android.util.Log.d("KeyboardSwipeRecognizer", "Start Point Weight updated to: " + weight);
   }
 }
