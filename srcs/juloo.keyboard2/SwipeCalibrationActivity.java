@@ -2545,20 +2545,53 @@ public class SwipeCalibrationActivity extends Activity
       
       // COMPREHENSIVE TRACE ANALYSIS with FULL EQUATION
       ComprehensiveTraceAnalyzer traceAnalyzer = new ComprehensiveTraceAnalyzer();
-      
-      // Set keyboard dimensions for analysis
       traceAnalyzer.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
       
       // Perform comprehensive analysis with timestamps
       List<Long> timestamps = new ArrayList<>(); // TODO: Get actual timestamps from gesture
       for (int i = 0; i < userSwipe.size(); i++) timestamps.add((long)i * 50); // Simulate for now
       
-      ComprehensiveTraceAnalyzer.TraceAnalysisResult traceResult = 
+      ComprehensiveTraceAnalyzer.TraceAnalysisResult userTraceResult = 
         traceAnalyzer.analyzeTrace(userSwipe, timestamps, word);
       
-      // FULL GESTURE EQUATION DISPLAY
-      analysis.append("📐 FULL GESTURE EQUATION:\n");
-      analysis.append("=========================\n");
+      // TARGET WORD TEMPLATE ANALYSIS
+      analysis.append("🎯 TARGET WORD TEMPLATE ANALYSIS:\n");
+      analysis.append("==================================\n");
+      ContinuousGestureRecognizer.Template targetTemplate = _templateGenerator.generateWordTemplate(word);
+      if (targetTemplate != null && !targetTemplate.pts.isEmpty())
+      {
+        // Convert template to PointF for analysis
+        List<PointF> templatePath = new ArrayList<>();
+        for (ContinuousGestureRecognizer.Point p : targetTemplate.pts)
+        {
+          templatePath.add(new PointF((float)p.x, (float)p.y));
+        }
+        
+        // Analyze target template with same comprehensive analysis
+        ComprehensiveTraceAnalyzer.TraceAnalysisResult templateResult = 
+          traceAnalyzer.analyzeTrace(templatePath, null, word); // No timestamps for template
+        
+        analysis.append(String.format("Template for '%s':\n", word.toUpperCase()));
+        analysis.append(String.format("  Total Distance: %.0f px\n", templateResult.totalDistance));
+        analysis.append(String.format("  North: %.0f px (%.1f%%) | South: %.0f px (%.1f%%)\n", 
+                       templateResult.northDistance, templateResult.northDistance / templateResult.totalDistance * 100,
+                       templateResult.southDistance, templateResult.southDistance / templateResult.totalDistance * 100));
+        analysis.append(String.format("  East: %.0f px (%.1f%%) | West: %.0f px (%.1f%%)\n",
+                       templateResult.eastDistance, templateResult.eastDistance / templateResult.totalDistance * 100,
+                       templateResult.westDistance, templateResult.westDistance / templateResult.totalDistance * 100));
+        analysis.append(String.format("  Bounding Box: %.0f×%.0f (aspect=%.3f)\n",
+                       templateResult.boundingBox.width(), templateResult.boundingBox.height(), templateResult.aspectRatio));
+        analysis.append(String.format("  Letters: %s\n", templateResult.detectedLetters));
+        analysis.append(String.format("  Start: %c | End: %c\n", 
+                       templateResult.startLetter != null ? templateResult.startLetter : '?',
+                       templateResult.endLetter != null ? templateResult.endLetter : '?'));
+        analysis.append(String.format("  Complexity: %.3f | Confidence: %.3f\n\n",
+                       templateResult.gestureComplexity, templateResult.overallConfidence));
+      }
+      
+      // USER GESTURE ANALYSIS
+      analysis.append("👤 USER GESTURE ANALYSIS:\n");
+      analysis.append("==========================\n");
       analysis.append(String.format("Total Distance: %.0f px\n", traceResult.totalDistance));
       analysis.append(String.format("  North: %.0f px (%.1f%%)\n", traceResult.northDistance, 
                      traceResult.northDistance / traceResult.totalDistance * 100));
@@ -2592,15 +2625,64 @@ public class SwipeCalibrationActivity extends Activity
       analysis.append(String.format("Gesture Complexity: %.3f\n", traceResult.gestureComplexity));
       analysis.append(String.format("Recognition Difficulty: %.3f\n", traceResult.recognitionDifficulty));
       
-      // CANDIDATE WORD FULL EQUATIONS
-      analysis.append("\n🏆 TOP CANDIDATES - FULL EQUATIONS:\n");
-      analysis.append("=====================================\n");
+      // TOP CANDIDATES WITH TEMPLATE AND USER ANALYSIS
+      analysis.append("\n🏆 TOP CANDIDATES - TEMPLATE + USER COMPARISON:\n");
+      analysis.append("================================================\n");
       
-      List<String> candidates = debugRecognizer.getCandidates(traceResult.detectedLetters);
+      List<String> candidates = debugRecognizer.getCandidates(userTraceResult.detectedLetters);
       for (int i = 0; i < Math.min(3, candidates.size()); i++)
       {
         String candidate = candidates.get(i);
-        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(candidate, userSwipe, traceResult.detectedLetters);
+        
+        // CANDIDATE TEMPLATE ANALYSIS
+        ContinuousGestureRecognizer.Template candidateTemplate = _templateGenerator.generateWordTemplate(candidate);
+        if (candidateTemplate != null)
+        {
+          List<PointF> candidateTemplatePath = new ArrayList<>();
+          for (ContinuousGestureRecognizer.Point p : candidateTemplate.pts)
+          {
+            candidateTemplatePath.add(new PointF((float)p.x, (float)p.y));
+          }
+          
+          ComprehensiveTraceAnalyzer.TraceAnalysisResult candidateTemplateResult = 
+            traceAnalyzer.analyzeTrace(candidateTemplatePath, null, candidate);
+          
+          analysis.append(String.format("\n#%d: %s\n", i + 1, candidate.toUpperCase()));
+          analysis.append("TEMPLATE METRICS:\n");
+          analysis.append(String.format("  Distance: %.0f px | N:%.0f S:%.0f E:%.0f W:%.0f\n",
+                         candidateTemplateResult.totalDistance,
+                         candidateTemplateResult.northDistance, candidateTemplateResult.southDistance,
+                         candidateTemplateResult.eastDistance, candidateTemplateResult.westDistance));
+          analysis.append(String.format("  BBox: %.0f×%.0f (aspect=%.3f)\n",
+                         candidateTemplateResult.boundingBox.width(), candidateTemplateResult.boundingBox.height(),
+                         candidateTemplateResult.aspectRatio));
+          analysis.append(String.format("  Letters: %s | Start:%c End:%c\n",
+                         candidateTemplateResult.detectedLetters,
+                         candidateTemplateResult.startLetter != null ? candidateTemplateResult.startLetter : '?',
+                         candidateTemplateResult.endLetter != null ? candidateTemplateResult.endLetter : '?'));
+          analysis.append(String.format("  Complexity: %.3f | Confidence: %.3f\n",
+                         candidateTemplateResult.gestureComplexity, candidateTemplateResult.overallConfidence));
+          
+          // TEMPLATE vs USER COMPARISON
+          analysis.append("\nTEMPLATE vs USER COMPARISON:\n");
+          analysis.append(String.format("  Distance Ratio: %.3f (template/user = %.0f/%.0f)\n",
+                         candidateTemplateResult.totalDistance / userTraceResult.totalDistance,
+                         candidateTemplateResult.totalDistance, userTraceResult.totalDistance));
+          analysis.append(String.format("  Aspect Ratio Match: %.3f vs %.3f (diff=%.3f)\n",
+                         candidateTemplateResult.aspectRatio, userTraceResult.aspectRatio,
+                         Math.abs(candidateTemplateResult.aspectRatio - userTraceResult.aspectRatio)));
+          analysis.append(String.format("  Start Letter Match: %s (%c vs %c)\n",
+                         candidateTemplateResult.startLetter == userTraceResult.startLetter ? "✅" : "❌",
+                         candidateTemplateResult.startLetter != null ? candidateTemplateResult.startLetter : '?',
+                         userTraceResult.startLetter != null ? userTraceResult.startLetter : '?'));
+          analysis.append(String.format("  End Letter Match: %s (%c vs %c)\n",
+                         candidateTemplateResult.endLetter == userTraceResult.endLetter ? "✅" : "❌",
+                         candidateTemplateResult.endLetter != null ? candidateTemplateResult.endLetter : '?',
+                         userTraceResult.endLetter != null ? userTraceResult.endLetter : '?'));
+        }
+        
+        // FULL SCORING EQUATION
+        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(candidate, userSwipe, userTraceResult.detectedLetters);
         
         analysis.append(String.format("\n#%d: %s\n", i + 1, candidate.toUpperCase()));
         analysis.append("COMPLETE PARAMETER BREAKDOWN:\n");

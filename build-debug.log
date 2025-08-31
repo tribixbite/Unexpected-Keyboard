@@ -20,6 +20,7 @@ Generated version info:  ()
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
 > Task :packageDebugResources
+> Task :mergeDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest FROM-CACHE
@@ -32,12 +33,11 @@ Generated version info:  ()
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
 > Task :parseDebugLocalResources
-> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :checkDebugDuplicateClasses
-> Task :mergeDebugJniLibFolders
-> Task :mergeDebugResources
+> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
 > Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug
@@ -47,16 +47,73 @@ Generated version info:  ()
 > Task :processDebugResources
 
 > Task :compileDebugJavaWithJavac
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:404: error: cannot find symbol
+    liveControlLayout.addView(zoneLabel);
+    ^
+  symbol:   variable liveControlLayout
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:424: error: cannot find symbol
+    liveControlLayout.addView(zoneSlider);
+    ^
+  symbol:   variable liveControlLayout
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:431: error: cannot find symbol
+    liveControlLayout.addView(missingLabel);
+    ^
+  symbol:   variable liveControlLayout
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:451: error: cannot find symbol
+    liveControlLayout.addView(missingSlider);
+    ^
+  symbol:   variable liveControlLayout
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:458: error: cannot find symbol
+    liveControlLayout.addView(startLabel);
+    ^
+  symbol:   variable liveControlLayout
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:478: error: cannot find symbol
+    liveControlLayout.addView(startSlider);
+    ^
+  symbol:   variable liveControlLayout
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:480: error: cannot find symbol
+    topLayout.addView(liveControlLayout);
+                      ^
+  symbol:   variable liveControlLayout
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2554: error: cannot find symbol
+      for (int i = 0; i < userSwipe.size(); i++) timestamps.add((long)i * 50); // Simulate for now
+                          ^
+  symbol:   variable userSwipe
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2557: error: cannot find symbol
+        traceAnalyzer.analyzeTrace(userSwipe, timestamps, word);
+                                   ^
+  symbol:   variable userSwipe
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2603: error: cannot find symbol
+        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(candidate, userSwipe, traceResult.detectedLetters);
+                                                                                                      ^
+  symbol:   variable userSwipe
+  location: class SwipeCalibrationActivity
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
+10 errors
 
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
+> Task :compileDebugJavaWithJavac FAILED
 
-BUILD SUCCESSFUL in 32s
-32 actionable tasks: 22 executed, 10 from cache
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 28s
+28 actionable tasks: 18 executed, 10 from cache
