@@ -81,7 +81,6 @@ public class SwipeCalibrationActivity extends Activity
   private TextView _instructionText;
   private TextView _currentWordText;
   private TextView _progressText;
-  private TextView _scoreText;
   private ProgressBar _progressBar;
   private KeyboardView _keyboardView;
   private Button _nextButton;
@@ -90,7 +89,7 @@ public class SwipeCalibrationActivity extends Activity
   private Button _deleteButton;
   private Button _exportButton;
   private Button _trainButton;
-  private LinearLayout _scoreLayout;
+  // Score UI elements removed with metrics cleanup
   
   // Navigation UI components
   private LinearLayout _navigationLayout;
@@ -100,13 +99,8 @@ public class SwipeCalibrationActivity extends Activity
   private Button _deleteSwipeButton;
   private Button _browseSwipesButton;
   
-  // Real-time accuracy metrics components
-  private LinearLayout _metricsLayout;
-  private TextView _sessionAccuracyText;
-  private TextView _overallAccuracyText;
-  private TextView _wpmText;
-  private TextView _confusionPatternsText;
-  private ProgressBar _accuracyProgressBar;
+  // Real-time accuracy metrics components (REMOVED - UI elements deleted)
+  // Data tracking continues but no UI display
   
   // Calibration state
   private int _currentIndex = 0;
@@ -1165,32 +1159,16 @@ public class SwipeCalibrationActivity extends Activity
     // Update metrics display
     updateMetricsDisplay();
     
-    // Display score
-    _scoreLayout.setVisibility(View.VISIBLE);
+    // Log score (UI elements removed)
     if (rank > 0)
     {
       String scoreText = String.format("Rank #%d (Score: %.2f, Confidence: %.0f%%)",
                                        rank, score, result.confidence * 100);
-      _scoreText.setText(scoreText);
-      
-      // Color based on ranking
-      if (rank == 1)
-      {
-        _scoreText.setTextColor(Color.GREEN);
-      }
-      else if (rank <= 3)
-      {
-        _scoreText.setTextColor(Color.YELLOW);
-      }
-      else
-      {
-        _scoreText.setTextColor(Color.RED);
-      }
+      android.util.Log.d(TAG, "Score: " + scoreText);
     }
     else
     {
-      _scoreText.setText("Not in top 10 predictions");
-      _scoreText.setTextColor(Color.RED);
+      android.util.Log.d(TAG, "Score: Not in top 10 predictions");
     }
     
     // Log detailed results
@@ -1207,30 +1185,20 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
-   * Update the real-time metrics display
+   * Update the real-time metrics display (UI REMOVED - data tracking only)
    */
   private void updateMetricsDisplay()
   {
-    // Calculate session accuracy
+    // Calculate session accuracy for logging
     float sessionAccuracy = _sessionTotalCount > 0 ? 
       (float)_sessionCorrectCount / _sessionTotalCount * 100 : 0;
-    _sessionAccuracyText.setText(String.format("%.1f%%", sessionAccuracy));
     
-    // Color code session accuracy
-    if (sessionAccuracy >= 80)
-      _sessionAccuracyText.setTextColor(Color.GREEN);
-    else if (sessionAccuracy >= 60)
-      _sessionAccuracyText.setTextColor(Color.YELLOW);
-    else
-      _sessionAccuracyText.setTextColor(Color.RED);
-    
-    // Calculate overall accuracy
+    // Calculate overall accuracy for logging
     float overallAccuracy = _overallTotalCount > 0 ?
       (float)_overallCorrectCount / _overallTotalCount * 100 : 0;
-    _overallAccuracyText.setText(String.format("%.1f%%", overallAccuracy));
-    _accuracyProgressBar.setProgress(Math.round(overallAccuracy));
     
-    // Calculate WPM (words per minute)
+    // Calculate WPM for logging
+    int wpm = 0;
     if (!_swipeDurations.isEmpty())
     {
       long avgDuration = 0;
@@ -1241,35 +1209,29 @@ public class SwipeCalibrationActivity extends Activity
       avgDuration /= _swipeDurations.size();
       
       // Calculate WPM (60000 ms per minute / avg duration per word)
-      int wpm = avgDuration > 0 ? (int)(60000 / avgDuration) : 0;
-      _wpmText.setText(String.valueOf(wpm));
-      
-      // Color code WPM
-      if (wpm >= 40)
-        _wpmText.setTextColor(Color.GREEN);
-      else if (wpm >= 25)
-        _wpmText.setTextColor(Color.YELLOW);
-      else
-        _wpmText.setTextColor(Color.WHITE);
+      wpm = avgDuration > 0 ? (int)(60000 / avgDuration) : 0;
     }
     
-    // Update confusion patterns display
+    // Log metrics for debugging (UI removed)
+    android.util.Log.d(TAG, String.format("Session accuracy: %.1f%%, Overall: %.1f%%, WPM: %d", 
+                                          sessionAccuracy, overallAccuracy, wpm));
+    
+    // Update confusion patterns tracking (no UI)
     updateConfusionPatterns();
   }
   
   /**
-   * Update the confusion patterns display
+   * Update the confusion patterns display (UI REMOVED - tracking only)
    */
   private void updateConfusionPatterns()
   {
     if (_confusionMatrix.isEmpty())
     {
-      _confusionPatternsText.setText("No errors yet - great job!");
-      _confusionPatternsText.setTextColor(Color.GREEN);
+      android.util.Log.d(TAG, "Confusion patterns: No errors yet - great job!");
       return;
     }
     
-    // Find top 3 confusion patterns
+    // Find top 3 confusion patterns for logging
     List<Map.Entry<String, Integer>> sortedConfusions = new ArrayList<>(_confusionMatrix.entrySet());
     Collections.sort(sortedConfusions, new Comparator<Map.Entry<String, Integer>>() {
       @Override
@@ -1288,8 +1250,8 @@ public class SwipeCalibrationActivity extends Activity
       count++;
     }
     
-    _confusionPatternsText.setText(patterns.toString());
-    _confusionPatternsText.setTextColor(Color.LTGRAY);
+    // Log instead of displaying in UI (UI removed)
+    android.util.Log.d(TAG, "Confusion patterns: " + patterns.toString());
   }
   
   /**
@@ -1909,11 +1871,10 @@ public class SwipeCalibrationActivity extends Activity
     // Display the trace on keyboard
     _keyboardView.displaySwipeTrace(screenPoints);
     
-    // Show metadata
+    // Log metadata (UI elements removed)
     long duration = calculateDuration(data.getTracePoints());
     int pointCount = normalizedPoints.size();
-    _scoreText.setText(String.format("Duration: %dms, Points: %d", duration, pointCount));
-    _scoreLayout.setVisibility(View.VISIBLE);
+    android.util.Log.d(TAG, String.format("Browse metadata - Duration: %dms, Points: %d", duration, pointCount));
     
     // Update navigation button states
     _prevSwipeButton.setEnabled(index > 0);
