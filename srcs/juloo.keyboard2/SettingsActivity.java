@@ -611,10 +611,33 @@ public class SettingsActivity extends PreferenceActivity
     if (key != null && key.startsWith("cgr_"))
     {
       android.util.Log.d("SettingsActivity", "CGR parameter changed: " + key);
-      // TODO: Trigger template regeneration in running keyboard service
-      Toast.makeText(this, "CGR parameter updated: " + key, Toast.LENGTH_SHORT).show();
+      
+      // Force immediate reload by sending broadcast to keyboard service
+      Intent reloadIntent = new Intent("juloo.keyboard2.RELOAD_CGR_PARAMETERS");
+      reloadIntent.putExtra("parameter_key", key);
+      sendBroadcast(reloadIntent);
+      
+      // Show current value for verification
+      int currentValue = prefs.getInt(key, -1);
+      Toast.makeText(this, "Updated " + key + " = " + currentValue + " (takes effect immediately)", Toast.LENGTH_LONG).show();
     }
     
     // No super call needed for interface method
+  }
+  
+  @Override
+  protected void onResume()
+  {
+    super.onResume();
+    // Register for preference changes
+    getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+  }
+  
+  @Override
+  protected void onPause()
+  {
+    super.onPause();
+    // Unregister to prevent memory leaks
+    getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
   }
 }

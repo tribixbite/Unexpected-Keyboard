@@ -1,8 +1,10 @@
 package juloo.keyboard2;
 
 import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.os.Build.VERSION;
@@ -154,6 +156,16 @@ public class Keyboard2 extends InputMethodService
     
     // Initialize ML data store
     _mlDataStore = SwipeMLDataStore.getInstance(this);
+    
+    // Register CGR parameter reload broadcast receiver
+    IntentFilter filter = new IntentFilter("juloo.keyboard2.RELOAD_CGR_PARAMETERS");
+    registerReceiver(new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        android.util.Log.d("Keyboard2", "CGR parameter reload broadcast received");
+        reloadCGRParameters();
+      }
+    }, filter);
     
     // Initialize user adaptation manager
     _adaptationManager = UserAdaptationManager.getInstance(this);
@@ -1247,6 +1259,33 @@ public class Keyboard2 extends InputMethodService
       // Don't actually clear - just show empty suggestions to keep bar visible
       _suggestionBar.setSuggestions(new ArrayList<>());
       android.util.Log.d("Keyboard2", "CGR predictions cleared (bar kept visible)");
+    }
+  }
+  
+  /**
+   * Reload CGR parameters and regenerate templates (called when settings change)
+   */
+  private void reloadCGRParameters()
+  {
+    android.util.Log.d("Keyboard2", "Reloading CGR parameters and regenerating templates...");
+    
+    // Force CGR system reinitialization with new parameters
+    if (_keyboardView != null)
+    {
+      // Trigger template regeneration with new parameters
+      new Thread(() -> {
+        try
+        {
+          // Force reinitialization of CGR system through public method
+          _keyboardView.reloadCGRSystem();
+          
+          android.util.Log.d("Keyboard2", "CGR parameters reloaded and templates regenerated");
+        }
+        catch (Exception e)
+        {
+          android.util.Log.e("Keyboard2", "Failed to reload CGR parameters: " + e.getMessage());
+        }
+      }).start();
     }
   }
 }

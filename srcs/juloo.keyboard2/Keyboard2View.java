@@ -796,4 +796,17 @@ public class Keyboard2View extends View
   {
     return _cgrFinalPredictions;
   }
+  
+  /**
+   * Reload CGR system with new parameters (called from settings changes)
+   */
+  public void reloadCGRSystem()
+  {
+    if (_swipeRecognizer != null)
+    {
+      android.util.Log.d("Keyboard2View", "Reloading CGR system with new parameters");
+      _swipeRecognizer.clearAllPredictions();
+      _swipeRecognizer.initializePredictionSystem(getContext());
+    }
+  }
 }
