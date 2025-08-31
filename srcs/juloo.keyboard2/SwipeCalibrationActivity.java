@@ -690,8 +690,15 @@ public class SwipeCalibrationActivity extends Activity
     // Show the swipe path overlay
     showSwipePathOverlay(points);
     
-    // ADD: Template comparison analysis for debugging
-    addTemplateComparison(_currentWord, points);
+    // ADD: Template comparison analysis for debugging (SAFE WRAPPER)
+    try
+    {
+      addTemplateComparison(_currentWord, points);
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e(TAG, "Template comparison failed: " + e.getMessage());
+    }
     
     // Create swipe pattern for legacy storage
     SwipePattern pattern = new SwipePattern(_currentWord, points, duration);
