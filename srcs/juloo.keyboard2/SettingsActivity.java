@@ -612,10 +612,8 @@ public class SettingsActivity extends PreferenceActivity
     {
       android.util.Log.d("SettingsActivity", "CGR parameter changed: " + key);
       
-      // Force immediate reload by sending broadcast to keyboard service
-      Intent reloadIntent = new Intent("juloo.keyboard2.RELOAD_CGR_PARAMETERS");
-      reloadIntent.putExtra("parameter_key", key);
-      sendBroadcast(reloadIntent);
+      // Parameter changes will take effect on next keyboard restart
+      android.util.Log.d("SettingsActivity", "CGR parameter " + key + " changed, will take effect on restart");
       
       // Show current value for verification
       int currentValue = prefs.getInt(key, -1);
