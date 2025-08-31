@@ -140,10 +140,34 @@ Cost = α × ProximityPenalty + β × MissingKeyPenalty + γ × ExtraKeyPenalty 
 9. **Template generation integration** - full reuse of existing system ✅
 10. **Calibration activity updated** to test new algorithm ✅
 
+## LATEST CALIBRATION RESULTS - NEW ALGORITHM
+
+### INITIAL TEST RESULTS (Post-Implementation):
+```
+MEDIUM: Template (864,250) → (864,250) len=1602, User 147 points → No CGR recognition results
+TOWARD: Template (486,79) → (324,237) len=1834, User 161 points → No CGR recognition results  
+MINOR: Template (864,394) → (378,79) len=1535, User 107 points → No CGR recognition results
+WEAPONS: Template (162,79) → (216,237) len=2291, User 193 points → No CGR recognition results
+MISTAKE: Template (864,394) → (270,79) len=3028, User 181 points → No CGR recognition results
+```
+
+### DEBUGGING ANALYSIS:
+1. **"No CGR recognition results"** indicates algorithm initialization or detection failure
+2. **Template coordinates look correct** - dynamic keyboard layout working
+3. **User gesture points adequate** (107-193 points per word)
+4. **Issue likely in letter detection** or candidate generation phase
+
+### DEBUGGING FIXES APPLIED:
+1. **Enhanced letter detection**: More frequent sampling (every 4 points vs 20)
+2. **Added comprehensive logging**: Point-by-point detection tracking
+3. **Fallback letter detection**: Use common letters if detection fails
+4. **Error handling**: Prevent crashes from component initialization failures
+
 ### IN PROGRESS:
-1. **Testing new algorithm against calibration data**
-2. **Refining penalty weights and parameters**
-3. **Performance optimization for real-time use**
+1. **Testing enhanced algorithm with debugging**
+2. **Verifying letter detection and key proximity**
+3. **Refining penalty weights and parameters**
+4. **Performance optimization for real-time use**
 
 ### NEXT STEPS:
 1. **Complete KeyboardSwipeRecognizer implementation**
