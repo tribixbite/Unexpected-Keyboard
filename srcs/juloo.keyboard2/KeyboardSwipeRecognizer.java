@@ -182,28 +182,78 @@ public class KeyboardSwipeRecognizer
   }
   
   /**
-   * Get key center coordinates (would integrate with templateGenerator)
+   * Get key center coordinates (INTEGRATED with templateGenerator)
    */
   private PointF getKeyCenter(char letter)
   {
-    // TODO: Integrate with WordGestureTemplateGenerator.getCharacterCoordinate()
-    // For now, return null - this needs keyboard layout integration
-    return null;
+    ContinuousGestureRecognizer.Point coord = templateGenerator.getCharacterCoordinate(letter);
+    return coord != null ? new PointF((float)coord.x, (float)coord.y) : null;
   }
   
   /**
-   * Generate candidate words that could match the detected letter sequence
+   * Set keyboard dimensions for dynamic coordinate calculation
+   */
+  public void setKeyboardDimensions(float width, float height)
+  {
+    templateGenerator.setKeyboardDimensions(width, height);
+    android.util.Log.d("KeyboardSwipeRecognizer", "Keyboard dimensions set: " + width + "x" + height);
+  }
+  
+  /**
+   * Generate candidate words using existing template generation (REUSED CODE)
    */
   private List<String> generateCandidateWords(List<Character> detectedLetters)
   {
     List<String> candidates = new ArrayList<>();
     
-    // TODO: Integrate with dictionary and filter by:
-    // 1. Words containing most/all detected letters
-    // 2. Words with similar letter sequence patterns
-    // 3. Length-appropriate words for detected sequence
+    if (detectedLetters.isEmpty()) return candidates;
+    
+    // REUSE: Get all templates from existing generator
+    List<ContinuousGestureRecognizer.Template> allTemplates = 
+      templateGenerator.generateBalancedWordTemplates(3000);
+    
+    // Filter to words containing detected letters in approximate order
+    for (ContinuousGestureRecognizer.Template template : allTemplates)
+    {
+      String word = template.id.toLowerCase();
+      
+      // Check if word contains most detected letters
+      if (wordContainsLetters(word, detectedLetters))
+      {
+        candidates.add(word);
+      }
+    }
+    
+    android.util.Log.d("KeyboardSwipeRecognizer", "Filtered to " + candidates.size() + 
+                      " candidates from detected letters: " + detectedLetters);
     
     return candidates;
+  }
+  
+  /**
+   * Check if word contains most of the detected letters (REUSED logic)
+   */
+  private boolean wordContainsLetters(String word, List<Character> detectedLetters)
+  {
+    if (detectedLetters.isEmpty()) return false;
+    
+    int matchCount = 0;
+    int lastFoundIndex = -1;
+    
+    // Check if detected letters appear in word in approximate order
+    for (Character letter : detectedLetters)
+    {
+      int foundIndex = word.indexOf(letter, lastFoundIndex + 1);
+      if (foundIndex != -1)
+      {
+        matchCount++;
+        lastFoundIndex = foundIndex;
+      }
+    }
+    
+    // Require at least 60% of detected letters to match
+    double matchRatio = (double)matchCount / detectedLetters.size();
+    return matchRatio >= 0.6;
   }
   
   /**
@@ -231,15 +281,39 @@ public class KeyboardSwipeRecognizer
   }
   
   /**
-   * Calculate how well swipe path matches word's key positions
+   * Calculate how well swipe path matches word's key positions (REUSED distance logic)
    */
   private double calculateProximityScore(String word, List<PointF> swipePath)
   {
-    // TODO: Implement key proximity matching
-    // - Calculate distances from swipe points to word's key centers
-    // - Apply Gaussian model for key zone probabilities
-    // - Weight by position along path (start > end)
-    return 1.0;
+    // REUSE: Get word template for key positions
+    ContinuousGestureRecognizer.Template wordTemplate = templateGenerator.generateWordTemplate(word);
+    if (wordTemplate == null) return 0.0;
+    
+    double totalScore = 0.0;
+    int validComparisons = 0;
+    
+    // Compare swipe path proximity to word's key sequence
+    for (int i = 0; i < Math.min(swipePath.size(), wordTemplate.pts.size()); i++)
+    {
+      PointF swipePoint = swipePath.get(i);
+      ContinuousGestureRecognizer.Point templatePoint = wordTemplate.pts.get(i % wordTemplate.pts.size());
+      
+      // REUSE: Distance calculation logic from CGR
+      double distance = Math.sqrt(Math.pow(swipePoint.x - templatePoint.x, 2) + 
+                                 Math.pow(swipePoint.y - templatePoint.y, 2));
+      
+      // Convert distance to proximity score (closer = higher score)
+      double proximityScore = Math.exp(-distance / keyZoneRadius);
+      
+      // Apply start point emphasis (users begin precisely)
+      double pathPosition = (double)i / swipePath.size();
+      double positionWeight = startPointWeight * (1.0 - pathPosition) + 1.0; // Higher weight at start
+      
+      totalScore += proximityScore * positionWeight;
+      validComparisons++;
+    }
+    
+    return validComparisons > 0 ? totalScore / validComparisons : 0.0;
   }
   
   /**
