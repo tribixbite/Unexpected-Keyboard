@@ -339,6 +339,44 @@ public class SwipeCalibrationActivity extends Activity
     
     topLayout.addView(cgrAnalysisLayout);
     
+    // LIVE PARAMETER CONTROL for immediate algorithm tuning
+    LinearLayout liveControlLayout = new LinearLayout(this);
+    liveControlLayout.setOrientation(LinearLayout.VERTICAL);
+    liveControlLayout.setPadding(16, 8, 16, 8);
+    liveControlLayout.setBackgroundColor(0xFF2B2B2B);
+    
+    TextView controlTitle = new TextView(this);
+    controlTitle.setText("⚡ Live Algorithm Control");
+    controlTitle.setTextSize(14);
+    controlTitle.setTextColor(Color.YELLOW);
+    liveControlLayout.addView(controlTitle);
+    
+    // Key Zone Radius slider
+    TextView zoneLabel = new TextView(this);
+    zoneLabel.setText("Key Zone: 120px");
+    zoneLabel.setTextColor(Color.WHITE);
+    zoneLabel.setTextSize(12);
+    liveControlLayout.addView(zoneLabel);
+    
+    android.widget.SeekBar zoneSlider = new android.widget.SeekBar(this);
+    zoneSlider.setMax(150); // 50-200 range
+    zoneSlider.setProgress(70); // 120px default
+    zoneSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        if (fromUser) {
+          int zoneRadius = progress + 50; // 50-200 range
+          zoneLabel.setText("Key Zone: " + zoneRadius + "px");
+          // TODO: Update algorithm parameter immediately
+        }
+      }
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+    });
+    liveControlLayout.addView(zoneSlider);
+    
+    topLayout.addView(liveControlLayout);
+    
     // Current word display - PROMINENT
     LinearLayout currentWordLayout = new LinearLayout(this);
     currentWordLayout.setOrientation(LinearLayout.VERTICAL);
@@ -2386,13 +2424,64 @@ public class SwipeCalibrationActivity extends Activity
                                        List<ContinuousGestureRecognizer.Point> userPoints)
   {
     StringBuilder analysis = new StringBuilder();
-    analysis.append("=== WORD: ").append(word.toUpperCase()).append(" ===\n");
+    analysis.append("=== ALGORITHM TRANSPARENCY ===\n");
+    analysis.append("WORD: ").append(word.toUpperCase()).append("\n\n");
+    
+    // STEP 1: Show letter detection process
+    try
+    {
+      KeyboardSwipeRecognizer debugRecognizer = new KeyboardSwipeRecognizer(this);
+      debugRecognizer.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+      
+      // Show step-by-step algorithm process with COMPLETE TRANSPARENCY
+      analysis.append("🔍 STEP 1: LETTER DETECTION\n");
+      List<Character> detectedLetters = debugRecognizer.getDetectedLetters(userSwipe);
+      analysis.append("Path: ").append(userSwipe.size()).append(" points\n");
+      analysis.append("Detected: ").append(detectedLetters).append("\n");
+      analysis.append("Count: ").append(detectedLetters.size()).append(" letters\n\n");
+      
+      analysis.append("🔍 STEP 2: CANDIDATE GENERATION\n");
+      List<String> candidates = debugRecognizer.getCandidates(detectedLetters);
+      analysis.append("Candidates: ").append(candidates.size()).append(" words\n");
+      if (!candidates.isEmpty())
+      {
+        analysis.append("Sample: ");
+        for (int i = 0; i < Math.min(5, candidates.size()); i++)
+        {
+          analysis.append(candidates.get(i)).append(" ");
+        }
+        analysis.append("\n");
+      }
+      analysis.append("\n");
+      
+      analysis.append("🔍 STEP 3: SCORING BREAKDOWN\n");
+      if (!candidates.isEmpty())
+      {
+        String testWord = candidates.contains(word) ? word : candidates.get(0);
+        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(testWord, userSwipe, detectedLetters);
+        analysis.append("Test word: ").append(testWord).append("\n");
+        analysis.append("Proximity: ").append(String.format("%.3f", score.proximityScore)).append("\n");
+        analysis.append("Sequence: ").append(String.format("%.3f", score.sequenceScore)).append("\n");
+        analysis.append("Start point: ").append(String.format("%.3f", score.startPointScore)).append("\n");
+        analysis.append("Language: ").append(String.format("%.3f", score.languageModelScore)).append("\n");
+        analysis.append("TOTAL: ").append(String.format("%.6f", score.totalScore)).append("\n");
+      }
+      else
+      {
+        analysis.append("No candidates for scoring\n");
+      }
+      analysis.append("\n");
+    }
+    catch (Exception e)
+    {
+      analysis.append("❌ ALGORITHM ERROR: ").append(e.getMessage()).append("\n");
+    }
     
     if (results.isEmpty())
     {
-      analysis.append("\n❌ NO CGR RESULTS\n");
-      analysis.append("Check template generation and\n");
-      analysis.append("coordinate alignment.\n");
+      analysis.append("❌ NO RESULTS\n");
+      analysis.append("Algorithm pipeline failed\n");
+      analysis.append("Check transparency above\n");
     }
     else
     {

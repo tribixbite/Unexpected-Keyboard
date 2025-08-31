@@ -569,4 +569,28 @@ public class KeyboardSwipeRecognizer
     android.util.Log.d("KeyboardSwipeRecognizer", String.format("Weights updated: prox=%.1f, miss=%.1f, extra=%.1f, order=%.1f, start=%.1f",
                       proximity, missingKey, extraKey, order, startPoint));
   }
+  
+  /**
+   * Get transparent letter detection for debugging
+   */
+  public List<Character> getDetectedLetters(List<PointF> swipePath)
+  {
+    return detectLetterSequence(swipePath);
+  }
+  
+  /**
+   * Get transparent candidate generation for debugging
+   */
+  public List<String> getCandidates(List<Character> detectedLetters)
+  {
+    return generateCandidateWords(detectedLetters);
+  }
+  
+  /**
+   * Get transparent scoring breakdown for debugging
+   */
+  public RecognitionResult getDetailedScore(String word, List<PointF> swipePath, List<Character> detectedLetters)
+  {
+    return calculateWordScore(word, swipePath, detectedLetters, new ArrayList<>());
+  }
 }
