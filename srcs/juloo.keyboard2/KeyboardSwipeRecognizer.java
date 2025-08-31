@@ -224,6 +224,15 @@ public class KeyboardSwipeRecognizer
   {
     templateGenerator.setKeyboardDimensions(width, height);
     android.util.Log.d("KeyboardSwipeRecognizer", "Keyboard dimensions set: " + width + "x" + height);
+    
+    // DEBUG: Test key coordinate generation
+    PointF testA = getKeyCenter('a');
+    PointF testE = getKeyCenter('e');
+    PointF testT = getKeyCenter('t');
+    android.util.Log.d("KeyboardSwipeRecognizer", String.format("Test key coords: a=(%.0f,%.0f), e=(%.0f,%.0f), t=(%.0f,%.0f)",
+                      testA != null ? testA.x : -1, testA != null ? testA.y : -1,
+                      testE != null ? testE.x : -1, testE != null ? testE.y : -1,
+                      testT != null ? testT.x : -1, testT != null ? testT.y : -1));
   }
   
   /**

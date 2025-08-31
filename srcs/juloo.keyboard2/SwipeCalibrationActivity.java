@@ -300,109 +300,15 @@ public class SwipeCalibrationActivity extends Activity
     _progressBar.setMax(WORDS_PER_SESSION);  // Total words = 20
     topLayout.addView(_progressBar);
     
-    // Score display layout
-    _scoreLayout = new LinearLayout(this);
-    _scoreLayout.setOrientation(LinearLayout.HORIZONTAL);
-    _scoreLayout.setPadding(0, 10, 0, 10);
-    _scoreLayout.setVisibility(View.GONE);
+    // REMOVED: Useless "Prediction Score: Not in top 10 predictions" section
+    // Redundant with main algorithm analysis
     
-    TextView scoreLabel = new TextView(this);
-    scoreLabel.setText("Prediction Score: ");
-    scoreLabel.setTextColor(Color.WHITE);
-    _scoreLayout.addView(scoreLabel);
-    
-    _scoreText = new TextView(this);
-    _scoreText.setTextColor(Color.YELLOW);
-    _scoreText.setTextSize(16);
-    _scoreLayout.addView(_scoreText);
-    
-    topLayout.addView(_scoreLayout);
-    
-    // Real-time accuracy metrics display
-    _metricsLayout = new LinearLayout(this);
-    _metricsLayout.setOrientation(LinearLayout.VERTICAL);
-    _metricsLayout.setPadding(0, 15, 0, 10);
-    _metricsLayout.setBackgroundColor(0x33000000); // Semi-transparent background
-    
-    TextView metricsTitle = new TextView(this);
-    metricsTitle.setText("📊 Real-Time Metrics");
-    metricsTitle.setTextColor(Color.WHITE);
-    metricsTitle.setTextSize(16);
-    metricsTitle.setPadding(10, 5, 10, 5);
-    _metricsLayout.addView(metricsTitle);
-    
-    // Session accuracy
-    LinearLayout sessionAccuracyLayout = new LinearLayout(this);
-    sessionAccuracyLayout.setOrientation(LinearLayout.HORIZONTAL);
-    sessionAccuracyLayout.setPadding(10, 5, 10, 5);
-    
-    TextView sessionLabel = new TextView(this);
-    sessionLabel.setText("Session Accuracy: ");
-    sessionLabel.setTextColor(Color.GRAY);
-    sessionAccuracyLayout.addView(sessionLabel);
-    
-    _sessionAccuracyText = new TextView(this);
-    _sessionAccuracyText.setText("0%");
-    _sessionAccuracyText.setTextColor(Color.CYAN);
-    _sessionAccuracyText.setTextSize(18);
-    sessionAccuracyLayout.addView(_sessionAccuracyText);
-    
-    _metricsLayout.addView(sessionAccuracyLayout);
-    
-    // Overall accuracy with progress bar
-    LinearLayout overallAccuracyLayout = new LinearLayout(this);
-    overallAccuracyLayout.setOrientation(LinearLayout.HORIZONTAL);
-    overallAccuracyLayout.setPadding(10, 5, 10, 5);
-    
-    TextView overallLabel = new TextView(this);
-    overallLabel.setText("Overall Accuracy: ");
-    overallLabel.setTextColor(Color.GRAY);
-    overallAccuracyLayout.addView(overallLabel);
-    
-    _overallAccuracyText = new TextView(this);
-    _overallAccuracyText.setText("0%");
-    _overallAccuracyText.setTextColor(Color.GREEN);
-    _overallAccuracyText.setTextSize(18);
-    overallAccuracyLayout.addView(_overallAccuracyText);
-    
-    _metricsLayout.addView(overallAccuracyLayout);
-    
-    _accuracyProgressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-    _accuracyProgressBar.setMax(100);
-    _accuracyProgressBar.setProgress(0);
-    LinearLayout.LayoutParams progParams = new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 10);
-    progParams.setMargins(10, 0, 10, 5);
-    _accuracyProgressBar.setLayoutParams(progParams);
-    _metricsLayout.addView(_accuracyProgressBar);
-    
-    // Words per minute
-    LinearLayout wpmLayout = new LinearLayout(this);
-    wpmLayout.setOrientation(LinearLayout.HORIZONTAL);
-    wpmLayout.setPadding(10, 5, 10, 5);
-    
-    TextView wpmLabel = new TextView(this);
-    wpmLabel.setText("Speed (WPM): ");
-    wpmLabel.setTextColor(Color.GRAY);
-    wpmLayout.addView(wpmLabel);
-    
-    _wpmText = new TextView(this);
-    _wpmText.setText("0");
-    _wpmText.setTextColor(Color.YELLOW);
-    _wpmText.setTextSize(16);
-    wpmLayout.addView(_wpmText);
-    
-    _metricsLayout.addView(wpmLayout);
-    
-    // Confusion patterns
-    _confusionPatternsText = new TextView(this);
-    _confusionPatternsText.setText("Common errors will appear here");
-    _confusionPatternsText.setTextColor(Color.LTGRAY);
-    _confusionPatternsText.setTextSize(12);
-    _confusionPatternsText.setPadding(10, 5, 10, 5);
-    _metricsLayout.addView(_confusionPatternsText);
-    
-    topLayout.addView(_metricsLayout);
+    // REMOVED: Entire useless Real-Time Metrics section
+    // - Session Accuracy: 0.0% (useless)
+    // - Overall Accuracy: 0.0% (useless)  
+    // - Speed (WPM): 51 (irrelevant for debugging)
+    // - "No errors yet - great job!" (meaningless)
+    // More space now available for useful algorithm debugging
     
     // CGR Results Analysis (replacing algorithm weights)
     LinearLayout cgrAnalysisLayout = new LinearLayout(this);
