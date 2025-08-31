@@ -18,10 +18,12 @@
     <CheckBoxPreference android:key="swipe_typing_enabled" android:title="@string/pref_swipe_typing_title" android:summary="@string/pref_swipe_typing_summary" android:defaultValue="false"/>
     <PreferenceScreen android:key="swipe_calibration" android:title="@string/pref_swipe_calibration_title" android:summary="@string/pref_swipe_calibration_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="cgr_algorithm_settings" android:title="CGR Algorithm Parameters" android:summary="Tune Continuous Gesture Recognition algorithm parameters" android:dependency="swipe_typing_enabled">
-      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_e_sigma" android:title="σₑ (E_SIGMA) - Euclidean Variance" android:summary="Euclidean distance sensitivity (%s)" android:defaultValue="200" min="50" max="500"/>
+      <Preference android:key="cgr_reset_optimal" android:title="🎯 Reset to Keyboard-Optimal Values" android:summary="Use values optimized for constrained keyboard gestures (not free drawing)"/>
+      <Preference android:key="cgr_reset_paper" android:title="📜 Reset to Paper Defaults" android:summary="Use original Kristensson &amp; Denby 2011 values for free drawing"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_e_sigma" android:title="σₑ (E_SIGMA) - Position Tolerance" android:summary="Lower for keyboard constraints (%s)" android:defaultValue="120" min="50" max="500"/>
       <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_beta" android:title="β (BETA) - Variance Ratio" android:summary="Distance variance ratio (%s)" android:defaultValue="400" min="100" max="800"/>
-      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_lambda" android:title="λ (LAMBDA) - Mixture Weight" android:summary="Euclidean vs turning angle balance (%s%%)" android:defaultValue="40" min="0" max="100"/>
-      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_kappa" android:title="κ (KAPPA) - End-Point Bias" android:summary="Complete template bias strength (%s)" android:defaultValue="10" min="0" max="50"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_lambda" android:title="λ (LAMBDA) - Distance Balance" android:summary="Higher for predictable keyboard positions (%s%%)" android:defaultValue="65" min="0" max="100"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_kappa" android:title="κ (KAPPA) - End-Point Bias" android:summary="Higher for specific key positions (%s)" android:defaultValue="25" min="0" max="50"/>
       <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_pt_spacing" android:title="Point Spacing" android:summary="Progressive segment density (%s)" android:defaultValue="200" min="100" max="1000"/>
       <juloo.keyboard2.prefs.IntSlideBarPreference android:key="cgr_max_resampling" android:title="Max Resampling Points" android:summary="Maximum gesture complexity (%s)" android:defaultValue="5000" min="1000" max="10000"/>
     </PreferenceScreen>

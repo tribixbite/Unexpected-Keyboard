@@ -32,11 +32,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class ContinuousGestureRecognizer
 {
-  // Configurable parameters (can be overridden from settings)
-  private double currentESigma = 200.0;
-  private double currentBeta = 400.0;
-  private double currentLambda = 0.4;
-  private double currentKappa = 1.0;
+  // Configurable parameters (KEYBOARD-OPTIMAL defaults, not paper defaults)
+  private double currentESigma = 120.0;  // Lower for keyboard constraints (was 200)
+  private double currentBeta = 400.0;    // Keep same variance ratio
+  private double currentLambda = 0.65;   // Higher Euclidean weight for predictable positions (was 0.4)
+  private double currentKappa = 2.5;     // Higher end-point bias for specific keys (was 1.0)
   
   // Default constants for fallback
   private static final double DEFAULT_E_SIGMA = 200.0;

@@ -2534,11 +2534,11 @@ public class SwipeCalibrationActivity extends Activity
         double lengthDifference = Math.abs(resultTemplateLength - userLength);
         double turningAngleDist = lengthDifference / Math.max(resultTemplateLength, userLength);
         
-        // CGR equation inputs
-        double eSigma = 200.0; // Default CGR parameter
-        double beta = 400.0;   // Default CGR parameter
-        double lambda = 0.4;   // Default CGR parameter
-        double kappa = 1.0;    // Default CGR parameter
+        // CGR equation inputs (KEYBOARD-OPTIMAL values)
+        double eSigma = 120.0; // Keyboard-optimal: lower position tolerance
+        double beta = 400.0;   // Keep same variance ratio
+        double lambda = 0.65;  // Keyboard-optimal: higher Euclidean weight
+        double kappa = 2.5;    // Keyboard-optimal: higher end-point bias
         
         // Distance function inputs
         double x_e = avgEuclideanDist;
