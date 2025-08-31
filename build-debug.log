@@ -20,7 +20,6 @@ Generated version info:  ()
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
 > Task :packageDebugResources
-> Task :mergeDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest FROM-CACHE
@@ -31,8 +30,9 @@ Generated version info:  ()
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :processDebugJavaRes NO-SOURCE
 > Task :parseDebugLocalResources
+> Task :processDebugJavaRes NO-SOURCE
+> Task :mergeDebugResources
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -82,18 +82,197 @@ Generated version info:  ()
                       ^
   symbol:   variable liveControlLayout
   location: class SwipeCalibrationActivity
-/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2554: error: cannot find symbol
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2552: error: cannot find symbol
       for (int i = 0; i < userSwipe.size(); i++) timestamps.add((long)i * 50); // Simulate for now
                           ^
   symbol:   variable userSwipe
   location: class SwipeCalibrationActivity
-/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2557: error: cannot find symbol
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2555: error: cannot find symbol
         traceAnalyzer.analyzeTrace(userSwipe, timestamps, word);
                                    ^
   symbol:   variable userSwipe
   location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2595: error: cannot find symbol
+      analysis.append(String.format("Total Distance: %.0f px\n", traceResult.totalDistance));
+                                                                 ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2596: error: cannot find symbol
+      analysis.append(String.format("  North: %.0f px (%.1f%%)\n", traceResult.northDistance, 
+                                                                   ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2597: error: cannot find symbol
+                     traceResult.northDistance / traceResult.totalDistance * 100));
+                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2597: error: cannot find symbol
+                     traceResult.northDistance / traceResult.totalDistance * 100));
+                                                 ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2598: error: cannot find symbol
+      analysis.append(String.format("  South: %.0f px (%.1f%%)\n", traceResult.southDistance, 
+                                                                   ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2599: error: cannot find symbol
+                     traceResult.southDistance / traceResult.totalDistance * 100));
+                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2599: error: cannot find symbol
+                     traceResult.southDistance / traceResult.totalDistance * 100));
+                                                 ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2600: error: cannot find symbol
+      analysis.append(String.format("  East: %.0f px (%.1f%%)\n", traceResult.eastDistance, 
+                                                                  ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2601: error: cannot find symbol
+                     traceResult.eastDistance / traceResult.totalDistance * 100));
+                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2601: error: cannot find symbol
+                     traceResult.eastDistance / traceResult.totalDistance * 100));
+                                                ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2602: error: cannot find symbol
+      analysis.append(String.format("  West: %.0f px (%.1f%%)\n", traceResult.westDistance, 
+                                                                  ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
 /data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2603: error: cannot find symbol
-        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(candidate, userSwipe, traceResult.detectedLetters);
+                     traceResult.westDistance / traceResult.totalDistance * 100));
+                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2603: error: cannot find symbol
+                     traceResult.westDistance / traceResult.totalDistance * 100));
+                                                ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2604: error: cannot find symbol
+      analysis.append(String.format("  Diagonal: %.0f px (%.1f%%)\n", traceResult.diagonalDistance, 
+                                                                      ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2605: error: cannot find symbol
+                     traceResult.diagonalDistance / traceResult.totalDistance * 100));
+                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2605: error: cannot find symbol
+                     traceResult.diagonalDistance / traceResult.totalDistance * 100));
+                                                    ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2608: error: cannot find symbol
+                     traceResult.boundingBox.width(), traceResult.boundingBox.height(), traceResult.boundingBoxArea));
+                                                                                        ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2608: error: package traceResult does not exist
+                     traceResult.boundingBox.width(), traceResult.boundingBox.height(), traceResult.boundingBoxArea));
+                                ^
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2608: error: package traceResult does not exist
+                     traceResult.boundingBox.width(), traceResult.boundingBox.height(), traceResult.boundingBoxArea));
+                                                                 ^
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2609: error: cannot find symbol
+      analysis.append(String.format("Aspect Ratio: %.3f\n", traceResult.aspectRatio));
+                                                            ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2611: error: cannot find symbol
+      analysis.append(String.format("\nStops: %d detected, avg %.0fms\n", traceResult.totalStops, traceResult.averageStopDuration));
+                                                                          ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2611: error: cannot find symbol
+      analysis.append(String.format("\nStops: %d detected, avg %.0fms\n", traceResult.totalStops, traceResult.averageStopDuration));
+                                                                                                  ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2612: error: cannot find symbol
+      analysis.append(String.format("Stopped Letters: %s\n", traceResult.stoppedLetters));
+                                                             ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2615: error: cannot find symbol
+                     traceResult.anglePoints.size(), traceResult.sharpAngles, traceResult.gentleAngles));
+                                                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2615: error: cannot find symbol
+                     traceResult.anglePoints.size(), traceResult.sharpAngles, traceResult.gentleAngles));
+                                                                              ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2615: error: package traceResult does not exist
+                     traceResult.anglePoints.size(), traceResult.sharpAngles, traceResult.gentleAngles));
+                                ^
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2616: error: cannot find symbol
+      analysis.append(String.format("Angle Letters: %s\n", traceResult.angleLetters));
+                                                           ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2618: error: cannot find symbol
+      analysis.append(String.format("\nDetected Letters: %s\n", traceResult.detectedLetters));
+                                                                ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2620: error: cannot find symbol
+                     traceResult.startLetter != null ? traceResult.startLetter : '?', traceResult.startAccuracy,
+                                                                                      ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2621: error: cannot find symbol
+                     traceResult.endLetter != null ? traceResult.endLetter : '?', traceResult.endAccuracy));
+                                                                                  ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2620: error: cannot find symbol
+                     traceResult.startLetter != null ? traceResult.startLetter : '?', traceResult.startAccuracy,
+                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2620: error: cannot find symbol
+                     traceResult.startLetter != null ? traceResult.startLetter : '?', traceResult.startAccuracy,
+                                                       ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2621: error: cannot find symbol
+                     traceResult.endLetter != null ? traceResult.endLetter : '?', traceResult.endAccuracy));
+                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2621: error: cannot find symbol
+                     traceResult.endLetter != null ? traceResult.endLetter : '?', traceResult.endAccuracy));
+                                                     ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2624: error: cannot find symbol
+      analysis.append(String.format("Overall Confidence: %.3f\n", traceResult.overallConfidence));
+                                                                  ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2625: error: cannot find symbol
+      analysis.append(String.format("Gesture Complexity: %.3f\n", traceResult.gestureComplexity));
+                                                                  ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2626: error: cannot find symbol
+      analysis.append(String.format("Recognition Difficulty: %.3f\n", traceResult.recognitionDifficulty));
+                                                                      ^
+  symbol:   variable traceResult
+  location: class SwipeCalibrationActivity
+/data/data/com.termux/files/home/git/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeCalibrationActivity.java:2685: error: cannot find symbol
+        KeyboardSwipeRecognizer.RecognitionResult score = debugRecognizer.getDetailedScore(candidate, userSwipe, userTraceResult.detectedLetters);
                                                                                                       ^
   symbol:   variable userSwipe
   location: class SwipeCalibrationActivity
@@ -101,7 +280,7 @@ Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-10 errors
+47 errors
 
 > Task :compileDebugJavaWithJavac FAILED
 
@@ -115,5 +294,5 @@ Execution failed for task ':compileDebugJavaWithJavac'.
 > Run with --info option to get more log output.
 > Run with --scan to get full insights.
 
-BUILD FAILED in 28s
+BUILD FAILED in 13s
 28 actionable tasks: 18 executed, 10 from cache
