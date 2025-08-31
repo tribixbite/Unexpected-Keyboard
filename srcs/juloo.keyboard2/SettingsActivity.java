@@ -572,7 +572,7 @@ public class SettingsActivity extends PreferenceActivity
     // Set keyboard-optimal values (for constrained 'follow the dotted line' gestures)
     editor.putInt("cgr_e_sigma", 120);   // Lower position tolerance (0-500 range)
     editor.putInt("cgr_lambda", 65);     // Higher Euclidean weight (0-100% range)
-    editor.putInt("cgr_kappa", 25);      // Higher end-point bias = 2.5 (0-10.0 range)
+    editor.putInt("cgr_kappa", 20);      // Moderate end-point bias = 2.0 (was 2.5, user had 10.0!)
     editor.putInt("cgr_beta", 400);      // Keep variance ratio (100-800 range)
     editor.putInt("cgr_length_filter", 80); // Strict length matching for keyboard (0-100% range)
     editor.apply();

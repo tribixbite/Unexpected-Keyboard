@@ -582,17 +582,25 @@ public class ContinuousGestureRecognizer
   }
   
   /**
-   * Center points at origin without resizing (paper's translation-only normalization)
+   * Complete normalization per research paper (centering + bounding box scaling)
    */
-  private void centerAtOrigin(List<Point> pts)
+  private void normalizeCompletely(List<Point> pts)
   {
     if (pts.isEmpty()) return;
     
-    // Calculate centroid
+    // Step 1: Calculate centroid and translate to origin
     Centroid centroid = getCentroid(pts);
-    
-    // Translate all points so centroid is at origin
     translate(pts, -centroid.x, -centroid.y);
+    
+    // Step 2: Scale to unit bounding box (CRITICAL - was missing!)
+    Rect bounds = getBoundingBox(pts);
+    double maxDimension = Math.max(bounds.width, bounds.height);
+    
+    if (maxDimension > 0)
+    {
+      double scaleFactor = 1.0 / maxDimension; // Scale to unit bounding box
+      scale(pts, scaleFactor, scaleFactor);
+    }
   }
   
   /**
@@ -805,9 +813,9 @@ public class ContinuousGestureRecognizer
       List<Point> centeredUser = deepCopyPts(userResampledToTemplate);
       List<Point> centeredTemplate = deepCopyPts(templatePts);
       
-      // Center both at origin (translate centroids to 0,0) - no resizing needed
-      centerAtOrigin(centeredUser);
-      centerAtOrigin(centeredTemplate);
+      // Complete normalization per research paper (centering + unit bounding box)
+      normalizeCompletely(centeredUser);
+      normalizeCompletely(centeredTemplate);
       
       double prob = getLikelihoodOfMatch(centeredUser, centeredTemplate, e_sigma, e_sigma / beta, lambda);
       
