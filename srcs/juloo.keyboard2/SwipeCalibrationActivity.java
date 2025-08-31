@@ -2403,7 +2403,7 @@ public class SwipeCalibrationActivity extends Activity
       _comparisonData.append(comparison);
       
       // Update main CGR analysis display (top section)
-      updateCGRAnalysisDisplay(word, results, templateLength, userLength);
+      updateCGRAnalysisDisplay(word, results, templateLength, userLength, userPoints);
       
       // Update detailed comparison display (bottom section)
       String[] entries = _comparisonData.toString().split("----------------------------------------");
@@ -2486,7 +2486,8 @@ public class SwipeCalibrationActivity extends Activity
    * Update the CGR analysis display in the top section after each swipe
    */
   private void updateCGRAnalysisDisplay(String word, List<ContinuousGestureRecognizer.Result> results, 
-                                       double templateLength, double userLength)
+                                       double templateLength, double userLength, 
+                                       List<ContinuousGestureRecognizer.Point> userPoints)
   {
     StringBuilder analysis = new StringBuilder();
     analysis.append("=== WORD: ").append(word.toUpperCase()).append(" ===\n");
@@ -2507,15 +2508,64 @@ public class SwipeCalibrationActivity extends Activity
       analysis.append(String.format("Confidence: %.1f%%\n", topResult.prob * 100));
       analysis.append(String.format("Target: %s | Got: %s\n\n", word, topResult.template.id));
       
-      // Top 3 predictions with clean formatting
-      analysis.append("TOP 3 PREDICTIONS:\n");
-      analysis.append("Rank | Word      | Confidence\n");
-      analysis.append("-----|-----------|----------\n");
+      // Top 3 predictions with ALGORITHM METRICS
+      analysis.append("TOP 3 PREDICTIONS (with algorithm inputs):\n");
+      analysis.append("==========================================\n");
       for (int i = 0; i < Math.min(3, results.size()); i++)
       {
         ContinuousGestureRecognizer.Result result = results.get(i);
-        analysis.append(String.format(" %d   | %-9s | %6.2f%%\n", 
-                       i + 1, result.template.id, result.prob * 100));
+        double resultTemplateLength = calculatePathLength(result.template.pts);
+        
+        analysis.append(String.format("#%d: %s (Final: %.3f = %.1f%%)\n", 
+                       i + 1, result.template.id, result.prob, result.prob * 100));
+        
+        // Calculate raw algorithm inputs for this prediction
+        ContinuousGestureRecognizer.Point templateStart = result.template.pts.get(0);
+        ContinuousGestureRecognizer.Point templateEnd = result.template.pts.get(result.template.pts.size() - 1);
+        
+        // Euclidean distance factors
+        double startDist = Math.sqrt((templateStart.x - userPoints.get(0).x) * (templateStart.x - userPoints.get(0).x) + 
+                                    (templateStart.y - userPoints.get(0).y) * (templateStart.y - userPoints.get(0).y));
+        double endDist = Math.sqrt((templateEnd.x - userPoints.get(userPoints.size()-1).x) * (templateEnd.x - userPoints.get(userPoints.size()-1).x) + 
+                                  (templateEnd.y - userPoints.get(userPoints.size()-1).y) * (templateEnd.y - userPoints.get(userPoints.size()-1).y));
+        double avgEuclideanDist = (startDist + endDist) / 2.0;
+        
+        // Turning angle factor (simplified)
+        double lengthDifference = Math.abs(resultTemplateLength - userLength);
+        double turningAngleDist = lengthDifference / Math.max(resultTemplateLength, userLength);
+        
+        // CGR equation inputs
+        double eSigma = 200.0; // Default CGR parameter
+        double beta = 400.0;   // Default CGR parameter
+        double lambda = 0.4;   // Default CGR parameter
+        double kappa = 1.0;    // Default CGR parameter
+        
+        // Distance function inputs
+        double x_e = avgEuclideanDist;
+        double x_a = turningAngleDist;
+        double sigma_e = eSigma;
+        double sigma_a = eSigma / beta;
+        
+        // Likelihood calculation
+        double likelihood = Math.exp(-(x_e * x_e / (sigma_e * sigma_e) * lambda + 
+                                      x_a * x_a / (sigma_a * sigma_a) * (1 - lambda)));
+        
+        // End-point bias calculation
+        double x = 1 - likelihood;
+        double endPointBias = 1 + kappa * Math.exp(-x * x);
+        
+        analysis.append(String.format("  Algorithm Inputs:\n"));
+        analysis.append(String.format("    x_e (Euclidean): %.2f\n", x_e));
+        analysis.append(String.format("    x_a (Turn angle): %.4f\n", x_a));
+        analysis.append(String.format("    σₑ (E_sigma): %.1f\n", sigma_e));
+        analysis.append(String.format("    σₐ (A_sigma): %.2f\n", sigma_a));
+        analysis.append(String.format("    λ (Lambda): %.1f\n", lambda));
+        analysis.append(String.format("    κ (Kappa): %.1f\n", kappa));
+        analysis.append(String.format("  Calculations:\n"));
+        analysis.append(String.format("    Likelihood: %.6f\n", likelihood));
+        analysis.append(String.format("    End-point bias: %.3f\n", endPointBias));
+        analysis.append(String.format("    Final = Likelihood × Bias = %.6f\n", likelihood * endPointBias));
+        analysis.append("  ----------------------------------------\n");
       }
       
       // Gesture analysis
