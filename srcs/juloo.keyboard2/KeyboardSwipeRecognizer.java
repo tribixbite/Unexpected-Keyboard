@@ -1,6 +1,7 @@
 package juloo.keyboard2;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.PointF;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,23 +45,65 @@ public class KeyboardSwipeRecognizer
   
   public KeyboardSwipeRecognizer(Context context)
   {
-    templateGenerator = new WordGestureTemplateGenerator();
-    templateGenerator.loadDictionary(context);
-    
-    try 
+    try
     {
-      bigramModel = new BigramModel();
-      ngramModel = new NgramModel();
-      userAdaptation = UserAdaptationManager.getInstance(context);
-      weightConfig = SwipeWeightConfig.getInstance(context);
-      gaussianModel = new GaussianKeyModel();
+      templateGenerator = new WordGestureTemplateGenerator();
+      templateGenerator.loadDictionary(context);
+      android.util.Log.d("KeyboardSwipeRecognizer", "Template generator initialized");
     }
     catch (Exception e)
     {
-      android.util.Log.w("KeyboardSwipeRecognizer", "Some components failed to initialize: " + e.getMessage());
+      android.util.Log.e("KeyboardSwipeRecognizer", "Template generator failed: " + e.getMessage());
+      templateGenerator = null;
     }
     
-    android.util.Log.d("KeyboardSwipeRecognizer", "Initialized keyboard-specific recognition algorithm");
+    // Initialize components with error handling
+    try { bigramModel = new BigramModel(); } 
+    catch (Exception e) { android.util.Log.w("KeyboardSwipeRecognizer", "BigramModel failed: " + e.getMessage()); }
+    
+    try { ngramModel = new NgramModel(); } 
+    catch (Exception e) { android.util.Log.w("KeyboardSwipeRecognizer", "NgramModel failed: " + e.getMessage()); }
+    
+    try { userAdaptation = UserAdaptationManager.getInstance(context); } 
+    catch (Exception e) { android.util.Log.w("KeyboardSwipeRecognizer", "UserAdaptation failed: " + e.getMessage()); }
+    
+    try { weightConfig = SwipeWeightConfig.getInstance(context); } 
+    catch (Exception e) { android.util.Log.w("KeyboardSwipeRecognizer", "WeightConfig failed: " + e.getMessage()); }
+    
+    try { gaussianModel = new GaussianKeyModel(); } 
+    catch (Exception e) { android.util.Log.w("KeyboardSwipeRecognizer", "GaussianModel failed: " + e.getMessage()); }
+    
+    // Load weights from settings
+    loadWeightsFromSettings(context);
+    
+    android.util.Log.d("KeyboardSwipeRecognizer", "Keyboard-specific recognition algorithm initialized (with error handling)");
+  }
+  
+  /**
+   * Load algorithm weights from settings
+   */
+  private void loadWeightsFromSettings(Context context)
+  {
+    try
+    {
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+      
+      // Load new algorithm weights
+      proximityWeight = prefs.getInt("proximity_weight", 100) / 100.0;
+      missingKeyPenalty = prefs.getInt("missing_key_penalty", 1000) / 100.0;
+      extraKeyPenalty = prefs.getInt("extra_key_penalty", 200) / 100.0;
+      orderPenalty = prefs.getInt("order_penalty", 500) / 100.0;
+      startPointWeight = prefs.getInt("start_point_weight", 300) / 100.0;
+      keyZoneRadius = prefs.getInt("key_zone_radius", 120);
+      pathSampleDistance = prefs.getInt("path_sample_distance", 10);
+      
+      android.util.Log.d("KeyboardSwipeRecognizer", String.format("Weights loaded: prox=%.2f, miss=%.2f, extra=%.2f, order=%.2f, start=%.2f, zone=%.0f, sample=%.0f",
+                        proximityWeight, missingKeyPenalty, extraKeyPenalty, orderPenalty, startPointWeight, keyZoneRadius, pathSampleDistance));
+    }
+    catch (Exception e)
+    {
+      android.util.Log.w("KeyboardSwipeRecognizer", "Failed to load settings, using defaults: " + e.getMessage());
+    }
   }
   
   /**
@@ -180,14 +223,20 @@ public class KeyboardSwipeRecognizer
   }
   
   /**
-   * Find nearest key to a point (within key zone radius)
+   * Find nearest key to a point (within key zone radius) - ROBUST
    */
   private Character getNearestKey(PointF point)
   {
+    if (templateGenerator == null)
+    {
+      android.util.Log.w("KeyboardSwipeRecognizer", "Template generator null - cannot detect keys");
+      return null;
+    }
+    
     double minDistance = Double.MAX_VALUE;
     Character nearestKey = null;
     
-    // Check all keyboard letters (would use actual key positions)
+    // Check all keyboard letters
     String allLetters = "qwertyuiopasdfghjklzxcvbnm";
     for (char c : allLetters.toCharArray())
     {
@@ -196,6 +245,13 @@ public class KeyboardSwipeRecognizer
       {
         double distance = Math.sqrt(Math.pow(point.x - keyCenter.x, 2) + Math.pow(point.y - keyCenter.y, 2));
         
+        // DEBUG: Log distance calculations for troubleshooting
+        if (distance <= keyZoneRadius * 2) // Log nearby keys
+        {
+          android.util.Log.v("KeyboardSwipeRecognizer", String.format("Point (%.0f,%.0f) to key '%c' at (%.0f,%.0f) = %.0f px", 
+                            point.x, point.y, c, keyCenter.x, keyCenter.y, distance));
+        }
+        
         // Only consider if within key zone radius
         if (distance <= keyZoneRadius && distance < minDistance)
         {
@@ -203,6 +259,16 @@ public class KeyboardSwipeRecognizer
           nearestKey = c;
         }
       }
+      else
+      {
+        android.util.Log.v("KeyboardSwipeRecognizer", "No coordinate for key '" + c + "'");
+      }
+    }
+    
+    if (nearestKey != null)
+    {
+      android.util.Log.d("KeyboardSwipeRecognizer", String.format("Point (%.0f,%.0f) → key '%c' (distance %.0f)", 
+                        point.x, point.y, nearestKey, minDistance));
     }
     
     return nearestKey;

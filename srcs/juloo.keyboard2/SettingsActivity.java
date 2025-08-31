@@ -530,8 +530,8 @@ public class SettingsActivity extends PreferenceActivity
    */
   private void setupCGRResetButtons()
   {
-    // Reset to Keyboard-Optimal Values button
-    Preference resetOptimalPref = findPreference("cgr_reset_optimal");
+    // Reset to Optimal Values button
+    Preference resetOptimalPref = findPreference("swipe_reset_optimal");
     if (resetOptimalPref != null)
     {
       resetOptimalPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
@@ -539,22 +539,22 @@ public class SettingsActivity extends PreferenceActivity
         @Override
         public boolean onPreferenceClick(Preference preference)
         {
-          resetToKeyboardOptimal();
+          resetToSwipeOptimal();
           return true;
         }
       });
     }
     
-    // Reset to Paper Defaults button  
-    Preference resetPaperPref = findPreference("cgr_reset_paper");
-    if (resetPaperPref != null)
+    // Reset to Strict Values button  
+    Preference resetStrictPref = findPreference("swipe_reset_strict");
+    if (resetStrictPref != null)
     {
-      resetPaperPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      resetStrictPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
       {
         @Override
         public boolean onPreferenceClick(Preference preference)
         {
-          resetToPaperDefaults();
+          resetToSwipeStrict();
           return true;
         }
       });
@@ -562,47 +562,51 @@ public class SettingsActivity extends PreferenceActivity
   }
   
   /**
-   * Reset CGR parameters to keyboard-optimal values
+   * Reset to balanced keyboard swipe recognition values
    */
-  private void resetToKeyboardOptimal()
+  private void resetToSwipeOptimal()
   {
     SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
     SharedPreferences.Editor editor = prefs.edit();
     
-    // Set keyboard-optimal values (for constrained 'follow the dotted line' gestures)
-    editor.putInt("cgr_e_sigma", 120);   // Lower position tolerance (0-500 range)
-    editor.putInt("cgr_lambda", 65);     // Higher Euclidean weight (0-100% range)
-    editor.putInt("cgr_kappa", 20);      // Moderate end-point bias = 2.0 (was 2.5, user had 10.0!)
-    editor.putInt("cgr_beta", 400);      // Keep variance ratio (100-800 range)
-    editor.putInt("cgr_length_filter", 80); // Strict length matching for keyboard (0-100% range)
+    // Set balanced values for keyboard gesture recognition
+    editor.putInt("proximity_weight", 100);      // Balanced proximity requirement
+    editor.putInt("missing_key_penalty", 1000);  // Strong penalty for missing letters (10.0)
+    editor.putInt("extra_key_penalty", 200);     // Moderate penalty for extra letters (2.0)
+    editor.putInt("order_penalty", 500);         // Moderate order enforcement (5.0)
+    editor.putInt("start_point_weight", 300);    // Strong start emphasis (3.0)
+    editor.putInt("key_zone_radius", 120);       // Large detection area
+    editor.putInt("path_sample_distance", 10);   // Frequent sampling
     editor.apply();
     
     // Force UI refresh
     recreate();
     
-    Toast.makeText(this, "Reset to keyboard-optimal values", Toast.LENGTH_SHORT).show();
+    Toast.makeText(this, "Reset to optimal keyboard recognition values", Toast.LENGTH_SHORT).show();
   }
   
   /**
-   * Reset CGR parameters to paper defaults
+   * Reset to strict keyboard swipe recognition values
    */
-  private void resetToPaperDefaults()
+  private void resetToSwipeStrict()
   {
     SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
     SharedPreferences.Editor editor = prefs.edit();
     
-    // Set original paper values (for unconstrained free drawing context)
-    editor.putInt("cgr_e_sigma", 200);   // Original paper value (0-500 range)
-    editor.putInt("cgr_lambda", 40);     // Original paper value (0-100% range)
-    editor.putInt("cgr_kappa", 10);      // Original paper value = 1.0 (0-10.0 range)
-    editor.putInt("cgr_beta", 400);      // Keep variance ratio (100-800 range)
-    editor.putInt("cgr_length_filter", 40); // Lenient length matching for free drawing (0-100% range)
+    // Set strict values for precise recognition
+    editor.putInt("proximity_weight", 200);      // High proximity requirement
+    editor.putInt("missing_key_penalty", 1500);  // Very strong penalty for missing letters (15.0)
+    editor.putInt("extra_key_penalty", 500);     // Higher penalty for extra letters (5.0)
+    editor.putInt("order_penalty", 1000);        // Strict order enforcement (10.0)
+    editor.putInt("start_point_weight", 500);    // Very strong start emphasis (5.0)
+    editor.putInt("key_zone_radius", 80);        // Smaller detection area (precise)
+    editor.putInt("path_sample_distance", 5);    // Very frequent sampling
     editor.apply();
     
     // Force UI refresh
     recreate();
     
-    Toast.makeText(this, "Reset to paper default values", Toast.LENGTH_SHORT).show();
+    Toast.makeText(this, "Reset to strict recognition values", Toast.LENGTH_SHORT).show();
   }
   
   @Override

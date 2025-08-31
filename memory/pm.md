@@ -30,10 +30,38 @@
 - **Calibration framework**: Testing infrastructure preserved ✅
 
 ### CURRENT STATUS:
-- **KeyboardSwipeRecognizer** ready for testing
-- **Calibration activity** updated to use new algorithm
-- **All CGR calls replaced** with keyboard-specific recognition
-- **Ready for accuracy testing** against failed CGR baseline
+- **KeyboardSwipeRecognizer** framework implemented but not fully functional
+- **Calibration activity** updated to use new algorithm but crashes
+- **UI cleanup** completed (removed useless metrics)
+- **Outstanding implementation work** preventing testing
+
+## OUTSTANDING IMPLEMENTATION TASKS
+
+### 1. Update CGR Settings Pages to New Algorithm Weights
+- Replace CGR parameters (σₑ, β, λ, κ) with KeyboardSwipeRecognizer weights
+- proximityWeight, missingKeyPenalty, extraKeyPenalty, orderPenalty, startPointWeight  
+- Update settings.xml for new weight system
+- Connect settings to new algorithm parameters
+
+### 2. Fix Force Close Bug in Calibration
+- App crashes when opening calibration page
+- Likely due to incomplete algorithm integration
+- Need proper error handling and initialization
+- Missing component integration causing crashes
+
+### 3. Complete Algorithm Implementation
+- Letter detection pipeline not functional
+- Candidate generation failing  
+- All words showing "No recognition results"
+- Need comprehensive debugging and fixes
+
+### 4. Settings Integration
+- New algorithm not reading user-configured weights
+- Settings changes not affecting new recognition system
+- Parameter loading/saving system needs update
+
+### RULE: NO BUILDING UNTIL ALL IMPLEMENTATION COMPLETE
+Stop building and testing until all outstanding implementation work finished.
 
 ## Project Overview
 Unexpected Keyboard is a lightweight, privacy-conscious virtual keyboard for Android with advanced swipe typing capabilities powered by machine learning.
