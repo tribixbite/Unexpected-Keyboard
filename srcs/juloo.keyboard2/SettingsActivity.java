@@ -17,7 +17,8 @@ import juloo.keyboard2.ml.SwipeMLDataStore;
 import juloo.keyboard2.ml.SwipeMLTrainer;
 import android.app.ProgressDialog;
 
-public class SettingsActivity extends PreferenceActivity
+public class SettingsActivity extends PreferenceActivity 
+  implements SharedPreferences.OnSharedPreferenceChangeListener
 {
   @Override
   public void onCreate(Bundle savedInstanceState)
@@ -33,6 +34,9 @@ public class SettingsActivity extends PreferenceActivity
     }
     catch (Exception _e) { fallbackEncrypted(); return; }
     addPreferencesFromResource(R.xml.settings);
+
+    // Add CGR reset button handlers
+    setupCGRResetButtons();
 
     boolean foldableDevice = FoldStateTracker.isFoldableDevice(this);
     findPreference("margin_bottom_portrait_unfolded").setEnabled(foldableDevice);
@@ -518,5 +522,97 @@ public class SettingsActivity extends PreferenceActivity
       .copy_preferences_to_protected_storage(this,
           getPreferenceManager().getSharedPreferences());
     super.onStop();
+  }
+  
+  /**
+   * Setup CGR reset button functionality
+   */
+  private void setupCGRResetButtons()
+  {
+    // Reset to Keyboard-Optimal Values button
+    Preference resetOptimalPref = findPreference("cgr_reset_optimal");
+    if (resetOptimalPref != null)
+    {
+      resetOptimalPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          resetToKeyboardOptimal();
+          return true;
+        }
+      });
+    }
+    
+    // Reset to Paper Defaults button  
+    Preference resetPaperPref = findPreference("cgr_reset_paper");
+    if (resetPaperPref != null)
+    {
+      resetPaperPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          resetToPaperDefaults();
+          return true;
+        }
+      });
+    }
+  }
+  
+  /**
+   * Reset CGR parameters to keyboard-optimal values
+   */
+  private void resetToKeyboardOptimal()
+  {
+    SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+    SharedPreferences.Editor editor = prefs.edit();
+    
+    // Set keyboard-optimal values
+    editor.putInt("cgr_e_sigma", 120);   // Lower position tolerance
+    editor.putInt("cgr_lambda", 65);     // Higher Euclidean weight  
+    editor.putInt("cgr_kappa", 25);      // Higher end-point bias (2.5)
+    editor.putInt("cgr_beta", 400);      // Keep variance ratio
+    editor.apply();
+    
+    // Force UI refresh
+    recreate();
+    
+    Toast.makeText(this, "Reset to keyboard-optimal values", Toast.LENGTH_SHORT).show();
+  }
+  
+  /**
+   * Reset CGR parameters to paper defaults
+   */
+  private void resetToPaperDefaults()
+  {
+    SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+    SharedPreferences.Editor editor = prefs.edit();
+    
+    // Set original paper values
+    editor.putInt("cgr_e_sigma", 200);   // Original paper value
+    editor.putInt("cgr_lambda", 40);     // Original paper value
+    editor.putInt("cgr_kappa", 10);      // Original paper value (1.0)
+    editor.putInt("cgr_beta", 400);      // Keep variance ratio
+    editor.apply();
+    
+    // Force UI refresh
+    recreate();
+    
+    Toast.makeText(this, "Reset to paper default values", Toast.LENGTH_SHORT).show();
+  }
+  
+  @Override
+  public void onSharedPreferenceChanged(SharedPreferences prefs, String key)
+  {
+    // Trigger CGR parameter reload when settings change
+    if (key != null && key.startsWith("cgr_"))
+    {
+      android.util.Log.d("SettingsActivity", "CGR parameter changed: " + key);
+      // TODO: Trigger template regeneration in running keyboard service
+      Toast.makeText(this, "CGR parameter updated: " + key, Toast.LENGTH_SHORT).show();
+    }
+    
+    // No super call needed for interface method
   }
 }

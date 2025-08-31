@@ -3,6 +3,7 @@ package juloo.keyboard2;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PointF;
+import juloo.keyboard2.DirectBootAwarePreferences;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -869,15 +870,38 @@ public class ContinuousGestureRecognizer
     // FIX: Don't normalize input here - normalize during comparison per paper's approach
     List<Point> unkPts = deepCopyPts(input);
     
+    // KEYBOARD OPTIMIZATION: Pre-filter by length before expensive recognition
+    double userGestureLength = getSpatialLength(unkPts);
+    List<List<Pattern>> lengthFilteredPartitions = new ArrayList<>();
+    
+    for (List<Pattern> partition : patternPartitions)
+    {
+      List<Pattern> lengthFiltered = new ArrayList<>();
+      for (Pattern pattern : partition)
+      {
+        double templateLength = getSpatialLength(pattern.template.pts);
+        double lengthRatio = Math.min(templateLength, userGestureLength) / Math.max(templateLength, userGestureLength);
+        
+        // Only process templates with reasonable length similarity (keyboard constraint)
+        if (lengthRatio > 0.4) // Must be within 60% length similarity
+        {
+          lengthFiltered.add(pattern);
+        }
+      }
+      lengthFilteredPartitions.add(lengthFiltered);
+    }
+    
     // Use permanent partitions (no copying) for memory efficiency
     List<Future<List<IncrementalResult>>> futures = new ArrayList<>();
     
-    android.util.Log.d("CGR", "Processing " + patterns.size() + " patterns using " + patternPartitions.size() + " permanent partitions");
+    int totalCandidates = lengthFilteredPartitions.stream().mapToInt(List::size).sum();
+    android.util.Log.d("CGR", "Length-filtered " + patterns.size() + " to " + totalCandidates + 
+                      " candidates (user length: " + String.format("%.0f", userGestureLength) + ")");
     
-    // Submit each partition to thread pool (no data copying)
-    for (int i = 0; i < patternPartitions.size(); i++)
+    // Submit each filtered partition to thread pool (no data copying)
+    for (int i = 0; i < lengthFilteredPartitions.size(); i++)
     {
-      final List<Pattern> partition = patternPartitions.get(i);
+      final List<Pattern> partition = lengthFilteredPartitions.get(i);
       final int partitionId = i;
       
       Future<List<IncrementalResult>> future = parallelExecutor.submit(() -> {
@@ -977,7 +1001,8 @@ public class ContinuousGestureRecognizer
   {
     try
     {
-      SharedPreferences prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
+      // Use DirectBootAwarePreferences to match settings system
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
       
       // Load CGR algorithm parameters with immediate effect
       currentESigma = prefs.getInt("cgr_e_sigma", 120);  // Keyboard-optimal default

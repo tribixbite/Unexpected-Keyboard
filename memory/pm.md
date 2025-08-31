@@ -1,5 +1,30 @@
 # Project Management - Unexpected Keyboard
 
+## CRITICAL CGR FIXES - TOP PRIORITY
+
+### 1. Fix Settings Integration
+- Settings storage mismatch - CGR looks for "settings" SharedPreferences  
+- No real-time updates - Parameters not reloaded when settings change
+- Preference key mismatch - Settings use different keys than CGR expects
+
+### 2. Implement Reset Button Functionality  
+- Reset buttons don't work - Make them actually set values
+- "Reset to Keyboard-Optimal" button needs to set: σₑ=120, λ=65%, κ=2.5
+- "Reset to Paper Defaults" button needs to set: σₑ=200, λ=40%, κ=1.0
+- Changes must apply immediately with template regeneration
+
+### 3. Add Real-time Parameter Updates
+- Settings changes must trigger immediate CGR parameter reload
+- Template regeneration when parameters change
+- Live parameter effect during calibration testing
+- Settings UI must reflect actual values being used
+
+### 4. Force Length Matching Priority
+- Length ratios 0.037, 0.160, 0.222 are terrible (should be ~1.0)
+- WINE (1381px) matches user (1513px) but gets "ass" (108px) instead
+- Heavily weight similar-length templates in recognition
+- Add length-based pre-filtering before CGR recognition
+
 ## Project Overview
 Unexpected Keyboard is a lightweight, privacy-conscious virtual keyboard for Android with advanced swipe typing capabilities powered by machine learning.
 
