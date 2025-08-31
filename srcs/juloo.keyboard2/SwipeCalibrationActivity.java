@@ -2295,6 +2295,11 @@ public class SwipeCalibrationActivity extends Activity
       // Set DYNAMIC keyboard dimensions for template generation
       _templateGenerator.setKeyboardDimensions(keyboardWidth, keyboardHeight);
       
+      // FORCE: Reload CGR parameters from settings on each swipe to test changes
+      android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+      int lengthFilter = prefs.getInt("cgr_length_filter", 70);
+      android.util.Log.d(TAG, "FORCE RELOAD: Length filter = " + lengthFilter + "%");
+      
       for (PointF p : userSwipe)
       {
         // NO TRANSFORMATION NEEDED - both template and user in same screen coordinate space
@@ -2304,11 +2309,15 @@ public class SwipeCalibrationActivity extends Activity
       // FULL CGR TESTING: Use same 3000 template set as normal keyboard
       ContinuousGestureRecognizer cgr = new ContinuousGestureRecognizer();
       
+      // FORCE: Apply current settings to CGR instance 
+      cgr.loadParametersFromPreferences(this);
+      
       // Generate FULL template set (same as normal keyboard) 
       List<ContinuousGestureRecognizer.Template> fullTemplates = 
         _templateGenerator.generateBalancedWordTemplates(3000);
       
       android.util.Log.d(TAG, "Testing CGR with FULL " + fullTemplates.size() + " templates (same as normal keyboard)");
+      android.util.Log.d(TAG, "CGR using length filter: " + lengthFilter + "% - should eliminate poor matches");
       
       cgr.setTemplateSet(fullTemplates);
       List<ContinuousGestureRecognizer.Result> results = cgr.recognize(userPoints);

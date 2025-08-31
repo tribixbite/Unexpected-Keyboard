@@ -568,12 +568,12 @@ public class SettingsActivity extends PreferenceActivity
     SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
     SharedPreferences.Editor editor = prefs.edit();
     
-    // Set keyboard-optimal values
-    editor.putInt("cgr_e_sigma", 120);   // Lower position tolerance
-    editor.putInt("cgr_lambda", 65);     // Higher Euclidean weight  
-    editor.putInt("cgr_kappa", 25);      // Higher end-point bias (2.5)
-    editor.putInt("cgr_beta", 400);      // Keep variance ratio
-    editor.putInt("cgr_length_filter", 80); // Strict length matching for keyboard
+    // Set keyboard-optimal values (for constrained 'follow the dotted line' gestures)
+    editor.putInt("cgr_e_sigma", 120);   // Lower position tolerance (0-500 range)
+    editor.putInt("cgr_lambda", 65);     // Higher Euclidean weight (0-100% range)
+    editor.putInt("cgr_kappa", 25);      // Higher end-point bias = 2.5 (0-10.0 range)
+    editor.putInt("cgr_beta", 400);      // Keep variance ratio (100-800 range)
+    editor.putInt("cgr_length_filter", 80); // Strict length matching for keyboard (0-100% range)
     editor.apply();
     
     // Force UI refresh
@@ -590,12 +590,12 @@ public class SettingsActivity extends PreferenceActivity
     SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
     SharedPreferences.Editor editor = prefs.edit();
     
-    // Set original paper values
-    editor.putInt("cgr_e_sigma", 200);   // Original paper value
-    editor.putInt("cgr_lambda", 40);     // Original paper value
-    editor.putInt("cgr_kappa", 10);      // Original paper value (1.0)
-    editor.putInt("cgr_beta", 400);      // Keep variance ratio
-    editor.putInt("cgr_length_filter", 40); // Lenient length matching for free drawing
+    // Set original paper values (for unconstrained free drawing context)
+    editor.putInt("cgr_e_sigma", 200);   // Original paper value (0-500 range)
+    editor.putInt("cgr_lambda", 40);     // Original paper value (0-100% range)
+    editor.putInt("cgr_kappa", 10);      // Original paper value = 1.0 (0-10.0 range)
+    editor.putInt("cgr_beta", 400);      // Keep variance ratio (100-800 range)
+    editor.putInt("cgr_length_filter", 40); // Lenient length matching for free drawing (0-100% range)
     editor.apply();
     
     // Force UI refresh
