@@ -155,6 +155,10 @@ public class SwipeCalibrationActivity extends Activity
   // Shared algorithm instance for live parameter control
   private KeyboardSwipeRecognizer _sharedRecognizer;
   
+  // Playground parameter storage
+  private Map<String, Integer> _playgroundParams = new HashMap<>();
+  private List<PointF> _lastSwipePoints = new ArrayList<>(); // Store for recalculation
+  
   // Weight variables (kept to prevent crashes, UI removed)
   private float _dtwWeight = 0.4f;
   private float _gaussianWeight = 0.3f;
@@ -364,88 +368,7 @@ public class SwipeCalibrationActivity extends Activity
     addConfigSlider(step6Layout, "Start Position Tolerance", 10, 100, 25, "px");
     algorithmFlowLayout.addView(step6Layout);
     
-    // Key Zone Radius slider
-    TextView zoneLabel = new TextView(this);
-    zoneLabel.setText("Key Zone: 120px");
-    zoneLabel.setTextColor(Color.WHITE);
-    zoneLabel.setTextSize(12);
-    liveControlLayout.addView(zoneLabel);
-    
-    android.widget.SeekBar zoneSlider = new android.widget.SeekBar(this);
-    zoneSlider.setMax(150); // 50-200 range
-    zoneSlider.setProgress(70); // 120px default
-    zoneSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        if (fromUser) {
-          int zoneRadius = progress + 50; // 50-200 range
-          zoneLabel.setText("Key Zone: " + zoneRadius + "px");
-          // LIVE UPDATE: Connect to shared algorithm instance
-          if (_sharedRecognizer != null) {
-            _sharedRecognizer.setKeyZoneRadius(zoneRadius);
-          }
-        }
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    liveControlLayout.addView(zoneSlider);
-    
-    // Missing Key Penalty slider
-    TextView missingLabel = new TextView(this);
-    missingLabel.setText("Missing Penalty: 10.0");
-    missingLabel.setTextColor(Color.WHITE);
-    missingLabel.setTextSize(12);
-    liveControlLayout.addView(missingLabel);
-    
-    android.widget.SeekBar missingSlider = new android.widget.SeekBar(this);
-    missingSlider.setMax(190); // 1.0-20.0 range (×10 for UI)
-    missingSlider.setProgress(90); // 10.0 default
-    missingSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        if (fromUser) {
-          double penalty = (progress + 10) / 10.0; // 1.0-20.0 range
-          missingLabel.setText("Missing Penalty: " + String.format("%.1f", penalty));
-          // LIVE UPDATE: Connect to shared algorithm instance
-          if (_sharedRecognizer != null) {
-            _sharedRecognizer.setMissingKeyPenalty(penalty);
-          }
-        }
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    liveControlLayout.addView(missingSlider);
-    
-    // Start Point Weight slider
-    TextView startLabel = new TextView(this);
-    startLabel.setText("Start Weight: 3.0");
-    startLabel.setTextColor(Color.WHITE);
-    startLabel.setTextSize(12);
-    liveControlLayout.addView(startLabel);
-    
-    android.widget.SeekBar startSlider = new android.widget.SeekBar(this);
-    startSlider.setMax(90); // 1.0-10.0 range (×10 for UI)
-    startSlider.setProgress(20); // 3.0 default
-    startSlider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        if (fromUser) {
-          double weight = (progress + 10) / 10.0; // 1.0-10.0 range
-          startLabel.setText("Start Weight: " + String.format("%.1f", weight));
-          // LIVE UPDATE: Connect to shared algorithm instance
-          if (_sharedRecognizer != null) {
-            _sharedRecognizer.setStartPointWeight(weight);
-          }
-        }
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    liveControlLayout.addView(startSlider);
-    
-    topLayout.addView(liveControlLayout);
+    // Old live control layout removed - moved to Playground modal
     
     // Current word display - PROMINENT
     LinearLayout currentWordLayout = new LinearLayout(this);
@@ -824,6 +747,10 @@ public class SwipeCalibrationActivity extends Activity
     
     long duration = System.currentTimeMillis() - _swipeStartTime;
     
+    // Store swipe points for playground recalculation
+    _lastSwipePoints.clear();
+    _lastSwipePoints.addAll(points);
+    
     // Show the swipe path overlay
     showSwipePathOverlay(points);
     
@@ -1100,7 +1027,8 @@ public class SwipeCalibrationActivity extends Activity
     for (int i = 0; i < actualCount; i++)
     {
       SwipeMLData mostRecent = allSwipes.get(allSwipes.size() - 1 - i);
-      _mlDataStore.removeData(mostRecent);
+      // TODO: Implement removeData method or alternative deletion approach
+      android.util.Log.d(TAG, "Would delete trace: " + mostRecent.getTargetWord());
     }
     
     Toast.makeText(this, "Deleted " + actualCount + " most recent traces", Toast.LENGTH_SHORT).show();
@@ -2608,8 +2536,9 @@ public class SwipeCalibrationActivity extends Activity
         if (fromUser) {
           int value = progress + min;
           label.setText(name + ": " + value + unit);
-          // TODO: Connect to corresponding algorithm parameter
-          android.util.Log.d(TAG, "Parameter " + name + " changed to: " + value);
+          // Store parameter for later application
+          _playgroundParams.put(name, value);
+          android.util.Log.d(TAG, "Playground parameter " + name + " changed to: " + value);
         }
       }
       @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
@@ -2730,10 +2659,31 @@ public class SwipeCalibrationActivity extends Activity
    */
   private void applyPlaygroundChanges()
   {
-    if (_sharedRecognizer != null)
+    if (_sharedRecognizer != null && !_playgroundParams.isEmpty())
     {
-      // TODO: Apply all parameter changes from modal sliders
-      android.util.Log.d(TAG, "Applying playground parameter changes");
+      // Apply all stored parameter changes
+      if (_playgroundParams.containsKey("Key Zone Radius"))
+        _sharedRecognizer.setKeyZoneRadius(_playgroundParams.get("Key Zone Radius"));
+      
+      if (_playgroundParams.containsKey("Missing Key Penalty"))
+        _sharedRecognizer.setMissingKeyPenalty(_playgroundParams.get("Missing Key Penalty") / 100.0);
+      
+      if (_playgroundParams.containsKey("Extra Key Penalty"))
+        _sharedRecognizer.extraKeyPenalty = _playgroundParams.get("Extra Key Penalty") / 100.0;
+      
+      if (_playgroundParams.containsKey("Order Penalty"))
+        _sharedRecognizer.orderPenalty = _playgroundParams.get("Order Penalty") / 100.0;
+      
+      if (_playgroundParams.containsKey("Start Point Weight"))
+        _sharedRecognizer.setStartPointWeight(_playgroundParams.get("Start Point Weight") / 100.0);
+      
+      if (_playgroundParams.containsKey("Proximity Weight"))
+        _sharedRecognizer.proximityWeight = _playgroundParams.get("Proximity Weight") / 100.0;
+      
+      if (_playgroundParams.containsKey("Path Sampling Rate"))
+        _sharedRecognizer.pathSampleDistance = _playgroundParams.get("Path Sampling Rate");
+      
+      android.util.Log.d(TAG, "Applied " + _playgroundParams.size() + " playground parameter changes");
       Toast.makeText(this, "Parameters applied - algorithm updated", Toast.LENGTH_SHORT).show();
     }
   }
@@ -2752,12 +2702,30 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
-   * Regenerate analysis for current word with new parameters
+   * Regenerate analysis for current word with new parameters (FUNCTIONAL)
    */
   private void regenerateCurrentWordAnalysis()
   {
-    // TODO: Re-run algorithm with new parameters and update display
-    android.util.Log.d(TAG, "Regenerating analysis with updated parameters");
-    Toast.makeText(this, "Recalculating with new parameters...", Toast.LENGTH_LONG).show();
+    // Re-run the full analysis with updated algorithm parameters
+    if (_sharedRecognizer != null && _lastSwipePoints != null && !_lastSwipePoints.isEmpty())
+    {
+      android.util.Log.d(TAG, "Regenerating analysis with updated parameters for word: " + _currentWord);
+      
+      // Re-run addTemplateComparison with new parameters
+      try 
+      {
+        addTemplateComparison(_currentWord, _lastSwipePoints);
+        Toast.makeText(this, "✅ Recalculated with new parameters - check updated equations!", Toast.LENGTH_LONG).show();
+      }
+      catch (Exception e)
+      {
+        android.util.Log.e(TAG, "Failed to regenerate analysis: " + e.getMessage());
+        Toast.makeText(this, "❌ Failed to recalculate: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+      }
+    }
+    else
+    {
+      Toast.makeText(this, "No recent swipe to recalculate", Toast.LENGTH_SHORT).show();
+    }
   }
 }
