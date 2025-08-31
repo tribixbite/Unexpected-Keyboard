@@ -2308,6 +2308,9 @@ public class SwipeCalibrationActivity extends Activity
       
       // NEW ALGORITHM TESTING: Use keyboard-specific recognition
       KeyboardSwipeRecognizer keyboardRecognizer = new KeyboardSwipeRecognizer(this);
+      
+      // CRITICAL: Ensure keyboard dimensions are set before recognition
+      android.util.Log.d(TAG, "Setting keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
       keyboardRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
       
       android.util.Log.d(TAG, "Testing NEW KeyboardSwipeRecognizer (replacing failed CGR)");

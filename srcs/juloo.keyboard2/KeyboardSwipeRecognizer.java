@@ -38,9 +38,9 @@ public class KeyboardSwipeRecognizer
   private SwipeWeightConfig weightConfig;
   private GaussianKeyModel gaussianModel;
   
-  // Key zone parameters
-  private double keyZoneRadius = 50.0;       // Pixels around key center for "hit"
-  private double pathSampleDistance = 20.0;  // Sample points along swipe path
+  // Key zone parameters (INCREASED for better detection)
+  private double keyZoneRadius = 120.0;      // Larger zone for easier key detection
+  private double pathSampleDistance = 10.0;  // More frequent sampling for better detection
   
   public KeyboardSwipeRecognizer(Context context)
   {
