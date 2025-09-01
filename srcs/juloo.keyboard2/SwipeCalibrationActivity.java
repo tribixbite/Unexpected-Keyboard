@@ -88,7 +88,7 @@ public class SwipeCalibrationActivity extends Activity
   private Button _nextButton;
   private Button _skipButton;
   private Button _saveButton;
-  private Button _deleteButton;
+  // REMOVED: _deleteButton (Delete Samples button removed)
   // REMOVED: _exportButton (Export All button removed)
   private Button _trainButton;
   // Score UI elements removed with metrics cleanup
@@ -439,10 +439,7 @@ public class SwipeCalibrationActivity extends Activity
     _saveButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
     buttonLayout.addView(_saveButton);
     
-    _deleteButton = new Button(this);
-    _deleteButton.setText("Delete Samples");
-    _deleteButton.setOnClickListener(v -> confirmDeleteSamples());
-    buttonLayout.addView(_deleteButton);
+    // REMOVED: Delete Samples button (as requested)
     
     // REMOVED: Export All button (as requested)
     
