@@ -15,8 +15,8 @@ Generated version info:  ()
 > Task :preDebugBuild
 > Task :mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :javaPreCompileDebug FROM-CACHE
-> Task :generateDebugResValues FROM-CACHE
 > Task :checkDebugAarMetadata
+> Task :generateDebugResValues FROM-CACHE
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
 > Task :packageDebugResources
@@ -31,13 +31,13 @@ Generated version info:  ()
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
-> Task :parseDebugLocalResources
-> Task :checkDebugDuplicateClasses
-> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeDebugResources
+> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :parseDebugLocalResources
+> Task :mergeDebugJniLibFolders
+> Task :checkDebugDuplicateClasses
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :mergeDebugJniLibFolders
 > Task :mergeDebugNativeLibs NO-SOURCE
 > Task :stripDebugDebugSymbols NO-SOURCE
 > Task :validateSigningDebug
