@@ -368,6 +368,9 @@ public class SwipeCalibrationActivity extends Activity
     addConfigSlider(step6Layout, "Start Position Tolerance", 10, 100, 25, "px");
     algorithmFlowLayout.addView(step6Layout);
     
+    // ADD ALGORITHM FLOW CHART TO MAIN LAYOUT (was missing!)
+    topLayout.addView(algorithmFlowLayout);
+    
     // Old live control layout removed - moved to Playground modal
     
     // Current word display - PROMINENT
@@ -484,42 +487,26 @@ public class SwipeCalibrationActivity extends Activity
     keyboardParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
     _keyboardView.setLayoutParams(keyboardParams);
     
-    // Add Playground button above current word bar
+    // Add Playground button to top layout for proper hierarchy
     Button playgroundButton = new Button(this);
-    playgroundButton.setText("🎮 Algorithm Playground");
-    playgroundButton.setTextSize(16);
+    playgroundButton.setText("🎮 Playground");
+    playgroundButton.setTextSize(14);
     playgroundButton.setOnClickListener(v -> showPlaygroundModal());
     playgroundButton.setBackgroundColor(0xFF4CAF50);
     playgroundButton.setTextColor(Color.WHITE);
-    playgroundButton.setPadding(16, 12, 16, 12);
-    mainLayout.addView(playgroundButton);
+    playgroundButton.setPadding(8, 8, 8, 8);
+    LinearLayout.LayoutParams playgroundParams = new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    playgroundParams.setMargins(8, 8, 8, 8);
+    playgroundButton.setLayoutParams(playgroundParams);
+    topLayout.addView(playgroundButton);
     
-    // Add current word display RIGHT ABOVE keyboard (moved from top)
-    mainLayout.addView(currentWordLayout);
+    // Add current word display to top layout for proper positioning
+    topLayout.addView(currentWordLayout);
     
     mainLayout.addView(_keyboardView);
     
-    // Template comparison section header moved to inline with copy button
-    
-    _templateComparisonText = new TextView(this);
-    _templateComparisonText.setText("Swipe words to see detailed CGR analysis...");
-    _templateComparisonText.setTextSize(11);
-    _templateComparisonText.setPadding(12, 12, 12, 12);
-    _templateComparisonText.setTextColor(Color.WHITE);
-    _templateComparisonText.setBackgroundColor(0xFF1A1A1A);
-    _templateComparisonText.setTypeface(android.graphics.Typeface.MONOSPACE); // Fixed-width font
-    _templateComparisonText.setSingleLine(false);
-    _templateComparisonText.setMaxLines(Integer.MAX_VALUE);
-    
-    android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
-    scrollView.addView(_templateComparisonText);
-    scrollView.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 400)); // Increased height
-    scrollView.setPadding(8, 8, 8, 8);
-    scrollView.setBackgroundColor(0xFF2B2B2B);
-    mainLayout.addView(scrollView);
-    
-    // Move copy button to right side of comparison text as icon-only
+    // FIXED: Move comparison header BEFORE scroll view to prevent overlap
     LinearLayout comparisonHeaderLayout = new LinearLayout(this);
     comparisonHeaderLayout.setOrientation(LinearLayout.HORIZONTAL);
     comparisonHeaderLayout.setPadding(16, 16, 16, 8);
@@ -538,6 +525,25 @@ public class SwipeCalibrationActivity extends Activity
     comparisonHeaderLayout.addView(_copyComparisonButton);
     
     mainLayout.addView(comparisonHeaderLayout);
+    
+    // Template comparison text area
+    _templateComparisonText = new TextView(this);
+    _templateComparisonText.setText("Swipe words to see comprehensive algorithm analysis...");
+    _templateComparisonText.setTextSize(11);
+    _templateComparisonText.setPadding(12, 12, 12, 12);
+    _templateComparisonText.setTextColor(Color.WHITE);
+    _templateComparisonText.setBackgroundColor(0xFF1A1A1A);
+    _templateComparisonText.setTypeface(android.graphics.Typeface.MONOSPACE); // Fixed-width font
+    _templateComparisonText.setSingleLine(false);
+    _templateComparisonText.setMaxLines(Integer.MAX_VALUE);
+    
+    android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+    scrollView.addView(_templateComparisonText);
+    scrollView.setLayoutParams(new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, 400)); // Increased height
+    scrollView.setPadding(8, 8, 8, 8);
+    scrollView.setBackgroundColor(0xFF2B2B2B);
+    mainLayout.addView(scrollView);
     
     setContentView(mainLayout);
     
