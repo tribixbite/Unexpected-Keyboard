@@ -2433,9 +2433,19 @@ public class SwipeCalibrationActivity extends Activity
       // Update comprehensive algorithm analysis display with new algorithm results
       updateComprehensiveAnalysisDisplay(word, results, templateLength, userLength, userSwipe);
       
-      // Update detailed comparison display (bottom section)
-      String[] entries = _comparisonData.toString().split("----------------------------------------");
+      // Update detailed comparison display with algorithm error report
       StringBuilder display = new StringBuilder();
+      
+      // Show algorithm error report if available
+      if (keyboardRecognizer != null && !keyboardRecognizer.lastErrorReport.isEmpty()) {
+        display.append("🔍 ALGORITHM DEBUG REPORT:\n");
+        display.append("================================\n");
+        display.append(keyboardRecognizer.lastErrorReport);
+        display.append("\n\n");
+      }
+      
+      // Show detailed comparison data
+      String[] entries = _comparisonData.toString().split("----------------------------------------");
       int start = Math.max(0, entries.length - 3);
       for (int i = start; i < entries.length; i++)
       {

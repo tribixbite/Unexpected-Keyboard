@@ -134,47 +134,55 @@ public class KeyboardSwipeRecognizer
   }
   
   /**
-   * SIMPLIFIED recognition method - fix crashes and return actual results
+   * Full recognition method with comprehensive error reporting
    */
   public List<RecognitionResult> recognizeSwipe(List<PointF> swipePath, List<String> context)
   {
     List<RecognitionResult> results = new ArrayList<>();
+    StringBuilder errorReport = new StringBuilder();
     
-    if (swipePath == null || swipePath.size() < 2 || templateGenerator == null)
-    {
-      android.util.Log.e("KeyboardSwipeRecognizer", "Invalid input - returning empty results");
+    errorReport.append("🔍 ALGORITHM VALIDATION:\n");
+    
+    // Step 0: Comprehensive input validation with error reporting
+    if (swipePath == null) {
+      errorReport.append("❌ CRITICAL: swipePath is NULL\n");
+      logError(errorReport.toString());
       return results;
     }
     
-    android.util.Log.d("KeyboardSwipeRecognizer", "SIMPLIFIED RECOGNITION: " + swipePath.size() + " points");
-    
-    try {
-      // SIMPLE APPROACH: Score top 20 dictionary words directly
-      List<String> dictionary = templateGenerator.getDictionary();
-      if (dictionary == null || dictionary.isEmpty()) {
-        android.util.Log.e("KeyboardSwipeRecognizer", "Dictionary is null/empty");
-        return results;
-      }
-      
-      // Score first 20 words to test algorithm
-      for (int i = 0; i < Math.min(20, dictionary.size()); i++) {
-        String word = dictionary.get(i);
-        
-        // Simple proximity-based score
-        double score = calculateSimpleProximityScore(word, swipePath);
-        
-        RecognitionResult result = new RecognitionResult(word, score, score, 1.0, 1.0, 1.0, new ArrayList<>());
-        results.add(result);
-        android.util.Log.d("KeyboardSwipeRecognizer", String.format("Simple score '%s': %.6f", word, score));
-      }
-      
-      // Sort by score
-      Collections.sort(results, (a, b) -> Double.compare(b.totalScore, a.totalScore));
-      
-      android.util.Log.d("KeyboardSwipeRecognizer", "SIMPLIFIED COMPLETE: " + results.size() + " results");
-    } catch (Exception e) {
-      android.util.Log.e("KeyboardSwipeRecognizer", "Recognition error: " + e.getMessage());
+    if (swipePath.size() == 0) {
+      errorReport.append("❌ CRITICAL: 0 swipe points detected\n");
+      logError(errorReport.toString());
+      return results;
     }
+    
+    if (swipePath.size() < 2) {
+      errorReport.append("⚠️  WARNING: Only " + swipePath.size() + " swipe point (need 2+)\n");
+    }
+    
+    if (templateGenerator == null) {
+      errorReport.append("❌ CRITICAL: templateGenerator is NULL\n");
+      logError(errorReport.toString());
+      return results;
+    }
+    
+    errorReport.append("✅ Input validation: " + swipePath.size() + " swipe points, generator OK\n\n");
+    
+    // Step 1: Letter detection with error reporting
+    errorReport.append("🔤 LETTER DETECTION:\n");
+    List<Character> detectedLetters = detectLetterSequenceWithReporting(swipePath, errorReport);
+    
+    // Step 2: Candidate generation with error reporting  
+    errorReport.append("\n📝 CANDIDATE GENERATION:\n");
+    List<String> candidates = generateCandidateWordsWithReporting(detectedLetters, errorReport);
+    
+    // Step 3: Scoring with error reporting
+    errorReport.append("\n📊 SCORING CALCULATION:\n");
+    results = scoreWordsWithReporting(candidates, swipePath, detectedLetters, context, errorReport);
+    
+    // Final report
+    errorReport.append("\n🎯 FINAL RESULTS: " + results.size() + " predictions generated\n");
+    logError(errorReport.toString());
     
     return results;
   }
@@ -715,5 +723,162 @@ public class KeyboardSwipeRecognizer
     }
     
     android.util.Log.d("KeyboardSwipeRecognizer", "Applied " + params.size() + " playground parameters");
+  }
+  
+  /**
+   * Log error to both LogCat and store for output text box display
+   */
+  private void logError(String message)
+  {
+    android.util.Log.e("KeyboardSwipeRecognizer", message);
+    // Store error message for display in calibration text box
+    lastErrorReport = message;
+  }
+  
+  // Store last error report for display
+  public String lastErrorReport = "";
+  
+  /**
+   * Letter detection with comprehensive error reporting
+   */
+  private List<Character> detectLetterSequenceWithReporting(List<PointF> swipePath, StringBuilder errorReport)
+  {
+    List<Character> detectedLetters = new ArrayList<>();
+    
+    if (swipePath.isEmpty()) {
+      errorReport.append("❌ No swipe points to analyze\n");
+      return detectedLetters;
+    }
+    
+    // Test keyboard coordinates
+    PointF testPoint = swipePath.get(0);
+    Character testKey = getNearestKey(testPoint);
+    
+    if (testKey == null) {
+      errorReport.append("❌ CRITICAL: Key detection failed - no coordinates\n");
+      errorReport.append("   First point (" + String.format("%.0f,%.0f", testPoint.x, testPoint.y) + ") → no key\n");
+      
+      // Test if template generator has any coordinates
+      if (templateGenerator != null) {
+        ContinuousGestureRecognizer.Point aCoord = templateGenerator.getCharacterCoordinate('a');
+        if (aCoord == null) {
+          errorReport.append("❌ Template generator has no coordinates for 'a'\n");
+          errorReport.append("   Keyboard dimensions not set properly\n");
+        } else {
+          errorReport.append("✅ Template generator has coordinates: a=(" + 
+                           String.format("%.0f,%.0f", aCoord.x, aCoord.y) + ")\n");
+        }
+      }
+      return detectedLetters;
+    }
+    
+    errorReport.append("✅ Key detection working: first point → '" + testKey + "'\n");
+    
+    // Perform full letter detection
+    Character lastLetter = null;
+    for (int i = 0; i < swipePath.size(); i += (int)pathSampleDistance) {
+      PointF point = swipePath.get(i);
+      Character nearestKey = getNearestKey(point);
+      
+      if (nearestKey != null && !nearestKey.equals(lastLetter)) {
+        detectedLetters.add(nearestKey);
+        lastLetter = nearestKey;
+      }
+    }
+    
+    errorReport.append("✅ Detected " + detectedLetters.size() + " letters: " + detectedLetters + "\n");
+    return detectedLetters;
+  }
+  
+  /**
+   * Candidate generation with error reporting
+   */
+  private List<String> generateCandidateWordsWithReporting(List<Character> detectedLetters, StringBuilder errorReport)
+  {
+    List<String> candidates = new ArrayList<>();
+    
+    if (templateGenerator == null) {
+      errorReport.append("❌ CRITICAL: Template generator is NULL\n");
+      return candidates;
+    }
+    
+    List<String> dictionary = templateGenerator.getDictionary();
+    if (dictionary == null) {
+      errorReport.append("❌ CRITICAL: Dictionary is NULL\n");
+      return candidates;
+    }
+    
+    if (dictionary.isEmpty()) {
+      errorReport.append("❌ CRITICAL: Dictionary is empty\n");
+      return candidates;
+    }
+    
+    errorReport.append("✅ Dictionary loaded: " + dictionary.size() + " words\n");
+    
+    if (detectedLetters.isEmpty()) {
+      errorReport.append("⚠️  No letters detected - accepting all words\n");
+      candidates.addAll(dictionary.subList(0, Math.min(50, dictionary.size())));
+    } else {
+      // Filter dictionary by detected letters
+      for (String word : dictionary) {
+        if (wordContainsLetters(word, detectedLetters)) {
+          candidates.add(word);
+        }
+      }
+    }
+    
+    errorReport.append("✅ Generated " + candidates.size() + " candidates\n");
+    if (!candidates.isEmpty()) {
+      errorReport.append("   Sample: " + candidates.subList(0, Math.min(5, candidates.size())) + "\n");
+    }
+    
+    return candidates;
+  }
+  
+  /**
+   * Word scoring with error reporting
+   */
+  private List<RecognitionResult> scoreWordsWithReporting(List<String> candidates, List<PointF> swipePath, 
+                                                         List<Character> detectedLetters, List<String> context, 
+                                                         StringBuilder errorReport)
+  {
+    List<RecognitionResult> results = new ArrayList<>();
+    
+    if (candidates.isEmpty()) {
+      errorReport.append("❌ CRITICAL: No candidates to score\n");
+      return results;
+    }
+    
+    errorReport.append("📊 Scoring " + candidates.size() + " candidates:\n");
+    
+    int scoredCount = 0;
+    for (String word : candidates) {
+      try {
+        RecognitionResult result = calculateWordScore(word, swipePath, detectedLetters, context);
+        results.add(result);
+        scoredCount++;
+        
+        if (scoredCount <= 3) { // Show first 3 scores in detail
+          errorReport.append(String.format("   %s: %.6f\n", word, result.totalScore));
+        }
+      } catch (Exception e) {
+        errorReport.append("❌ Error scoring '" + word + "': " + e.getMessage() + "\n");
+      }
+    }
+    
+    if (scoredCount < candidates.size()) {
+      errorReport.append("   ... " + (candidates.size() - scoredCount) + " more scored\n");
+    }
+    
+    // Sort results
+    Collections.sort(results, (a, b) -> Double.compare(b.totalScore, a.totalScore));
+    
+    errorReport.append("✅ Scoring complete: " + results.size() + " results\n");
+    if (!results.isEmpty()) {
+      RecognitionResult top = results.get(0);
+      errorReport.append("   Top result: " + top.word + " (score: " + String.format("%.6f", top.totalScore) + ")\n");
+    }
+    
+    return results;
   }
 }
