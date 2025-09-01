@@ -2489,6 +2489,7 @@ public class SwipeCalibrationActivity extends Activity
   private double calculateCoordinateAlignment(List<ContinuousGestureRecognizer.Point> templatePts, 
                                             List<ContinuousGestureRecognizer.Point> userPts)
   {
+    if (templatePts == null || userPts == null || templatePts.isEmpty() || userPts.isEmpty()) return 0.0;
     if (templatePts.size() < 2 || userPts.size() < 2) return 0.0;
     
     // Compare start and end point alignment

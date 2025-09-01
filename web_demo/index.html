@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swipe Model Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        #keyboard-container {
+            position: relative;
+            width: 95%;
+            max-width: 800px;
+            aspect-ratio: 2.5 / 1;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #predictions {
+            margin-top: 20px;
+            font-size: 1.5em;
+            min-height: 2em;
+            display: flex;
+            gap: 15px;
+            background-color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .prediction-word {
+            background-color: #e4e6eb;
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+        #status {
+            margin-top: 15px;
+            color: #666;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="predictions">
+        <span>Swipe on the keyboard below</span>
+    </div>
+    <div id="keyboard-container">
+        <canvas id="keyboard-canvas"></canvas>
+        <canvas id="swipe-canvas"></canvas>
+    </div>
+    <div id="status">Loading model and vocabulary...</div>
+    <button id="clear-button">Clear Swipe</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script>
+        const keyboardCanvas = document.getElementById('keyboard-canvas');
+        const swipeCanvas = document.getElementById('swipe-canvas');
+        const kbdCtx = keyboardCanvas.getContext('2d');
+        const swipeCtx = swipeCanvas.getContext('2d');
+        const predictionsDiv = document.getElementById('predictions');
+        const statusDiv = document.getElementById('status');
+        const clearButton = document.getElementById('clear-button');
+
+        let session;
+        let vocabulary = {};
+        let reverseVocabulary = {};
+        let isSwiping = false;
+        let swipePath = [];
+        let keysLayout = {};
+
+        const QWERTY_LAYOUT = [
+            "qwertyuiop",
+            "asdfghjkl",
+            "zxcvbnm"
+        ];
+
+        const MODEL_CONFIG = {
+            MAX_TRACE_LENGTH: 50,
+            MAX_KEY_SEQ_LENGTH: 20,
+            MODEL_PATH: 'swipe_model_web_executorch.onnx',
+            VOCAB_PATH: 'vocabulary.json'
+        };
+
+        function drawKeyboard() {
+            const container = document.getElementById('keyboard-container');
+            const { width, height } = container.getBoundingClientRect();
+            keyboardCanvas.width = width;
+            keyboardCanvas.height = height;
+            swipeCanvas.width = width;
+            swipeCanvas.height = height;
+
+            const numRows = QWERTY_LAYOUT.length;
+            const rowHeight = height / numRows;
+
+            kbdCtx.clearRect(0, 0, width, height);
+            kbdCtx.strokeStyle = '#ccc';
+            kbdCtx.fillStyle = '#333';
+            kbdCtx.font = `${rowHeight * 0.4}px sans-serif`;
+            kbdCtx.textAlign = 'center';
+            kbdCtx.textBaseline = 'middle';
+
+            keysLayout = {};
+
+            QWERTY_LAYOUT.forEach((row, rowIndex) => {
+                const numKeys = row.length;
+                const keyWidth = width / numKeys;
+                row.split('').forEach((key, keyIndex) => {
+                    const x = keyIndex * keyWidth;
+                    const y = rowIndex * rowHeight;
+                    kbdCtx.strokeRect(x, y, keyWidth, rowHeight);
+                    kbdCtx.fillText(key, x + keyWidth / 2, y + rowHeight / 2);
+                    keysLayout[key] = { x: x + keyWidth / 2, y: y + rowHeight / 2, width: keyWidth, height: rowHeight };
+                });
+            });
+        }
+
+        function getNearestKey(x, y) {
+            let nearestKey = null;
+            let minDistance = Infinity;
+            for (const key in keysLayout) {
+                const keyPos = keysLayout[key];
+                const distance = Math.sqrt(Math.pow(x - keyPos.x, 2) + Math.pow(y - keyPos.y, 2));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestKey = key;
+                }
+            }
+            return nearestKey;
+        }
+
+        async function preprocessSwipe(path) {
+            if (path.length < 2) return null;
+
+            // 1. Normalize and calculate velocities
+            const { width, height } = keyboardCanvas.getBoundingClientRect();
+            let processedPath = [];
+            for (let i = 0; i < path.length; i++) {
+                const p = path[i];
+                const normX = p.x / width;
+                const normY = p.y / height;
+                let vx = 0, vy = 0;
+                if (i > 0) {
+                    const prev = path[i-1];
+                    const dt = p.t - prev.t;
+                    if (dt > 0) {
+                        vx = (p.x - prev.x) / dt;
+                        vy = (p.y - prev.y) / dt;
+                    }
+                }
+                processedPath.push({ x: normX, y: normY, vx, vy });
+            }
+
+            // 2. Resample to fixed length (MAX_TRACE_LENGTH)
+            let resampled = [];
+            const totalLength = processedPath.length - 1;
+            for (let i = 0; i < MODEL_CONFIG.MAX_TRACE_LENGTH; i++) {
+                const position = i / (MODEL_CONFIG.MAX_TRACE_LENGTH - 1);
+                const index = position * totalLength;
+                const lowerIndex = Math.floor(index);
+                const upperIndex = Math.ceil(index);
+                const weight = index - lowerIndex;
+                
+                if (upperIndex >= processedPath.length) {
+                     resampled.push(processedPath[processedPath.length - 1]);
+                } else {
+                    const p1 = processedPath[lowerIndex];
+                    const p2 = processedPath[upperIndex];
+                    resampled.push({
+                        x: p1.x * (1 - weight) + p2.x * weight,
+                        y: p1.y * (1 - weight) + p2.y * weight,
+                        vx: p1.vx * (1 - weight) + p2.vx * weight,
+                        vy: p1.vy * (1 - weight) + p2.vy * weight,
+                    });
+                }
+            }
+
+            // 3. Create trace tensor data
+            const traceData = new Float32Array(MODEL_CONFIG.MAX_TRACE_LENGTH * 4);
+            for (let i = 0; i < MODEL_CONFIG.MAX_TRACE_LENGTH; i++) {
+                const p = resampled[i] || {x: -1, y: -1, vx: 0, vy: 0};
+                traceData[i * 4 + 0] = p.x;
+                traceData[i * 4 + 1] = p.y;
+                traceData[i * 4 + 2] = p.vx;
+                traceData[i * 4 + 3] = p.vy;
+            }
+             for (let i = resampled.length; i < MODEL_CONFIG.MAX_TRACE_LENGTH; i++) {
+                traceData.fill(-1, i * 4, (i * 4) + 4);
+            }
+
+
+            // 4. Get key sequence
+            let keySequence = [];
+            let lastKey = null;
+            for (const p of path) {
+                const key = getNearestKey(p.x, p.y);
+                if (key && key !== lastKey) {
+                    keySequence.push(key);
+                    lastKey = key;
+                }
+            }
+
+            // 5. Create keys tensor data
+            const keyMap = "abcdefghijklmnopqrstuvwxyz";
+            const keyData = new BigInt64Array(MODEL_CONFIG.MAX_KEY_SEQ_LENGTH);
+            for (let i = 0; i < MODEL_CONFIG.MAX_KEY_SEQ_LENGTH; i++) {
+                if (i < keySequence.length) {
+                    const keyIndex = keyMap.indexOf(keySequence[i]);
+                    keyData[i] = BigInt(keyIndex >= 0 ? keyIndex : -1);
+                } else {
+                    keyData[i] = BigInt(0); // Padding
+                }
+            }
+
+            const traceTensor = new ort.Tensor('float32', traceData, [1, MODEL_CONFIG.MAX_TRACE_LENGTH, 4]);
+            const keysTensor = new ort.Tensor('int64', keyData, [1, MODEL_CONFIG.MAX_KEY_SEQ_LENGTH]);
+
+            return { trace_input: traceTensor, keys_input: keysTensor };
+        }
+
+        async function runInference() {
+            if (!session || swipePath.length < 2) {
+                return;
+            }
+            statusDiv.textContent = 'Processing...';
+            
+            const feeds = await preprocessSwipe(swipePath);
+            if (!feeds) {
+                statusDiv.textContent = 'Swipe too short.';
+                return;
+            }
+
+            try {
+                const results = await session.run(feeds);
+                const outputTensor = results[session.outputNames[0]];
+                const scores = outputTensor.data;
+
+                const top5 = Array.from(scores)
+                    .map((score, index) => ({ score, index }))
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 5);
+
+                displayPredictions(top5);
+                statusDiv.textContent = 'Swipe to get predictions.';
+            } catch (error) {
+                console.error('Inference failed:', error);
+                statusDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function displayPredictions(preds) {
+            predictionsDiv.innerHTML = '';
+            preds.forEach(p => {
+                const word = reverseVocabulary[p.index] || 'unknown';
+                const el = document.createElement('div');
+                el.className = 'prediction-word';
+                el.textContent = word;
+                predictionsDiv.appendChild(el);
+            });
+        }
+
+        function clearSwipe() {
+            swipePath = [];
+            swipeCtx.clearRect(0, 0, swipeCanvas.width, swipeCanvas.height);
+            predictionsDiv.innerHTML = '<span>Swipe on the keyboard below</span>';
+            statusDiv.textContent = 'Swipe to get predictions.';
+        }
+
+        async function main() {
+            try {
+                drawKeyboard();
+                
+                const vocabResponse = await fetch(MODEL_CONFIG.VOCAB_PATH);
+                vocabulary = await vocabResponse.json();
+                reverseVocabulary = Object.fromEntries(Object.entries(vocabulary).map(([key, value]) => [value, key]));
+                
+                session = await ort.InferenceSession.create(MODEL_CONFIG.MODEL_PATH);
+                
+                statusDiv.textContent = 'Ready. Swipe to get predictions.';
+            } catch (error) {
+                console.error(error);
+                statusDiv.textContent = `Error loading resources: ${error.message}`;
+            }
+        }
+
+        swipeCanvas.addEventListener('mousedown', (e) => {
+            isSwiping = true;
+            clearSwipe();
+            const rect = swipeCanvas.getBoundingClientRect();
+            swipePath.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, t: Date.now() });
+            swipeCtx.beginPath();
+            swipeCtx.moveTo(swipePath[0].x, swipePath[0].y);
+            swipeCtx.strokeStyle = '#007bff';
+            swipeCtx.lineWidth = 3;
+        });
+
+        swipeCanvas.addEventListener('mousemove', (e) => {
+            if (isSwiping) {
+                const rect = swipeCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                swipePath.push({ x, y, t: Date.now() });
+                swipeCtx.lineTo(x, y);
+                swipeCtx.stroke();
+            }
+        });
+
+        swipeCanvas.addEventListener('mouseup', () => {
+            if (isSwiping) {
+                isSwiping = false;
+                runInference();
+            }
+        });
+        
+        swipeCanvas.addEventListener('mouseleave', () => {
+            if (isSwiping) {
+                isSwiping = false;
+                runInference();
+            }
+        });
+
+        clearButton.addEventListener('click', clearSwipe);
+        window.addEventListener('resize', drawKeyboard);
+
+        main();
+    </script>
+</body>
+</html>
