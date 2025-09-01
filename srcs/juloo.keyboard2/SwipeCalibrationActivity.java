@@ -2329,15 +2329,19 @@ public class SwipeCalibrationActivity extends Activity
       List<KeyboardSwipeRecognizer.RecognitionResult> newResults = 
         keyboardRecognizer.recognizeSwipe(userSwipe, context);
       
-      // Convert results for display compatibility
+      // Convert results for display compatibility (WITH REAL TEMPLATES)
       List<ContinuousGestureRecognizer.Result> results = new ArrayList<>();
       for (KeyboardSwipeRecognizer.RecognitionResult newResult : newResults)
       {
-        // Create compatible result for display
-        ContinuousGestureRecognizer.Template fakeTemplate = 
-          new ContinuousGestureRecognizer.Template(newResult.word, new ArrayList<>());
+        // Create real template instead of fake empty one
+        ContinuousGestureRecognizer.Template realTemplate = _templateGenerator.generateWordTemplate(newResult.word);
+        if (realTemplate == null) {
+          // Fallback to empty template but with proper handling
+          realTemplate = new ContinuousGestureRecognizer.Template(newResult.word, new ArrayList<>());
+        }
+        
         ContinuousGestureRecognizer.Result compatResult = 
-          new ContinuousGestureRecognizer.Result(fakeTemplate, newResult.totalScore, new ArrayList<>());
+          new ContinuousGestureRecognizer.Result(realTemplate, newResult.totalScore, new ArrayList<>());
         results.add(compatResult);
       }
       
@@ -2381,17 +2385,27 @@ public class SwipeCalibrationActivity extends Activity
       {
         ContinuousGestureRecognizer.Result result = results.get(i);
         
-        // Calculate template attributes that impact prediction
-        double resultTemplateLength = calculatePathLength(result.template.pts);
-        int templatePoints = result.template.pts.size();
+        // Calculate template attributes that impact prediction (NULL SAFE)
+        double resultTemplateLength = 0;
+        int templatePoints = 0;
+        ContinuousGestureRecognizer.Point tStart = null;
+        ContinuousGestureRecognizer.Point tEnd = null;
         
-        ContinuousGestureRecognizer.Point tStart = result.template.pts.get(0);
-        ContinuousGestureRecognizer.Point tEnd = result.template.pts.get(result.template.pts.size() - 1);
+        if (result.template.pts != null && !result.template.pts.isEmpty()) {
+          resultTemplateLength = calculatePathLength(result.template.pts);
+          templatePoints = result.template.pts.size();
+          tStart = result.template.pts.get(0);
+          tEnd = result.template.pts.get(result.template.pts.size() - 1);
+        }
         
         comparison.append(String.format("  #%d: %s (prob=%.6f)\n", i + 1, result.template.id, result.prob));
         comparison.append(String.format("      Length: %.0f, Points: %d\n", resultTemplateLength, templatePoints));
-        comparison.append(String.format("      Coords: (%.0f,%.0f)→(%.0f,%.0f)\n", 
-                         tStart.x, tStart.y, tEnd.x, tEnd.y));
+        if (tStart != null && tEnd != null) {
+          comparison.append(String.format("      Coords: (%.0f,%.0f)→(%.0f,%.0f)\n", 
+                           tStart.x, tStart.y, tEnd.x, tEnd.y));
+        } else {
+          comparison.append("      Coords: No template coordinates available\n");
+        }
         
         // Show prediction equation factors
         if (i == 0) // Only for top result
