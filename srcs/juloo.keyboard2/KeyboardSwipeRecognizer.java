@@ -358,10 +358,8 @@ public class KeyboardSwipeRecognizer
   {
     if (detectedLetters.isEmpty() || word.isEmpty()) return false;
     
-    // GEMINI SUGGESTION: First detected letter must be first letter of word
-    if (word.charAt(0) != detectedLetters.get(0)) {
-      return false;
-    }
+    // REMOVED: Overly strict first letter requirement that eliminated all candidates
+    // Let scoring algorithm (calculateStartPointScore) handle start point accuracy instead
     
     int matchCount = 0;
     int lastFoundIndex = -1;
@@ -377,9 +375,9 @@ public class KeyboardSwipeRecognizer
       }
     }
     
-    // STRICTER: Require 75% match instead of 60%
+    // RELAXED: Require 50% match for reasonable candidate generation  
     double matchRatio = (double)matchCount / detectedLetters.size();
-    return matchRatio >= 0.75;
+    return matchRatio >= 0.5;
   }
   
   /**
