@@ -462,6 +462,9 @@ public class SwipeCalibrationActivity extends Activity
     _navigationLayout.setGravity(android.view.Gravity.CENTER);
     _navigationLayout.setVisibility(View.GONE);
     
+    // FORCE: Ensure navigation layout stays hidden and doesn't break layout
+    _navigationLayout.setLayoutParams(new LinearLayout.LayoutParams(0, 0)); // Zero size when hidden
+    
     _prevSwipeButton = new Button(this);
     _prevSwipeButton.setText("◀ Previous");
     _prevSwipeButton.setOnClickListener(v -> navigatePreviousSwipe());
@@ -520,10 +523,12 @@ public class SwipeCalibrationActivity extends Activity
     _copyComparisonButton.setText("📋");
     _copyComparisonButton.setTextSize(18);
     _copyComparisonButton.setOnClickListener(v -> copyComparisonData());
-    _copyComparisonButton.setLayoutParams(new LinearLayout.LayoutParams(80, 80));
+    _copyComparisonButton.setLayoutParams(new LinearLayout.LayoutParams(60, 60));
+    _copyComparisonButton.setBackgroundColor(0xFF2D2D2D);
     comparisonHeaderLayout.addView(_copyComparisonButton);
     
-    mainLayout.addView(comparisonHeaderLayout);
+    // Add to topLayout for proper visibility
+    topLayout.addView(comparisonHeaderLayout);
     
     // Template comparison text area
     _templateComparisonText = new TextView(this);
@@ -581,6 +586,9 @@ public class SwipeCalibrationActivity extends Activity
     
     // Load saved weights (now safe)
     loadSavedWeights();
+    
+    // CRITICAL: Start calibration by showing first word
+    showNextWord();
   }
   
   /**
@@ -831,6 +839,16 @@ public class SwipeCalibrationActivity extends Activity
     
     // Show feedback
     Toast.makeText(this, "Swipe recorded! Duration: " + duration + "ms", Toast.LENGTH_SHORT).show();
+    
+    // CRITICAL: Call template comparison to show analysis (was missing!)
+    try
+    {
+      addTemplateComparison(_currentWord, points);
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e(TAG, "Template comparison failed: " + e.getMessage());
+    }
     
     // Auto-advance after showing overlay (with delay)
     _uiHandler.postDelayed(() -> {
@@ -2354,8 +2372,8 @@ public class SwipeCalibrationActivity extends Activity
                   .append(") len=").append(String.format("%.0f", userLength)).append("\n");
       }
       
-      // DETAILED CGR ANALYSIS: Show comprehensive recognition data
-      comparison.append("CGR RESULTS:\n");
+      // ALGORITHM ANALYSIS: Show comprehensive recognition data
+      comparison.append("ALGORITHM RESULTS:\n");
       for (int i = 0; i < Math.min(3, results.size()); i++)
       {
         ContinuousGestureRecognizer.Result result = results.get(i);
@@ -2385,7 +2403,7 @@ public class SwipeCalibrationActivity extends Activity
       
       if (results.isEmpty())
       {
-        comparison.append("  No CGR recognition results\n");
+        comparison.append("  No algorithm recognition results\n");
       }
       
       // Match point calculation analysis

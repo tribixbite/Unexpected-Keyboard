@@ -143,11 +143,13 @@ public class KeyboardSwipeRecognizer
       return new ArrayList<>();
     }
     
-    android.util.Log.d("KeyboardSwipeRecognizer", "Recognizing swipe with " + swipePath.size() + " points");
+    android.util.Log.d("KeyboardSwipeRecognizer", "=== STARTING RECOGNITION ===");
+    android.util.Log.d("KeyboardSwipeRecognizer", "Swipe path: " + swipePath.size() + " points");
+    android.util.Log.d("KeyboardSwipeRecognizer", "Template generator: " + (templateGenerator != null ? "OK" : "NULL"));
     
     // Step 1: Detect letter sequence from swipe path
     List<Character> detectedLetters = detectLetterSequence(swipePath);
-    android.util.Log.d("KeyboardSwipeRecognizer", "Detected letter sequence: " + detectedLetters);
+    android.util.Log.d("KeyboardSwipeRecognizer", "Step 1 - Detected letters: " + detectedLetters + " (count: " + detectedLetters.size() + ")");
     
     // FALLBACK: If no letters detected, use simple heuristic
     if (detectedLetters.isEmpty())
@@ -161,7 +163,10 @@ public class KeyboardSwipeRecognizer
     
     // Step 2: Generate candidate words containing these letters
     List<String> candidates = generateCandidateWords(detectedLetters);
-    android.util.Log.d("KeyboardSwipeRecognizer", "Generated " + candidates.size() + " candidate words");
+    android.util.Log.d("KeyboardSwipeRecognizer", "Step 2 - Generated candidates: " + candidates.size() + " words");
+    if (!candidates.isEmpty()) {
+      android.util.Log.d("KeyboardSwipeRecognizer", "Sample candidates: " + candidates.subList(0, Math.min(5, candidates.size())));
+    }
     
     // Step 3: Calculate scores for each candidate
     List<RecognitionResult> results = new ArrayList<>();
@@ -185,7 +190,13 @@ public class KeyboardSwipeRecognizer
       }
     });
     
-    android.util.Log.d("KeyboardSwipeRecognizer", "Recognition complete: " + results.size() + " results");
+    android.util.Log.d("KeyboardSwipeRecognizer", "=== RECOGNITION COMPLETE ===");
+    android.util.Log.d("KeyboardSwipeRecognizer", "Final results: " + results.size() + " predictions");
+    for (int i = 0; i < Math.min(3, results.size()); i++) {
+      RecognitionResult result = results.get(i);
+      android.util.Log.d("KeyboardSwipeRecognizer", String.format("Result #%d: %s (score=%.6f)", 
+                        i + 1, result.word, result.totalScore));
+    }
     return results;
   }
   
