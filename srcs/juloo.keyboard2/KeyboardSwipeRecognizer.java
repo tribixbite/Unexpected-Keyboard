@@ -197,6 +197,9 @@ public class KeyboardSwipeRecognizer
         PointF swipePoint = swipePath.get(i);
         int templateIndex = (i * templateSize) / swipePath.size(); // Map to template
         
+        // NULL SAFE: Check template bounds before access
+        if (templateIndex >= template.pts.size()) templateIndex = template.pts.size() - 1;
+        
         ContinuousGestureRecognizer.Point templatePoint = template.pts.get(templateIndex);
         double distance = Math.sqrt(Math.pow(swipePoint.x - templatePoint.x, 2) + 
                                    Math.pow(swipePoint.y - templatePoint.y, 2));
@@ -568,7 +571,9 @@ public class KeyboardSwipeRecognizer
     PointF firstKeyCenter = getKeyCenter(firstLetter);
     if (firstKeyCenter == null) return 0.0;
     
-    // Calculate distance from swipe start to first key
+    // Calculate distance from swipe start to first key (NULL SAFE)
+    if (swipePath.isEmpty()) return 0.0;
+    
     PointF swipeStart = swipePath.get(0);
     double startDistance = Math.sqrt(Math.pow(swipeStart.x - firstKeyCenter.x, 2) + 
                                    Math.pow(swipeStart.y - firstKeyCenter.y, 2));
@@ -593,8 +598,8 @@ public class KeyboardSwipeRecognizer
       double baseFrequency = templateGenerator != null ? 
         templateGenerator.getWordFrequency(word) / 1000.0 : 1.0; // Normalize frequency
       
-      // Contextual probability (bigram/n-gram)
-      if (bigramModel != null && context != null && !context.isEmpty())
+      // Contextual probability (bigram/n-gram) - NULL SAFE
+      if (bigramModel != null && context != null && !context.isEmpty() && context.size() > 0)
       {
         String previousWord = context.get(context.size() - 1);
         float contextMultiplier = bigramModel.getContextMultiplier(word, context);

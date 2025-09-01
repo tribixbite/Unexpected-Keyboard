@@ -1778,7 +1778,9 @@ public class SwipeCalibrationActivity extends Activity
       if (points == null || points.isEmpty()) return;
       
       _overlayPath = new Path();
-      _overlayPath.moveTo(points.get(0).x, points.get(0).y);
+      if (!points.isEmpty()) {
+        _overlayPath.moveTo(points.get(0).x, points.get(0).y);
+      }
       
       for (int i = 1; i < points.size(); i++)
       {
