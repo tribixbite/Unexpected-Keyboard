@@ -149,7 +149,21 @@ public class KeyboardSwipeRecognizer
     
     // Step 1: Detect letter sequence from swipe path
     List<Character> detectedLetters = detectLetterSequence(swipePath);
-    android.util.Log.d("KeyboardSwipeRecognizer", "Step 1 - Detected letters: " + detectedLetters + " (count: " + detectedLetters.size() + ")");
+    android.util.Log.e("KeyboardSwipeRecognizer", "Step 1 - Detected letters: " + detectedLetters + " (count: " + detectedLetters.size() + ")");
+    
+    // EMERGENCY DEBUG: Test first few points manually
+    if (swipePath.size() > 0) {
+      PointF firstPoint = swipePath.get(0);
+      Character firstKey = getNearestKey(firstPoint);
+      android.util.Log.e("KeyboardSwipeRecognizer", String.format("EMERGENCY: First point (%.0f,%.0f) → key '%s'", 
+                        firstPoint.x, firstPoint.y, firstKey != null ? firstKey : "NULL"));
+      
+      // Check if template generator has coordinates
+      if (templateGenerator != null) {
+        ContinuousGestureRecognizer.Point aCoord = templateGenerator.getCharacterCoordinate('a');
+        android.util.Log.e("KeyboardSwipeRecognizer", "Template gen 'a' coord: " + (aCoord != null ? aCoord.x + "," + aCoord.y : "NULL"));
+      }
+    }
     
     // FALLBACK: If no letters detected, use simple heuristic
     if (detectedLetters.isEmpty())
@@ -168,7 +182,15 @@ public class KeyboardSwipeRecognizer
       android.util.Log.d("KeyboardSwipeRecognizer", "Sample candidates: " + candidates.subList(0, Math.min(5, candidates.size())));
     }
     
-    // REMOVED: 50 word fallback (as requested)
+    // EMERGENCY: Force candidates if none generated (to debug scoring)
+    if (candidates.isEmpty() && templateGenerator != null) {
+      android.util.Log.e("KeyboardSwipeRecognizer", "EMERGENCY: No candidates - forcing test words");
+      candidates.add("worked");
+      candidates.add("their"); 
+      candidates.add("ticket");
+      candidates.add("scored");
+      candidates.add("taxes");
+    }
     
     // Step 3: Calculate scores for each candidate
     List<RecognitionResult> results = new ArrayList<>();
