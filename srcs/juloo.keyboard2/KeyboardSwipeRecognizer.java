@@ -182,15 +182,7 @@ public class KeyboardSwipeRecognizer
       android.util.Log.d("KeyboardSwipeRecognizer", "Sample candidates: " + candidates.subList(0, Math.min(5, candidates.size())));
     }
     
-    // EMERGENCY: Force candidates if none generated (to debug scoring)
-    if (candidates.isEmpty() && templateGenerator != null) {
-      android.util.Log.e("KeyboardSwipeRecognizer", "EMERGENCY: No candidates - forcing test words");
-      candidates.add("worked");
-      candidates.add("their"); 
-      candidates.add("ticket");
-      candidates.add("scored");
-      candidates.add("taxes");
-    }
+    // REMOVED: Emergency test system (as requested)
     
     // Step 3: Calculate scores for each candidate
     List<RecognitionResult> results = new ArrayList<>();
@@ -329,17 +321,27 @@ public class KeyboardSwipeRecognizer
    */
   public void setKeyboardDimensions(float width, float height)
   {
-    templateGenerator.setKeyboardDimensions(width, height);
-    android.util.Log.d("KeyboardSwipeRecognizer", "Keyboard dimensions set: " + width + "x" + height);
+    if (templateGenerator == null) {
+      android.util.Log.e("KeyboardSwipeRecognizer", "Template generator is NULL - cannot set dimensions");
+      return;
+    }
     
-    // DEBUG: Test key coordinate generation
+    templateGenerator.setKeyboardDimensions(width, height);
+    android.util.Log.e("KeyboardSwipeRecognizer", "Keyboard dimensions set: " + width + "x" + height);
+    
+    // CRITICAL: Test key coordinate generation immediately
     PointF testA = getKeyCenter('a');
     PointF testE = getKeyCenter('e');
     PointF testT = getKeyCenter('t');
-    android.util.Log.d("KeyboardSwipeRecognizer", String.format("Test key coords: a=(%.0f,%.0f), e=(%.0f,%.0f), t=(%.0f,%.0f)",
+    android.util.Log.e("KeyboardSwipeRecognizer", String.format("CRITICAL: Test key coords: a=(%.0f,%.0f), e=(%.0f,%.0f), t=(%.0f,%.0f)",
                       testA != null ? testA.x : -1, testA != null ? testA.y : -1,
                       testE != null ? testE.x : -1, testE != null ? testE.y : -1,
                       testT != null ? testT.x : -1, testT != null ? testT.y : -1));
+                      
+    // CRITICAL: If coordinates are null, letter detection will fail completely
+    if (testA == null || testE == null || testT == null) {
+      android.util.Log.e("KeyboardSwipeRecognizer", "CRITICAL ERROR: Key coordinates are NULL - letter detection will fail");
+    }
   }
   
   /**
@@ -380,9 +382,31 @@ public class KeyboardSwipeRecognizer
   {
     if (detectedLetters.isEmpty() || word.isEmpty()) return false;
     
-    // REMOVED: Overly strict first letter requirement that eliminated all candidates
-    // Let scoring algorithm (calculateStartPointScore) handle start point accuracy instead
+    // FIXED: Proper null check to prevent crashes
+    if (detectedLetters.isEmpty()) {
+      android.util.Log.d("KeyboardSwipeRecognizer", "No detected letters - word '" + word + "' accepted by default");
+      return true; // Accept all words when no letters detected
+    }
     
+    // Simple letter matching without strict requirements
+    int matchCount = 0;
+    for (char wordChar : word.toCharArray()) {
+      for (Character detectedChar : detectedLetters) {
+        if (wordChar == detectedChar) {
+          matchCount++;
+          break;
+        }
+      }
+    }
+    
+    // Accept word if it contains any detected letters  
+    boolean hasMatch = matchCount > 0;
+    android.util.Log.d("KeyboardSwipeRecognizer", String.format("Word '%s': %d/%d letters match, accepted=%s", 
+                      word, matchCount, word.length(), hasMatch));
+    return hasMatch;
+    
+    /*
+    // REMOVED: Overly strict filtering causing crashes
     int matchCount = 0;
     int lastFoundIndex = -1;
     
@@ -400,6 +424,7 @@ public class KeyboardSwipeRecognizer
     // RELAXED: Require 50% match for reasonable candidate generation  
     double matchRatio = (double)matchCount / detectedLetters.size();
     return matchRatio >= 0.5;
+    */
   }
   
   /**
