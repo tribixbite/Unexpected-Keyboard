@@ -237,8 +237,15 @@ public class ComprehensiveTraceAnalyzer
     result.boundingBoxArea = result.boundingBox.width() * result.boundingBox.height();
     result.aspectRatio = result.boundingBox.width() / result.boundingBox.height();
     
-    // TODO: Add rotated bounding box analysis if enabled
-    result.boundingBoxRotation = 0.0; // Placeholder
+    // IMPLEMENTED: Rotated bounding box analysis for better gesture characterization
+    if (includeBoundingBoxRotation && swipePath.size() >= 3)
+    {
+      result.boundingBoxRotation = calculateOptimalRotation(swipePath);
+    }
+    else
+    {
+      result.boundingBoxRotation = 0.0;
+    }
     
     android.util.Log.d("ComprehensiveTraceAnalyzer", String.format("Bounding box: %.0fx%.0f, aspect=%.2f",
                       result.boundingBox.width(), result.boundingBox.height(), result.aspectRatio));
@@ -648,6 +655,46 @@ public class ComprehensiveTraceAnalyzer
     endPositionTolerance = endTol;
     requireStartLetterMatch = reqStart;
     requireEndLetterMatch = reqEnd;
+  }
+  
+  /**
+   * Calculate optimal rotation angle for minimal bounding box
+   */
+  private double calculateOptimalRotation(List<PointF> points)
+  {
+    double minArea = Double.MAX_VALUE;
+    double optimalRotation = 0.0;
+    
+    // Test rotations from 0 to 180 degrees (in 5-degree increments)
+    for (int angle = 0; angle < 180; angle += 5)
+    {
+      double radians = Math.toRadians(angle);
+      
+      // Calculate rotated bounding box
+      float minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
+      float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
+      
+      for (PointF point : points)
+      {
+        // Rotate point around origin
+        float rotatedX = (float)(point.x * Math.cos(radians) - point.y * Math.sin(radians));
+        float rotatedY = (float)(point.x * Math.sin(radians) + point.y * Math.cos(radians));
+        
+        minX = Math.min(minX, rotatedX);
+        maxX = Math.max(maxX, rotatedX);
+        minY = Math.min(minY, rotatedY);
+        maxY = Math.max(maxY, rotatedY);
+      }
+      
+      double area = (maxX - minX) * (maxY - minY);
+      if (area < minArea)
+      {
+        minArea = area;
+        optimalRotation = angle;
+      }
+    }
+    
+    return optimalRotation;
   }
   
   /**

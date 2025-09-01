@@ -1023,12 +1023,12 @@ public class SwipeCalibrationActivity extends Activity
     
     int actualCount = Math.min(count, allSwipes.size());
     
-    // Delete most recent traces (assuming they're ordered by time)
+    // Delete most recent traces using existing deleteEntry method
     for (int i = 0; i < actualCount; i++)
     {
       SwipeMLData mostRecent = allSwipes.get(allSwipes.size() - 1 - i);
-      // TODO: Implement removeData method or alternative deletion approach
-      android.util.Log.d(TAG, "Would delete trace: " + mostRecent.getTargetWord());
+      _mlDataStore.deleteEntry(mostRecent);
+      android.util.Log.d(TAG, "Deleted trace: " + mostRecent.getTargetWord());
     }
     
     Toast.makeText(this, "Deleted " + actualCount + " most recent traces", Toast.LENGTH_SHORT).show();
@@ -2670,15 +2670,26 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
-   * Reset playground parameters to defaults
+   * Reset playground parameters to defaults (IMPLEMENTED)
    */
   private void resetPlaygroundToDefaults()
   {
     if (_sharedRecognizer != null)
     {
-      // TODO: Reset all parameters to default values
-      android.util.Log.d(TAG, "Reset playground parameters to defaults");
-      Toast.makeText(this, "Parameters reset to defaults", Toast.LENGTH_SHORT).show();
+      // Reset all parameters to production defaults
+      _sharedRecognizer.setKeyZoneRadius(120.0);          // Balanced detection area
+      _sharedRecognizer.setMissingKeyPenalty(10.0);       // Strong penalty for missing letters
+      _sharedRecognizer.setExtraKeyPenalty(2.0);          // Moderate penalty for extra letters
+      _sharedRecognizer.setOrderPenalty(5.0);             // Moderate order enforcement
+      _sharedRecognizer.setStartPointWeight(3.0);         // Strong start emphasis
+      _sharedRecognizer.setProximityWeight(1.0);          // Balanced proximity weight
+      _sharedRecognizer.setPathSampleDistance(10.0);      // Frequent sampling
+      
+      // Clear playground parameter storage
+      _playgroundParams.clear();
+      
+      android.util.Log.d(TAG, "Reset all playground parameters to production defaults");
+      Toast.makeText(this, "Parameters reset to production defaults", Toast.LENGTH_SHORT).show();
     }
   }
   

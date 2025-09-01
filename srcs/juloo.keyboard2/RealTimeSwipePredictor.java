@@ -68,9 +68,8 @@ public class RealTimeSwipePredictor implements ContinuousSwipeGestureRecognizer.
         long templateTime = System.currentTimeMillis();
         android.util.Log.d("RealTimeSwipePredictor", "Templates generated in " + (templateTime - dictTime) + "ms");
         
-        // Load CGR parameters from settings before setting templates  
-        // TODO: Add parameter loading to ContinuousSwipeGestureRecognizer
-        android.util.Log.d("RealTimeSwipePredictor", "Using default CGR parameters for now");
+        // CGR parameter loading not needed - using KeyboardSwipeRecognizer for new predictions
+        android.util.Log.d("RealTimeSwipePredictor", "Using KeyboardSwipeRecognizer for new algorithm");
         
         // Set templates in gesture recognizer
         long setTime;
