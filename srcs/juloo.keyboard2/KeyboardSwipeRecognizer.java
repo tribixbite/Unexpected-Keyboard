@@ -452,6 +452,10 @@ public class KeyboardSwipeRecognizer
     // Bayesian combination: P(word | swipe) ∝ P(swipe | word) × P(word)
     double totalScore = likelihood * languageModelScore;
     
+    // CRITICAL DEBUG: Log all score components to identify 0.000000 issue
+    android.util.Log.e("KeyboardSwipeRecognizer", String.format("SCORE DEBUG '%s': prox=%.6f seq=%.6f start=%.6f lang=%.6f → total=%.6f",
+                      word, proximityScore, sequenceScore, startPointScore, languageModelScore, totalScore));
+    
     return new RecognitionResult(word, totalScore, proximityScore, sequenceScore, 
                                startPointScore, languageModelScore, detectedLetters);
   }
