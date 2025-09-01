@@ -521,10 +521,11 @@ public class SwipeCalibrationActivity extends Activity
     
     _copyComparisonButton = new Button(this);
     _copyComparisonButton.setText("📋");
-    _copyComparisonButton.setTextSize(18);
+    _copyComparisonButton.setTextSize(20);
     _copyComparisonButton.setOnClickListener(v -> copyComparisonData());
-    _copyComparisonButton.setLayoutParams(new LinearLayout.LayoutParams(60, 60));
-    _copyComparisonButton.setBackgroundColor(0xFF2D2D2D);
+    _copyComparisonButton.setLayoutParams(new LinearLayout.LayoutParams(70, 70));
+    _copyComparisonButton.setBackgroundColor(0xFF4CAF50);  // Green background for visibility
+    _copyComparisonButton.setTextColor(Color.WHITE);
     comparisonHeaderLayout.addView(_copyComparisonButton);
     
     // Add to topLayout for proper visibility
