@@ -531,9 +531,9 @@ public class KeyboardSwipeRecognizer
     
     try
     {
-      // Base word frequency (unigram)
-      // TODO: Integrate with actual word frequency from templateGenerator
-      double baseFrequency = 1.0; // Placeholder
+      // Base word frequency (unigram) - INTEGRATED
+      double baseFrequency = templateGenerator != null ? 
+        templateGenerator.getWordFrequency(word) / 1000.0 : 1.0; // Normalize frequency
       
       // Contextual probability (bigram/n-gram)
       if (bigramModel != null && context != null && !context.isEmpty())
@@ -618,5 +618,39 @@ public class KeyboardSwipeRecognizer
   {
     startPointWeight = weight;
     android.util.Log.d("KeyboardSwipeRecognizer", "Start Point Weight updated to: " + weight);
+  }
+  
+  /**
+   * Comprehensive parameter setters for playground integration
+   */
+  public void setProximityWeight(double weight) { proximityWeight = weight; }
+  public void setExtraKeyPenalty(double penalty) { extraKeyPenalty = penalty; }
+  public void setOrderPenalty(double penalty) { orderPenalty = penalty; }
+  public void setPathSampleDistance(double distance) { pathSampleDistance = distance; }
+  
+  /**
+   * Apply all parameters from playground map
+   */
+  public void applyParameterMap(Map<String, Integer> params)
+  {
+    for (Map.Entry<String, Integer> entry : params.entrySet())
+    {
+      String paramName = entry.getKey();
+      int value = entry.getValue();
+      
+      switch (paramName)
+      {
+        case "Key Zone Radius": setKeyZoneRadius(value); break;
+        case "Missing Key Penalty": setMissingKeyPenalty(value / 100.0); break;
+        case "Extra Key Penalty": setExtraKeyPenalty(value / 100.0); break;
+        case "Order Penalty": setOrderPenalty(value / 100.0); break;
+        case "Start Point Weight": setStartPointWeight(value / 100.0); break;
+        case "Proximity Weight": setProximityWeight(value / 100.0); break;
+        case "Path Sampling Rate": setPathSampleDistance(value); break;
+        default: android.util.Log.w("KeyboardSwipeRecognizer", "Unknown parameter: " + paramName);
+      }
+    }
+    
+    android.util.Log.d("KeyboardSwipeRecognizer", "Applied " + params.size() + " playground parameters");
   }
 }

@@ -159,9 +159,10 @@ public class ComprehensiveTraceAnalyzer
     }
   }
   
-  public ComprehensiveTraceAnalyzer()
+  public ComprehensiveTraceAnalyzer(WordGestureTemplateGenerator generator)
   {
-    android.util.Log.d("ComprehensiveTraceAnalyzer", "Initialized with maximum configurability");
+    templateGenerator = generator; // Reuse existing generator with keyboard dimensions
+    android.util.Log.d("ComprehensiveTraceAnalyzer", "Initialized with shared template generator");
   }
   
   /**
@@ -494,10 +495,35 @@ public class ComprehensiveTraceAnalyzer
   
   // ========== HELPER METHODS (All using configurable parameters) ==========
   
+  // Integrated keyboard layout for letter detection
+  private WordGestureTemplateGenerator templateGenerator;
+  
   private Character findNearestLetter(PointF point)
   {
-    // TODO: Integrate with keyboard layout
-    return null; // Placeholder
+    if (templateGenerator == null) return null;
+    
+    double minDistance = Double.MAX_VALUE;
+    Character nearestLetter = null;
+    
+    // Check all keyboard letters using existing coordinate system
+    String allLetters = "qwertyuiopasdfghjklzxcvbnm";
+    for (char c : allLetters.toCharArray())
+    {
+      ContinuousGestureRecognizer.Point coord = templateGenerator.getCharacterCoordinate(c);
+      if (coord != null)
+      {
+        double distance = Math.sqrt(Math.pow(point.x - coord.x, 2) + Math.pow(point.y - coord.y, 2));
+        
+        // Use configurable letter detection radius
+        if (distance <= letterDetectionRadius && distance < minDistance)
+        {
+          minDistance = distance;
+          nearestLetter = c;
+        }
+      }
+    }
+    
+    return nearestLetter;
   }
   
   private double calculateDirectionChange(List<PointF> path, int centerIndex)
@@ -528,15 +554,42 @@ public class ComprehensiveTraceAnalyzer
   
   private double calculateLetterConfidence(PointF point, Character letter)
   {
-    // TODO: Calculate based on distance to key center and other factors
-    return 0.8; // Placeholder
+    if (letter == null || templateGenerator == null) return 0.0;
+    
+    // Get actual key center coordinate
+    ContinuousGestureRecognizer.Point keyCenter = templateGenerator.getCharacterCoordinate(letter);
+    if (keyCenter == null) return 0.0;
+    
+    // Calculate distance from point to key center
+    double distance = Math.sqrt(Math.pow(point.x - keyCenter.x, 2) + Math.pow(point.y - keyCenter.y, 2));
+    
+    // Convert distance to confidence using configurable parameters
+    // Confidence decreases exponentially with distance
+    double confidence = Math.exp(-distance / letterDetectionRadius);
+    
+    return Math.min(1.0, confidence);
   }
   
   private double calculatePositionAccuracy(PointF point, Character letter, double tolerance)
   {
-    if (letter == null) return 0.0;
-    // TODO: Calculate based on distance to key center within tolerance
-    return 0.7; // Placeholder
+    if (letter == null || templateGenerator == null) return 0.0;
+    
+    // Get actual key center coordinate  
+    ContinuousGestureRecognizer.Point keyCenter = templateGenerator.getCharacterCoordinate(letter);
+    if (keyCenter == null) return 0.0;
+    
+    // Calculate distance from point to key center
+    double distance = Math.sqrt(Math.pow(point.x - keyCenter.x, 2) + Math.pow(point.y - keyCenter.y, 2));
+    
+    // Accuracy is 1.0 if within tolerance, decreasing linearly beyond tolerance
+    if (distance <= tolerance)
+    {
+      return 1.0 - (distance / tolerance) * 0.5; // 50-100% accuracy within tolerance
+    }
+    else
+    {
+      return Math.max(0.0, 0.5 - (distance - tolerance) / tolerance); // Decreasing beyond tolerance
+    }
   }
   
   // ========== CONFIGURATION METHODS ==========
@@ -602,7 +655,10 @@ public class ComprehensiveTraceAnalyzer
    */
   public void setKeyboardDimensions(float width, float height)
   {
-    // TODO: Store keyboard dimensions for letter detection
-    android.util.Log.d("ComprehensiveTraceAnalyzer", "Keyboard dimensions set: " + width + "x" + height);
+    if (templateGenerator != null)
+    {
+      templateGenerator.setKeyboardDimensions(width, height);
+      android.util.Log.d("ComprehensiveTraceAnalyzer", "Keyboard dimensions set: " + width + "x" + height);
+    }
   }
 }

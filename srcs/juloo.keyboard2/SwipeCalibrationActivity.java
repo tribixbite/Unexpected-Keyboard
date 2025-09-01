@@ -2655,33 +2655,14 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
-   * Apply playground parameter changes to shared recognizer
+   * Apply playground parameter changes to shared recognizer (COMPREHENSIVE)
    */
   private void applyPlaygroundChanges()
   {
     if (_sharedRecognizer != null && !_playgroundParams.isEmpty())
     {
-      // Apply all stored parameter changes
-      if (_playgroundParams.containsKey("Key Zone Radius"))
-        _sharedRecognizer.setKeyZoneRadius(_playgroundParams.get("Key Zone Radius"));
-      
-      if (_playgroundParams.containsKey("Missing Key Penalty"))
-        _sharedRecognizer.setMissingKeyPenalty(_playgroundParams.get("Missing Key Penalty") / 100.0);
-      
-      if (_playgroundParams.containsKey("Extra Key Penalty"))
-        _sharedRecognizer.extraKeyPenalty = _playgroundParams.get("Extra Key Penalty") / 100.0;
-      
-      if (_playgroundParams.containsKey("Order Penalty"))
-        _sharedRecognizer.orderPenalty = _playgroundParams.get("Order Penalty") / 100.0;
-      
-      if (_playgroundParams.containsKey("Start Point Weight"))
-        _sharedRecognizer.setStartPointWeight(_playgroundParams.get("Start Point Weight") / 100.0);
-      
-      if (_playgroundParams.containsKey("Proximity Weight"))
-        _sharedRecognizer.proximityWeight = _playgroundParams.get("Proximity Weight") / 100.0;
-      
-      if (_playgroundParams.containsKey("Path Sampling Rate"))
-        _sharedRecognizer.pathSampleDistance = _playgroundParams.get("Path Sampling Rate");
+      // Use comprehensive parameter application method
+      _sharedRecognizer.applyParameterMap(_playgroundParams);
       
       android.util.Log.d(TAG, "Applied " + _playgroundParams.size() + " playground parameter changes");
       Toast.makeText(this, "Parameters applied - algorithm updated", Toast.LENGTH_SHORT).show();
