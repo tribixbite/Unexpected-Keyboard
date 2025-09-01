@@ -302,6 +302,16 @@ public class SwipeCalibrationActivity extends Activity
     _progressBar.setMax(WORDS_PER_SESSION);  // Total words = 20
     topLayout.addView(_progressBar);
     
+    // ADD PLAYGROUND BUTTON EARLY in topLayout so it's visible
+    Button playgroundButton = new Button(this);
+    playgroundButton.setText("🎮 Playground");
+    playgroundButton.setTextSize(14);
+    playgroundButton.setOnClickListener(v -> showPlaygroundModal());
+    playgroundButton.setBackgroundColor(0xFF4CAF50);
+    playgroundButton.setTextColor(Color.WHITE);
+    playgroundButton.setPadding(8, 8, 8, 8);
+    topLayout.addView(playgroundButton);
+    
     // REMOVED: Useless "Prediction Score: Not in top 10 predictions" section
     // Redundant with main algorithm analysis
     
@@ -314,7 +324,8 @@ public class SwipeCalibrationActivity extends Activity
     
     // REMOVED: CGR Recognition Analysis section entirely (as requested)
     
-    // COMPREHENSIVE ALGORITHM FLOW CHART UI - Every parameter configurable
+    // COMPREHENSIVE ALGORITHM FLOW CHART UI - Every parameter configurable (CONSTRAINED HEIGHT)
+    android.widget.ScrollView algorithmScrollView = new android.widget.ScrollView(this);
     LinearLayout algorithmFlowLayout = new LinearLayout(this);
     algorithmFlowLayout.setOrientation(LinearLayout.VERTICAL);
     algorithmFlowLayout.setPadding(12, 8, 12, 8);
@@ -368,8 +379,11 @@ public class SwipeCalibrationActivity extends Activity
     addConfigSlider(step6Layout, "Start Position Tolerance", 10, 100, 25, "px");
     algorithmFlowLayout.addView(step6Layout);
     
-    // ADD ALGORITHM FLOW CHART TO MAIN LAYOUT (was missing!)
-    topLayout.addView(algorithmFlowLayout);
+    // ADD ALGORITHM FLOW CHART TO MAIN LAYOUT (with height constraint)
+    algorithmScrollView.addView(algorithmFlowLayout);
+    algorithmScrollView.setLayoutParams(new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, 300)); // Constrain height so other elements visible
+    topLayout.addView(algorithmScrollView);
     
     // Old live control layout removed - moved to Playground modal
     
@@ -487,19 +501,7 @@ public class SwipeCalibrationActivity extends Activity
     keyboardParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
     _keyboardView.setLayoutParams(keyboardParams);
     
-    // Add Playground button to top layout for proper hierarchy
-    Button playgroundButton = new Button(this);
-    playgroundButton.setText("🎮 Playground");
-    playgroundButton.setTextSize(14);
-    playgroundButton.setOnClickListener(v -> showPlaygroundModal());
-    playgroundButton.setBackgroundColor(0xFF4CAF50);
-    playgroundButton.setTextColor(Color.WHITE);
-    playgroundButton.setPadding(8, 8, 8, 8);
-    LinearLayout.LayoutParams playgroundParams = new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-    playgroundParams.setMargins(8, 8, 8, 8);
-    playgroundButton.setLayoutParams(playgroundParams);
-    topLayout.addView(playgroundButton);
+    // REMOVED: Duplicate playground button (moved to early position in topLayout)
     
     // Add current word display to top layout for proper positioning
     topLayout.addView(currentWordLayout);
@@ -528,7 +530,7 @@ public class SwipeCalibrationActivity extends Activity
     
     // Template comparison text area
     _templateComparisonText = new TextView(this);
-    _templateComparisonText.setText("Swipe words to see comprehensive algorithm analysis...");
+    _templateComparisonText.setText("Swipe words to see comprehensive algorithm analysis and predictions...");
     _templateComparisonText.setTextSize(11);
     _templateComparisonText.setPadding(12, 12, 12, 12);
     _templateComparisonText.setTextColor(Color.WHITE);
@@ -2410,7 +2412,8 @@ public class SwipeCalibrationActivity extends Activity
       // Add to accumulated data
       _comparisonData.append(comparison);
       
-      // REMOVED: CGR analysis display section (updateCGRAnalysisDisplay call removed)
+      // Update comprehensive algorithm analysis display with new algorithm results
+      updateComprehensiveAnalysisDisplay(word, results, templateLength, userLength, userSwipe);
       
       // Update detailed comparison display (bottom section)
       String[] entries = _comparisonData.toString().split("----------------------------------------");
@@ -2489,7 +2492,20 @@ public class SwipeCalibrationActivity extends Activity
     return Math.max(0.0, alignmentScore);
   }
   
-  // REMOVED: updateCGRAnalysisDisplay method (entire CGR Recognition Analysis section removed)
+  /**
+   * Update comprehensive algorithm analysis display (replacement for CGR analysis)
+   */
+  private void updateComprehensiveAnalysisDisplay(String word, List<ContinuousGestureRecognizer.Result> results, 
+                                                 double templateLength, double userLength, List<PointF> userSwipe)
+  {
+    // Since we don't have a dedicated analysis display anymore, 
+    // ensure the comparison data shows comprehensive analysis
+    android.util.Log.d(TAG, String.format("Comprehensive analysis for %s: %d results, template=%.0f, user=%.0f", 
+                      word, results.size(), templateLength, userLength));
+    
+    // The analysis is now shown in the _templateComparisonText through addTemplateComparison
+    // which includes the full KeyboardSwipeRecognizer analysis
+  }
   
   /**
    * Create flow chart step layout with header
