@@ -2593,7 +2593,13 @@ public class SwipeCalibrationActivity extends Activity
     
     android.widget.SeekBar slider = new android.widget.SeekBar(this);
     slider.setMax(max - min);
-    slider.setProgress(defaultValue - min);
+    
+    // Check if we have an imported value for this parameter
+    Integer existingValue = _playgroundParams.get(name);
+    int initialValue = (existingValue != null) ? existingValue : defaultValue;
+    slider.setProgress(initialValue - min);
+    label.setText(name + ": " + initialValue + unit); // Update label with initial value
+    
     slider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
     slider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
       @Override
@@ -2643,6 +2649,14 @@ public class SwipeCalibrationActivity extends Activity
       {"Start Point Weight", "100", "1000", "300", "×0.01"}
     }));
     
+    // Add the main DTW algorithm component weights
+    modalLayout.addView(createParameterGroup("🎯 Main Algorithm Components", new String[][]{
+      {"DTW Weight", "0", "100", "40", "%"},
+      {"Gaussian Weight", "0", "100", "30", "%"},
+      {"N-gram Weight", "0", "100", "20", "%"},
+      {"Frequency Weight", "0", "100", "10", "%"}
+    }));
+    
     modalLayout.addView(createParameterGroup("📐 Directional Analysis", new String[][]{
       {"North/South Weight", "0", "200", "100", "%"},
       {"East/West Weight", "0", "200", "100", "%"},
@@ -2660,6 +2674,53 @@ public class SwipeCalibrationActivity extends Activity
       {"Sharp Angle Limit", "45", "180", "90", "°"},
       {"Analysis Window", "3", "10", "5", "points"}
     }));
+    
+    // Add Import/Export buttons section with proper layout
+    LinearLayout importExportSection = new LinearLayout(this);
+    importExportSection.setOrientation(LinearLayout.VERTICAL);
+    importExportSection.setPadding(12, 12, 12, 12);
+    importExportSection.setBackgroundColor(0xFF1A4D1A); // Green background for settings
+    
+    TextView importExportTitle = new TextView(this);
+    importExportTitle.setText("📋 Global App Settings");
+    importExportTitle.setTextSize(14);
+    importExportTitle.setTextColor(Color.WHITE);
+    importExportTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+    importExportTitle.setPadding(0, 0, 0, 12);
+    importExportSection.addView(importExportTitle);
+    
+    LinearLayout buttonsLayout = new LinearLayout(this);
+    buttonsLayout.setOrientation(LinearLayout.HORIZONTAL);
+    buttonsLayout.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, 
+        LinearLayout.LayoutParams.WRAP_CONTENT));
+    
+    Button importButton = new Button(this);
+    importButton.setText("📥 Import");
+    importButton.setTextSize(12);
+    importButton.setTextColor(Color.WHITE);
+    importButton.setBackgroundColor(0xFF2E7D32);
+    LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(
+        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+    importParams.setMargins(0, 0, 8, 0);
+    importButton.setLayoutParams(importParams);
+    importButton.setOnClickListener(v -> importGlobalSettings());
+    
+    Button exportButton = new Button(this);
+    exportButton.setText("📤 Export");
+    exportButton.setTextSize(12);
+    exportButton.setTextColor(Color.WHITE);
+    exportButton.setBackgroundColor(0xFF388E3C);
+    LinearLayout.LayoutParams exportParams = new LinearLayout.LayoutParams(
+        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+    exportParams.setMargins(8, 0, 0, 0);
+    exportButton.setLayoutParams(exportParams);
+    exportButton.setOnClickListener(v -> exportGlobalSettings());
+    
+    buttonsLayout.addView(importButton);
+    buttonsLayout.addView(exportButton);
+    importExportSection.addView(buttonsLayout);
+    modalLayout.addView(importExportSection);
     
     scrollView.addView(modalLayout);
     builder.setView(scrollView);
@@ -2685,6 +2746,106 @@ public class SwipeCalibrationActivity extends Activity
     
     AlertDialog dialog = builder.create();
     dialog.show();
+  }
+  
+  /**
+   * Import global app parameter settings from SwipeWeightConfig
+   */
+  private void importGlobalSettings()
+  {
+    try
+    {
+      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+      
+      // Load global weights into playground parameters map
+      _playgroundParams.put("DTW Weight", (int)(weightConfig.getDtwWeight() * 100));
+      _playgroundParams.put("Gaussian Weight", (int)(weightConfig.getGaussianWeight() * 100));
+      _playgroundParams.put("N-gram Weight", (int)(weightConfig.getNgramWeight() * 100));
+      _playgroundParams.put("Frequency Weight", (int)(weightConfig.getFrequencyWeight() * 100));
+      
+      Toast.makeText(this, "✅ Imported global app settings successfully!\n" + 
+        weightConfig.toString() + "\n\nOpen playground to see imported values.", Toast.LENGTH_LONG).show();
+      
+      Log.d(TAG, "Imported global settings to playground params: " + weightConfig.toString());
+      Log.d(TAG, "Updated playground params: DTW=" + _playgroundParams.get("DTW Weight") + 
+        ", Gaussian=" + _playgroundParams.get("Gaussian Weight") +
+        ", N-gram=" + _playgroundParams.get("N-gram Weight") +
+        ", Frequency=" + _playgroundParams.get("Frequency Weight"));
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "❌ Failed to import global settings: " + e.getMessage(), Toast.LENGTH_LONG).show();
+      Log.e(TAG, "Error importing global settings", e);
+    }
+  }
+  
+  /**
+   * Export current playground parameter settings to global app settings
+   */
+  private void exportGlobalSettings()
+  {
+    // Get current weights from playground params
+    Integer dtwParam = _playgroundParams.get("DTW Weight");
+    Integer gaussianParam = _playgroundParams.get("Gaussian Weight");
+    Integer ngramParam = _playgroundParams.get("N-gram Weight");
+    Integer frequencyParam = _playgroundParams.get("Frequency Weight");
+    
+    if (dtwParam == null || gaussianParam == null || ngramParam == null || frequencyParam == null)
+    {
+      Toast.makeText(this, "❌ No playground weights found to export.\nAdjust weights in playground first.", Toast.LENGTH_LONG).show();
+      return;
+    }
+    
+    // Show confirmation dialog before overwriting global settings
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("⚠️ Overwrite Global Settings?");
+    builder.setMessage("This will replace the algorithm weights used in normal typing.\n\n" +
+      "Current playground weights:\n" +
+      "• DTW: " + dtwParam + "%\n" +
+      "• Gaussian: " + gaussianParam + "%\n" +
+      "• N-gram: " + ngramParam + "%\n" +
+      "• Frequency: " + frequencyParam + "%\n\n" +
+      "Continue with export?");
+    
+    builder.setPositiveButton("✅ Export", new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        performExport(dtwParam, gaussianParam, ngramParam, frequencyParam);
+      }
+    });
+    
+    builder.setNegativeButton("❌ Cancel", null);
+    builder.show();
+  }
+  
+  /**
+   * Actually perform the export after confirmation
+   */
+  private void performExport(int dtwParam, int gaussianParam, int ngramParam, int frequencyParam)
+  {
+    try
+    {
+      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+      
+      // Convert from percentage back to float and save
+      float dtwWeight = dtwParam / 100.0f;
+      float gaussianWeight = gaussianParam / 100.0f;
+      float ngramWeight = ngramParam / 100.0f;
+      float frequencyWeight = frequencyParam / 100.0f;
+      
+      weightConfig.saveWeights(dtwWeight, gaussianWeight, ngramWeight, frequencyWeight);
+      
+      Toast.makeText(this, "✅ Exported playground settings to global app settings!\n" + 
+        "These weights will now be used in the main keyboard.\n\n" +
+        weightConfig.toString(), Toast.LENGTH_LONG).show();
+      
+      Log.d(TAG, "Exported to global settings: " + weightConfig.toString());
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "❌ Failed to export to global settings: " + e.getMessage(), Toast.LENGTH_LONG).show();
+      Log.e(TAG, "Error exporting to global settings", e);
+    }
   }
   
   /**

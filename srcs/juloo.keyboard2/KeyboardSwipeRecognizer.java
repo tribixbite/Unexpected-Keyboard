@@ -696,6 +696,71 @@ public class KeyboardSwipeRecognizer
   }
   
   /**
+   * Main algorithm component weight update methods
+   */
+  public void updateDTWWeight(float weight)
+  {
+    if (weightConfig != null) {
+      // Get current weights and update DTW component
+      float gaussian = weightConfig.getGaussianWeight();
+      float ngram = weightConfig.getNgramWeight();
+      float frequency = weightConfig.getFrequencyWeight();
+      
+      // Normalize to maintain sum = 1.0
+      float total = weight + gaussian + ngram + frequency;
+      if (total > 0) {
+        weightConfig.saveWeights(weight/total, gaussian/total, ngram/total, frequency/total);
+      }
+      android.util.Log.d("KeyboardSwipeRecognizer", "DTW Weight updated to: " + weight);
+    }
+  }
+  
+  public void updateGaussianWeight(float weight)
+  {
+    if (weightConfig != null) {
+      float dtw = weightConfig.getDtwWeight();
+      float ngram = weightConfig.getNgramWeight();
+      float frequency = weightConfig.getFrequencyWeight();
+      
+      float total = dtw + weight + ngram + frequency;
+      if (total > 0) {
+        weightConfig.saveWeights(dtw/total, weight/total, ngram/total, frequency/total);
+      }
+      android.util.Log.d("KeyboardSwipeRecognizer", "Gaussian Weight updated to: " + weight);
+    }
+  }
+  
+  public void updateNgramWeight(float weight)
+  {
+    if (weightConfig != null) {
+      float dtw = weightConfig.getDtwWeight();
+      float gaussian = weightConfig.getGaussianWeight();
+      float frequency = weightConfig.getFrequencyWeight();
+      
+      float total = dtw + gaussian + weight + frequency;
+      if (total > 0) {
+        weightConfig.saveWeights(dtw/total, gaussian/total, weight/total, frequency/total);
+      }
+      android.util.Log.d("KeyboardSwipeRecognizer", "N-gram Weight updated to: " + weight);
+    }
+  }
+  
+  public void updateFrequencyWeight(float weight)
+  {
+    if (weightConfig != null) {
+      float dtw = weightConfig.getDtwWeight();
+      float gaussian = weightConfig.getGaussianWeight();
+      float ngram = weightConfig.getNgramWeight();
+      
+      float total = dtw + gaussian + ngram + weight;
+      if (total > 0) {
+        weightConfig.saveWeights(dtw/total, gaussian/total, ngram/total, weight/total);
+      }
+      android.util.Log.d("KeyboardSwipeRecognizer", "Frequency Weight updated to: " + weight);
+    }
+  }
+  
+  /**
    * Comprehensive parameter setters for playground integration
    */
   public void setProximityWeight(double weight) { proximityWeight = weight; }
@@ -722,6 +787,11 @@ public class KeyboardSwipeRecognizer
         case "Start Point Weight": setStartPointWeight(value / 100.0); break;
         case "Proximity Weight": setProximityWeight(value / 100.0); break;
         case "Path Sampling Rate": setPathSampleDistance(value); break;
+        // Main algorithm component weights
+        case "DTW Weight": updateDTWWeight(value / 100.0f); break;
+        case "Gaussian Weight": updateGaussianWeight(value / 100.0f); break;
+        case "N-gram Weight": updateNgramWeight(value / 100.0f); break;
+        case "Frequency Weight": updateFrequencyWeight(value / 100.0f); break;
         default: android.util.Log.w("KeyboardSwipeRecognizer", "Unknown parameter: " + paramName);
       }
     }
