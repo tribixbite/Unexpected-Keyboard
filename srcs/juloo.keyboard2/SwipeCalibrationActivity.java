@@ -2460,23 +2460,26 @@ public class SwipeCalibrationActivity extends Activity
         display.append("\n\n");
       }
       
-      // Add DTW algorithm detailed equation breakdown
+      // Show recent detailed comparison data first (limit to last entry to reduce duplication)
+      String[] entries = _comparisonData.toString().split("----------------------------------------");
+      if (entries.length > 0) {
+        // Show only the most recent entry
+        String lastEntry = entries[entries.length - 1];
+        if (!lastEntry.trim().isEmpty()) {
+          display.append(lastEntry).append("----------------------------------------\n\n");
+        }
+      }
+      
+      // Add comprehensive DTW algorithm detailed equation breakdown
       if (_dtwPredictor != null && _currentWord != null && userSwipe != null && !userSwipe.isEmpty()) {
+        Log.d(TAG, "Adding DTW equation breakdown for word: " + _currentWord);
         display.append("🧮 DTW ALGORITHM EQUATION BREAKDOWN:\n");
         display.append("====================================\n");
         addDTWEquationBreakdown(display, _currentWord, userSwipe);
-        display.append("\n\n");
-      }
-      
-      // Show detailed comparison data
-      String[] entries = _comparisonData.toString().split("----------------------------------------");
-      int start = Math.max(0, entries.length - 3);
-      for (int i = start; i < entries.length; i++)
-      {
-        if (!entries[i].trim().isEmpty())
-        {
-          display.append(entries[i]).append("----------------------------------------\n");
-        }
+        display.append("\n");
+      } else {
+        Log.w(TAG, "DTW breakdown skipped - predictor:" + (_dtwPredictor != null) + 
+              ", word:" + _currentWord + ", swipe:" + (userSwipe != null ? userSwipe.size() : "null"));
       }
       
       _templateComparisonText.setText(display.toString());

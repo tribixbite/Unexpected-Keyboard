@@ -229,7 +229,12 @@ public class DTWPredictor
    * Calculate detailed score breakdown for a single word (for debugging/calibration)
    */
   public ScoreBreakdown getScoreBreakdownForWord(String word, List<PointF> rawCoordinates) {
+    android.util.Log.d("DTWPredictor", "Getting breakdown for word: " + word);
+    android.util.Log.d("DTWPredictor", "Word paths loaded: " + _wordPaths.size());
+    android.util.Log.d("DTWPredictor", "Contains word '" + word + "': " + _wordPaths.containsKey(word));
+    
     if (!_wordPaths.containsKey(word) || rawCoordinates == null || rawCoordinates.size() < 2) {
+      android.util.Log.w("DTWPredictor", "Cannot create breakdown - missing word path or insufficient coordinates");
       return new ScoreBreakdown(0, 0, 0, 0, 0);
     }
 
