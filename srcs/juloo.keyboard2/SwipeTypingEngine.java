@@ -18,9 +18,11 @@ public class SwipeTypingEngine
   private final SwipeDetector _swipeDetector;
   private final SwipeScorer _scorer;
   private Config _config;
+  private android.content.Context _context;
   
   public SwipeTypingEngine(android.content.Context context, WordPredictor sequencePredictor, Config config)
   {
+    _context = context;
     _cgrRecognizer = new KeyboardSwipeRecognizer(context);
     _sequencePredictor = sequencePredictor;
     _swipeDetector = new SwipeDetector();
@@ -104,11 +106,22 @@ public class SwipeTypingEngine
   {
     List<ScoredCandidate> allCandidates = new ArrayList<>();
     
-    // Get CGR predictions using working KeyboardSwipeRecognizer
+    // Get CGR predictions using working KeyboardSwipeRecognizer  
     if (_cgrRecognizer != null && input.coordinates.size() > 2)
     {
       try
       {
+        // CRITICAL: Set keyboard dimensions for coordinate mapping (was missing!)
+        android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
+        android.view.WindowManager wm = (android.view.WindowManager) 
+          _context.getSystemService(android.content.Context.WINDOW_SERVICE);
+        wm.getDefaultDisplay().getMetrics(metrics);
+        float keyboardWidth = metrics.widthPixels;
+        float keyboardHeight = metrics.heightPixels * 0.35f; // Typical keyboard height
+        
+        _cgrRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
+        android.util.Log.d("SwipeTypingEngine", "Set CGR keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
+        
         List<KeyboardSwipeRecognizer.RecognitionResult> cgrResults = 
           _cgrRecognizer.recognizeSwipe(input.coordinates, new ArrayList<>());
         
