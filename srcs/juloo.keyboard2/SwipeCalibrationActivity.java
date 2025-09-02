@@ -2600,6 +2600,9 @@ public class SwipeCalibrationActivity extends Activity
     slider.setProgress(initialValue - min);
     label.setText(name + ": " + initialValue + unit); // Update label with initial value
     
+    // Store the initial value in the parameters map so export can find it
+    _playgroundParams.put(name, initialValue);
+    
     slider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
     slider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
       @Override
@@ -2784,15 +2787,30 @@ public class SwipeCalibrationActivity extends Activity
    */
   private void exportGlobalSettings()
   {
+    // Debug: Log all playground params
+    Log.d(TAG, "=== Export Debug Info ===");
+    Log.d(TAG, "Total playground params: " + _playgroundParams.size());
+    for (Map.Entry<String, Integer> entry : _playgroundParams.entrySet()) {
+      Log.d(TAG, "Param: " + entry.getKey() + " = " + entry.getValue());
+    }
+    
     // Get current weights from playground params
     Integer dtwParam = _playgroundParams.get("DTW Weight");
     Integer gaussianParam = _playgroundParams.get("Gaussian Weight");
     Integer ngramParam = _playgroundParams.get("N-gram Weight");
     Integer frequencyParam = _playgroundParams.get("Frequency Weight");
     
+    Log.d(TAG, "Weight params found - DTW: " + dtwParam + ", Gaussian: " + gaussianParam + 
+          ", N-gram: " + ngramParam + ", Frequency: " + frequencyParam);
+    
     if (dtwParam == null || gaussianParam == null || ngramParam == null || frequencyParam == null)
     {
-      Toast.makeText(this, "❌ No playground weights found to export.\nAdjust weights in playground first.", Toast.LENGTH_LONG).show();
+      Toast.makeText(this, "❌ No playground weights found to export.\nMissing: " +
+        (dtwParam == null ? "DTW " : "") +
+        (gaussianParam == null ? "Gaussian " : "") +
+        (ngramParam == null ? "N-gram " : "") +
+        (frequencyParam == null ? "Frequency " : "") +
+        "\nTotal params: " + _playgroundParams.size(), Toast.LENGTH_LONG).show();
       return;
     }
     
