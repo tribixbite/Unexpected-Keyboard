@@ -2312,22 +2312,24 @@ public class SwipeCalibrationActivity extends Activity
         userPoints.add(new ContinuousGestureRecognizer.Point(p.x, p.y));
       }
       
-      // NEW ALGORITHM TESTING: Use keyboard-specific recognition
-      KeyboardSwipeRecognizer keyboardRecognizer = new KeyboardSwipeRecognizer(this);
+      // Use shared recognizer that has playground parameters applied
+      if (_sharedRecognizer == null) {
+        _sharedRecognizer = new KeyboardSwipeRecognizer(this);
+      }
       
       // CRITICAL: Ensure keyboard dimensions are set before recognition
       android.util.Log.d(TAG, "Setting keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
-      keyboardRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
+      _sharedRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
       
-      android.util.Log.d(TAG, "Testing NEW KeyboardSwipeRecognizer (replacing failed CGR)");
-      android.util.Log.d(TAG, "Using Bayesian framework with key proximity + sequence validation");
+      android.util.Log.d(TAG, "Using shared KeyboardSwipeRecognizer with playground parameters");
+      android.util.Log.d(TAG, "Playground params applied: " + _playgroundParams.size() + " parameters");
       
       // Convert to List<String> context (empty for now)
       List<String> context = new ArrayList<>();
       
-      // Test new algorithm
+      // Test algorithm with current playground parameters
       List<KeyboardSwipeRecognizer.RecognitionResult> newResults = 
-        keyboardRecognizer.recognizeSwipe(userSwipe, context);
+        _sharedRecognizer.recognizeSwipe(userSwipe, context);
       
       // Convert results for display compatibility (WITH REAL TEMPLATES)
       List<ContinuousGestureRecognizer.Result> results = new ArrayList<>();
@@ -2450,11 +2452,19 @@ public class SwipeCalibrationActivity extends Activity
       // Update detailed comparison display with algorithm error report
       StringBuilder display = new StringBuilder();
       
-      // Show algorithm error report if available
-      if (keyboardRecognizer != null && !keyboardRecognizer.lastErrorReport.isEmpty()) {
-        display.append("🔍 ALGORITHM DEBUG REPORT:\n");
-        display.append("================================\n");
-        display.append(keyboardRecognizer.lastErrorReport);
+      // Show comprehensive algorithm debug report
+      if (_sharedRecognizer != null && !_sharedRecognizer.lastErrorReport.isEmpty()) {
+        display.append("🔍 KEYBOARD SWIPE RECOGNIZER DEBUG:\n");
+        display.append("===================================\n");
+        display.append(_sharedRecognizer.lastErrorReport);
+        display.append("\n\n");
+      }
+      
+      // Add DTW algorithm detailed equation breakdown
+      if (_dtwPredictor != null && _currentWord != null && userSwipe != null && !userSwipe.isEmpty()) {
+        display.append("🧮 DTW ALGORITHM EQUATION BREAKDOWN:\n");
+        display.append("====================================\n");
+        addDTWEquationBreakdown(display, _currentWord, userSwipe);
         display.append("\n\n");
       }
       
@@ -2476,6 +2486,69 @@ public class SwipeCalibrationActivity extends Activity
     {
       Log.e(TAG, "Error in template comparison: " + e.getMessage());
       _templateComparisonText.setText("Error: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * Add detailed DTW algorithm equation breakdown to debug display
+   */
+  private void addDTWEquationBreakdown(StringBuilder display, String targetWord, List<PointF> userSwipe)
+  {
+    try
+    {
+      // Get current weights
+      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+      float dtwWeight = weightConfig.getDtwWeight();
+      float gaussianWeight = weightConfig.getGaussianWeight();
+      float ngramWeight = weightConfig.getNgramWeight();
+      float frequencyWeight = weightConfig.getFrequencyWeight();
+      
+      display.append("Target Word: ").append(targetWord.toUpperCase()).append("\n");
+      display.append("User Swipe Points: ").append(userSwipe.size()).append("\n\n");
+      
+      // Get word frequency
+      int frequency = _wordFrequencies.getOrDefault(targetWord, 1000);
+      
+      display.append("ALGORITHM COMPONENT WEIGHTS:\n");
+      display.append(String.format("• DTW Weight: %.1f%%\n", dtwWeight * 100));
+      display.append(String.format("• Gaussian Weight: %.1f%%\n", gaussianWeight * 100));
+      display.append(String.format("• N-gram Weight: %.1f%%\n", ngramWeight * 100));  
+      display.append(String.format("• Frequency Weight: %.1f%%\n\n", frequencyWeight * 100));
+      
+      display.append("COMPONENT SCORE CALCULATIONS:\n");
+      
+      // Mock DTW calculation (simplified for display)
+      display.append("1. DTW (Dynamic Time Warping):\n");
+      display.append("   • Template path generation for '").append(targetWord).append("'\n");
+      display.append("   • Normalized to 200 sample points\n"); 
+      display.append("   • Distance calculation via DP matrix\n");
+      display.append("   • DTW Score = 1 / (1 + distance)\n\n");
+      
+      display.append("2. Gaussian Key Model:\n");
+      display.append("   • Statistical probability based on key positions\n");
+      display.append("   • Gaussian distribution around key centers\n");
+      display.append("   • Path likelihood calculation\n\n");
+      
+      display.append("3. N-gram Language Model:\n");
+      display.append("   • Language context scoring\n");
+      display.append("   • Word probability in context\n");
+      display.append("   • Score normalized to 0-1 range\n\n");
+      
+      display.append("4. Frequency Score:\n");
+      display.append(String.format("   • Word frequency: %d\n", frequency));
+      display.append(String.format("   • Frequency Score = min(1.0, %d / 10000) = %.3f\n\n", frequency, Math.min(1.0f, frequency / 10000.0f)));
+      
+      display.append("FINAL EQUATION:\n");
+      display.append("Final Score = (DTW × " + String.format("%.1f", dtwWeight * 100) + "%) + ");
+      display.append("(Gaussian × " + String.format("%.1f", gaussianWeight * 100) + "%) + ");
+      display.append("(N-gram × " + String.format("%.1f", ngramWeight * 100) + "%) + ");
+      display.append("(Frequency × " + String.format("%.1f", frequencyWeight * 100) + "%)\n");
+      display.append("Final Score × 1000 for ranking\n");
+      
+    }
+    catch (Exception e)
+    {
+      display.append("Error generating DTW breakdown: ").append(e.getMessage()).append("\n");
     }
   }
   
