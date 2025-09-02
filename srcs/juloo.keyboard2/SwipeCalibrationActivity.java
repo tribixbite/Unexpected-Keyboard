@@ -2795,22 +2795,45 @@ public class SwipeCalibrationActivity extends Activity
   {
     try
     {
+      // Load algorithm component weights from SwipeWeightConfig
       SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-      
-      // Load global weights into playground parameters map
       _playgroundParams.put("DTW Weight", (int)(weightConfig.getDtwWeight() * 100));
       _playgroundParams.put("Gaussian Weight", (int)(weightConfig.getGaussianWeight() * 100));
       _playgroundParams.put("N-gram Weight", (int)(weightConfig.getNgramWeight() * 100));
       _playgroundParams.put("Frequency Weight", (int)(weightConfig.getFrequencyWeight() * 100));
       
-      Toast.makeText(this, "✅ Imported global app settings successfully!\n" + 
-        weightConfig.toString() + "\n\nOpen playground to see imported values.", Toast.LENGTH_LONG).show();
+      // Load other playground parameters from saved global settings
+      SharedPreferences prefs = getSharedPreferences("playground_global_settings", MODE_PRIVATE);
+      String[] otherParams = {
+        "Key Zone Radius", "Missing Key Penalty", "Extra Key Penalty", 
+        "Order Penalty", "Start Point Weight", "Proximity Weight", "Path Sampling Rate"
+      };
       
-      Log.d(TAG, "Imported global settings to playground params: " + weightConfig.toString());
-      Log.d(TAG, "Updated playground params: DTW=" + _playgroundParams.get("DTW Weight") + 
-        ", Gaussian=" + _playgroundParams.get("Gaussian Weight") +
-        ", N-gram=" + _playgroundParams.get("N-gram Weight") +
-        ", Frequency=" + _playgroundParams.get("Frequency Weight"));
+      int importedCount = 4; // Algorithm weights count
+      StringBuilder importedSummary = new StringBuilder();
+      importedSummary.append("Algorithm Weights:\n").append(weightConfig.toString()).append("\n\n");
+      
+      for (String paramName : otherParams) {
+        String prefKey = "playground_" + paramName.replace(" ", "_");
+        if (prefs.contains(prefKey)) {
+          int value = prefs.getInt(prefKey, -1);
+          _playgroundParams.put(paramName, value);
+          importedCount++;
+          importedSummary.append("• ").append(paramName).append(": ").append(value).append("\n");
+        }
+      }
+      
+      if (importedCount > 4) {
+        importedSummary.append("\nOther Parameters: ").append(importedCount - 4).append(" loaded");
+      } else {
+        importedSummary.append("\nOther Parameters: None saved (using defaults)");
+      }
+      
+      Toast.makeText(this, "✅ Imported " + importedCount + " global parameters!\n\n" + 
+        importedSummary.toString() + "\n\nOpen playground to see imported values.", Toast.LENGTH_LONG).show();
+      
+      Log.d(TAG, "Imported " + importedCount + " parameters successfully");
+      Log.d(TAG, "Algorithm weights: " + weightConfig.toString());
     }
     catch (Exception e)
     {
@@ -2831,41 +2854,56 @@ public class SwipeCalibrationActivity extends Activity
       Log.d(TAG, "Param: " + entry.getKey() + " = " + entry.getValue());
     }
     
-    // Get current weights from playground params
-    Integer dtwParam = _playgroundParams.get("DTW Weight");
-    Integer gaussianParam = _playgroundParams.get("Gaussian Weight");
-    Integer ngramParam = _playgroundParams.get("N-gram Weight");
-    Integer frequencyParam = _playgroundParams.get("Frequency Weight");
+    if (_playgroundParams.isEmpty()) {
+      Toast.makeText(this, "❌ No playground parameters to export.\nAdjust parameters in playground first.", Toast.LENGTH_LONG).show();
+      return;
+    }
     
-    Log.d(TAG, "Weight params found - DTW: " + dtwParam + ", Gaussian: " + gaussianParam + 
-          ", N-gram: " + ngramParam + ", Frequency: " + frequencyParam);
+    // Collect all functional playground parameters
+    Map<String, Integer> functionalParams = new HashMap<>();
+    String[] workingParams = {
+      "Key Zone Radius", "Missing Key Penalty", "Extra Key Penalty", 
+      "Order Penalty", "Start Point Weight", "Proximity Weight", "Path Sampling Rate",
+      "DTW Weight", "Gaussian Weight", "N-gram Weight", "Frequency Weight"
+    };
     
-    if (dtwParam == null || gaussianParam == null || ngramParam == null || frequencyParam == null)
-    {
-      Toast.makeText(this, "❌ No playground weights found to export.\nMissing: " +
-        (dtwParam == null ? "DTW " : "") +
-        (gaussianParam == null ? "Gaussian " : "") +
-        (ngramParam == null ? "N-gram " : "") +
-        (frequencyParam == null ? "Frequency " : "") +
-        "\nTotal params: " + _playgroundParams.size(), Toast.LENGTH_LONG).show();
+    StringBuilder summary = new StringBuilder();
+    summary.append("Parameters to export:\n\n");
+    
+    for (String paramName : workingParams) {
+      Integer value = _playgroundParams.get(paramName);
+      if (value != null) {
+        functionalParams.put(paramName, value);
+        summary.append("• ").append(paramName).append(": ").append(value);
+        if (paramName.contains("Weight") && !paramName.equals("Start Point Weight")) {
+          summary.append("%");
+        } else if (paramName.contains("Penalty") || paramName.equals("Start Point Weight")) {
+          summary.append("×0.01");
+        } else if (paramName.equals("Key Zone Radius")) {
+          summary.append("px");
+        } else if (paramName.equals("Path Sampling Rate")) {
+          summary.append(" points");
+        }
+        summary.append("\n");
+      }
+    }
+    
+    if (functionalParams.isEmpty()) {
+      Toast.makeText(this, "❌ No functional parameters found to export.\nTotal params: " + _playgroundParams.size(), Toast.LENGTH_LONG).show();
       return;
     }
     
     // Show confirmation dialog before overwriting global settings
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("⚠️ Overwrite Global Settings?");
-    builder.setMessage("This will replace the algorithm weights used in normal typing.\n\n" +
-      "Current playground weights:\n" +
-      "• DTW: " + dtwParam + "%\n" +
-      "• Gaussian: " + gaussianParam + "%\n" +
-      "• N-gram: " + ngramParam + "%\n" +
-      "• Frequency: " + frequencyParam + "%\n\n" +
+    builder.setTitle("⚠️ Export " + functionalParams.size() + " Parameters?");
+    builder.setMessage("This will save your playground settings as the new global defaults.\n\n" +
+      summary.toString() + "\n" +
       "Continue with export?");
     
     builder.setPositiveButton("✅ Export", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        performExport(dtwParam, gaussianParam, ngramParam, frequencyParam);
+        performComprehensiveExport(functionalParams);
       }
     });
     
@@ -2874,32 +2912,64 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
-   * Actually perform the export after confirmation
+   * Perform comprehensive export of all playground parameters
    */
-  private void performExport(int dtwParam, int gaussianParam, int ngramParam, int frequencyParam)
+  private void performComprehensiveExport(Map<String, Integer> functionalParams)
   {
     try
     {
-      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+      SharedPreferences prefs = getSharedPreferences("playground_global_settings", MODE_PRIVATE);
+      SharedPreferences.Editor editor = prefs.edit();
       
-      // Convert from percentage back to float and save
-      float dtwWeight = dtwParam / 100.0f;
-      float gaussianWeight = gaussianParam / 100.0f;
-      float ngramWeight = ngramParam / 100.0f;
-      float frequencyWeight = frequencyParam / 100.0f;
+      // Export algorithm component weights to SwipeWeightConfig
+      Integer dtwParam = functionalParams.get("DTW Weight");
+      Integer gaussianParam = functionalParams.get("Gaussian Weight");
+      Integer ngramParam = functionalParams.get("N-gram Weight");
+      Integer frequencyParam = functionalParams.get("Frequency Weight");
       
-      weightConfig.saveWeights(dtwWeight, gaussianWeight, ngramWeight, frequencyWeight);
+      if (dtwParam != null && gaussianParam != null && ngramParam != null && frequencyParam != null) {
+        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+        float dtwWeight = dtwParam / 100.0f;
+        float gaussianWeight = gaussianParam / 100.0f;
+        float ngramWeight = ngramParam / 100.0f;
+        float frequencyWeight = frequencyParam / 100.0f;
+        
+        weightConfig.saveWeights(dtwWeight, gaussianWeight, ngramWeight, frequencyWeight);
+        Log.d(TAG, "Saved algorithm weights: " + weightConfig.toString());
+      }
       
-      Toast.makeText(this, "✅ Exported playground settings to global app settings!\n" + 
-        "These weights will now be used in the main keyboard.\n\n" +
-        weightConfig.toString(), Toast.LENGTH_LONG).show();
+      // Export all other playground parameters to separate storage
+      int savedCount = 0;
+      StringBuilder savedParams = new StringBuilder();
       
-      Log.d(TAG, "Exported to global settings: " + weightConfig.toString());
+      for (Map.Entry<String, Integer> entry : functionalParams.entrySet()) {
+        String paramName = entry.getKey();
+        Integer value = entry.getValue();
+        
+        // Skip algorithm weights (already handled above)
+        if (!paramName.equals("DTW Weight") && !paramName.equals("Gaussian Weight") && 
+            !paramName.equals("N-gram Weight") && !paramName.equals("Frequency Weight")) {
+          
+          editor.putInt("playground_" + paramName.replace(" ", "_"), value);
+          savedParams.append("• ").append(paramName).append(": ").append(value).append("\n");
+          savedCount++;
+        }
+      }
+      
+      editor.apply();
+      
+      Toast.makeText(this, "✅ Exported " + functionalParams.size() + " playground parameters!\n" +
+        "Algorithm weights saved to SwipeWeightConfig.\n" +
+        "Other parameters saved to global settings.\n\n" +
+        "These settings will now be used in normal typing.", Toast.LENGTH_LONG).show();
+      
+      Log.d(TAG, "Exported " + functionalParams.size() + " parameters successfully");
+      Log.d(TAG, "Algorithm weights exported, " + savedCount + " other parameters saved");
     }
     catch (Exception e)
     {
-      Toast.makeText(this, "❌ Failed to export to global settings: " + e.getMessage(), Toast.LENGTH_LONG).show();
-      Log.e(TAG, "Error exporting to global settings", e);
+      Toast.makeText(this, "❌ Failed to export parameters: " + e.getMessage(), Toast.LENGTH_LONG).show();
+      Log.e(TAG, "Error exporting parameters", e);
     }
   }
   
