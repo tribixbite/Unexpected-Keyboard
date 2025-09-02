@@ -59,7 +59,6 @@ public class Keyboard2 extends InputMethodService
   // Swipe typing components
   private DictionaryManager _dictionaryManager;
   private WordPredictor _wordPredictor;
-  private DTWPredictor _dtwPredictor;
   private SwipeTypingEngine _swipeEngine;
   private AsyncPredictionHandler _asyncPredictionHandler;
   private SuggestionBar _suggestionBar;
@@ -187,18 +186,12 @@ public class Keyboard2 extends InputMethodService
       // Initialize DTW predictor for swipe typing only
       if (_config.swipe_typing_enabled)
       {
-        _dtwPredictor = new DTWPredictor(_wordPredictor);
-        _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
-        
-        // Load and set weight configuration
-        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-        _swipeEngine.setWeightConfig(weightConfig);
+        _swipeEngine = new SwipeTypingEngine(this, _wordPredictor, _config);
         
         // Initialize async prediction handler
         _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
         
-        // Load calibration data to improve accuracy
-        _dtwPredictor.loadCalibrationData(this);
+        // CGR recognizer doesn't need separate calibration data loading
         
         // Set keyboard dimensions if available
         if (_keyboardView != null)
@@ -406,21 +399,15 @@ public class Keyboard2 extends InputMethodService
         android.util.Log.d("Keyboard2", "Word predictor initialized with " + _wordPredictor.getDictionarySize() + " words");
       }
       
-      if (_config.swipe_typing_enabled && _dtwPredictor == null)
+      if (_config.swipe_typing_enabled && _swipeEngine == null)
       {
         android.util.Log.d("Keyboard2", "Initializing DTW predictor in onStartInputView");
-        _dtwPredictor = new DTWPredictor(_wordPredictor);
-        _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
-        
-        // Load and set weight configuration
-        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-        _swipeEngine.setWeightConfig(weightConfig);
+        _swipeEngine = new SwipeTypingEngine(this, _wordPredictor, _config);
         
         // Initialize async prediction handler
         _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
         
-        // Load calibration data to improve accuracy
-        _dtwPredictor.loadCalibrationData(this);
+        // CGR recognizer doesn't need separate calibration data loading
         
         // Set keyboard dimensions
         if (_keyboardView != null)
@@ -460,7 +447,7 @@ public class Keyboard2 extends InputMethodService
       android.util.Log.d("Keyboard2", "Predictions disabled in settings");
       // Clean up if predictions are disabled
       _wordPredictor = null;
-      _dtwPredictor = null;
+      // CGR recognizer cleanup handled by SwipeTypingEngine
       _suggestionBar = null;
       _inputViewContainer = null;
       setInputView(_keyboardView);
@@ -984,11 +971,7 @@ public class Keyboard2 extends InputMethodService
         return;
       }
       // Initialize engine on the fly
-      _swipeEngine = new SwipeTypingEngine(_dtwPredictor, _wordPredictor, _config);
-      
-      // Load and set weight configuration
-      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-      _swipeEngine.setWeightConfig(weightConfig);
+      _swipeEngine = new SwipeTypingEngine(this, _wordPredictor, _config);
       
       // Initialize async handler if not already done
       if (_asyncPredictionHandler == null)

@@ -13,21 +13,19 @@ import java.util.Map;
  */
 public class SwipeTypingEngine
 {
-  private final DTWPredictor _dtwPredictor;
+  private final KeyboardSwipeRecognizer _cgrRecognizer;
   private final WordPredictor _sequencePredictor;
   private final SwipeDetector _swipeDetector;
   private final SwipeScorer _scorer;
   private Config _config;
-  private SwipeWeightConfig _weightConfig;
   
-  public SwipeTypingEngine(DTWPredictor dtwPredictor, WordPredictor sequencePredictor, Config config)
+  public SwipeTypingEngine(android.content.Context context, WordPredictor sequencePredictor, Config config)
   {
-    _dtwPredictor = dtwPredictor;
+    _cgrRecognizer = new KeyboardSwipeRecognizer(context);
     _sequencePredictor = sequencePredictor;
     _swipeDetector = new SwipeDetector();
     _scorer = new SwipeScorer();
     _config = config;
-    _weightConfig = null;
     
     // Ensure predictors have config
     if (_sequencePredictor != null)
@@ -37,25 +35,13 @@ public class SwipeTypingEngine
   }
   
   /**
-   * Set weight configuration for DTW predictor
-   */
-  public void setWeightConfig(SwipeWeightConfig weightConfig)
-  {
-    _weightConfig = weightConfig;
-    if (_dtwPredictor != null)
-    {
-      _dtwPredictor.setWeightConfig(weightConfig);
-    }
-  }
-  
-  /**
-   * Set keyboard dimensions for DTW normalization
+   * Set keyboard dimensions for CGR recognizer
    */
   public void setKeyboardDimensions(float width, float height)
   {
-    if (_dtwPredictor != null)
+    if (_cgrRecognizer != null)
     {
-      _dtwPredictor.setKeyboardDimensions(width, height);
+      _cgrRecognizer.setKeyboardDimensions(width, height);
     }
   }
   
@@ -118,30 +104,26 @@ public class SwipeTypingEngine
   {
     List<ScoredCandidate> allCandidates = new ArrayList<>();
     
-    // Get DTW predictions using actual coordinates
-    if (_dtwPredictor != null && input.coordinates.size() > 2)
+    // Get CGR predictions using working KeyboardSwipeRecognizer
+    if (_cgrRecognizer != null && input.coordinates.size() > 2)
     {
       try
       {
-        DTWPredictor.DTWResult dtwResult = _dtwPredictor.predictWithCoordinates(
-          input.coordinates, input.touchedKeys);
+        List<KeyboardSwipeRecognizer.RecognitionResult> cgrResults = 
+          _cgrRecognizer.recognizeSwipe(input.coordinates, new ArrayList<>());
         
-        android.util.Log.d("SwipeTypingEngine", "DTW predictions: " + dtwResult.words);
-        android.util.Log.d("SwipeTypingEngine", "DTW confidence: " + dtwResult.confidence);
+        android.util.Log.d("SwipeTypingEngine", "CGR predictions: " + cgrResults.size() + " results");
         
-        // Convert to scored candidates with DTW boost based on confidence
-        for (int i = 0; i < dtwResult.words.size(); i++)
+        // Convert to scored candidates
+        for (KeyboardSwipeRecognizer.RecognitionResult result : cgrResults)
         {
-          String word = dtwResult.words.get(i);
-          float baseScore = dtwResult.scores.get(i);
-          // Boost score based on DTW confidence
-          float dtwScore = baseScore * (1.0f + dtwResult.confidence);
-          allCandidates.add(new ScoredCandidate(word, dtwScore, "DTW"));
+          allCandidates.add(new ScoredCandidate(result.word, (float)result.totalScore, "CGR"));
+          android.util.Log.d("SwipeTypingEngine", "CGR result: " + result.word + " = " + result.totalScore);
         }
       }
       catch (Exception e)
       {
-        android.util.Log.e("SwipeTypingEngine", "DTW prediction failed: " + e.getMessage());
+        android.util.Log.e("SwipeTypingEngine", "CGR prediction failed: " + e.getMessage());
       }
     }
     

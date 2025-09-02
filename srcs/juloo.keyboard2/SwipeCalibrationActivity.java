@@ -2441,10 +2441,8 @@ public class SwipeCalibrationActivity extends Activity
       }
       
       comparison.append("Timestamp: ").append(new Date().toString()).append("\n");
-      
-      // ADD WORKING CGR ALGORITHM EQUATION BREAKDOWN
-      comparison.append("\n🎯 CGR ALGORITHM EQUATION BREAKDOWN (WORKING):\n");
-      comparison.append("================================================\n");
+      comparison.append("🎯 CGR EQUATION BREAKDOWN:\n");
+      comparison.append("========================\n");
       
       // Show CGR algorithm parameters that affect calculation
       comparison.append("CURRENT CGR PARAMETERS:\n");
