@@ -206,6 +206,64 @@ public class DTWPredictor
   /**
    * Predict words using actual swipe coordinates
    */
+  /**
+   * Helper class for detailed score breakdown
+   */
+  public static class ScoreBreakdown {
+    public final float dtwScore;
+    public final float gaussianScore;
+    public final float ngramScore;
+    public final float frequencyScore;
+    public final float finalScore;
+
+    public ScoreBreakdown(float dtw, float gaussian, float ngram, float freq, float finalScore) {
+      this.dtwScore = dtw;
+      this.gaussianScore = gaussian;
+      this.ngramScore = ngram;
+      this.frequencyScore = freq;
+      this.finalScore = finalScore;
+    }
+  }
+
+  /**
+   * Calculate detailed score breakdown for a single word (for debugging/calibration)
+   */
+  public ScoreBreakdown getScoreBreakdownForWord(String word, List<PointF> rawCoordinates) {
+    if (!_wordPaths.containsKey(word) || rawCoordinates == null || rawCoordinates.size() < 2) {
+      return new ScoreBreakdown(0, 0, 0, 0, 0);
+    }
+
+    List<PointF> normalizedPath = normalizeCoordinates(rawCoordinates);
+    normalizedPath = resamplePath(normalizedPath, SAMPLING_POINTS);
+    List<PointF> wordPath = _wordPaths.get(word);
+
+    // DTW
+    float distance = calculateDTW(normalizedPath, wordPath);
+    float dtwScore = 1.0f / (1.0f + distance);
+
+    // Gaussian
+    float gaussianScore = _gaussianModel.getWordConfidence(word, normalizedPath);
+
+    // N-gram
+    float ngramScore = _ngramModel.scoreWord(word);
+    float ngramNorm = ngramScore / 100.0f;
+
+    // Frequency
+    int frequency = _wordFrequencies.getOrDefault(word, 1000);
+    float freqScore = Math.min(1.0f, frequency / 10000.0f);
+
+    // Final Score
+    float finalScore;
+    if (_weightConfig != null) {
+      finalScore = _weightConfig.computeWeightedScore(dtwScore, gaussianScore, ngramNorm, freqScore) * 1000;
+    } else {
+      // Fallback to default weights
+      finalScore = (dtwScore * 0.4f + gaussianScore * 0.3f + ngramNorm * 0.2f + freqScore * 0.1f) * 1000;
+    }
+
+    return new ScoreBreakdown(dtwScore, gaussianScore, ngramNorm, freqScore, finalScore);
+  }
+
   public DTWResult predictWithCoordinates(List<PointF> rawCoordinates, List<KeyboardData.Key> touchedKeys)
   {
     if (rawCoordinates == null || rawCoordinates.size() < 2)

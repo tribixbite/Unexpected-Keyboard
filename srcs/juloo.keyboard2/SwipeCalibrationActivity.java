@@ -2515,66 +2515,63 @@ public class SwipeCalibrationActivity extends Activity
       display.append(String.format("• N-gram Weight: %.1f%%\n", ngramWeight * 100));  
       display.append(String.format("• Frequency Weight: %.1f%%\n\n", frequencyWeight * 100));
       
-      // CALCULATE ACTUAL COMPONENT SCORES FOR THIS SPECIFIC WORD
+      // GET ACTUAL CALCULATED COMPONENT SCORES FOR THIS SPECIFIC WORD
       if (_dtwPredictor != null) {
         // Set up DTW predictor with current keyboard dimensions
         _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
         
-        // Get touched keys for DTW predictor
-        List<KeyboardData.Key> touchedKeys = new ArrayList<>();
-        Map<String, KeyButton> keyPositions = _keyboardView.getKeyPositions();
+        // Get detailed score breakdown for this specific word
+        DTWPredictor.ScoreBreakdown breakdown = _dtwPredictor.getScoreBreakdownForWord(targetWord, userSwipe);
         
-        for (PointF p : userSwipe) {
-          String keyChar = _keyboardView.getKeyAt(p.x, p.y);
-          if (keyChar != null && keyPositions.containsKey(keyChar)) {
-            KeyButton keyButton = keyPositions.get(keyChar);
-            KeyValue kv = KeyValue.makeStringKey(keyChar);
-            KeyboardData.Key key = new KeyboardData.Key(
-              new KeyValue[]{kv, null, null, null, null},
-              null, 0,
-              keyButton.width / _keyboardView.getWidth(),
-              keyButton.x / _keyboardView.getWidth(),
-              null
-            );
-            touchedKeys.add(key);
+        if (breakdown != null) {
+          display.append("ACTUAL CALCULATED COMPONENT SCORES FOR '").append(targetWord.toUpperCase()).append("':\n");
+          display.append(String.format("• DTW Score: %.6f (shape matching)\n", breakdown.dtwScore));
+          display.append(String.format("• Gaussian Score: %.6f (key position probability)\n", breakdown.gaussianScore));
+          display.append(String.format("• N-gram Score: %.6f (language context)\n", breakdown.ngramScore));
+          display.append(String.format("• Frequency Score: %.6f (word commonness)\n\n", breakdown.frequencyScore));
+          
+          display.append("ALGORITHM COMPONENT WEIGHTS (CURRENT):\n");
+          display.append(String.format("• DTW Weight: %.3f (%.1f%%)\n", dtwWeight, dtwWeight * 100));
+          display.append(String.format("• Gaussian Weight: %.3f (%.1f%%)\n", gaussianWeight, gaussianWeight * 100));
+          display.append(String.format("• N-gram Weight: %.3f (%.1f%%)\n", ngramWeight, ngramWeight * 100));  
+          display.append(String.format("• Frequency Weight: %.3f (%.1f%%)\n\n", frequencyWeight, frequencyWeight * 100));
+          
+          display.append("FULL WEIGHTED EQUATION WITH ACTUAL VALUES:\n");
+          display.append(String.format(
+              "Score = (%.6f × %.3f) + (%.6f × %.3f) + (%.6f × %.3f) + (%.6f × %.3f)\n",
+              breakdown.dtwScore, dtwWeight,
+              breakdown.gaussianScore, gaussianWeight,
+              breakdown.ngramScore, ngramWeight,
+              breakdown.frequencyScore, frequencyWeight
+          ));
+          
+          float calculatedScore = (breakdown.dtwScore * dtwWeight) + (breakdown.gaussianScore * gaussianWeight) +
+                                (breakdown.ngramScore * ngramWeight) + (breakdown.frequencyScore * frequencyWeight);
+                                
+          display.append(String.format("      = %.6f + %.6f + %.6f + %.6f = %.6f\n",
+              breakdown.dtwScore * dtwWeight,
+              breakdown.gaussianScore * gaussianWeight,
+              breakdown.ngramScore * ngramWeight,
+              breakdown.frequencyScore * frequencyWeight,
+              calculatedScore
+          ));
+
+          display.append(String.format("Final Result = %.6f × 1000 = %.2f\n", calculatedScore, breakdown.finalScore));
+          
+          // Get ranking from full prediction
+          DTWPredictor.DTWResult fullResult = _dtwPredictor.predictWithCoordinates(userSwipe, new ArrayList<>());
+          int rank = -1;
+          for (int i = 0; i < fullResult.words.size(); i++) {
+            if (fullResult.words.get(i).equals(targetWord)) {
+              rank = i + 1;
+              break;
+            }
           }
+          display.append(String.format("Prediction Rank: %s\n", rank > 0 ? "#" + rank : "Not in top 10"));
+          
+        } else {
+          display.append("Could not generate score breakdown for '").append(targetWord).append("'\n");
         }
-        
-        // Get actual DTW prediction result
-        DTWPredictor.DTWResult result = _dtwPredictor.predictWithCoordinates(userSwipe, touchedKeys);
-        
-        // Find the scores for our target word
-        float finalScore = 0.0f;
-        int rank = -1;
-        
-        for (int i = 0; i < result.words.size(); i++) {
-          if (result.words.get(i).equals(targetWord)) {
-            rank = i + 1;
-            finalScore = result.scores.get(i);
-            break;
-          }
-        }
-        
-        // Calculate component scores (using already declared frequency variable)
-        float freqScore = Math.min(1.0f, frequency / 10000.0f);
-        
-        display.append("ACTUAL CALCULATED VALUES FOR '").append(targetWord.toUpperCase()).append("':\n");
-        display.append(String.format("• Word Frequency: %d\n", frequency));
-        display.append(String.format("• Frequency Score: %.6f\n", freqScore));
-        display.append(String.format("• Final Combined Score: %.3f\n", finalScore));
-        display.append(String.format("• Prediction Rank: %s\n\n", rank > 0 ? "#" + rank : "Not in top 10"));
-        
-        display.append("ALGORITHM COMPONENT WEIGHTS (CURRENT):\n");
-        display.append(String.format("• DTW Weight: %.1f%%\n", dtwWeight * 100));
-        display.append(String.format("• Gaussian Weight: %.1f%%\n", gaussianWeight * 100));
-        display.append(String.format("• N-gram Weight: %.1f%%\n", ngramWeight * 100));  
-        display.append(String.format("• Frequency Weight: %.1f%%\n\n", frequencyWeight * 100));
-        
-        display.append("FINAL WEIGHTED EQUATION:\n");
-        display.append(String.format("Score = (DTW×%.3f) + (Gaussian×%.3f) + (N-gram×%.3f) + (%.6f×%.3f)\n",
-                      dtwWeight, gaussianWeight, ngramWeight, freqScore, frequencyWeight));
-        display.append(String.format("Result = %.3f × 1000 = %.1f (Rank #%s)\n", 
-                      finalScore/1000, finalScore, rank > 0 ? String.valueOf(rank) : "?"));
       } else {
         display.append("DTW Predictor not available for detailed calculations\n");
       }
