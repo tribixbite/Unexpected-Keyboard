@@ -953,13 +953,22 @@ public class Keyboard2 extends InputMethodService
                                 List<android.graphics.PointF> swipePath,
                                 List<Long> timestamps)
   {
-    android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION START =====");
-    android.util.Log.d("Keyboard2", "handleSwipeTyping called with " + swipedKeys.size() + " keys");
+    android.util.Log.e("Keyboard2", "🚨 ===== SWIPE PREDICTION START ===== 🚨");
+    android.util.Log.e("Keyboard2", "handleSwipeTyping called with " + swipedKeys.size() + " keys and " + swipePath.size() + " path points");
+    
+    // Log swipe path details
+    if (swipePath.size() > 0) {
+      android.graphics.PointF first = swipePath.get(0);
+      android.graphics.PointF last = swipePath.get(swipePath.size() - 1);
+      android.util.Log.e("Keyboard2", "Swipe path: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
+    }
     
     if (!_config.swipe_typing_enabled)
     {
-      android.util.Log.d("Keyboard2", "Swipe typing disabled");
+      android.util.Log.e("Keyboard2", "❌ SWIPE TYPING DISABLED IN CONFIG");
       return;
+    } else {
+      android.util.Log.e("Keyboard2", "✅ Swipe typing enabled, proceeding...");
     }
     
     if (_swipeEngine == null)

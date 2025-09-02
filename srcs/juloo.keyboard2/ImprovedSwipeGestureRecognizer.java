@@ -27,7 +27,7 @@ public class ImprovedSwipeGestureRecognizer
   private KeyboardData.Key _lastRegisteredKey;
   
   // Thresholds for improved filtering
-  private static final float MIN_SWIPE_DISTANCE = 100.0f; // Increased from 50
+  private static final float MIN_SWIPE_DISTANCE = 50.0f; // Lowered to make swipes easier to detect
   private static final long MIN_DWELL_TIME_MS = 20; // Minimum time to register a key
   private static final float MIN_KEY_DISTANCE = 40.0f; // Minimum distance to register new key
   private static final int SMOOTHING_WINDOW = 3; // Points for moving average
@@ -382,21 +382,33 @@ public class ImprovedSwipeGestureRecognizer
    */
   private boolean shouldConsiderSwipeTyping()
   {
+    // Add debug logging for swipe detection
+    android.util.Log.e("ImprovedSwipeGestureRecognizer", "🔍 SWIPE DETECTION CHECK:");
+    android.util.Log.e("ImprovedSwipeGestureRecognizer", "- Keys touched: " + _touchedKeys.size());
+    android.util.Log.e("ImprovedSwipeGestureRecognizer", "- Total distance: " + _totalDistance + " (need " + MIN_SWIPE_DISTANCE + ")");
+    
     // Need at least 2 alphabetic keys
-    if (_touchedKeys.size() < 2)
+    if (_touchedKeys.size() < 2) {
+      android.util.Log.e("ImprovedSwipeGestureRecognizer", "❌ Too few keys: " + _touchedKeys.size() + " < 2");
       return false;
+    }
     
     // Check total distance
-    if (_totalDistance < MIN_SWIPE_DISTANCE)
+    if (_totalDistance < MIN_SWIPE_DISTANCE) {
+      android.util.Log.e("ImprovedSwipeGestureRecognizer", "❌ Distance too short: " + _totalDistance + " < " + MIN_SWIPE_DISTANCE);
       return false;
+    }
     
     // Check if all touched keys are alphabetic
     for (KeyboardData.Key key : _touchedKeys)
     {
-      if (!isValidAlphabeticKey(key))
+      if (!isValidAlphabeticKey(key)) {
+        android.util.Log.e("ImprovedSwipeGestureRecognizer", "❌ Non-alphabetic key touched");
         return false;
+      }
     }
     
+    android.util.Log.e("ImprovedSwipeGestureRecognizer", "✅ SWIPE DETECTED - proceeding with swipe typing");
     return true;
   }
   
