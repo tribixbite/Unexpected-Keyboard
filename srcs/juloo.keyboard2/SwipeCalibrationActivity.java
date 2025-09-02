@@ -2725,29 +2725,66 @@ public class SwipeCalibrationActivity extends Activity
     importExportSection.addView(buttonsLayout);
     modalLayout.addView(importExportSection);
     
+    // Add custom action buttons as a single row at the bottom
+    LinearLayout actionButtonsLayout = new LinearLayout(this);
+    actionButtonsLayout.setOrientation(LinearLayout.HORIZONTAL);
+    actionButtonsLayout.setPadding(16, 16, 16, 16);
+    actionButtonsLayout.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, 
+        LinearLayout.LayoutParams.WRAP_CONTENT));
+    
+    // Apply button
+    Button applyButton = new Button(this);
+    applyButton.setText("✅");
+    applyButton.setTextSize(16);
+    applyButton.setBackgroundColor(0xFF4CAF50);
+    applyButton.setTextColor(Color.WHITE);
+    LinearLayout.LayoutParams applyParams = new LinearLayout.LayoutParams(
+        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+    applyParams.setMargins(0, 0, 8, 0);
+    applyButton.setLayoutParams(applyParams);
+    applyButton.setOnClickListener(v -> {
+      applyPlaygroundChanges();
+      regenerateCurrentWordAnalysis();
+    });
+    
+    // Reset button
+    Button resetButton = new Button(this);
+    resetButton.setText("🔄");
+    resetButton.setTextSize(16);
+    resetButton.setBackgroundColor(0xFF888888);
+    resetButton.setTextColor(Color.WHITE);
+    LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(
+        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+    resetParams.setMargins(4, 0, 4, 0);
+    resetButton.setLayoutParams(resetParams);
+    resetButton.setOnClickListener(v -> {
+      resetPlaygroundToDefaults();
+      regenerateCurrentWordAnalysis();
+    });
+    
+    // Cancel button
+    Button cancelButton = new Button(this);
+    cancelButton.setText("❌");
+    cancelButton.setTextSize(16);
+    cancelButton.setBackgroundColor(0xFF757575);
+    cancelButton.setTextColor(Color.WHITE);
+    LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
+        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+    cancelParams.setMargins(8, 0, 0, 0);
+    cancelButton.setLayoutParams(cancelParams);
+    
+    actionButtonsLayout.addView(applyButton);
+    actionButtonsLayout.addView(resetButton);
+    actionButtonsLayout.addView(cancelButton);
+    modalLayout.addView(actionButtonsLayout);
+    
     scrollView.addView(modalLayout);
     builder.setView(scrollView);
     
-    // Apply and Reset buttons
-    builder.setPositiveButton("✅ Apply Changes", new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        applyPlaygroundChanges();
-        regenerateCurrentWordAnalysis();
-      }
-    });
-    
-    builder.setNeutralButton("🔄 Reset to Defaults", new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        resetPlaygroundToDefaults();
-        regenerateCurrentWordAnalysis();
-      }
-    });
-    
-    builder.setNegativeButton("❌ Cancel", null);
-    
+    // Set cancel button to close dialog (done after dialog is created)
     AlertDialog dialog = builder.create();
+    cancelButton.setOnClickListener(v -> dialog.dismiss());
     dialog.show();
   }
   
