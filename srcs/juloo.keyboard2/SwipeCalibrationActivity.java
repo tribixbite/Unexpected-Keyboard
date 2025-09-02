@@ -2515,35 +2515,69 @@ public class SwipeCalibrationActivity extends Activity
       display.append(String.format("• N-gram Weight: %.1f%%\n", ngramWeight * 100));  
       display.append(String.format("• Frequency Weight: %.1f%%\n\n", frequencyWeight * 100));
       
-      display.append("COMPONENT SCORE CALCULATIONS:\n");
-      
-      // Mock DTW calculation (simplified for display)
-      display.append("1. DTW (Dynamic Time Warping):\n");
-      display.append("   • Template path generation for '").append(targetWord).append("'\n");
-      display.append("   • Normalized to 200 sample points\n"); 
-      display.append("   • Distance calculation via DP matrix\n");
-      display.append("   • DTW Score = 1 / (1 + distance)\n\n");
-      
-      display.append("2. Gaussian Key Model:\n");
-      display.append("   • Statistical probability based on key positions\n");
-      display.append("   • Gaussian distribution around key centers\n");
-      display.append("   • Path likelihood calculation\n\n");
-      
-      display.append("3. N-gram Language Model:\n");
-      display.append("   • Language context scoring\n");
-      display.append("   • Word probability in context\n");
-      display.append("   • Score normalized to 0-1 range\n\n");
-      
-      display.append("4. Frequency Score:\n");
-      display.append(String.format("   • Word frequency: %d\n", frequency));
-      display.append(String.format("   • Frequency Score = min(1.0, %d / 10000) = %.3f\n\n", frequency, Math.min(1.0f, frequency / 10000.0f)));
-      
-      display.append("FINAL EQUATION:\n");
-      display.append("Final Score = (DTW × " + String.format("%.1f", dtwWeight * 100) + "%) + ");
-      display.append("(Gaussian × " + String.format("%.1f", gaussianWeight * 100) + "%) + ");
-      display.append("(N-gram × " + String.format("%.1f", ngramWeight * 100) + "%) + ");
-      display.append("(Frequency × " + String.format("%.1f", frequencyWeight * 100) + "%)\n");
-      display.append("Final Score × 1000 for ranking\n");
+      // CALCULATE ACTUAL COMPONENT SCORES FOR THIS SPECIFIC WORD
+      if (_dtwPredictor != null) {
+        // Set up DTW predictor with current keyboard dimensions
+        _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+        
+        // Get touched keys for DTW predictor
+        List<KeyboardData.Key> touchedKeys = new ArrayList<>();
+        Map<String, KeyButton> keyPositions = _keyboardView.getKeyPositions();
+        
+        for (PointF p : userSwipe) {
+          String keyChar = _keyboardView.getKeyAt(p.x, p.y);
+          if (keyChar != null && keyPositions.containsKey(keyChar)) {
+            KeyButton keyButton = keyPositions.get(keyChar);
+            KeyValue kv = KeyValue.makeStringKey(keyChar);
+            KeyboardData.Key key = new KeyboardData.Key(
+              new KeyValue[]{kv, null, null, null, null},
+              null, 0,
+              keyButton.width / _keyboardView.getWidth(),
+              keyButton.x / _keyboardView.getWidth(),
+              null
+            );
+            touchedKeys.add(key);
+          }
+        }
+        
+        // Get actual DTW prediction result
+        DTWPredictor.DTWResult result = _dtwPredictor.predictWithCoordinates(userSwipe, touchedKeys);
+        
+        // Find the scores for our target word
+        float finalScore = 0.0f;
+        int rank = -1;
+        
+        for (int i = 0; i < result.words.size(); i++) {
+          if (result.words.get(i).equals(targetWord)) {
+            rank = i + 1;
+            finalScore = result.scores.get(i);
+            break;
+          }
+        }
+        
+        // Calculate component scores (using already declared frequency variable)
+        float freqScore = Math.min(1.0f, frequency / 10000.0f);
+        
+        display.append("ACTUAL CALCULATED VALUES FOR '").append(targetWord.toUpperCase()).append("':\n");
+        display.append(String.format("• Word Frequency: %d\n", frequency));
+        display.append(String.format("• Frequency Score: %.6f\n", freqScore));
+        display.append(String.format("• Final Combined Score: %.3f\n", finalScore));
+        display.append(String.format("• Prediction Rank: %s\n\n", rank > 0 ? "#" + rank : "Not in top 10"));
+        
+        display.append("ALGORITHM COMPONENT WEIGHTS (CURRENT):\n");
+        display.append(String.format("• DTW Weight: %.1f%%\n", dtwWeight * 100));
+        display.append(String.format("• Gaussian Weight: %.1f%%\n", gaussianWeight * 100));
+        display.append(String.format("• N-gram Weight: %.1f%%\n", ngramWeight * 100));  
+        display.append(String.format("• Frequency Weight: %.1f%%\n\n", frequencyWeight * 100));
+        
+        display.append("FINAL WEIGHTED EQUATION:\n");
+        display.append(String.format("Score = (DTW×%.3f) + (Gaussian×%.3f) + (N-gram×%.3f) + (%.6f×%.3f)\n",
+                      dtwWeight, gaussianWeight, ngramWeight, freqScore, frequencyWeight));
+        display.append(String.format("Result = %.3f × 1000 = %.1f (Rank #%s)\n", 
+                      finalScore/1000, finalScore, rank > 0 ? String.valueOf(rank) : "?"));
+      } else {
+        display.append("DTW Predictor not available for detailed calculations\n");
+      }
       
     }
     catch (Exception e)
@@ -3087,6 +3121,31 @@ public class SwipeCalibrationActivity extends Activity
     {
       // Use comprehensive parameter application method
       _sharedRecognizer.applyParameterMap(_playgroundParams);
+      
+      // CRITICAL: Also update DTW predictor with weight changes
+      Integer dtwParam = _playgroundParams.get("DTW Weight");
+      Integer gaussianParam = _playgroundParams.get("Gaussian Weight");
+      Integer ngramParam = _playgroundParams.get("N-gram Weight");
+      Integer frequencyParam = _playgroundParams.get("Frequency Weight");
+      
+      if (dtwParam != null && gaussianParam != null && ngramParam != null && frequencyParam != null) {
+        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
+        // Update the weight config that DTW predictor uses
+        float dtwWeight = dtwParam / 100.0f;
+        float gaussianWeight = gaussianParam / 100.0f;
+        float ngramWeight = ngramParam / 100.0f;
+        float frequencyWeight = frequencyParam / 100.0f;
+        
+        // Save to config so DTW predictor picks up changes
+        weightConfig.saveWeights(dtwWeight, gaussianWeight, ngramWeight, frequencyWeight);
+        
+        // Update DTW predictor's weight config reference
+        if (_dtwPredictor != null) {
+          _dtwPredictor.setWeightConfig(weightConfig);
+        }
+        
+        android.util.Log.d(TAG, "Updated DTW predictor weights: " + weightConfig.toString());
+      }
       
       android.util.Log.d(TAG, "Applied " + _playgroundParams.size() + " playground parameter changes");
       Toast.makeText(this, "Parameters applied - algorithm updated", Toast.LENGTH_SHORT).show();
