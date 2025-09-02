@@ -323,8 +323,15 @@ public class Keyboard2View extends View
   @Override
   public boolean onTouch(View v, MotionEvent event)
   {
+    // GESTURE INTERRUPTION DEBUGGING - log events that might segment swipes
+    int action = event.getActionMasked();
+    if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+      android.util.Log.e("SwipeDebug", "🎯 KEY EVENT: " + MotionEvent.actionToString(action) + 
+        " at (" + event.getX() + "," + event.getY() + ") viewHeight=" + getHeight());
+    }
+    
     int p;
-    switch (event.getActionMasked())
+    switch (action)
     {
       case MotionEvent.ACTION_UP:
       case MotionEvent.ACTION_POINTER_UP:
@@ -447,8 +454,9 @@ public class Keyboard2View extends View
   public void onMeasure(int wSpec, int hSpec)
   {
     int width;
-    DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-    width = dm.widthPixels;
+    // FIXED: Use actual measured width instead of screen width (layout calculation bug)
+    width = MeasureSpec.getSize(wSpec);
+    android.util.Log.d("Keyboard2View", "Layout fix: using measured width " + width + " instead of screen width");
     _marginLeft = Math.max(_config.horizontal_margin, _insets_left);
     _marginRight = Math.max(_config.horizontal_margin, _insets_right);
     _marginBottom = _config.margin_bottom + _insets_bottom;
