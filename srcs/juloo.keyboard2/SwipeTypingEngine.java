@@ -126,12 +126,25 @@ public class SwipeTypingEngine
           _cgrRecognizer.recognizeSwipe(input.coordinates, new ArrayList<>());
         
         android.util.Log.d("SwipeTypingEngine", "CGR predictions: " + cgrResults.size() + " results");
+        android.util.Log.d("SwipeTypingEngine", "Input coordinates: " + input.coordinates.size() + " points");
+        
+        // Log first few coordinate points for debugging
+        if (input.coordinates.size() > 0) {
+          android.graphics.PointF first = input.coordinates.get(0);
+          android.graphics.PointF last = input.coordinates.get(input.coordinates.size() - 1);
+          android.util.Log.d("SwipeTypingEngine", "Swipe path: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
+        }
         
         // Convert to scored candidates
         for (KeyboardSwipeRecognizer.RecognitionResult result : cgrResults)
         {
           allCandidates.add(new ScoredCandidate(result.word, (float)result.totalScore, "CGR"));
           android.util.Log.d("SwipeTypingEngine", "CGR result: " + result.word + " = " + result.totalScore);
+        }
+        
+        // Log error report from CGR recognizer
+        if (cgrResults.isEmpty()) {
+          android.util.Log.w("SwipeTypingEngine", "No CGR results! Error report: " + _cgrRecognizer.lastErrorReport);
         }
       }
       catch (Exception e)
