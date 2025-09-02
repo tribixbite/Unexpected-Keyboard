@@ -1,96 +1,64 @@
-# Swipe Prediction Scoring for Calibration Screen
+# Breakdown: The "Swipe Calibration" Screen
 
-This document provides a detailed breakdown of how the prediction ranking scores are computed within the swipe calibration screen. The goal of the scoring system is to rank a list of candidate words based on how well they match a user's swipe gesture.
+This document details the functionality of the "Swipe Calibration" screen. Contrary to a typical user-facing calibration tool, this screen is a comprehensive **developer utility** for data collection, debugging, and algorithm analysis.
 
-The final score for each candidate word is a weighted combination of two primary scores:
-1.  **Geometric Score (`S_geom`):** Measures the similarity between the user's swipe path and the ideal path for the candidate word.
-2.  **Lexical Score (`S_lex`):** Measures the likelihood of the candidate word appearing in the language (based on frequency).
+Its primary purpose is not to tune the keyboard for the user, but to generate high-quality swipe data for training machine learning models and to provide a detailed analysis of how the underlying prediction engines perform on any given swipe.
 
----
-
-## 1. Gesture Path Preprocessing
-
-Before scoring, the raw user input (a sequence of x, y coordinates) is normalized to account for variations in speed and keyboard scale. This creates a standardized path that can be compared against ideal word paths.
-
-- **Input:** Raw path `P_raw = [(x1, y1), (x2, y2), ...]`
-- **Output:** Normalized path `P_norm`
+**Key File:** `srcs/juloo/keyboard2/SwipeCalibrationActivity.java`
 
 ---
 
-## 2. Candidate Word Generation
+## Core Functionalities
 
-The system generates a list of potential candidate words from the dictionary. This is done by identifying all words whose constituent characters lie near the user's swipe path.
+1.  **Swipe Data Collection**: The user is prompted to swipe a series of words. Each swipe (a path of x,y coordinates and timestamps) is captured and stored in a local SQLite database (`swipe_ml_data.db`) as a `SwipeMLData` object. This data is used for offline model training.
 
----
+2.  **Prediction Analysis**: After each swipe, the activity calls the app's core prediction engines to see how they would rank candidates for that swipe. This is for analysis, not for user-facing correction.
 
-## 3. Scoring and Ranking Algorithm
-
-For each candidate word, the system calculates a final score and ranks them.
-
-### a. Geometric Score (`S_geom`)
-
-This score quantifies how well the shape of the user's normalized swipe path (`P_norm`) matches the ideal, pre-calculated path for a candidate word (`P_ideal`). The ideal path is the straight-line path connecting the centers of the keys for that word.
-
-The similarity is calculated using a path similarity algorithm like Dynamic Time Warping (DTW), which finds the optimal alignment between two sequences. The result is a score between 0.0 (no match) and 1.0 (perfect match).
-
-**Formula:** `S_geom = 1 - (DTW_distance(P_norm, P_ideal) / Max_Possible_Distance)`
-
-### b. Lexical Score (`S_lex`)
-
-This score is determined by the frequency of the candidate word in the active dictionary. More common words are considered more likely and receive a higher score. The frequency is normalized to a value between 0.0 and 1.0.
-
-**Formula:** `S_lex = NormalizedWordFrequency(candidate_word)`
-
-### c. Final Score (`S_final`)
-
-The final score is a weighted average of the Geometric and Lexical scores. The weights are adjustable parameters, but typical values emphasize the geometric match slightly more than the lexical probability.
-
-- `W_geom`: Weight for the geometric score (e.g., 0.6)
-- `W_lex`: Weight for the lexical score (e.g., 0.4)
-
-**Formula:** `S_final = (W_geom * S_geom) + (W_lex * S_lex)`
+3.  **Debug Visualization**: The screen displays the user's exact swipe path overlaid on the keyboard and provides a text-based breakdown of the scores from the various algorithms.
 
 ---
 
-## Example Calculation
+## How Prediction Ranking Scores are Computed
 
-Let's assume the user swipes a path that is close to the word "good".
+The ranking score displayed in this activity is a direct look into the production prediction engine. The primary algorithm used for this analysis appears to be the `KeyboardSwipeRecognizer`, which uses a Bayesian-inspired framework:
 
-**User Swipe:** A slightly curved path near the keys G, O, D.
-**Candidate Words:** The system identifies "good", "god", and "food" as potential matches.
-**Weights:** `W_geom = 0.6`, `W_lex = 0.4`
+**P(word | swipe) ∝ P(swipe | word) × P(word)**
 
-### Scoring:
+-   `P(word | swipe)`: The final probability (and thus the rank) of a `word` given the `swipe`.
+-   `P(swipe | word)`: The **Likelihood**. How likely is this `swipe` path if the user intended to type this `word`? This is the geometric score.
+-   `P(word)`: The **Prior**. How likely is the `word` in general? This is the language model or frequency score.
 
-1.  **Candidate: "good"**
-    - The user's path is very similar to the ideal path for "good".
-      - `S_geom` = **0.95**
-    - "good" is a very common word.
-      - `S_lex` = **0.90**
-    - `S_final("good")` = (0.6 * 0.95) + (0.4 * 0.90) = 0.57 + 0.36 = **0.93**
+The final score is a combination of several weighted components:
 
-2.  **Candidate: "god"**
-    - The path is shorter and doesn't account for the double 'o'.
-      - `S_geom` = **0.70**
-    - "god" is a common word, but less so than "good".
-      - `S_lex` = **0.75**
-    - `S_final("god")` = (0.6 * 0.70) + (0.4 * 0.75) = 0.42 + 0.30 = **0.72**
+1.  **Proximity Score (Geometric Match)**: This is the core geometric calculation. It compares the user's swipe path to the ideal path for a candidate word (the "template"). It penalizes for:
+    *   The distance between the swipe path and the template path.
+    *   Missing required letters from the word.
+    *   Including extra letters not in the word.
+    *   Incorrect ordering of the letters.
 
-3.  **Candidate: "food"**
-    - The path starts closer to 'G' than 'F'.
-      - `S_geom` = **0.60**
-    - "food" is a very common word.
-      - `S_lex` = **0.88**
-    - `S_final("food")` = (0.6 * 0.60) + (0.4 * 0.88) = 0.36 + 0.352 = **0.712**
+2.  **Start Point Score**: A bonus is applied if the swipe starts very close to the first letter of the candidate word. This gives strong weight to the user's initial intention.
 
-### Final Ranking
+3.  **Language Model Score (Frequency)**: The score is boosted based on the word's general frequency in the English language. Common words are considered more likely.
 
-The candidates are sorted by their `S_final` score in descending order.
+### Example Calculation
 
-| Rank | Candidate | `S_geom` | `S_lex` | `S_final` |
-|------|-----------|----------|---------|-----------|
-| 1    | good      | 0.95     | 0.90    | **0.930** |
-| 2    | god       | 0.70     | 0.75    | **0.720** |
-| 3    | food      | 0.60     | 0.88    | **0.712** |
+Imagine a user swipes a path for the word **"hello"**. The system analyzes several candidates, including "hello" and "jello".
 
-The calibration screen would display this ranked list, with "good" correctly identified as the top prediction.
+1.  **Candidate: "hello"**
+    *   **Proximity Score**: The user's path is very close to the ideal path for "hello". It passes over H-E-L-L-O in the correct order. **Score: 0.95**
+    *   **Start Point Score**: The swipe started very close to the 'H' key. **Score: 0.98**
+    *   **Language Score**: "hello" is a very common word. **Score: 0.90**
+    *   **Final Score (conceptual)**: `(0.95 * W_prox) + (0.98 * W_start) + (0.90 * W_lang) = High Score`
+
+2.  **Candidate: "jello"**
+    *   **Proximity Score**: The path is somewhat close, but the start is off.
+        *   It will be heavily penalized for missing the 'J' at the beginning.
+        *   It will be penalized for having an extra 'H' at the start.
+        *   **Score: 0.40**
+    *   **Start Point Score**: The swipe started near 'H', not 'J'. **Score: 0.10**
+    *   **Language Score**: "jello" is a reasonably common word. **Score: 0.65**
+    *   **Final Score (conceptual)**: `(0.40 * W_prox) + (0.10 * W_start) + (0.65 * W_lang) = Low Score`
+
+### Conclusion
+
+The calibration screen does not compute its own scores. Instead, it acts as a sophisticated test harness that invokes the real prediction engine (`KeyboardSwipeRecognizer`) and displays the resulting scores and debug information, allowing developers to analyze and improve the core swipe-typing algorithms.

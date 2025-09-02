@@ -2441,6 +2441,45 @@ public class SwipeCalibrationActivity extends Activity
       }
       
       comparison.append("Timestamp: ").append(new Date().toString()).append("\n");
+      
+      // ADD WORKING CGR ALGORITHM EQUATION BREAKDOWN
+      comparison.append("\n🎯 CGR ALGORITHM EQUATION BREAKDOWN (WORKING):\n");
+      comparison.append("================================================\n");
+      
+      // Show CGR algorithm parameters that affect calculation
+      comparison.append("CURRENT CGR PARAMETERS:\n");
+      if (_sharedRecognizer != null) {
+        comparison.append(String.format("• Proximity Weight: %.2f\n", _sharedRecognizer.proximityWeight));
+        comparison.append(String.format("• Missing Key Penalty: %.2f\n", _sharedRecognizer.missingKeyPenalty));
+        comparison.append(String.format("• Extra Key Penalty: %.2f\n", _sharedRecognizer.extraKeyPenalty));
+        comparison.append(String.format("• Order Penalty: %.2f\n", _sharedRecognizer.orderPenalty));
+        comparison.append(String.format("• Start Point Weight: %.2f\n", _sharedRecognizer.startPointWeight));
+        comparison.append(String.format("• Key Zone Radius: %.0f px\n", _sharedRecognizer.keyZoneRadius));
+      } else {
+        comparison.append("• Shared recognizer not available\n");
+      }
+      comparison.append("\n");
+      
+      // Show actual CGR results with component breakdowns (already calculated in newResults)
+      comparison.append("CGR ALGORITHM COMPONENT SCORES (TOP 3):\n");
+      for (int i = 0; i < Math.min(3, newResults.size()); i++) {
+        KeyboardSwipeRecognizer.RecognitionResult result = newResults.get(i);
+        
+        comparison.append(String.format("#%d: %s (Total Score: %.6f)\n", 
+          i + 1, result.word.toUpperCase(), result.totalScore));
+        comparison.append(String.format("    • Proximity Score: %.6f (shape matching)\n", result.proximityScore));
+        comparison.append(String.format("    • Sequence Score: %.6f (letter order)\n", result.sequenceScore));
+        comparison.append(String.format("    • Start Point Score: %.6f (start accuracy)\n", result.startPointScore));
+        comparison.append(String.format("    • Language Score: %.6f (word frequency)\n", result.languageModelScore));
+        
+        // Show Bayesian equation with actual values
+        double likelihood = result.proximityScore * result.sequenceScore * result.startPointScore;
+        comparison.append(String.format("    • Likelihood = %.6f × %.6f × %.6f = %.6f\n", 
+          result.proximityScore, result.sequenceScore, result.startPointScore, likelihood));
+        comparison.append(String.format("    • Final = %.6f × %.6f = %.6f\n\n", 
+          likelihood, result.languageModelScore, result.totalScore));
+      }
+      
       comparison.append("----------------------------------------\n\n");
       
       // Add to accumulated data
@@ -2470,17 +2509,7 @@ public class SwipeCalibrationActivity extends Activity
         }
       }
       
-      // Add comprehensive DTW algorithm detailed equation breakdown
-      if (_dtwPredictor != null && _currentWord != null && userSwipe != null && !userSwipe.isEmpty()) {
-        Log.d(TAG, "Adding DTW equation breakdown for word: " + _currentWord);
-        display.append("🧮 DTW ALGORITHM EQUATION BREAKDOWN:\n");
-        display.append("====================================\n");
-        addDTWEquationBreakdown(display, _currentWord, userSwipe);
-        display.append("\n");
-      } else {
-        Log.w(TAG, "DTW breakdown skipped - predictor:" + (_dtwPredictor != null) + 
-              ", word:" + _currentWord + ", swipe:" + (userSwipe != null ? userSwipe.size() : "null"));
-      }
+      // Removed broken DTW breakdown - CGR algorithm breakdown now embedded in comparison data above
       
       _templateComparisonText.setText(display.toString());
       

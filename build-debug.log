@@ -23,6 +23,7 @@ Generated version info:  ()
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest FROM-CACHE
+> Task :mergeDebugResources
 > Task :processDebugManifest FROM-CACHE
 > Task :processDebugManifestForPackage FROM-CACHE
 > Task :mergeDebugShaders
@@ -32,7 +33,6 @@ Generated version info:  ()
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
 > Task :parseDebugLocalResources
-> Task :mergeDebugResources
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :mergeExtDexDebug FROM-CACHE
