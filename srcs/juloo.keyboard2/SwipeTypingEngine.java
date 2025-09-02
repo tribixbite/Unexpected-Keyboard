@@ -120,7 +120,9 @@ public class SwipeTypingEngine
         float keyboardHeight = metrics.heightPixels * 0.35f; // Typical keyboard height
         
         _cgrRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
-        android.util.Log.d("SwipeTypingEngine", "Set CGR keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
+        android.util.Log.e("SwipeTypingEngine", "🖥️ MAIN KB CGR SETUP:");
+        android.util.Log.e("SwipeTypingEngine", "- Keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
+        android.util.Log.e("SwipeTypingEngine", "- Screen size: " + metrics.widthPixels + "x" + metrics.heightPixels);
         
         List<KeyboardSwipeRecognizer.RecognitionResult> cgrResults = 
           _cgrRecognizer.recognizeSwipe(input.coordinates, new ArrayList<>());

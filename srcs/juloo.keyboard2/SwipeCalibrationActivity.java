@@ -2318,7 +2318,9 @@ public class SwipeCalibrationActivity extends Activity
       }
       
       // CRITICAL: Ensure keyboard dimensions are set before recognition
-      android.util.Log.d(TAG, "Setting keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
+      android.util.Log.e(TAG, "🖥️ CALIBRATION CGR SETUP:");
+      android.util.Log.e(TAG, "- Keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
+      android.util.Log.e(TAG, "- Screen size: " + _screenWidth + "x" + _screenHeight);
       _sharedRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
       
       android.util.Log.d(TAG, "Using shared KeyboardSwipeRecognizer with playground parameters");
@@ -2326,6 +2328,16 @@ public class SwipeCalibrationActivity extends Activity
       
       // Convert to List<String> context (empty for now)
       List<String> context = new ArrayList<>();
+      
+      // Log coordinate data for comparison with main keyboard
+      android.util.Log.e(TAG, "🎯 CALIBRATION COORDINATE DATA:");
+      android.util.Log.e(TAG, "- Target word: " + word);
+      android.util.Log.e(TAG, "- Swipe points: " + userSwipe.size());
+      if (userSwipe.size() > 0) {
+        android.graphics.PointF first = userSwipe.get(0);
+        android.graphics.PointF last = userSwipe.get(userSwipe.size() - 1);
+        android.util.Log.e(TAG, "- Coordinate range: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
+      }
       
       // Test algorithm with current playground parameters
       List<KeyboardSwipeRecognizer.RecognitionResult> newResults = 

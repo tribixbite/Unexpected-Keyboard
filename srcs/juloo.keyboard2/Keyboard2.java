@@ -963,6 +963,22 @@ public class Keyboard2 extends InputMethodService
       android.util.Log.e("Keyboard2", "Swipe path: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
     }
     
+    // CRITICAL: Log detected keys to compare with calibration
+    android.util.Log.e("Keyboard2", "🔤 DETECTED KEYS:");
+    StringBuilder detectedKeySeq = new StringBuilder();
+    for (int i = 0; i < swipedKeys.size(); i++) {
+      KeyboardData.Key key = swipedKeys.get(i);
+      if (key != null) {
+        // Use key's string representation for debugging
+        String keyStr = key.toString();
+        detectedKeySeq.append(keyStr).append(" ");
+        android.util.Log.e("Keyboard2", "  Key " + i + ": " + keyStr);
+      } else {
+        android.util.Log.e("Keyboard2", "  Key " + i + ": NULL");
+      }
+    }
+    android.util.Log.e("Keyboard2", "🔤 KEY SEQUENCE: " + detectedKeySeq.toString());
+    
     if (!_config.swipe_typing_enabled)
     {
       android.util.Log.e("Keyboard2", "❌ SWIPE TYPING DISABLED IN CONFIG");

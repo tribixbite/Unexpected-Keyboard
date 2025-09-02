@@ -27,7 +27,7 @@ public class ImprovedSwipeGestureRecognizer
   private KeyboardData.Key _lastRegisteredKey;
   
   // Thresholds for improved filtering
-  private static final float MIN_SWIPE_DISTANCE = 50.0f; // Lowered to make swipes easier to detect
+  private static final float MIN_SWIPE_DISTANCE = 100.0f; // Restored original threshold for long words
   private static final long MIN_DWELL_TIME_MS = 20; // Minimum time to register a key
   private static final float MIN_KEY_DISTANCE = 40.0f; // Minimum distance to register new key
   private static final int SMOOTHING_WINDOW = 3; // Points for moving average
