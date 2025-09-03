@@ -234,29 +234,48 @@ public class KeyboardSwipeRecognizer
   {
     List<Character> sequence = new ArrayList<>();
     Character lastLetter = null;
+    PointF lastValidPoint = null;
     
-    // FIXED: Sample more frequently and check all points if needed
-    int sampleInterval = Math.max(1, (int)(pathSampleDistance / 5)); // Sample every 4 points instead of 20
+    // IMPROVED: Much more selective sampling - target 3-8 letters max per word
+    int sampleInterval = Math.max(20, swipePath.size() / 8); // Sample ~8 points across entire path
+    double minDistanceForNewLetter = keyZoneRadius * 0.8; // Must move significantly to register new letter
     
     for (int i = 0; i < swipePath.size(); i += sampleInterval)
     {
       PointF point = swipePath.get(i);
       Character nearestKey = getNearestKey(point);
       
-      // DEBUG: Log detection attempts
-      android.util.Log.d("KeyboardSwipeRecognizer", String.format("Point (%.0f,%.0f) → key '%s'", 
-                        point.x, point.y, nearestKey != null ? nearestKey : "null"));
-      
-      // Add to sequence if it's a new letter (avoid duplicates)
       if (nearestKey != null && !nearestKey.equals(lastLetter))
       {
-        sequence.add(nearestKey);
-        lastLetter = nearestKey;
-        android.util.Log.d("KeyboardSwipeRecognizer", "Added letter '" + nearestKey + "' to sequence");
+        // FILTER: Require significant movement to register new letter
+        boolean significantMovement = true;
+        if (lastValidPoint != null) {
+          double distanceFromLast = Math.sqrt(
+            Math.pow(point.x - lastValidPoint.x, 2) + 
+            Math.pow(point.y - lastValidPoint.y, 2));
+          significantMovement = distanceFromLast >= minDistanceForNewLetter;
+        }
+        
+        if (significantMovement) {
+          sequence.add(nearestKey);
+          lastLetter = nearestKey;
+          lastValidPoint = new PointF(point.x, point.y);
+          android.util.Log.d("KeyboardSwipeRecognizer", String.format("Added letter '%c' at (%.0f,%.0f) after %.0fpx movement", 
+                            nearestKey, point.x, point.y, lastValidPoint != null ? 
+                            Math.sqrt(Math.pow(point.x - lastValidPoint.x, 2) + Math.pow(point.y - lastValidPoint.y, 2)) : 0));
+        }
       }
     }
     
-    android.util.Log.d("KeyboardSwipeRecognizer", "Final detected sequence: " + sequence);
+    // SAFETY: Limit to reasonable word length (3-12 characters)
+    if (sequence.size() > 12) {
+      android.util.Log.w("KeyboardSwipeRecognizer", "Truncating over-detected sequence from " + 
+                        sequence.size() + " to 12 letters");
+      sequence = sequence.subList(0, 12);
+    }
+    
+    android.util.Log.d("KeyboardSwipeRecognizer", "Final detected sequence: " + sequence + 
+                      " (" + sequence.size() + " letters)");
     return sequence;
   }
   
