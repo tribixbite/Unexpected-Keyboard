@@ -2482,12 +2482,28 @@ public class SwipeCalibrationActivity extends Activity
         comparison.append(String.format("    • Start Point Score: %.6f (start accuracy)\n", result.startPointScore));
         comparison.append(String.format("    • Language Score: %.6f (word frequency)\n", result.languageModelScore));
         
-        // Show Bayesian equation with actual values
+        // Show detailed Bayesian equation calculations step by step
         double likelihood = result.proximityScore * result.sequenceScore * result.startPointScore;
-        comparison.append(String.format("    • Likelihood = %.6f × %.6f × %.6f = %.6f\n", 
+        comparison.append("    DETAILED CALCULATION STEPS:\n");
+        comparison.append(String.format("    Step 1: Proximity × Sequence × StartPoint\n"));
+        comparison.append(String.format("           = %.6f × %.6f × %.6f = %.6f\n", 
           result.proximityScore, result.sequenceScore, result.startPointScore, likelihood));
-        comparison.append(String.format("    • Final = %.6f × %.6f = %.6f\n\n", 
+        comparison.append(String.format("    Step 2: Likelihood × Language Model\n"));
+        comparison.append(String.format("           = %.6f × %.6f = %.6f\n", 
           likelihood, result.languageModelScore, result.totalScore));
+        
+        // Add coordinate-specific details if available
+        if (i == 0 && userSwipe.size() > 0) { // Only for top result
+          comparison.append("    GEOMETRIC ANALYSIS:\n");
+          PointF userStart = userSwipe.get(0);
+          PointF userEnd = userSwipe.get(userSwipe.size() - 1);
+          comparison.append(String.format("    • User path: (%.0f,%.0f) → (%.0f,%.0f)\n", 
+            userStart.x, userStart.y, userEnd.x, userEnd.y));
+          comparison.append(String.format("    • Path length: %.0f px\n", userLength));
+          comparison.append(String.format("    • Average point density: %.1f px/point\n", 
+            userLength / userSwipe.size()));
+        }
+        comparison.append("\n");
       }
       
       comparison.append("----------------------------------------\n\n");
@@ -2509,15 +2525,8 @@ public class SwipeCalibrationActivity extends Activity
         display.append("\n\n");
       }
       
-      // Show recent detailed comparison data first (limit to last entry to reduce duplication)
-      String[] entries = _comparisonData.toString().split("----------------------------------------");
-      if (entries.length > 0) {
-        // Show only the most recent entry
-        String lastEntry = entries[entries.length - 1];
-        if (!lastEntry.trim().isEmpty()) {
-          display.append(lastEntry).append("----------------------------------------\n\n");
-        }
-      }
+      // Show only the current comparison data (avoid redundant historical entries)
+      // Skip showing _comparisonData to eliminate duplication - current analysis is shown above
       
       // Removed broken DTW breakdown - CGR algorithm breakdown now embedded in comparison data above
       
