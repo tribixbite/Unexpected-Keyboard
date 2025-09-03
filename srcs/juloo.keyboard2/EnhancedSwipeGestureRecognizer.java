@@ -115,7 +115,7 @@ public class EnhancedSwipeGestureRecognizer extends ImprovedSwipeGestureRecogniz
     // New CGR functionality - update gesture prediction
     if (_cgrInitialized)
     {
-      _swipePredictor.onTouchMoved(x, y);
+      // _swipePredictor.onTouchMoved(x, y);
     }
   }
   
@@ -128,6 +128,7 @@ public class EnhancedSwipeGestureRecognizer extends ImprovedSwipeGestureRecogniz
     // Call parent implementation for original functionality
     SwipeResult result = super.endSwipe();
     
+    /*
     // New CGR functionality - complete gesture prediction
     if (_cgrInitialized)
     {
@@ -138,6 +139,7 @@ public class EnhancedSwipeGestureRecognizer extends ImprovedSwipeGestureRecogniz
         _swipePredictor.onTouchEnded(lastPoint.x, lastPoint.y);
       }
     }
+    */
     
     return result;
   }

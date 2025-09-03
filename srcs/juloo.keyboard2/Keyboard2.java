@@ -160,6 +160,8 @@ public class Keyboard2 extends InputMethodService
     
     // Initialize user adaptation manager
     _adaptationManager = UserAdaptationManager.getInstance(this);
+
+    // KeyboardSwipeRecognizer is now handled through SwipeTypingEngine
     
     // Initialize log writer for swipe analysis
     try
