@@ -898,8 +898,8 @@ public class KeyboardSwipeRecognizer
     errorReport.append("✅ Dictionary loaded: " + dictionary.size() + " words\n");
     
     if (detectedLetters.isEmpty()) {
-      errorReport.append("⚠️  No letters detected - accepting all words\n");
-      candidates.addAll(dictionary.subList(0, Math.min(50, dictionary.size())));
+      errorReport.append("⚠️  No letters detected - accepting more candidate words\n");
+      candidates.addAll(dictionary.subList(0, Math.min(200, dictionary.size()))); // Increased from 50 to 200
     } else {
       // Filter dictionary by detected letters
       for (String word : dictionary) {

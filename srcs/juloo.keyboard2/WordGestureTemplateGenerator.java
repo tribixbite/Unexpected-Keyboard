@@ -133,7 +133,7 @@ public class WordGestureTemplateGenerator
       String line;
       int wordCount = 0;
       
-      while ((line = reader.readLine()) != null && wordCount < 5000) // Limit to top 5000 words
+      while ((line = reader.readLine()) != null && wordCount < 10000) // Expanded to ~10,000 words for better recognition coverage
       {
         // Skip comments and empty lines
         if (line.startsWith("#") || line.trim().isEmpty()) continue;
