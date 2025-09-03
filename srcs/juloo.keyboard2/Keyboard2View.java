@@ -362,14 +362,28 @@ public class Keyboard2View extends View
   private KeyboardData.Row getRowAtPosition(float ty)
   {
     float y = _config.marginTop;
-    if (ty < y)
+    android.util.Log.e("KeyDetection", "🔍 COORDINATE DEBUG: touch_y=" + ty + ", marginTop=" + y + ", viewHeight=" + getHeight() + ", rowHeight=" + _tc.row_height);
+    
+    if (ty < y) {
+      android.util.Log.v("KeyDetection", "❌ Y too small: " + ty + " < " + y);
       return null;
+    }
+    
+    int rowIndex = 0;
     for (KeyboardData.Row row : _keyboard.rows)
     {
-      y += (row.shift + row.height) * _tc.row_height;
-      if (ty < y)
+      float rowBottom = y + (row.shift + row.height) * _tc.row_height;
+      android.util.Log.v("KeyDetection", "Row " + rowIndex + ": y=" + y + "-" + rowBottom);
+      
+      if (ty < rowBottom) {
+        android.util.Log.v("KeyDetection", "✅ Found row " + rowIndex + " for y=" + ty);
         return row;
+      }
+      y = rowBottom;
+      rowIndex++;
     }
+    
+    android.util.Log.v("KeyDetection", "❌ No row found for y=" + ty + " (past last row)");
     return null;
   }
 
@@ -377,8 +391,13 @@ public class Keyboard2View extends View
   {
     KeyboardData.Row row = getRowAtPosition(ty);
     float x = _marginLeft;
-    if (row == null)
+    if (row == null) {
+      android.util.Log.e("KeyDetection", "❌ No row found for y=" + ty + " (marginTop=" + _config.marginTop + ")");
       return null;
+    }
+    
+    // Log coordinate mapping for debugging
+    android.util.Log.v("KeyDetection", "🎯 Touch at (" + tx + "," + ty + ") → row found, checking keys...");
     
     // Check if this row contains 'a' and 'l' keys (middle letter row in QWERTY)
     boolean hasAAndLKeys = rowContainsAAndL(row);
@@ -405,10 +424,18 @@ public class Keyboard2View extends View
     {
       float xLeft = x + key.shift * _keyWidth;
       float xRight = xLeft + key.width * _keyWidth;
+      
+      // Log 'a' key coordinates for debugging
+      if (isCharacterKey(key, 'a')) {
+        android.util.Log.e("KeyDetection", "📍 'A' KEY POSITION: x=" + xLeft + "-" + xRight + ", y=row, touch=(" + tx + "," + ty + ")");
+      }
+      
       if (tx < xLeft)
         return null;
-      if (tx < xRight)
+      if (tx < xRight) {
+        android.util.Log.v("KeyDetection", "✅ Found key at (" + tx + "," + ty + ") → " + key.toString());
         return key;
+      }
       x = xRight;
     }
     

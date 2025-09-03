@@ -111,19 +111,7 @@ public class SwipeTypingEngine
     {
       try
       {
-        // CRITICAL: Set keyboard dimensions for coordinate mapping (was missing!)
-        android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
-        android.view.WindowManager wm = (android.view.WindowManager) 
-          _context.getSystemService(android.content.Context.WINDOW_SERVICE);
-        wm.getDefaultDisplay().getMetrics(metrics);
-        float keyboardWidth = metrics.widthPixels;
-        float keyboardHeight = metrics.heightPixels * 0.35f; // Typical keyboard height
-        
-        _cgrRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
-        android.util.Log.e("SwipeTypingEngine", "🖥️ MAIN KB CGR SETUP:");
-        android.util.Log.e("SwipeTypingEngine", "- Keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
-        android.util.Log.e("SwipeTypingEngine", "- Screen size: " + metrics.widthPixels + "x" + metrics.heightPixels);
-        
+        // CGR recognizer dimensions should be set by Keyboard2 with actual view dimensions
         List<KeyboardSwipeRecognizer.RecognitionResult> cgrResults = 
           _cgrRecognizer.recognizeSwipe(input.coordinates, new ArrayList<>());
         

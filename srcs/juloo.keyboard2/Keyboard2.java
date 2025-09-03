@@ -441,6 +441,30 @@ public class Keyboard2 extends InputMethodService
       }
       
       setInputView(_inputViewContainer != null ? _inputViewContainer : _keyboardView);
+      
+      // CRITICAL: Set correct keyboard dimensions for CGR after view is laid out
+      if (_swipeEngine != null && _keyboardView != null) {
+        _keyboardView.getViewTreeObserver().addOnGlobalLayoutListener(
+          new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+              // Ensure we have valid dimensions
+              if (_keyboardView.getWidth() > 0 && _keyboardView.getHeight() > 0) {
+                _swipeEngine.setKeyboardDimensions(
+                  _keyboardView.getWidth(), 
+                  _keyboardView.getHeight()
+                );
+                
+                android.util.Log.e("Keyboard2", "✅ SET REAL KEYBOARD DIMENSIONS: " + 
+                  _keyboardView.getWidth() + "x" + _keyboardView.getHeight());
+                
+                // Remove the listener to avoid repeated calls
+                _keyboardView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+              }
+            }
+          }
+        );
+      }
     }
     else
     {
