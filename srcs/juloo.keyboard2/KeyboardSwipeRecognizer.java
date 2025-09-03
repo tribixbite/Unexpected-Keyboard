@@ -40,8 +40,8 @@ public class KeyboardSwipeRecognizer
   private GaussianKeyModel gaussianModel;
   
   // Key zone parameters (PUBLIC for transparency)
-  public double keyZoneRadius = 120.0;      // Larger zone for easier key detection
-  public double pathSampleDistance = 10.0;  // More frequent sampling for better detection
+  public double keyZoneRadius = 180.0;      // Larger zone for easier key detection  
+  public double pathSampleDistance = 5.0;   // More frequent sampling for better detection
   
   public KeyboardSwipeRecognizer(Context context)
   {

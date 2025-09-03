@@ -2414,6 +2414,15 @@ public class SwipeCalibrationActivity extends Activity
       }
       comparison.append("\n");
       
+      // Show letter detection debugging first
+      if (_sharedRecognizer != null) {
+        List<Character> detectedLetters = _sharedRecognizer.getDetectedLetters(userSwipe);
+        comparison.append("LETTER DETECTION DEBUG:\n");
+        comparison.append(String.format("• Detected letters: %s (%d total)\n", detectedLetters, detectedLetters.size()));
+        comparison.append(String.format("• Key zone radius: %.0f px\n", _sharedRecognizer.keyZoneRadius));
+        comparison.append(String.format("• Sample distance: %.0f px\n\n", _sharedRecognizer.pathSampleDistance));
+      }
+      
       // Show actual CGR results with component breakdowns (already calculated in newResults)
       comparison.append("CGR ALGORITHM COMPONENT SCORES (TOP 3):\n");
       for (int i = 0; i < Math.min(3, newResults.size()); i++) {
@@ -3167,14 +3176,14 @@ public class SwipeCalibrationActivity extends Activity
   {
     if (_sharedRecognizer != null)
     {
-      // Reset all parameters to production defaults
-      _sharedRecognizer.setKeyZoneRadius(120.0);          // Balanced detection area
+      // Reset all parameters to production defaults (INCREASED key zone for better letter detection)
+      _sharedRecognizer.setKeyZoneRadius(180.0);          // Larger detection area for better letter recognition
       _sharedRecognizer.setMissingKeyPenalty(10.0);       // Strong penalty for missing letters
       _sharedRecognizer.setExtraKeyPenalty(2.0);          // Moderate penalty for extra letters
       _sharedRecognizer.setOrderPenalty(5.0);             // Moderate order enforcement
       _sharedRecognizer.setStartPointWeight(3.0);         // Strong start emphasis
       _sharedRecognizer.setProximityWeight(1.0);          // Balanced proximity weight
-      _sharedRecognizer.setPathSampleDistance(10.0);      // Frequent sampling
+      _sharedRecognizer.setPathSampleDistance(5.0);       // More frequent sampling for better detection
       
       // Clear playground parameter storage
       _playgroundParams.clear();
