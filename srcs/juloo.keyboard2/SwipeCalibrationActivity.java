@@ -324,66 +324,7 @@ public class SwipeCalibrationActivity extends Activity
     
     // REMOVED: CGR Recognition Analysis section entirely (as requested)
     
-    // COMPREHENSIVE ALGORITHM FLOW CHART UI - Every parameter configurable (CONSTRAINED HEIGHT)
-    android.widget.ScrollView algorithmScrollView = new android.widget.ScrollView(this);
-    LinearLayout algorithmFlowLayout = new LinearLayout(this);
-    algorithmFlowLayout.setOrientation(LinearLayout.VERTICAL);
-    algorithmFlowLayout.setPadding(12, 8, 12, 8);
-    algorithmFlowLayout.setBackgroundColor(0xFF1A1A1A);
-    
-    TextView flowTitle = new TextView(this);
-    flowTitle.setText("📊 ALGORITHM FLOW CHART - Complete Configurability");
-    flowTitle.setTextSize(14);
-    flowTitle.setTextColor(Color.CYAN);
-    flowTitle.setPadding(0, 0, 0, 8);
-    algorithmFlowLayout.addView(flowTitle);
-    
-    // ========== 1. USER TRACE COLLECTION BOUNDING BOX ==========
-    LinearLayout step1Layout = createFlowStep("1️⃣ TRACE COLLECTION & BOUNDING BOX");
-    addConfigSlider(step1Layout, "Bounding Box Padding", 5, 50, 10, "px");
-    addConfigSlider(step1Layout, "Aspect Ratio Weight", 0, 300, 100, "%");
-    algorithmFlowLayout.addView(step1Layout);
-    
-    // ========== 2. DIRECTIONAL DISTANCE BREAKDOWN ==========
-    LinearLayout step2Layout = createFlowStep("2️⃣ DIRECTIONAL DISTANCE (N/S/E/W)");
-    addConfigSlider(step2Layout, "North/South Weight", 0, 200, 100, "%");
-    addConfigSlider(step2Layout, "East/West Weight", 0, 200, 100, "%");
-    addConfigSlider(step2Layout, "Diagonal Weight", 0, 200, 80, "%");
-    algorithmFlowLayout.addView(step2Layout);
-    
-    // ========== 3. PAUSE/STOP DETECTION ==========
-    LinearLayout step3Layout = createFlowStep("3️⃣ PAUSE/STOP DETECTION");
-    addConfigSlider(step3Layout, "Stop Threshold", 50, 500, 150, "ms");
-    addConfigSlider(step3Layout, "Position Tolerance", 5, 50, 15, "px");
-    addConfigSlider(step3Layout, "Stop Letter Weight", 100, 500, 200, "%");
-    algorithmFlowLayout.addView(step3Layout);
-    
-    // ========== 4. ANGLE POINT DETECTION ==========
-    LinearLayout step4Layout = createFlowStep("4️⃣ ANGLE POINT DETECTION");
-    addConfigSlider(step4Layout, "Angle Threshold", 10, 90, 30, "°");
-    addConfigSlider(step4Layout, "Sharp Angle Limit", 45, 180, 90, "°");
-    addConfigSlider(step4Layout, "Angle Letter Boost", 100, 300, 150, "%");
-    algorithmFlowLayout.addView(step4Layout);
-    
-    // ========== 5. LETTER DETECTION ==========
-    LinearLayout step5Layout = createFlowStep("5️⃣ LETTER DETECTION & CONFIDENCE");
-    addConfigSlider(step5Layout, "Letter Detection Radius", 30, 150, 80, "px");
-    addConfigSlider(step5Layout, "Confidence Threshold", 0, 100, 70, "%");
-    addConfigSlider(step5Layout, "Letter Order Weight", 100, 300, 120, "%");
-    algorithmFlowLayout.addView(step5Layout);
-    
-    // ========== 6. START/END LETTER ANALYSIS ==========
-    LinearLayout step6Layout = createFlowStep("6️⃣ START/END LETTER EMPHASIS");
-    addConfigSlider(step6Layout, "Start Letter Weight", 100, 500, 300, "%");
-    addConfigSlider(step6Layout, "End Letter Weight", 50, 200, 100, "%");
-    addConfigSlider(step6Layout, "Start Position Tolerance", 10, 100, 25, "px");
-    algorithmFlowLayout.addView(step6Layout);
-    
-    // ADD ALGORITHM FLOW CHART TO MAIN LAYOUT (with height constraint)
-    algorithmScrollView.addView(algorithmFlowLayout);
-    algorithmScrollView.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 300)); // Constrain height so other elements visible
-    topLayout.addView(algorithmScrollView);
+    // REMOVED: Algorithm flow chart section - same functionality available in Playground modal
     
     // Old live control layout removed - moved to Playground modal
     
@@ -506,32 +447,33 @@ public class SwipeCalibrationActivity extends Activity
     // Add current word display to top layout for proper positioning
     topLayout.addView(currentWordLayout);
     
-    mainLayout.addView(_keyboardView);
+    // FIXED: Move output text area to topLayout to prevent off-screen issues
+    // Create combined output header with copy button
+    LinearLayout outputHeaderLayout = new LinearLayout(this);
+    outputHeaderLayout.setOrientation(LinearLayout.HORIZONTAL);
+    outputHeaderLayout.setPadding(16, 16, 16, 8);
     
-    // FIXED: Move comparison header BEFORE scroll view to prevent overlap
-    LinearLayout comparisonHeaderLayout = new LinearLayout(this);
-    comparisonHeaderLayout.setOrientation(LinearLayout.HORIZONTAL);
-    comparisonHeaderLayout.setPadding(16, 16, 16, 8);
-    
-    TextView comparisonLabel = new TextView(this);
-    comparisonLabel.setText("Template vs User Gesture Comparison:");
-    comparisonLabel.setTextSize(16);
-    comparisonLabel.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    comparisonHeaderLayout.addView(comparisonLabel);
+    TextView outputLabel = new TextView(this);
+    outputLabel.setText("🔍 Swipe Analysis Output:");
+    outputLabel.setTextSize(16);
+    outputLabel.setTextColor(Color.CYAN);
+    outputLabel.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+    outputLabel.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    outputHeaderLayout.addView(outputLabel);
     
     _copyComparisonButton = new Button(this);
-    _copyComparisonButton.setText("📋");
-    _copyComparisonButton.setTextSize(20);
+    _copyComparisonButton.setText("📋 Copy");
+    _copyComparisonButton.setTextSize(12);
     _copyComparisonButton.setOnClickListener(v -> copyComparisonData());
-    _copyComparisonButton.setLayoutParams(new LinearLayout.LayoutParams(70, 70));
+    _copyComparisonButton.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     _copyComparisonButton.setBackgroundColor(0xFF4CAF50);  // Green background for visibility
     _copyComparisonButton.setTextColor(Color.WHITE);
-    comparisonHeaderLayout.addView(_copyComparisonButton);
+    _copyComparisonButton.setPadding(8, 8, 8, 8);
+    outputHeaderLayout.addView(_copyComparisonButton);
     
-    // Add to topLayout for proper visibility
-    topLayout.addView(comparisonHeaderLayout);
+    topLayout.addView(outputHeaderLayout);
     
-    // Template comparison text area
+    // Template comparison text area - moved to topLayout for proper visibility
     _templateComparisonText = new TextView(this);
     _templateComparisonText.setText("Swipe words to see comprehensive algorithm analysis and predictions...");
     _templateComparisonText.setTextSize(11);
@@ -545,10 +487,12 @@ public class SwipeCalibrationActivity extends Activity
     android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
     scrollView.addView(_templateComparisonText);
     scrollView.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 400)); // Increased height
+      ViewGroup.LayoutParams.MATCH_PARENT, 300)); // Constrained height to fit in topLayout
     scrollView.setPadding(8, 8, 8, 8);
     scrollView.setBackgroundColor(0xFF2B2B2B);
-    mainLayout.addView(scrollView);
+    topLayout.addView(scrollView);
+
+    mainLayout.addView(_keyboardView);
     
     setContentView(mainLayout);
     
@@ -2514,21 +2458,18 @@ public class SwipeCalibrationActivity extends Activity
       // Update comprehensive algorithm analysis display with new algorithm results
       updateComprehensiveAnalysisDisplay(word, results, templateLength, userLength, userSwipe);
       
-      // Update detailed comparison display with algorithm error report
+      // Update detailed comparison display with comprehensive analysis
       StringBuilder display = new StringBuilder();
       
-      // Show comprehensive algorithm debug report
+      // Show current detailed comparison data with CGR equation breakdown
+      display.append(comparison.toString());
+      
+      // Optionally add debug report if available
       if (_sharedRecognizer != null && !_sharedRecognizer.lastErrorReport.isEmpty()) {
-        display.append("🔍 KEYBOARD SWIPE RECOGNIZER DEBUG:\n");
-        display.append("===================================\n");
+        display.append("\n🔍 ADDITIONAL DEBUG INFO:\n");
+        display.append("===========================\n");
         display.append(_sharedRecognizer.lastErrorReport);
-        display.append("\n\n");
       }
-      
-      // Show only the current comparison data (avoid redundant historical entries)
-      // Skip showing _comparisonData to eliminate duplication - current analysis is shown above
-      
-      // Removed broken DTW breakdown - CGR algorithm breakdown now embedded in comparison data above
       
       _templateComparisonText.setText(display.toString());
       
