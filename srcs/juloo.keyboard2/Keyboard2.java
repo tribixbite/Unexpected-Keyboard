@@ -452,17 +452,19 @@ public class Keyboard2 extends InputMethodService
             public void onGlobalLayout() {
               // Ensure we have valid dimensions
               if (_keyboardView.getWidth() > 0 && _keyboardView.getHeight() > 0) {
-                _swipeEngine.setKeyboardDimensions(
-                  _keyboardView.getWidth(), 
-                  _keyboardView.getHeight()
-                );
+                
+                // Use dynamic keyboard dimensions based on user settings (like calibration)
+                float keyboardWidth = _keyboardView.getWidth();
+                float keyboardHeight = calculateDynamicKeyboardHeight();
+                
+                _swipeEngine.setKeyboardDimensions(keyboardWidth, keyboardHeight);
                 
                 // CRITICAL: Also set real key positions for 100% accurate coordinate mapping
                 java.util.Map<Character, android.graphics.PointF> realKeyPositions = _keyboardView.getRealKeyPositions();
                 _swipeEngine.setRealKeyPositions(realKeyPositions);
                 
-                android.util.Log.e("Keyboard2", "✅ SET REAL KEYBOARD DIMENSIONS: " + 
-                  _keyboardView.getWidth() + "x" + _keyboardView.getHeight());
+                android.util.Log.e("Keyboard2", "✅ SET DYNAMIC KEYBOARD DIMENSIONS: " + 
+                  keyboardWidth + "x" + keyboardHeight + " (user: " + getUserKeyboardHeightPercent() + "%)");
                 android.util.Log.e("Keyboard2", "✅ SET REAL KEY POSITIONS: " + realKeyPositions.size() + " keys");
                 
                 // Remove the listener to avoid repeated calls
@@ -976,6 +978,79 @@ public class Keyboard2 extends InputMethodService
         _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
         _suggestionBar.setSuggestionsWithScores(result.words, result.scores);
       }
+    }
+  }
+  
+  /**
+   * Calculate dynamic keyboard height based on user settings (like calibration page)
+   * Supports orientation, foldable devices, and user height preferences
+   */
+  private float calculateDynamicKeyboardHeight()
+  {
+    try {
+      // Get screen dimensions
+      android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
+      android.view.WindowManager wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
+      wm.getDefaultDisplay().getMetrics(metrics);
+      
+      // Check foldable state
+      FoldStateTracker foldTracker = new FoldStateTracker(this);
+      boolean foldableUnfolded = foldTracker.isUnfolded();
+      
+      // Check orientation
+      boolean isLandscape = getResources().getConfiguration().orientation == 
+                            android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+      
+      // Get user height preference (same logic as calibration)
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+      int keyboardHeightPref;
+      
+      if (isLandscape) {
+        String key = foldableUnfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape";
+        keyboardHeightPref = prefs.getInt(key, 50);
+      } else {
+        String key = foldableUnfolded ? "keyboard_height_unfolded" : "keyboard_height";
+        keyboardHeightPref = prefs.getInt(key, 35);
+      }
+      
+      // Calculate dynamic height
+      float keyboardHeightPercent = keyboardHeightPref / 100.0f;
+      float calculatedHeight = metrics.heightPixels * keyboardHeightPercent;
+      
+      android.util.Log.e("Keyboard2", "📏 DYNAMIC HEIGHT CALC: " + keyboardHeightPref + "% of " + 
+        metrics.heightPixels + " = " + calculatedHeight + " (landscape=" + isLandscape + ", foldable=" + foldableUnfolded + ")");
+      
+      return calculatedHeight;
+      
+    } catch (Exception e) {
+      android.util.Log.e("Keyboard2", "Failed to calculate dynamic height: " + e.getMessage());
+      // Fallback to view height
+      return _keyboardView.getHeight();
+    }
+  }
+  
+  /**
+   * Get user keyboard height percentage for logging
+   */
+  private int getUserKeyboardHeightPercent()
+  {
+    try {
+      FoldStateTracker foldTracker = new FoldStateTracker(this);
+      boolean foldableUnfolded = foldTracker.isUnfolded();
+      boolean isLandscape = getResources().getConfiguration().orientation == 
+                            android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+      
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+      
+      if (isLandscape) {
+        String key = foldableUnfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape";
+        return prefs.getInt(key, 50);
+      } else {
+        String key = foldableUnfolded ? "keyboard_height_unfolded" : "keyboard_height";
+        return prefs.getInt(key, 35);
+      }
+    } catch (Exception e) {
+      return 35; // Default
     }
   }
   
