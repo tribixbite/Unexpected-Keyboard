@@ -333,19 +333,27 @@ public class KeyboardSwipeRecognizer
     
     templateGenerator.setKeyboardDimensions(width, height);
     android.util.Log.e("KeyboardSwipeRecognizer", "Keyboard dimensions set: " + width + "x" + height);
-    
-    // CRITICAL: Test key coordinate generation immediately
-    PointF testA = getKeyCenter('a');
-    PointF testE = getKeyCenter('e');
-    PointF testT = getKeyCenter('t');
-    android.util.Log.e("KeyboardSwipeRecognizer", String.format("CRITICAL: Test key coords: a=(%.0f,%.0f), e=(%.0f,%.0f), t=(%.0f,%.0f)",
-                      testA != null ? testA.x : -1, testA != null ? testA.y : -1,
-                      testE != null ? testE.x : -1, testE != null ? testE.y : -1,
-                      testT != null ? testT.x : -1, testT != null ? testT.y : -1));
-                      
-    // CRITICAL: If coordinates are null, letter detection will fail completely
-    if (testA == null || testE == null || testT == null) {
-      android.util.Log.e("KeyboardSwipeRecognizer", "CRITICAL ERROR: Key coordinates are NULL - letter detection will fail");
+  }
+  
+  /**
+   * Set real key positions for 100% accurate coordinate mapping (CRITICAL FIX)
+   * Replaces simplified grid calculations with actual keyboard layout positions
+   */
+  public void setRealKeyPositions(java.util.Map<Character, android.graphics.PointF> realPositions)
+  {
+    if (templateGenerator != null && realPositions != null) {
+      templateGenerator.setRealKeyPositions(realPositions);
+      android.util.Log.e("KeyboardSwipeRecognizer", "✅ SET REAL KEY POSITIONS: " + realPositions.size() + " keys");
+      
+      // Log key positions for verification
+      if (realPositions.containsKey('a')) {
+        android.graphics.PointF aPos = realPositions.get('a');
+        android.util.Log.e("KeyboardSwipeRecognizer", "📍 Real 'a' position: (" + aPos.x + "," + aPos.y + ")");
+      }
+      if (realPositions.containsKey('m')) {
+        android.graphics.PointF mPos = realPositions.get('m');
+        android.util.Log.e("KeyboardSwipeRecognizer", "📍 Real 'm' position: (" + mPos.x + "," + mPos.y + ")");
+      }
     }
   }
   

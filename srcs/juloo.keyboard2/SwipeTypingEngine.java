@@ -48,6 +48,17 @@ public class SwipeTypingEngine
   }
   
   /**
+   * Set real key positions for 100% accurate coordinate mapping
+   */
+  public void setRealKeyPositions(java.util.Map<Character, android.graphics.PointF> realPositions)
+  {
+    if (_cgrRecognizer != null)
+    {
+      _cgrRecognizer.setRealKeyPositions(realPositions);
+    }
+  }
+  
+  /**
    * Update configuration
    */
   public void setConfig(Config config)

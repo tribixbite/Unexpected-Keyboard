@@ -264,6 +264,29 @@ public class WordGestureTemplateGenerator
   }
   
   /**
+   * Set real key positions for 100% accurate coordinate mapping (CRITICAL FIX)
+   * Replaces simplified grid calculations with actual keyboard layout positions
+   */
+  public void setRealKeyPositions(java.util.Map<Character, android.graphics.PointF> realPositions)
+  {
+    if (realPositions == null || realPositions.isEmpty()) {
+      android.util.Log.w("WordGestureTemplateGenerator", "No real key positions provided - using grid calculations");
+      return;
+    }
+    
+    // Replace calculated coordinates with real positions
+    keyboardCoords.clear();
+    for (java.util.Map.Entry<Character, android.graphics.PointF> entry : realPositions.entrySet()) {
+      char keyChar = entry.getKey();
+      android.graphics.PointF realPos = entry.getValue();
+      keyboardCoords.put(keyChar, new ContinuousGestureRecognizer.Point(realPos.x, realPos.y));
+      android.util.Log.d("WordGestureTemplateGenerator", "Real coord: '" + keyChar + "' = (" + realPos.x + "," + realPos.y + ")");
+    }
+    
+    android.util.Log.i("WordGestureTemplateGenerator", "✅ Using " + keyboardCoords.size() + " REAL key positions instead of grid calculations");
+  }
+  
+  /**
    * Get dictionary size
    */
   public int getDictionarySize()

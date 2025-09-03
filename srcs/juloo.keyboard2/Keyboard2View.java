@@ -319,6 +319,58 @@ public class Keyboard2View extends View
     _wordPredictor = predictor;
     _keyboard2 = keyboard2;
   }
+  
+  /**
+   * Extract real key positions for accurate coordinate mapping
+   * Returns map of character to actual center coordinates
+   */
+  public java.util.Map<Character, android.graphics.PointF> getRealKeyPositions()
+  {
+    java.util.Map<Character, android.graphics.PointF> keyPositions = new java.util.HashMap<>();
+    
+    if (_keyboard == null || _tc == null) {
+      android.util.Log.w("Keyboard2View", "Cannot extract key positions - layout not ready");
+      return keyPositions;
+    }
+    
+    float y = _config.marginTop;
+    
+    for (KeyboardData.Row row : _keyboard.rows)
+    {
+      float x = _marginLeft;
+      
+      for (KeyboardData.Key key : row.keys)
+      {
+        float xLeft = x + key.shift * _keyWidth;
+        float xRight = xLeft + key.width * _keyWidth;
+        float yTop = y + row.shift * _tc.row_height;
+        float yBottom = yTop + row.height * _tc.row_height;
+        
+        // Calculate center coordinates
+        float centerX = (xLeft + xRight) / 2f;
+        float centerY = (yTop + yBottom) / 2f;
+        
+        // Extract character from key (if alphabetic) using simplified approach
+        try {
+          String keyString = key.toString();
+          if (keyString != null && keyString.length() == 1 && Character.isLetter(keyString.charAt(0))) {
+            char keyChar = keyString.toLowerCase().charAt(0);
+            keyPositions.put(keyChar, new android.graphics.PointF(centerX, centerY));
+            android.util.Log.d("KeyPositions", "Real position: '" + keyChar + "' = (" + centerX + "," + centerY + ")");
+          }
+        } catch (Exception e) {
+          // Skip keys that can't be extracted
+        }
+        
+        x = xRight;
+      }
+      
+      y += (row.shift + row.height) * _tc.row_height;
+    }
+    
+    android.util.Log.i("KeyPositions", "Extracted " + keyPositions.size() + " real key positions");
+    return keyPositions;
+  }
 
   @Override
   public boolean onTouch(View v, MotionEvent event)

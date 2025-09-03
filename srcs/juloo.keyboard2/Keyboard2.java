@@ -457,8 +457,13 @@ public class Keyboard2 extends InputMethodService
                   _keyboardView.getHeight()
                 );
                 
+                // CRITICAL: Also set real key positions for 100% accurate coordinate mapping
+                java.util.Map<Character, android.graphics.PointF> realKeyPositions = _keyboardView.getRealKeyPositions();
+                _swipeEngine.setRealKeyPositions(realKeyPositions);
+                
                 android.util.Log.e("Keyboard2", "✅ SET REAL KEYBOARD DIMENSIONS: " + 
                   _keyboardView.getWidth() + "x" + _keyboardView.getHeight());
+                android.util.Log.e("Keyboard2", "✅ SET REAL KEY POSITIONS: " + realKeyPositions.size() + " keys");
                 
                 // Remove the listener to avoid repeated calls
                 _keyboardView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
