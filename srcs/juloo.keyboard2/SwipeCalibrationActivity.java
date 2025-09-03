@@ -2436,16 +2436,35 @@ public class SwipeCalibrationActivity extends Activity
         comparison.append(String.format("           = %.6f × %.6f = %.6f\n", 
           likelihood, result.languageModelScore, result.totalScore));
         
-        // Add coordinate-specific details if available
-        if (i == 0 && userSwipe.size() > 0) { // Only for top result
+        // Show specific input breakdown for score derivation
+        comparison.append("    SCORE COMPONENT BREAKDOWN:\n");
+        comparison.append(String.format("    • Proximity: %.6f (path shape similarity)\n", result.proximityScore));
+        comparison.append(String.format("    • Sequence: %.6f (letter order accuracy)\n", result.sequenceScore));  
+        comparison.append(String.format("    • StartPoint: %.6f (starting position accuracy)\n", result.startPointScore));
+        comparison.append(String.format("    • Language: %.6f (word frequency & context)\n", result.languageModelScore));
+        
+        // Add geometric analysis for ALL predictions, not just top one
+        if (userSwipe.size() > 0) {
           comparison.append("    GEOMETRIC ANALYSIS:\n");
           PointF userStart = userSwipe.get(0);
           PointF userEnd = userSwipe.get(userSwipe.size() - 1);
           comparison.append(String.format("    • User path: (%.0f,%.0f) → (%.0f,%.0f)\n", 
             userStart.x, userStart.y, userEnd.x, userEnd.y));
           comparison.append(String.format("    • Path length: %.0f px\n", userLength));
-          comparison.append(String.format("    • Average point density: %.1f px/point\n", 
+          comparison.append(String.format("    • Point count: %d points\n", userSwipe.size()));
+          comparison.append(String.format("    • Point density: %.1f px/point\n", 
             userLength / userSwipe.size()));
+          
+          // Add template-specific geometry if available (get from original template)
+          if (template != null && template.pts != null && !template.pts.isEmpty()) {
+            ContinuousGestureRecognizer.Point templateStart = template.pts.get(0);
+            ContinuousGestureRecognizer.Point templateEnd = template.pts.get(template.pts.size() - 1);
+            comparison.append(String.format("    • Template path: (%.0f,%.0f) → (%.0f,%.0f)\n", 
+              templateStart.x, templateStart.y, templateEnd.x, templateEnd.y));
+            comparison.append(String.format("    • Template length: %.0f px\n", templateLength));
+            comparison.append(String.format("    • Length ratio: %.3f (user/template)\n", 
+              userLength / templateLength));
+          }
         }
         comparison.append("\n");
       }
