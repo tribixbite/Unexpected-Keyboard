@@ -524,60 +524,69 @@ public class KeyboardSwipeRecognizer
   }
   
   /**
-   * Calculate how well detected letters match word's letter sequence (IMPLEMENTED)
+   * Calculate how well detected letters match word's letter sequence (FUZZY MATCHING)
    */
   private double calculateSequenceScore(String word, List<Character> detectedLetters)
   {
     if (detectedLetters.isEmpty()) return 0.0;
     
-    double score = 1.0;
-    
-    // Check each required letter in word
+    // FUZZY MATCHING: Calculate similarity ratio instead of harsh penalties
+    int matchedLetters = 0;
     int detectedIndex = 0;
+    
+    // Count letters that match in approximate order (forgiving)
     for (char requiredLetter : word.toCharArray())
     {
-      boolean found = false;
-      
-      // Look for this letter in remaining detected sequence
+      // Look for this letter in remaining detected sequence  
       for (int i = detectedIndex; i < detectedLetters.size(); i++)
       {
         if (detectedLetters.get(i) == requiredLetter)
         {
-          found = true;
+          matchedLetters++;
           detectedIndex = i + 1; // Move forward for next letter
+          android.util.Log.d("KeyboardSwipeRecognizer", "Found letter '" + requiredLetter + "' in sequence");
           break;
         }
       }
-      
-      // PENALTY: Missing required letter (high penalty)
-      if (!found)
-      {
-        score *= Math.exp(-missingKeyPenalty);
-        android.util.Log.d("KeyboardSwipeRecognizer", "Missing letter penalty for '" + requiredLetter + "' in " + word);
-      }
     }
     
-    // PENALTY: Extra letters not in word (lower penalty)
+    // FUZZY SCORING: Base score on match ratio with forgiving curve
+    double matchRatio = (double)matchedLetters / word.length();
+    double baseScore = Math.pow(matchRatio, 0.5); // Square root for more forgiving scoring
+    
+    // GENTLE PENALTIES: Much smaller penalties for imperfect matches
+    double penaltyScore = 1.0;
+    
+    // Small penalty for extra letters (much more forgiving)
+    int extraLetters = 0;
     for (Character detectedLetter : detectedLetters)
     {
       if (word.indexOf(detectedLetter) == -1)
       {
-        score *= Math.exp(-extraKeyPenalty);
-        android.util.Log.d("KeyboardSwipeRecognizer", "Extra letter penalty for '" + detectedLetter + "' not in " + word);
+        extraLetters++;
       }
     }
+    if (extraLetters > 0) {
+      penaltyScore *= Math.exp(-extraLetters * 0.1); // Very gentle extra letter penalty
+      android.util.Log.d("KeyboardSwipeRecognizer", "Gentle penalty for " + extraLetters + " extra letters");
+    }
     
-    // ORDER PENALTY: Check sequence order
+    // ORDER BONUS: Reward good sequence order (instead of harsh penalty)
     String detectedSequence = "";
     for (Character c : detectedLetters) detectedSequence += c;
     
-    if (!isSubsequence(word, detectedSequence))
-    {
-      score *= Math.exp(-orderPenalty);
-      android.util.Log.d("KeyboardSwipeRecognizer", "Order penalty for " + word + " vs detected " + detectedSequence);
+    if (isSubsequence(word, detectedSequence)) {
+      penaltyScore *= 1.2; // Bonus for good order instead of penalty for bad order
+      android.util.Log.d("KeyboardSwipeRecognizer", "Order bonus for " + word + " vs detected " + detectedSequence);
     }
     
-    return score;
+    // FINAL FUZZY SCORE: Combine match ratio with gentle penalties
+    double finalScore = baseScore * penaltyScore;
+    
+    android.util.Log.d("KeyboardSwipeRecognizer", String.format("Sequence score for '%s': %d/%d matched (%.3f ratio) → %.6f final score", 
+                      word, matchedLetters, word.length(), matchRatio, finalScore));
+    
+    return finalScore;
   }
   
   /**
