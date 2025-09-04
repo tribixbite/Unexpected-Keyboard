@@ -88,7 +88,7 @@ public class SwipeTypingEngine
       "Classification: isSwipe=%s, confidence=%.2f, quality=%s",
       classification.isSwipe, classification.confidence, classification.quality));
     
-    // Choose prediction strategy based on classification
+    // FORCE KeyboardSwipeRecognizer path for consistency with calibration
     if (!classification.isSwipe)
     {
       // Regular typing - use sequence predictor only
@@ -96,17 +96,9 @@ public class SwipeTypingEngine
       return _sequencePredictor.predictWordsWithScores(input.keySequence);
     }
     
-    // For swipes, use hybrid prediction based on quality
-    if (_swipeDetector.shouldUseDTW(classification))
-    {
-      android.util.Log.d("SwipeTypingEngine", "Using hybrid DTW + sequence prediction");
-      return hybridPredict(input, classification);
-    }
-    else
-    {
-      android.util.Log.d("SwipeTypingEngine", "Using enhanced sequence prediction (low quality swipe)");
-      return enhancedSequencePredict(input, classification);
-    }
+    // ALWAYS use KeyboardSwipeRecognizer for swipes (like calibration page)
+    android.util.Log.d("SwipeTypingEngine", "FORCING KeyboardSwipeRecognizer path for consistency with calibration");
+    return hybridPredict(input, classification);
   }
   
   /**
