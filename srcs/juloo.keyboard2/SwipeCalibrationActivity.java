@@ -2474,6 +2474,17 @@ public class SwipeCalibrationActivity extends Activity
             comparison.append(String.format("    • Length ratio: %.3f (user/template)\n", 
               userLength / templateLength));
           }
+          
+          // Add detailed proximity score calculation breakdown
+          if (i == 0) { // Only for top result to avoid clutter
+            comparison.append("    PROXIMITY SCORE BREAKDOWN:\n");
+            comparison.append("    Algorithm: For each swipe point, calculate distance to corresponding template point\n");
+            comparison.append(String.format("    • Proximity formula: exp(-distance / keyZoneRadius)\n"));
+            comparison.append(String.format("    • Key zone radius: %.0f px\n", _sharedRecognizer != null ? _sharedRecognizer.keyZoneRadius : 120));
+            comparison.append(String.format("    • Start point weight: %.2fx (users begin precisely)\n", _sharedRecognizer != null ? _sharedRecognizer.startPointWeight : 3.0));
+            comparison.append(String.format("    • Position weighting: Higher at start, lower at end\n"));
+            comparison.append(String.format("    • Average of all point-to-point proximity scores\n"));
+          }
         }
         comparison.append("\n");
       }
