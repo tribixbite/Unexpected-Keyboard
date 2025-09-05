@@ -146,41 +146,14 @@ public class SwipeTypingEngine
       }
     }
     
-    // Get sequence predictions
-    WordPredictor.PredictionResult sequenceResult = _sequencePredictor.predictWordsWithScores(input.keySequence);
-    android.util.Log.d("SwipeTypingEngine", "Sequence predictions: " + sequenceResult.words);
+    // PURE KeyboardSwipeRecognizer: Use results directly like calibration (no mixing)
+    android.util.Log.d("SwipeTypingEngine", "Using PURE KeyboardSwipeRecognizer results (no mixing) for calibration consistency");
     
-    // Add sequence predictions to candidates
-    for (int i = 0; i < sequenceResult.words.size(); i++)
-    {
-      String word = sequenceResult.words.get(i);
-      int baseScore = sequenceResult.scores.get(i);
-      
-      // Check if word already exists from DTW
-      ScoredCandidate existing = findCandidate(allCandidates, word);
-      if (existing != null)
-      {
-        // Combine scores - word appears in both predictions
-        existing.score += baseScore * 0.5f; // Boost for appearing in both
-        existing.source = "Both";
-      }
-      else
-      {
-        allCandidates.add(new ScoredCandidate(word, baseScore, "Sequence"));
-      }
-    }
-    
-    // Apply unified scoring with all weights
-    for (ScoredCandidate candidate : allCandidates)
-    {
-      candidate.finalScore = _scorer.calculateFinalScore(candidate, input, classification, _config);
-    }
-    
-    // Sort by final score
+    // Sort by KeyboardSwipeRecognizer totalScore (not modified finalScore)
     Collections.sort(allCandidates, new Comparator<ScoredCandidate>() {
       @Override
       public int compare(ScoredCandidate a, ScoredCandidate b) {
-        return Float.compare(b.finalScore, a.finalScore);
+        return Float.compare(b.score, a.score); // Use original CGR score, not finalScore
       }
     });
     
