@@ -21,11 +21,17 @@ public class WordGestureTemplateGenerator
   private final List<String> dictionary;
   private final Map<String, Integer> wordFrequencies;
   
+  // PERFORMANCE: Template cache to avoid regenerating on every swipe
+  private Map<String, ContinuousGestureRecognizer.Template> templateCache;
+  private String cachedDimensions; // Track when cache is valid
+  
   public WordGestureTemplateGenerator()
   {
     dictionary = new ArrayList<>();
     wordFrequencies = new HashMap<>();
     keyboardCoords = new HashMap<>();
+    templateCache = new HashMap<>();
+    cachedDimensions = "";
     
     // Initialize with default coordinates to prevent crashes
     setKeyboardDimensions(1080f, 400f); // Default fallback dimensions
@@ -172,6 +178,12 @@ public class WordGestureTemplateGenerator
     }
     
     word = word.toLowerCase();
+    
+    // PERFORMANCE: Check cache first
+    if (templateCache.containsKey(word)) {
+      return templateCache.get(word);
+    }
+    
     List<ContinuousGestureRecognizer.Point> points = new ArrayList<>();
     
     for (char c : word.toCharArray())
@@ -194,7 +206,12 @@ public class WordGestureTemplateGenerator
       return null; // Need at least 2 points for a gesture
     }
     
-    return new ContinuousGestureRecognizer.Template(word, points);
+    ContinuousGestureRecognizer.Template template = new ContinuousGestureRecognizer.Template(word, points);
+    
+    // CACHE: Store for future use
+    templateCache.put(word, template);
+    
+    return template;
   }
   
   /**

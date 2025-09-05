@@ -21,7 +21,6 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
-> Task :mergeDebugResources
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest FROM-CACHE
 > Task :processDebugManifest FROM-CACHE
@@ -33,11 +32,7 @@ Generated version info:  ()
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
 > Task :parseDebugLocalResources
-<<<<<<< HEAD
 > Task :mergeDebugResources
-=======
-> Task :checkDebugDuplicateClasses
->>>>>>> 294a0b49 (feat(debug): add comprehensive coordinate debugging pipeline for investigation)
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :mergeExtDexDebug FROM-CACHE
@@ -50,17 +45,18 @@ Generated version info:  ()
 > Task :writeDebugSigningConfigVersions
 > Task :mergeDebugJavaResource
 > Task :processDebugResources
-> Task :compileDebugJavaWithJavac FROM-CACHE
-> Task :dexBuilderDebug FROM-CACHE
-> Task :mergeProjectDexDebug FROM-CACHE
+
+> Task :compileDebugJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :dexBuilderDebug
+> Task :mergeProjectDexDebug
 > Task :packageDebug
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-<<<<<<< HEAD
-BUILD SUCCESSFUL in 13s
-32 actionable tasks: 19 executed, 13 from cache
-=======
-BUILD SUCCESSFUL in 25s
+BUILD SUCCESSFUL in 31s
 32 actionable tasks: 22 executed, 10 from cache
->>>>>>> 294a0b49 (feat(debug): add comprehensive coordinate debugging pipeline for investigation)
