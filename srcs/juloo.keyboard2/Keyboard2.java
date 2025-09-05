@@ -1062,11 +1062,20 @@ public class Keyboard2 extends InputMethodService
     android.util.Log.e("Keyboard2", "🚨 ===== SWIPE PREDICTION START ===== 🚨");
     android.util.Log.e("Keyboard2", "handleSwipeTyping called with " + swipedKeys.size() + " keys and " + swipePath.size() + " path points");
     
-    // Log swipe path details
+    // COORDINATE DEBUGGING: Log detailed coordinate information
     if (swipePath.size() > 0) {
       android.graphics.PointF first = swipePath.get(0);
       android.graphics.PointF last = swipePath.get(swipePath.size() - 1);
-      android.util.Log.e("Keyboard2", "Swipe path: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
+      android.util.Log.e("Keyboard2", "📍 RAW SWIPE COORDINATES:");
+      android.util.Log.e("Keyboard2", "- Swipe path: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
+      android.util.Log.e("Keyboard2", "- Keyboard dimensions: " + (_keyboardView != null ? _keyboardView.getWidth() + "x" + _keyboardView.getHeight() : "unknown"));
+      android.util.Log.e("Keyboard2", "- Screen metrics: " + getResources().getDisplayMetrics().widthPixels + "x" + getResources().getDisplayMetrics().heightPixels);
+      
+      // Log first few points for analysis
+      for (int i = 0; i < Math.min(5, swipePath.size()); i++) {
+        android.graphics.PointF p = swipePath.get(i);
+        android.util.Log.e("Keyboard2", "  Point " + i + ": (" + p.x + "," + p.y + ")");
+      }
     }
     
     // CRITICAL: Log detected keys to compare with calibration

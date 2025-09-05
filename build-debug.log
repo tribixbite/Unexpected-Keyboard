@@ -21,6 +21,7 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
+> Task :mergeDebugResources
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest FROM-CACHE
 > Task :processDebugManifest FROM-CACHE
@@ -32,7 +33,11 @@ Generated version info:  ()
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
 > Task :parseDebugLocalResources
+<<<<<<< HEAD
 > Task :mergeDebugResources
+=======
+> Task :checkDebugDuplicateClasses
+>>>>>>> 294a0b49 (feat(debug): add comprehensive coordinate debugging pipeline for investigation)
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :mergeExtDexDebug FROM-CACHE
@@ -52,5 +57,10 @@ Generated version info:  ()
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
+<<<<<<< HEAD
 BUILD SUCCESSFUL in 13s
 32 actionable tasks: 19 executed, 13 from cache
+=======
+BUILD SUCCESSFUL in 25s
+32 actionable tasks: 22 executed, 10 from cache
+>>>>>>> 294a0b49 (feat(debug): add comprehensive coordinate debugging pipeline for investigation)

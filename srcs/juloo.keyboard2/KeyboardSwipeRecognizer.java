@@ -141,6 +141,21 @@ public class KeyboardSwipeRecognizer
     List<RecognitionResult> results = new ArrayList<>();
     StringBuilder errorReport = new StringBuilder();
     
+    // COORDINATE DEBUGGING: Log what coordinates we receive from main keyboard
+    android.util.Log.e("KeyboardSwipeRecognizer", "🎯 ALGORITHM COORDINATE INPUT:");
+    if (swipePath != null && !swipePath.isEmpty()) {
+      PointF first = swipePath.get(0);
+      PointF last = swipePath.get(swipePath.size() - 1);
+      android.util.Log.e("KeyboardSwipeRecognizer", "- Algorithm input: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
+      android.util.Log.e("KeyboardSwipeRecognizer", "- Algorithm points: " + swipePath.size());
+      
+      // Sample coordinates for analysis
+      for (int i = 0; i < Math.min(3, swipePath.size()); i++) {
+        PointF p = swipePath.get(i);
+        android.util.Log.e("KeyboardSwipeRecognizer", "  Algo[" + i + "]: (" + p.x + "," + p.y + ")");
+      }
+    }
+
     errorReport.append("🔍 ALGORITHM VALIDATION:\n");
     
     // Step 0: Comprehensive input validation with error reporting
