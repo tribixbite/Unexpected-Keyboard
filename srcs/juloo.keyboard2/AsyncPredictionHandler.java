@@ -21,23 +21,23 @@ public class AsyncPredictionHandler
   private static final int MSG_PREDICT = 1;
   private static final int MSG_CANCEL_PENDING = 2;
   
-  // Callback interface for prediction results
+  // Callback interface for prediction results  
   public interface PredictionCallback
   {
-    void onPredictionsReady(List<String> predictions, List<Float> scores);
+    void onPredictionsReady(List<String> predictions, List<Integer> scores);
     void onPredictionError(String error);
   }
   
   private final HandlerThread _workerThread;
   private final Handler _workerHandler;
   private final Handler _mainHandler;
-  private final SwipeTypingEngine _swipeEngine;
+  private final NeuralSwipeTypingEngine _neuralEngine;
   private final AtomicInteger _requestId;
   private volatile int _currentRequestId;
   
-  public AsyncPredictionHandler(SwipeTypingEngine swipeEngine)
+  public AsyncPredictionHandler(NeuralSwipeTypingEngine neuralEngine)
   {
-    _swipeEngine = swipeEngine;
+    _neuralEngine = neuralEngine;
     _requestId = new AtomicInteger(0);
     _currentRequestId = 0;
     
@@ -121,7 +121,7 @@ public class AsyncPredictionHandler
       long startTime = System.currentTimeMillis();
       
       // Perform prediction (this is the potentially blocking operation)
-      WordPredictor.PredictionResult result = _swipeEngine.predict(request.input);
+      PredictionResult result = _neuralEngine.predict(request.input);
       
       // Check again if cancelled during prediction
       if (request.requestId != _currentRequestId)
@@ -130,14 +130,9 @@ public class AsyncPredictionHandler
         return;
       }
       
-      // Extract words and convert integer scores to float
+      // Extract words and scores directly (neural system uses integers)
       final List<String> words = result.words;
-      final List<Float> scores = new java.util.ArrayList<>();
-      
-      for (Integer score : result.scores)
-      {
-        scores.add(score.floatValue());
-      }
+      final List<Integer> scores = result.scores;
       
       long duration = System.currentTimeMillis() - startTime;
       Log.d(TAG, "Prediction completed in " + duration + "ms (ID: " + request.requestId + ")");

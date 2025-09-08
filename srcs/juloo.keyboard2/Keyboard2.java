@@ -59,7 +59,7 @@ public class Keyboard2 extends InputMethodService
   // Swipe typing components
   private DictionaryManager _dictionaryManager;
   private WordPredictor _wordPredictor;
-  private SwipeTypingEngine _swipeEngine;
+  private NeuralSwipeTypingEngine _neuralEngine;
   private AsyncPredictionHandler _asyncPredictionHandler;
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
@@ -185,20 +185,20 @@ public class Keyboard2 extends InputMethodService
       _wordPredictor.setUserAdaptationManager(_adaptationManager);
       _wordPredictor.loadDictionary(this, "en");
       
-      // Initialize DTW predictor for swipe typing only
+      // Initialize neural predictor for swipe typing only
       if (_config.swipe_typing_enabled)
       {
-        _swipeEngine = new SwipeTypingEngine(this, _wordPredictor, _config);
+        _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
         
         // Initialize async prediction handler
-        _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
+        _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
         
         // CGR recognizer doesn't need separate calibration data loading
         
         // Set keyboard dimensions if available
         if (_keyboardView != null)
         {
-          _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+          _neuralEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
         }
         
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
@@ -338,9 +338,9 @@ public class Keyboard2 extends InputMethodService
     refreshSubtypeImm();
     
     // Update swipe engine config if it exists
-    if (_swipeEngine != null)
+    if (_neuralEngine != null)
     {
-      _swipeEngine.setConfig(_config);
+      _neuralEngine.setConfig(_config);
     }
     if (_wordPredictor != null)
     {
@@ -401,20 +401,20 @@ public class Keyboard2 extends InputMethodService
         android.util.Log.d("Keyboard2", "Word predictor initialized with " + _wordPredictor.getDictionarySize() + " words");
       }
       
-      if (_config.swipe_typing_enabled && _swipeEngine == null)
+      if (_config.swipe_typing_enabled && _neuralEngine == null)
       {
-        android.util.Log.d("Keyboard2", "Initializing DTW predictor in onStartInputView");
-        _swipeEngine = new SwipeTypingEngine(this, _wordPredictor, _config);
+        android.util.Log.d("Keyboard2", "Initializing neural engine in onStartInputView");
+        _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
         
         // Initialize async prediction handler
-        _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
+        _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
         
         // CGR recognizer doesn't need separate calibration data loading
         
         // Set keyboard dimensions
         if (_keyboardView != null)
         {
-          _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+          _neuralEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
         }
         
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
@@ -445,7 +445,7 @@ public class Keyboard2 extends InputMethodService
       setInputView(_inputViewContainer != null ? _inputViewContainer : _keyboardView);
       
       // CRITICAL: Set correct keyboard dimensions for CGR after view is laid out
-      if (_swipeEngine != null && _keyboardView != null) {
+      if (_neuralEngine != null && _keyboardView != null) {
         _keyboardView.getViewTreeObserver().addOnGlobalLayoutListener(
           new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -457,11 +457,11 @@ public class Keyboard2 extends InputMethodService
                 float keyboardWidth = _keyboardView.getWidth();
                 float keyboardHeight = calculateDynamicKeyboardHeight();
                 
-                _swipeEngine.setKeyboardDimensions(keyboardWidth, keyboardHeight);
+                _neuralEngine.setKeyboardDimensions(keyboardWidth, keyboardHeight);
                 
                 // CRITICAL: Also set real key positions for 100% accurate coordinate mapping
                 java.util.Map<Character, android.graphics.PointF> realKeyPositions = _keyboardView.getRealKeyPositions();
-                _swipeEngine.setRealKeyPositions(realKeyPositions);
+                _neuralEngine.setRealKeyPositions(realKeyPositions);
                 
                 android.util.Log.e("Keyboard2", "✅ SET DYNAMIC KEYBOARD DIMENSIONS: " + 
                   keyboardWidth + "x" + keyboardHeight + " (user: " + getUserKeyboardHeightPercent() + "%)");
@@ -766,7 +766,7 @@ public class Keyboard2 extends InputMethodService
   /**
    * Handle prediction results from async prediction handler
    */
-  private void handlePredictionResults(List<String> predictions, List<Float> scores)
+  private void handlePredictionResults(List<String> predictions, List<Integer> scores)
   {
     android.util.Log.d("Keyboard2", "Got " + predictions.size() + " async predictions");
     
@@ -783,24 +783,17 @@ public class Keyboard2 extends InputMethodService
     // Log predictions for debugging
     for (int i = 0; i < Math.min(5, predictions.size()); i++)
     {
-      android.util.Log.d("Keyboard2", String.format("Prediction %d: %s (score: %.3f)", 
+      android.util.Log.d("Keyboard2", String.format("Neural Prediction %d: %s (score: %d)", 
                                                      i + 1, predictions.get(i), 
-                                                     i < scores.size() ? scores.get(i) : 0.0f));
+                                                     i < scores.size() ? scores.get(i) : 0));
     }
     
-    // Update suggestion bar (convert Float scores to Integer)
+    // Update suggestion bar (scores are already integers from neural system)
     if (_suggestionBar != null)
     {
-      android.util.Log.d("Keyboard2", "Setting suggestions in bar: " + predictions);
+      android.util.Log.d("Keyboard2", "Setting neural suggestions in bar: " + predictions);
       _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
-      
-      // Convert Float scores to Integer
-      List<Integer> intScores = new ArrayList<>();
-      for (Float score : scores)
-      {
-        intScores.add(Math.round(score));
-      }
-      _suggestionBar.setSuggestionsWithScores(predictions, intScores);
+      _suggestionBar.setSuggestionsWithScores(predictions, scores);
       android.util.Log.d("Keyboard2", "===== ASYNC SWIPE PREDICTION END =====");
     }
   }
@@ -1102,7 +1095,7 @@ public class Keyboard2 extends InputMethodService
       android.util.Log.e("Keyboard2", "✅ Swipe typing enabled, proceeding...");
     }
     
-    if (_swipeEngine == null)
+    if (_neuralEngine == null)
     {
       // Fallback to word predictor if engine not initialized
       if (_wordPredictor == null)
@@ -1111,17 +1104,17 @@ public class Keyboard2 extends InputMethodService
         return;
       }
       // Initialize engine on the fly
-      _swipeEngine = new SwipeTypingEngine(this, _wordPredictor, _config);
+      _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
       
       // Initialize async handler if not already done
       if (_asyncPredictionHandler == null)
       {
-        _asyncPredictionHandler = new AsyncPredictionHandler(_swipeEngine);
+        _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
       }
       
       if (_keyboardView != null)
       {
-        _swipeEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+        _neuralEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
       }
     }
     
@@ -1201,7 +1194,7 @@ public class Keyboard2 extends InputMethodService
         _asyncPredictionHandler.requestPredictions(swipeInput, new AsyncPredictionHandler.PredictionCallback()
         {
           @Override
-          public void onPredictionsReady(List<String> predictions, List<Float> scores)
+          public void onPredictionsReady(List<String> predictions, List<Integer> scores)
           {
             // Process predictions on UI thread
             handlePredictionResults(predictions, scores);
@@ -1223,7 +1216,7 @@ public class Keyboard2 extends InputMethodService
       {
         // Fallback to synchronous prediction if async handler not available
         long startTime = System.currentTimeMillis();
-        WordPredictor.PredictionResult result = _swipeEngine.predict(swipeInput);
+        PredictionResult result = _neuralEngine.predict(swipeInput);
       long predictionTime = System.currentTimeMillis() - startTime;
       List<String> predictions = result.words;
       
