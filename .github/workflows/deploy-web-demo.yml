@@ -4,77 +4,53 @@ on:
   push:
     branches: [ main, feature/swipe-typing ]
     paths: [ 'web_demo/**' ]
-  pull_request:
-    branches: [ main ]
-    paths: [ 'web_demo/**' ]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           lfs: true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Prepare web demo files
-        run: |
-          cd web_demo
-          echo "Web demo files present:"
-          ls -la
-
-      - name: Build web demo
-        run: |
-          cd web_demo
-          # Copy all necessary files to build directory
-          mkdir -p dist
-          cp -r *.html *.js *.json *.onnx dist/ 2>/dev/null || echo "Some files may not exist, continuing..."
           
-          # Ensure main HTML file is present
+      - name: Prepare deployment files
+        run: |
+          cd web_demo
+          echo "📁 Web demo files:"
+          ls -la
+          
+          # Create deployment directory
+          mkdir -p ../deploy
+          
+          # Copy all necessary files
+          echo "📦 Copying files..."
+          cp *.html ../deploy/ 2>/dev/null || echo "No HTML files"
+          cp *.js ../deploy/ 2>/dev/null || echo "No JS files"  
+          cp *.json ../deploy/ 2>/dev/null || echo "No JSON files"
+          cp *.onnx ../deploy/ 2>/dev/null || echo "No ONNX files"
+          
+          # Ensure main HTML file becomes index.html
           if [ -f swipe-onnx.html ]; then
-            cp swipe-onnx.html dist/index.html
-          elif [ -f index.html ]; then
-            cp index.html dist/
+            cp swipe-onnx.html ../deploy/index.html
+            echo "✅ Main file: swipe-onnx.html → index.html"
           else
-            echo "No main HTML file found!"
+            echo "❌ No main HTML file found!"
             exit 1
           fi
           
-          # List built files
-          echo "Built files:"
-          ls -la dist/
+          cd ../deploy
+          echo "🚀 Deployment files ready:"
+          ls -la
+          echo "📊 File sizes:"
+          du -h *
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './web_demo/dist'
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/swipe-typing'
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: 'Deploy web demo from ${{ github.sha }}'
