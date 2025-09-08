@@ -350,10 +350,10 @@
                     
                     <!-- Row 4: Special keys -->
                     <div class="flex justify-center gap-1 md:gap-1.5 px-1">
-                        <button class="w-16 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5">123</button>
-                        <button class="w-12 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5">😊</button>
+                        <button class="w-16 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="toggleNumberMode()">123</button>
+                        <button class="w-12 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="toggleEmojiMode()">😊</button>
                         <button class="flex-1 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="handleSpace()">space</button>
-                        <button class="w-20 h-12 bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 hover:from-neon-blue/30 hover:to-neon-purple/30 rounded-lg text-white text-sm transition-all border border-neon-blue/30">return</button>
+                        <button class="w-20 h-12 bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 hover:from-neon-blue/30 hover:to-neon-purple/30 rounded-lg text-white text-sm transition-all border border-neon-blue/30" onclick="handleReturn()">return</button>
                     </div>
                 </div>
             </div>
@@ -982,11 +982,23 @@
         
         // Handle pure single character input (no predictions)
         function handleSingleCharacterInput(keyValue) {
-            if (keyValue && keyValue.length === 1 && keyValue.match(/[a-z]/i)) {
-                // Just add the character directly to input, no predictions
-                inputText += keyValue.toLowerCase();
-                document.getElementById('inputText').textContent = inputText;
+            if (keyValue && keyValue.length === 1) {
+                // Handle different character types
+                if (keyValue.match(/[a-z]/i)) {
+                    // Letters - lowercase for consistency
+                    inputText += keyValue.toLowerCase();
+                } else if (keyValue.match(/[0-9-/();$&@"'.,?!+*]/)) {
+                    // Numbers and symbols - add as-is
+                    inputText += keyValue;
+                } else if (keyValue.match(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u)) {
+                    // Emojis - add as-is
+                    inputText += keyValue;
+                } else {
+                    // Other single characters
+                    inputText += keyValue;
+                }
                 
+                document.getElementById('inputText').textContent = inputText;
                 console.log(`📝 Added character: "${keyValue}" (total: "${inputText}")`);
                 
                 // Clear any existing predictions since this is direct character input
@@ -1003,9 +1015,33 @@
                         document.getElementById('inputText').textContent = inputText;
                         console.log('📝 Added space');
                         break;
+                    case 'shift':
+                        handleShift();
+                        break;
                     default:
                         console.log(`Special key tapped: ${keyValue}`);
                 }
+            }
+        }
+        
+        // Handle shift key functionality
+        function handleShift() {
+            // Toggle shift state
+            const isShiftActive = document.querySelector('.key[data-key="shift"]')?.classList.contains('key-active');
+            
+            if (isShiftActive) {
+                // Turn off shift
+                document.querySelector('.key[data-key="shift"]')?.classList.remove('key-active');
+                console.log('🔤 Shift OFF');
+            } else {
+                // Turn on shift
+                document.querySelector('.key[data-key="shift"]')?.classList.add('key-active');
+                console.log('🔤 Shift ON');
+                
+                // Auto turn off after next character
+                setTimeout(() => {
+                    document.querySelector('.key[data-key="shift"]')?.classList.remove('key-active');
+                }, 3000); // Auto-off after 3 seconds
             }
         }
         
@@ -2607,6 +2643,56 @@
             console.log('=== Mobile Tap Functionality Test Complete ===');
         }
         
+        // Test 4th row functionality
+        function testFourthRowFunctionality() {
+            console.log('=== Testing 4th Row Functionality ===');
+            
+            clearInput();
+            
+            // Test 1: Number mode toggle
+            console.log('\nTest 1: Testing number mode');
+            console.log('Current keyboard state:', isNumberMode ? 'NUMBERS' : 'LETTERS');
+            toggleNumberMode();
+            console.log('After toggle:', isNumberMode ? 'NUMBERS' : 'LETTERS');
+            
+            // Test 2: Number input
+            console.log('\nTest 2: Testing number input');
+            handleSingleCharacterInput('1');
+            handleSingleCharacterInput('2');
+            handleSingleCharacterInput('3');
+            console.log('After number input:', document.getElementById('inputText').textContent);
+            
+            // Test 3: Switch back to letters
+            console.log('\nTest 3: Switching back to letters');
+            toggleNumberMode();
+            handleSingleCharacterInput('a');
+            handleSingleCharacterInput('b');
+            console.log('After letter input:', document.getElementById('inputText').textContent);
+            
+            // Test 4: Emoji mode
+            console.log('\nTest 4: Testing emoji mode');
+            toggleEmojiMode();
+            console.log('Emoji mode:', isEmojiMode ? 'ON' : 'OFF');
+            
+            // Test 5: Return functionality
+            console.log('\nTest 5: Testing return key');
+            handleReturn();
+            console.log('After return:', JSON.stringify(document.getElementById('inputText').textContent));
+            
+            // Test 6: Shift functionality
+            console.log('\nTest 6: Testing shift key');
+            handleShift();
+            const shiftActive = document.querySelector('.key[data-key="shift"]')?.classList.contains('key-active');
+            console.log('Shift active:', shiftActive);
+            
+            console.log('=== 4th Row Functionality Test Complete ===');
+            
+            // Reset to normal mode
+            if (isNumberMode) toggleNumberMode();
+            if (isEmojiMode) toggleEmojiMode();
+            clearInput();
+        }
+        
         // Expose test functions globally for debugging
         window.testCustomDictionary = testCustomDictionary;
         window.testTapFunctionality = testTapFunctionality;
@@ -2615,6 +2701,134 @@
         window.testSelectionFunctionality = testSelectionFunctionality;
         window.testGestureDetection = testGestureDetection;
         window.testMobileTapFunctionality = testMobileTapFunctionality;
+        window.testFourthRowFunctionality = testFourthRowFunctionality;
+        
+        // 4th Row Button Functions
+        let isNumberMode = false;
+        let isEmojiMode = false;
+        
+        function toggleNumberMode() {
+            isNumberMode = !isNumberMode;
+            const button = document.querySelector('button[onclick="toggleNumberMode()"]');
+            
+            if (isNumberMode) {
+                // Change to numbers layout
+                updateKeyboardToNumbers();
+                button.textContent = 'ABC';
+                button.classList.add('bg-neon-blue/20', 'text-neon-blue');
+                button.classList.remove('bg-gray-800', 'text-gray-400');
+                console.log('🔢 Number mode enabled');
+            } else {
+                // Change back to letters
+                updateKeyboardToLetters();
+                button.textContent = '123';
+                button.classList.remove('bg-neon-blue/20', 'text-neon-blue');
+                button.classList.add('bg-gray-800', 'text-gray-400');
+                console.log('🔤 Letter mode enabled');
+            }
+        }
+        
+        function toggleEmojiMode() {
+            isEmojiMode = !isEmojiMode;
+            const button = document.querySelector('button[onclick="toggleEmojiMode()"]');
+            
+            if (isEmojiMode) {
+                // Show emoji picker or common emojis
+                showEmojiKeyboard();
+                button.classList.add('bg-neon-purple/20', 'text-neon-purple');
+                button.classList.remove('bg-gray-800', 'text-gray-400');
+                console.log('😊 Emoji mode enabled');
+            } else {
+                // Return to normal keyboard
+                updateKeyboardToLetters();
+                button.classList.remove('bg-neon-purple/20', 'text-neon-purple');
+                button.classList.add('bg-gray-800', 'text-gray-400');
+                console.log('🔤 Letter mode enabled');
+            }
+        }
+        
+        function handleReturn() {
+            // Add newline to text
+            inputText += '\n';
+            document.getElementById('inputText').textContent = inputText;
+            console.log('📝 Added newline');
+            
+            // Clear any pending predictions since we're starting a new line
+            clearPredictionState();
+        }
+        
+        // Update keyboard layout to numbers
+        function updateKeyboardToNumbers() {
+            const numberLayouts = [
+                ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+                ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"'],
+                ['shift', '.', ',', '?', '!', "'", '"', '+', '*', 'backspace']
+            ];
+            
+            // Update each row
+            numberLayouts.forEach((row, rowIndex) => {
+                const keys = document.querySelectorAll(`[data-row="${rowIndex}"] .key`);
+                row.forEach((char, keyIndex) => {
+                    if (keys[keyIndex]) {
+                        keys[keyIndex].textContent = char;
+                        keys[keyIndex].dataset.key = char;
+                        // Update data attributes for numbers
+                        if (char.match(/[0-9-/();$&@"'.,?!+*]/)) {
+                            keys[keyIndex].dataset.row = rowIndex;
+                            keys[keyIndex].dataset.col = keyIndex;
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Update keyboard layout to letters  
+        function updateKeyboardToLetters() {
+            const letterLayouts = [
+                ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+                ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+                ['shift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'backspace']
+            ];
+            
+            // Update each row
+            letterLayouts.forEach((row, rowIndex) => {
+                const rowDiv = document.querySelector(`[data-row="${rowIndex}"]`)?.parentElement;
+                if (rowDiv) {
+                    const keys = rowDiv.querySelectorAll('.key');
+                    row.forEach((char, keyIndex) => {
+                        if (keys[keyIndex]) {
+                            keys[keyIndex].textContent = char.toUpperCase();
+                            keys[keyIndex].dataset.key = char;
+                            keys[keyIndex].dataset.row = rowIndex;
+                            keys[keyIndex].dataset.col = keyIndex;
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Show emoji keyboard
+        function showEmojiKeyboard() {
+            const emojiSets = [
+                ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇'],
+                ['🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙'],
+                ['shift', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', 'backspace']
+            ];
+            
+            // Update each row with emojis
+            emojiSets.forEach((row, rowIndex) => {
+                const rowDiv = document.querySelector(`[data-row="${rowIndex}"]`)?.parentElement;
+                if (rowDiv) {
+                    const keys = rowDiv.querySelectorAll('.key');
+                    row.forEach((emoji, keyIndex) => {
+                        if (keys[keyIndex]) {
+                            keys[keyIndex].textContent = emoji;
+                            keys[keyIndex].dataset.key = emoji === 'shift' || emoji === 'backspace' ? emoji : emoji;
+                        }
+                    });
+                }
+            });
+        }
         
         // Initialize on load
         window.addEventListener('load', init);
