@@ -133,11 +133,18 @@ public class SwipeCalibrationActivity extends Activity
   
   private void setupUI()
   {
-    // Main layout with web demo styling
-    LinearLayout mainLayout = new LinearLayout(this);
-    mainLayout.setOrientation(LinearLayout.VERTICAL);
-    mainLayout.setBackgroundColor(0xFF0a0a0f); // Dark background
-    mainLayout.setPadding(20, 20, 20, 20);
+    // Main RelativeLayout like original
+    android.widget.RelativeLayout mainLayout = new android.widget.RelativeLayout(this);
+    mainLayout.setBackgroundColor(Color.BLACK);
+    
+    // Create top content layout
+    LinearLayout topLayout = new LinearLayout(this);
+    topLayout.setOrientation(LinearLayout.VERTICAL);
+    topLayout.setPadding(40, 40, 40, 20);
+    android.widget.RelativeLayout.LayoutParams topParams = new android.widget.RelativeLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    topParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+    topLayout.setLayoutParams(topParams);
     
     // Title
     TextView title = new TextView(this);
@@ -145,70 +152,79 @@ public class SwipeCalibrationActivity extends Activity
     title.setTextSize(24);
     title.setTextColor(0xFF00d4ff); // Neon blue
     title.setPadding(0, 0, 0, 20);
-    mainLayout.addView(title);
+    topLayout.addView(title);
     
     // Instructions
     _instructionText = new TextView(this);
-    _instructionText.setText("Swipe the word below to collect neural training data");
-    _instructionText.setTextColor(0xFFFFFFFF);
+    _instructionText.setText("Swipe the word shown below - auto-advances on completion");
+    _instructionText.setTextColor(Color.GRAY);
     _instructionText.setPadding(0, 0, 0, 10);
-    mainLayout.addView(_instructionText);
+    topLayout.addView(_instructionText);
     
     // Current word display
     _currentWordText = new TextView(this);
     _currentWordText.setTextSize(32);
-    _currentWordText.setTextColor(0xFFb300ff); // Neon purple
+    _currentWordText.setTextColor(Color.CYAN);
     _currentWordText.setPadding(0, 20, 0, 20);
-    mainLayout.addView(_currentWordText);
+    topLayout.addView(_currentWordText);
     
     // Progress
     _progressText = new TextView(this);
-    _progressText.setTextColor(0xFFFFFFFF);
-    mainLayout.addView(_progressText);
+    _progressText.setTextColor(Color.WHITE);
+    topLayout.addView(_progressText);
     
     _progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
     _progressBar.setMax(WORDS_PER_SESSION);
-    mainLayout.addView(_progressBar);
+    topLayout.addView(_progressBar);
     
     // Benchmark display
     _benchmarkText = new TextView(this);
     _benchmarkText.setTextColor(0xFF00d4ff);
     _benchmarkText.setTextSize(14);
     _benchmarkText.setPadding(0, 10, 0, 10);
-    mainLayout.addView(_benchmarkText);
+    topLayout.addView(_benchmarkText);
+    
+    // Playground button
+    Button playgroundButton = new Button(this);
+    playgroundButton.setText("🎮 Neural Playground");
+    playgroundButton.setTextSize(14);
+    playgroundButton.setOnClickListener(v -> showNeuralPlayground());
+    playgroundButton.setBackgroundColor(0xFF4CAF50);
+    playgroundButton.setTextColor(Color.WHITE);
+    playgroundButton.setPadding(8, 8, 8, 8);
+    topLayout.addView(playgroundButton);
     
     // Control buttons
     LinearLayout buttonLayout = new LinearLayout(this);
     buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
+    buttonLayout.setPadding(16, 16, 16, 8);
+    buttonLayout.setGravity(android.view.Gravity.CENTER);
     
-    _nextButton = createNeonButton("Next", 0xFF4CAF50);
-    _nextButton.setOnClickListener(v -> nextWord());
-    buttonLayout.addView(_nextButton);
-    
-    _skipButton = createNeonButton("Skip", 0xFFFF9800);
+    _skipButton = new Button(this);
+    _skipButton.setText("Skip Word");
     _skipButton.setOnClickListener(v -> skipWord());
+    _skipButton.setBackgroundColor(0xFFFF5722);
+    _skipButton.setTextColor(Color.WHITE);
     buttonLayout.addView(_skipButton);
     
-    _exportButton = createNeonButton("Export", 0xFF2196F3);
+    _nextButton = new Button(this);
+    _nextButton.setText("Next Word");  
+    _nextButton.setOnClickListener(v -> nextWord());
+    _nextButton.setBackgroundColor(0xFF4CAF50);
+    _nextButton.setTextColor(Color.WHITE);
+    buttonLayout.addView(_nextButton);
+    
+    _exportButton = new Button(this);
+    _exportButton.setText("Export Data");
     _exportButton.setOnClickListener(v -> exportTrainingData());
+    _exportButton.setBackgroundColor(0xFF2196F3);
+    _exportButton.setTextColor(Color.WHITE);
     buttonLayout.addView(_exportButton);
     
-    _benchmarkButton = createNeonButton("Benchmark", 0xFFE91E63);
-    _benchmarkButton.setOnClickListener(v -> runBenchmark());
-    buttonLayout.addView(_benchmarkButton);
+    topLayout.addView(buttonLayout);
+    mainLayout.addView(topLayout);
     
-    Button playgroundButton = createNeonButton("🎮 Playground", 0xFF9C27B0);
-    playgroundButton.setOnClickListener(v -> showNeuralPlayground());
-    buttonLayout.addView(playgroundButton);
-    
-    mainLayout.addView(buttonLayout);
-    
-    // Create container for keyboard at bottom
-    LinearLayout container = new LinearLayout(this);
-    container.setOrientation(LinearLayout.VERTICAL);
-    container.addView(mainLayout);
-    
-    setContentView(container);
+    setContentView(mainLayout);
   }
   
   private Button createNeonButton(String text, int color)
@@ -229,15 +245,15 @@ public class SwipeCalibrationActivity extends Activity
   {
     _keyboardView = new NeuralKeyboardView(this);
     
-    // Create keyboard layout params to position at bottom
-    LinearLayout.LayoutParams keyboardParams = new LinearLayout.LayoutParams(
+    // Position keyboard at bottom using RelativeLayout params like original
+    android.widget.RelativeLayout.LayoutParams keyboardParams = new android.widget.RelativeLayout.LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT, _keyboardHeight);
-    keyboardParams.gravity = android.view.Gravity.BOTTOM;
+    keyboardParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
     _keyboardView.setLayoutParams(keyboardParams);
     
-    // Add keyboard to container
-    ViewGroup container = (ViewGroup) findViewById(android.R.id.content);
-    ((LinearLayout) container.getChildAt(0)).addView(_keyboardView);
+    // Add keyboard to main RelativeLayout
+    ViewGroup mainLayout = (ViewGroup) findViewById(android.R.id.content);
+    ((android.widget.RelativeLayout) mainLayout.getChildAt(0)).addView(_keyboardView);
     
     // Set keyboard dimensions for neural engine
     _neuralEngine.setKeyboardDimensions(_screenWidth, _keyboardHeight);
