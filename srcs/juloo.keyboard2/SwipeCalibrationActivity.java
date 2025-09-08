@@ -68,6 +68,11 @@ public class SwipeCalibrationActivity extends Activity
   private Button _exportButton;
   private Button _benchmarkButton;
   
+  // Swipe data collection (needed by keyboard view)
+  private List<PointF> _currentSwipePoints = new ArrayList<>();
+  private List<Long> _currentSwipeTimestamps = new ArrayList<>();
+  private long _swipeStartTime;
+  
   // Neural prediction
   private NeuralSwipeTypingEngine _neuralEngine;
   private Config _config;
@@ -85,6 +90,12 @@ public class SwipeCalibrationActivity extends Activity
   private List<Long> _predictionTimes = new ArrayList<>();
   private int _correctPredictions = 0;
   private int _totalPredictions = 0;
+  
+  // User configuration (needed for keyboard layout)
+  private float _characterSize = 1.15f;
+  private float _labelTextSize = 0.33f;
+  private float _keyVerticalMargin = 0.015f;
+  private float _keyHorizontalMargin = 0.02f;
   
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -452,61 +463,70 @@ public class SwipeCalibrationActivity extends Activity
   }
   
   /**
-   * Neural keyboard view with web demo styling and animations
+   * Restored keyboard view with proper 4-row QWERTY layout and touch handling
    */
   private class NeuralKeyboardView extends View
   {
-    private Map<String, KeyButton> _keys = new HashMap<>();
     private Paint _keyPaint;
+    private Paint _keyBorderPaint;
     private Paint _textPaint;
-    private Paint _trailPaint;
-    private Paint _glowPaint;
-    
-    // Swipe state
-    private boolean _swiping = false;
-    private List<PointF> _swipePoints = new ArrayList<>();
-    private List<Long> _swipeTimestamps = new ArrayList<>();
-    private Path _swipePath = new Path();
-    private long _swipeStartTime;
+    private Paint _swipePaint;
+    private Paint _overlayPaint;
+    private Map<String, KeyButton> _keys;
+    private Path _swipePath;
+    private Path _overlayPath;
+    private List<PointF> _swipePoints;
+    private boolean _swiping;
     
     public NeuralKeyboardView(Context context)
     {
       super(context);
-      setupPaints();
-      setOnTouchListener(this::onTouch);
+      init();
     }
     
-    private void setupPaints()
+    private void init()
     {
-      // Key paint - dark theme matching web demo
       _keyPaint = new Paint();
-      _keyPaint.setColor(0xFF1a1a2e); // Dark key color
+      _keyPaint.setColor(0xFF2B2B2B); // Darker gray similar to real keyboard
+      _keyPaint.setStyle(Paint.Style.FILL);
       _keyPaint.setAntiAlias(true);
       
-      // Text paint
+      _keyBorderPaint = new Paint();
+      _keyBorderPaint.setColor(0xFF1A1A1A); // Even darker for border
+      _keyBorderPaint.setStyle(Paint.Style.STROKE);
+      _keyBorderPaint.setStrokeWidth(2);
+      _keyBorderPaint.setAntiAlias(true);
+      
       _textPaint = new Paint();
-      _textPaint.setColor(0xFFFFFFFF);
-      _textPaint.setAntiAlias(true);
+      _textPaint.setColor(Color.WHITE);
       _textPaint.setTextAlign(Paint.Align.CENTER);
-      _textPaint.setTextSize(40);
+      _textPaint.setAntiAlias(true);
+      _textPaint.setSubpixelText(true);
       
-      // Trail paint with neon glow
-      _trailPaint = new Paint();
-      _trailPaint.setColor(0xFF00d4ff); // Neon blue
-      _trailPaint.setStrokeWidth(8);
-      _trailPaint.setStyle(Paint.Style.STROKE);
-      _trailPaint.setStrokeCap(Paint.Cap.ROUND);
-      _trailPaint.setAntiAlias(true);
+      _swipePaint = new Paint();
+      _swipePaint.setColor(Color.CYAN);
+      _swipePaint.setStrokeWidth(8);
+      _swipePaint.setStyle(Paint.Style.STROKE);
+      _swipePaint.setAlpha(180);
+      _swipePaint.setAntiAlias(true);
+      _swipePaint.setStrokeCap(Paint.Cap.ROUND);
+      _swipePaint.setStrokeJoin(Paint.Join.ROUND);
       
-      // Glow paint for trail effect
-      _glowPaint = new Paint();
-      _glowPaint.setColor(0xFF00d4ff);
-      _glowPaint.setStrokeWidth(20);
-      _glowPaint.setStyle(Paint.Style.STROKE);
-      _glowPaint.setStrokeCap(Paint.Cap.ROUND);
-      _glowPaint.setMaskFilter(new android.graphics.BlurMaskFilter(10, android.graphics.BlurMaskFilter.Blur.NORMAL));
-      _glowPaint.setAntiAlias(true);
-      _glowPaint.setAlpha(100);
+      _overlayPaint = new Paint();
+      _overlayPaint.setColor(Color.GREEN);
+      _overlayPaint.setStrokeWidth(10);
+      _overlayPaint.setStyle(Paint.Style.STROKE);
+      _overlayPaint.setAlpha(200);
+      _overlayPaint.setAntiAlias(true);
+      _overlayPaint.setStrokeCap(Paint.Cap.ROUND);
+      _overlayPaint.setStrokeJoin(Paint.Join.ROUND);
+      
+      _swipePath = new Path();
+      _overlayPath = null;
+      _swipePoints = new ArrayList<>();
+      _keys = new HashMap<>();
+      
+      setBackgroundColor(Color.BLACK);
     }
     
     @Override
@@ -538,24 +558,112 @@ public class SwipeCalibrationActivity extends Activity
     {
       _keys.clear();
       
+      // Use user's configuration for dimensions
       float keyWidth = width / 10f;
-      float keyHeight = height / 3f; // 3 rows
-      float margin = 4;
+      float rowHeight = height / 4f; // 4 rows including bottom row
+      float verticalMargin = _keyVerticalMargin * rowHeight;
+      float horizontalMargin = _keyHorizontalMargin * keyWidth;
       
-      for (int row = 0; row < KEYBOARD_LAYOUT.length; row++)
+      // Calculate text size using actual config values
+      float characterSize = _characterSize;
+      float labelTextSize = _labelTextSize;
+      
+      // Match the real keyboard's text size calculation
+      float baseSize = Math.min(
+        rowHeight - verticalMargin,
+        (keyWidth - horizontalMargin) * 3f/2f
+      );
+      float textSize = baseSize * characterSize * labelTextSize;
+      _textPaint.setTextSize(textSize);
+      
+      // Layout QWERTY keyboard with 4 rows
+      String[][] fullLayout = {
+        {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"},
+        {"a", "s", "d", "f", "g", "h", "j", "k", "l"},
+        {"shift", "z", "x", "c", "v", "b", "n", "m", "backspace"},
+        {"?123", ",", "space", ".", "enter"}
+      };
+      
+      for (int row = 0; row < fullLayout.length; row++)
       {
-        String[] rowKeys = KEYBOARD_LAYOUT[row];
-        float rowOffset = (row == 1) ? keyWidth * 0.5f : (row == 2) ? keyWidth : 0;
+        String[] rowKeys = fullLayout[row];
         
-        for (int col = 0; col < rowKeys.length; col++)
+        if (row == 0) // Top row (q-p)
         {
-          String key = rowKeys[col];
-          float x = rowOffset + col * keyWidth + margin;
-          float y = row * keyHeight + margin;
-          
-          KeyButton button = new KeyButton(key, x, y, 
-            keyWidth - margin * 2, keyHeight - margin * 2);
-          _keys.put(key, button);
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float x = col * keyWidth + horizontalMargin / 2;
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, x, y, 
+              keyWidth - horizontalMargin, rowHeight - verticalMargin);
+            _keys.put(key, button);
+          }
+        }
+        else if (row == 1) // Second row (a-l) - offset by half key
+        {
+          float rowOffset = keyWidth * 0.5f;
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float x = rowOffset + col * keyWidth + horizontalMargin / 2;
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, x, y, 
+              keyWidth - horizontalMargin, rowHeight - verticalMargin);
+            _keys.put(key, button);
+          }
+        }
+        else if (row == 2) // Third row (shift, z-m, backspace)
+        {
+          float currentX = horizontalMargin / 2;
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float keyW = keyWidth - horizontalMargin;
+            
+            // Special keys are wider
+            if (key.equals("shift") || key.equals("backspace"))
+            {
+              keyW = keyWidth * 1.5f - horizontalMargin;
+            }
+            
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, currentX, y, 
+              keyW, rowHeight - verticalMargin);
+            _keys.put(key, button);
+            
+            currentX += keyW + horizontalMargin;
+          }
+        }
+        else if (row == 3) // Bottom row (?123, comma, space, period, enter)
+        {
+          float currentX = horizontalMargin / 2;
+          for (int col = 0; col < rowKeys.length; col++)
+          {
+            String key = rowKeys[col];
+            float keyW = keyWidth - horizontalMargin;
+            
+            // Special key widths
+            if (key.equals("space"))
+            {
+              keyW = keyWidth * 5f - horizontalMargin; // Space bar is 5 keys wide
+            }
+            else if (key.equals("?123") || key.equals("enter"))
+            {
+              keyW = keyWidth * 1.5f - horizontalMargin;
+            }
+            
+            float y = row * rowHeight + verticalMargin / 2;
+            
+            KeyButton button = new KeyButton(key, currentX, y, 
+              keyW, rowHeight - verticalMargin);
+            _keys.put(key, button);
+            
+            currentX += keyW + horizontalMargin;
+          }
         }
       }
     }
@@ -568,20 +676,24 @@ public class SwipeCalibrationActivity extends Activity
       // Draw keys
       for (KeyButton key : _keys.values())
       {
-        key.draw(canvas, _keyPaint, _textPaint);
+        key.draw(canvas, _keyPaint, _keyBorderPaint, _textPaint);
       }
       
-      // Draw swipe trail with neon glow effect
+      // Draw swipe path
       if (!_swipePath.isEmpty())
       {
-        // Draw glow first
-        canvas.drawPath(_swipePath, _glowPaint);
-        // Draw main trail
-        canvas.drawPath(_swipePath, _trailPaint);
+        canvas.drawPath(_swipePath, _swipePaint);
+      }
+      
+      // Draw overlay path (displayed after swipe completion)
+      if (_overlayPath != null)
+      {
+        canvas.drawPath(_overlayPath, _overlayPaint);
       }
     }
     
-    private boolean onTouch(View v, MotionEvent event)
+    @Override
+    public boolean onTouchEvent(MotionEvent event)
     {
       float x = event.getX();
       float y = event.getY();
@@ -589,187 +701,65 @@ public class SwipeCalibrationActivity extends Activity
       switch (event.getAction())
       {
         case MotionEvent.ACTION_DOWN:
-          startSwipe(x, y);
+          _swiping = true;
+          _swipeStartTime = System.currentTimeMillis();
+          _swipePath.reset();
+          _swipePath.moveTo(x, y);
+          _swipePoints.clear();
+          _swipePoints.add(new PointF(x, y));
+          _currentSwipeTimestamps.clear();
+          _currentSwipeTimestamps.add(System.currentTimeMillis());
+          invalidate();
           return true;
           
         case MotionEvent.ACTION_MOVE:
           if (_swiping)
           {
-            continueSwipe(x, y);
+            _swipePath.lineTo(x, y);
+            _swipePoints.add(new PointF(x, y));
+            _currentSwipeTimestamps.add(System.currentTimeMillis());
+            invalidate();
           }
           return true;
           
         case MotionEvent.ACTION_UP:
           if (_swiping)
           {
-            endSwipe();
+            _swiping = false;
+            if (_swipePoints.size() > 5) // Minimum points for valid swipe
+            {
+              recordSwipe(new ArrayList<>(_swipePoints));
+            }
+            _currentSwipeTimestamps.clear();
           }
           return true;
       }
       
-      return false;
+      return super.onTouchEvent(event);
     }
     
-    private void startSwipe(float x, float y)
+    public void reset()
     {
-      _swiping = true;
-      _swipeStartTime = System.currentTimeMillis();
-      
-      _swipePoints.clear();
-      _swipeTimestamps.clear();
       _swipePath.reset();
-      
-      _swipePoints.add(new PointF(x, y));
-      _swipeTimestamps.add(_swipeStartTime);
-      _swipePath.moveTo(x, y);
-      
-      // Highlight key with glow effect
-      highlightKeyAt(x, y, true);
-      
+      _swipePoints.clear();
+      _currentSwipeTimestamps.clear();
+      _overlayPath = null;
       invalidate();
     }
     
-    private void continueSwipe(float x, float y)
+    public void setSwipeOverlay(Path path)
     {
-      _swipePoints.add(new PointF(x, y));
-      _swipeTimestamps.add(System.currentTimeMillis());
-      _swipePath.lineTo(x, y);
-      
-      // Highlight current key
-      highlightKeyAt(x, y, false);
-      
+      _overlayPath = path;
       invalidate();
     }
     
-    private void endSwipe()
+    public void clearOverlay()
     {
-      _swiping = false;
-      
-      if (_swipePoints.size() > 5)
-      {
-        processSwipe();
-      }
-      
-      // Clear highlights and trail after delay
-      new Handler().postDelayed(() -> {
-        clearHighlights();
-        _swipePath.reset();
-        invalidate();
-      }, 500);
+      _overlayPath = null;
+      invalidate();
     }
     
-    private void processSwipe()
-    {
-      Log.d(TAG, String.format("Processing neural swipe: %d points", _swipePoints.size()));
-      
-      // Create SwipeInput matching web demo format
-      String keySequence = extractKeySequence();
-      SwipeInput swipeInput = new SwipeInput(_swipePoints, _swipeTimestamps, new ArrayList<>());
-      
-      // Record ML data
-      recordMLData(swipeInput);
-      
-      // Run neural prediction with timing
-      long startTime = System.nanoTime();
-      
-      try
-      {
-        PredictionResult result = _neuralEngine.predict(swipeInput);
-        long endTime = System.nanoTime();
-        
-        _predictionTimes.add(endTime - startTime);
-        _totalPredictions++;
-        
-        // Check if prediction is correct
-        boolean correct = false;
-        for (int i = 0; i < result.words.size(); i++)
-        {
-          if (result.words.get(i).equals(_currentWord))
-          {
-            correct = true;
-            _correctPredictions++;
-            Log.d(TAG, String.format("✅ Correct prediction at rank %d: %s", i + 1, _currentWord));
-            break;
-          }
-        }
-        
-        if (!correct)
-        {
-          Log.d(TAG, String.format("❌ Incorrect prediction. Expected: %s, Got: %s", 
-            _currentWord, result.words.isEmpty() ? "none" : result.words.get(0)));
-        }
-        
-        updateBenchmarkDisplay();
-      }
-      catch (Exception e)
-      {
-        Log.e(TAG, "Neural prediction failed", e);
-        Toast.makeText(getContext(), "Neural prediction error: " + e.getMessage(), 
-          Toast.LENGTH_SHORT).show();
-      }
-      
-      // Auto-advance
-      new Handler().postDelayed(() -> nextWord(), 1000);
-    }
-    
-    private String extractKeySequence()
-    {
-      StringBuilder keySeq = new StringBuilder();
-      for (PointF point : _swipePoints)
-      {
-        String key = getKeyAt(point.x, point.y);
-        if (key != null && key.length() == 1)
-        {
-          keySeq.append(key);
-        }
-      }
-      return keySeq.toString();
-    }
-    
-    private void recordMLData(SwipeInput swipeInput)
-    {
-      SwipeMLData mlData = new SwipeMLData(_currentWord, "neural_calibration",
-        _screenWidth, _screenHeight, _keyboardHeight);
-      
-      // Add trace points with timestamps
-      for (int i = 0; i < _swipePoints.size(); i++)
-      {
-        PointF p = _swipePoints.get(i);
-        long timestamp = i < _swipeTimestamps.size() ? _swipeTimestamps.get(i) : System.currentTimeMillis();
-        mlData.addRawPoint(p.x, p.y, timestamp);
-      }
-      
-      // Add registered keys
-      String keySequence = extractKeySequence();
-      for (char c : keySequence.toCharArray())
-      {
-        mlData.addRegisteredKey(String.valueOf(c));
-      }
-      
-      _mlDataStore.storeSwipeData(mlData);
-      Log.d(TAG, "Stored neural ML data for: " + _currentWord);
-    }
-    
-    private void highlightKeyAt(float x, float y, boolean isStart)
-    {
-      String key = getKeyAt(x, y);
-      if (key != null && _keys.containsKey(key))
-      {
-        KeyButton button = _keys.get(key);
-        button.setHighlighted(true, isStart);
-        invalidate();
-      }
-    }
-    
-    private void clearHighlights()
-    {
-      for (KeyButton button : _keys.values())
-      {
-        button.setHighlighted(false, false);
-      }
-    }
-    
-    private String getKeyAt(float x, float y)
+    public String getKeyAt(float x, float y)
     {
       for (Map.Entry<String, KeyButton> entry : _keys.entrySet())
       {
@@ -780,17 +770,125 @@ public class SwipeCalibrationActivity extends Activity
       }
       return null;
     }
+    
+    public Map<String, KeyButton> getKeyPositions()
+    {
+      return new HashMap<>(_keys);
+    }
+    
+    public void displaySwipeTrace(List<PointF> points)
+    {
+      if (points == null || points.isEmpty()) return;
+      
+      _overlayPath = new Path();
+      if (!points.isEmpty()) {
+        _overlayPath.moveTo(points.get(0).x, points.get(0).y);
+      }
+      
+      for (int i = 1; i < points.size(); i++)
+      {
+        _overlayPath.lineTo(points.get(i).x, points.get(i).y);
+      }
+      
+      invalidate();
+    }
+    
+    public void clearSwipeOverlay()
+    {
+      _overlayPath = null;
+      invalidate();
+    }
+  }
+  
+  // Add recordSwipe method needed by keyboard view
+  private void recordSwipe(List<PointF> points)
+  {
+    if (points.isEmpty()) return;
+    
+    long duration = System.currentTimeMillis() - _swipeStartTime;
+    
+    // Create SwipeInput for neural prediction
+    String keySequence = "";
+    for (PointF p : points)
+    {
+      String keyChar = _keyboardView.getKeyAt(p.x, p.y);
+      if (keyChar != null && keyChar.length() == 1)
+      {
+        keySequence += keyChar;
+      }
+    }
+    
+    SwipeInput swipeInput = new SwipeInput(points, _currentSwipeTimestamps, new ArrayList<>());
+    
+    // Record ML data
+    SwipeMLData mlData = new SwipeMLData(_currentWord, "neural_calibration",
+                                         _screenWidth, _screenHeight, _keyboardHeight);
+    
+    // Add trace points with actual timestamps
+    for (int i = 0; i < points.size() && i < _currentSwipeTimestamps.size(); i++)
+    {
+      PointF p = points.get(i);
+      long timestamp = _currentSwipeTimestamps.get(i);
+      mlData.addRawPoint(p.x, p.y, timestamp);
+      
+      // Add registered key
+      String key = _keyboardView.getKeyAt(p.x, p.y);
+      if (key != null)
+      {
+        mlData.addRegisteredKey(key);
+      }
+    }
+    
+    _mlDataStore.storeSwipeData(mlData);
+    
+    // Run neural prediction
+    try
+    {
+      long startTime = System.nanoTime();
+      PredictionResult result = _neuralEngine.predict(swipeInput);
+      long endTime = System.nanoTime();
+      
+      _predictionTimes.add(endTime - startTime);
+      _totalPredictions++;
+      
+      // Check if prediction is correct
+      boolean correct = false;
+      for (int i = 0; i < result.words.size(); i++)
+      {
+        if (result.words.get(i).equals(_currentWord))
+        {
+          correct = true;
+          _correctPredictions++;
+          Log.d(TAG, String.format("✅ Neural prediction correct at rank %d: %s", i + 1, _currentWord));
+          break;
+        }
+      }
+      
+      if (!correct)
+      {
+        Log.d(TAG, String.format("❌ Neural prediction incorrect. Expected: %s, Got: %s", 
+          _currentWord, result.words.isEmpty() ? "none" : result.words.get(0)));
+      }
+      
+      updateBenchmarkDisplay();
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Neural prediction failed", e);
+      Toast.makeText(this, "Neural prediction error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    }
+    
+    // Auto-advance after delay
+    new Handler().postDelayed(() -> nextWord(), 1500);
   }
   
   /**
-   * Key button with neon styling matching web demo
+   * Key button with proper styling and touch detection
    */
-  private static class KeyButton
+  static class KeyButton
   {
     String label;
     float x, y, width, height;
-    boolean highlighted = false;
-    boolean isStartKey = false;
     
     KeyButton(String label, float x, float y, float width, float height)
     {
@@ -801,38 +899,47 @@ public class SwipeCalibrationActivity extends Activity
       this.height = height;
     }
     
-    void setHighlighted(boolean highlighted, boolean isStart)
+    void draw(Canvas canvas, Paint keyPaint, Paint borderPaint, Paint textPaint)
     {
-      this.highlighted = highlighted;
-      this.isStartKey = isStart;
-    }
-    
-    void draw(Canvas canvas, Paint keyPaint, Paint textPaint)
-    {
-      Paint activePaint = new Paint(keyPaint);
+      // Draw key background with rounded corners
+      android.graphics.RectF rect = new android.graphics.RectF(x, y, x + width, y + height);
+      float cornerRadius = Math.min(width, height) * 0.15f; // 15% of smallest dimension
+      canvas.drawRoundRect(rect, cornerRadius, cornerRadius, keyPaint);
       
-      if (highlighted)
+      // Draw border
+      canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint);
+      
+      // Draw text centered properly (accounting for text metrics)
+      String displayLabel = label;
+      
+      // Handle special key labels
+      if (label.equals("space"))
       {
-        if (isStartKey)
-        {
-          // Start key gets special neon purple glow
-          activePaint.setColor(0xFFb300ff);
-          activePaint.setShadowLayer(20, 0, 0, 0xFFb300ff);
-        }
-        else
-        {
-          // Regular highlight with neon blue
-          activePaint.setColor(0xFF00d4ff);
-          activePaint.setShadowLayer(15, 0, 0, 0xFF00d4ff);
-        }
+        displayLabel = " "; // Space bar typically has no label
+      }
+      else if (label.equals("shift"))
+      {
+        displayLabel = "⇧"; // Shift arrow symbol
+      }
+      else if (label.equals("backspace"))
+      {
+        displayLabel = "⌫"; // Backspace symbol
+      }
+      else if (label.equals("enter"))
+      {
+        displayLabel = "↵"; // Enter/return symbol
+      }
+      else if (label.equals("?123"))
+      {
+        displayLabel = "?123"; // Keep as is
+      }
+      else
+      {
+        displayLabel = label.toUpperCase(); // Regular keys in uppercase
       }
       
-      // Draw key background
-      canvas.drawRoundRect(x, y, x + width, y + height, 8, 8, activePaint);
-      
-      // Draw text
-      float textY = y + height/2 - (textPaint.descent() + textPaint.ascent()) / 2;
-      canvas.drawText(label.toUpperCase(), x + width/2, textY, textPaint);
+      float textY = y + (height - textPaint.ascent() - textPaint.descent()) / 2f;
+      canvas.drawText(displayLabel, x + width / 2, textY, textPaint);
     }
     
     boolean contains(float px, float py)
