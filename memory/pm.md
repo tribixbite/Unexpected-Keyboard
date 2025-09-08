@@ -137,19 +137,21 @@
 
 ---
 
-## OUTSTANDING LEGACY TASKS (Historical Reference)
+## NEXT STEPS FOR NEURAL SYSTEM VALIDATION
 
-### 1. Update CGR Settings Pages to New Algorithm Weights ✅ COMPLETED
-- ✅ Replaced CGR parameters (σₑ, β, λ, κ) with KeyboardSwipeRecognizer weights
-- ✅ proximityWeight, missingKeyPenalty, extraKeyPenalty, orderPenalty, startPointWeight  
-- ✅ Updated settings.xml for new weight system
-- ✅ Connected settings to new algorithm parameters
+### 📱 DEVICE TESTING CHECKLIST:
+1. **Install APK**: Deploy 40MB neural APK to test device
+2. **Enable Neural**: Settings → Swipe Typing → Neural Prediction Settings → Enable
+3. **Test Swipe Typing**: Swipe on main keyboard, check logs for neural predictions
+4. **Calibration Test**: Open calibration page, verify keyboard displays and neural playground works
+5. **Model Loading**: Check logs for ONNX model loading success/failure
+6. **Performance Test**: Measure prediction latency and accuracy
 
-### 2. Fix Force Close Bug in Calibration ✅ COMPLETED
-- ✅ Fixed app crashes when opening calibration page
-- ✅ Removed references to deleted UI components (_sessionAccuracyText, _overallAccuracyText, _wpmText, _confusionPatternsText, _accuracyProgressBar, _scoreText, _scoreLayout)
-- ✅ Replaced UI calls with logging for data tracking
-- ✅ Build successful, calibration page should now open properly
+### 🔧 DEBUGGING TOOLS:
+- **ADB Logs**: `adb logcat | grep -E "Neural|ONNX|Swipe"` 
+- **Calibration Page**: Neural playground for parameter testing
+- **Settings**: Neural prediction controls in typing preferences
+- **Error Messages**: Clear RuntimeException when ONNX fails
 
 ### 3. Neural Algorithm Implementation 🚧 IN PROGRESS
 - ✅ **ONNX Runtime Integration**: Neural prediction pipeline implemented
@@ -158,19 +160,47 @@
 - ✅ **Neural Calibration**: Working calibration page with playground
 - 🚧 **NEEDS TESTING**: Validate ONNX models load and predictions work on device
 
-### 4. Settings Integration ✅ COMPLETED
-- ✅ New algorithm reading user-configured weights from settings
-- ✅ Settings changes affecting new recognition system through config integration
-- ✅ Parameter loading/saving system updated with DirectBootAwarePreferences
+### 4. Neural Settings Integration ✅ COMPLETED
+- ✅ Neural prediction parameters: beam_width, max_length, confidence_threshold
+- ✅ Neural settings UI replacing legacy weight controls
+- ✅ Neural playground with real-time parameter adjustment
+- ✅ Config.java integration with neural parameter loading
 
-## Project Overview
-Unexpected Keyboard is a lightweight, privacy-conscious virtual keyboard for Android with advanced swipe typing capabilities powered by machine learning.
+## 📊 CURRENT NEURAL SYSTEM STATUS
+
+### ✅ IMPLEMENTED COMPONENTS:
+- **NeuralSwipeTypingEngine**: Main prediction orchestrator
+- **OnnxSwipePredictor**: ONNX Runtime transformer interface
+- **SwipeTrajectoryProcessor**: Feature extraction [x,y,vx,vy,ax,ay]
+- **SwipeTokenizer**: Character-to-index mapping (41 tokens)
+- **Neural Calibration**: Clean UI with keyboard display and playground
+- **Neural Settings**: Beam search controls in preferences
+
+### ✅ TECHNICAL INTEGRATION:
+- **Keyboard2.java**: Calls neural engine for all swipe predictions
+- **AsyncPredictionHandler**: Updated for neural Integer score interface
+- **Config System**: Neural parameters loaded from preferences
+- **ONNX Models**: 12.5MB models deployed to assets/models/
+- **Memory Management**: Proper tensor cleanup with finally blocks
+
+### 🚧 TESTING REQUIRED:
+1. **Model Loading**: Validate ONNX models load correctly on device
+2. **Neural Predictions**: Test actual swipe typing uses neural system
+3. **Calibration Testing**: Verify calibration page neural backend works
+4. **Performance**: Measure neural prediction latency vs legacy system
+5. **Accuracy**: Compare neural prediction quality
+
+---
 
 ## Directory Structure
 ```
 Unexpected-Keyboard/
 ├── assets/
-│   └── dictionaries/       # Word frequency dictionaries
+│   ├── dictionaries/       # Word frequency dictionaries
+│   └── models/            # ONNX neural models
+│       ├── swipe_encoder.onnx    # Transformer encoder (5.3MB)
+│       ├── swipe_decoder.onnx    # Transformer decoder (7.2MB)
+│       └── tokenizer.json        # Character tokenization config
 ├── build/                  # Build outputs (gitignored)
 │   └── outputs/
 │       └── apk/           # Generated APKs
@@ -187,8 +217,13 @@ Unexpected-Keyboard/
 ├── srcs/                  # Source code
 │   ├── compose/          # Compose key sequences
 │   ├── juloo.keyboard2/  # Main Java package
-│   │   ├── ml/          # Machine learning components
-│   │   └── prefs/       # Preference handlers
+│   │   ├── ml/          # ML data collection (SwipeMLData, SwipeMLDataStore)
+│   │   ├── prefs/       # Preference handlers
+│   │   ├── NeuralSwipeTypingEngine.java    # Main neural prediction engine
+│   │   ├── OnnxSwipePredictor.java         # ONNX transformer predictor
+│   │   ├── SwipeTokenizer.java             # Character tokenization
+│   │   ├── SwipeTrajectoryProcessor.java   # Feature extraction
+│   │   └── SwipeCalibrationActivity.java   # Neural calibration UI
 │   └── layouts/          # Keyboard layout definitions
 ├── test/                  # Unit tests
 └── tools/                 # Build tools and scripts
