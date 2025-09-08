@@ -350,10 +350,10 @@
                     
                     <!-- Row 4: Special keys -->
                     <div class="flex justify-center gap-1 md:gap-1.5 px-1">
-                        <button class="w-16 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="toggleNumberMode()">123</button>
-                        <button class="w-12 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="toggleEmojiMode()">😊</button>
-                        <button class="flex-1 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="handleSpace()">space</button>
-                        <button class="w-20 h-12 bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 hover:from-neon-blue/30 hover:to-neon-purple/30 rounded-lg text-white text-sm transition-all border border-neon-blue/30" onclick="handleReturn()">return</button>
+                        <button class="w-16 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="toggleNumberMode()" data-special="number-toggle">123</button>
+                        <button class="w-12 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="toggleEmojiMode()" data-special="emoji-toggle">😊</button>
+                        <button class="flex-1 h-12 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition-all border border-white/5" onclick="handleSpace()" data-special="space">space</button>
+                        <button class="w-20 h-12 bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 hover:from-neon-blue/30 hover:to-neon-purple/30 rounded-lg text-white text-sm transition-all border border-neon-blue/30" onclick="handleReturn()" data-special="return">return</button>
                     </div>
                 </div>
             </div>
@@ -773,7 +773,7 @@
         }
         
         function getKeyAtPosition(clientX, clientY) {
-            const keys = document.querySelectorAll('.key[data-key]');
+            const keys = document.querySelectorAll('.key[data-key]:not([data-special])');
             for (let key of keys) {
                 const rect = key.getBoundingClientRect();
                 if (clientX >= rect.left && clientX <= rect.right &&
@@ -2643,6 +2643,52 @@
             console.log('=== Mobile Tap Functionality Test Complete ===');
         }
         
+        // Test 4th row button isolation
+        function testFourthRowButtonIsolation() {
+            console.log('=== Testing 4th Row Button Isolation ===');
+            
+            clearInput();
+            
+            // Test 1: Verify special buttons are excluded from gesture detection
+            console.log('\nTest 1: Special button exclusion test');
+            const specialButtons = document.querySelectorAll('[data-special]');
+            console.log(`Found ${specialButtons.length} special buttons:`, 
+                Array.from(specialButtons).map(b => b.dataset.special));
+            
+            // Test if getKeyAtPosition ignores special buttons
+            const numberButton = document.querySelector('[data-special="number-toggle"]');
+            if (numberButton) {
+                const rect = numberButton.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const detectedKey = getKeyAtPosition(centerX, centerY);
+                console.log(`Number button position test: ${detectedKey ? 'DETECTED AS KEY ❌' : 'IGNORED ✅'}`);
+            }
+            
+            // Test 2: Verify functions work
+            console.log('\nTest 2: Testing special button functions');
+            
+            console.log('Before number toggle - Input:', document.getElementById('inputText').textContent);
+            toggleNumberMode();
+            console.log('After number toggle - Mode:', isNumberMode ? 'NUMBERS ✓' : 'LETTERS');
+            
+            console.log('Before space - Input:', document.getElementById('inputText').textContent);
+            handleSpace();
+            console.log('After space - Input:', JSON.stringify(document.getElementById('inputText').textContent));
+            
+            console.log('Before return - Input length:', document.getElementById('inputText').textContent.length);
+            handleReturn();
+            console.log('After return - Input contains newline:', document.getElementById('inputText').textContent.includes('\n') ? 'YES ✓' : 'NO ❌');
+            
+            // Test 3: Reset state
+            console.log('\nTest 3: Resetting to normal state');
+            if (isNumberMode) toggleNumberMode();
+            if (isEmojiMode) toggleEmojiMode();
+            clearInput();
+            
+            console.log('=== 4th Row Button Isolation Test Complete ===');
+        }
+        
         // Test 4th row functionality
         function testFourthRowFunctionality() {
             console.log('=== Testing 4th Row Functionality ===');
@@ -2701,6 +2747,7 @@
         window.testSelectionFunctionality = testSelectionFunctionality;
         window.testGestureDetection = testGestureDetection;
         window.testMobileTapFunctionality = testMobileTapFunctionality;
+        window.testFourthRowButtonIsolation = testFourthRowButtonIsolation;
         window.testFourthRowFunctionality = testFourthRowFunctionality;
         
         // 4th Row Button Functions
@@ -2830,8 +2877,33 @@
             });
         }
         
+        // Setup special button event handling
+        function setupSpecialButtonHandlers() {
+            // Add event handlers to special buttons to prevent gesture interference
+            document.querySelectorAll('[data-special]').forEach(button => {
+                // Prevent all gesture events on special buttons
+                ['touchstart', 'touchmove', 'touchend', 'touchcancel', 'mousedown', 'mousemove', 'mouseup'].forEach(eventType => {
+                    button.addEventListener(eventType, function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }, { passive: false });
+                });
+                
+                // Ensure click events work normally
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // The onclick attribute will still fire
+                }, { passive: false });
+            });
+            
+            console.log('✓ Special button handlers configured');
+        }
+        
         // Initialize on load
-        window.addEventListener('load', init);
+        window.addEventListener('load', () => {
+            init();
+            setupSpecialButtonHandlers();
+        });
     </script>
 </body>
 </html>
