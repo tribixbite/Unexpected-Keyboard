@@ -85,6 +85,12 @@ public final class Config
   public boolean swipe_show_debug_scores;
   public boolean word_prediction_enabled;
   public int suggestion_bar_opacity; // 0 - 100
+  
+  // Neural swipe prediction configuration
+  public boolean neural_prediction_enabled; 
+  public int neural_beam_width; // 1 - 16
+  public int neural_max_length; // 10 - 50  
+  public float neural_confidence_threshold; // 0.0 - 1.0
 
   // Dynamically set
   public boolean shouldOfferVoiceTyping;
@@ -219,6 +225,12 @@ public final class Config
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
     suggestion_bar_opacity = safeGetInt(_prefs, "suggestion_bar_opacity", 90);
+    
+    // Neural swipe prediction configuration
+    neural_prediction_enabled = _prefs.getBoolean("neural_prediction_enabled", true);
+    neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 8);
+    neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);
+    neural_confidence_threshold = _prefs.getFloat("neural_confidence_threshold", 0.1f);
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;
