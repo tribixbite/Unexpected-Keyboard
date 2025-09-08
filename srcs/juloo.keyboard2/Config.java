@@ -72,12 +72,11 @@ public final class Config
   public boolean clipboard_history_enabled;
   public int clipboard_history_limit;
   public boolean swipe_typing_enabled;
+  // Legacy swipe parameters (kept for compatibility with existing WordPredictor)
   public float swipe_confidence_shape_weight;
   public float swipe_confidence_location_weight;
   public float swipe_confidence_frequency_weight;
   public float swipe_confidence_velocity_weight;
-  public float swipe_velocity_std;
-  public int swipe_turning_point_threshold;
   public float swipe_first_letter_weight;
   public float swipe_last_letter_weight;
   public float swipe_endpoint_bonus_weight;
@@ -211,13 +210,11 @@ public final class Config
       android.util.Log.w("Config", "Fixed clipboard_history_limit type mismatch: " + stringValue);
     }
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
-    // Add safety for other int preferences that might have string/int type conflicts
+    // Legacy swipe parameters (kept for compatibility)
     swipe_confidence_shape_weight = safeGetInt(_prefs, "swipe_confidence_shape_weight", 90) / 100.f;
     swipe_confidence_location_weight = safeGetInt(_prefs, "swipe_confidence_location_weight", 130) / 100.f;
     swipe_confidence_frequency_weight = safeGetInt(_prefs, "swipe_confidence_frequency_weight", 80) / 100.f;
     swipe_confidence_velocity_weight = safeGetInt(_prefs, "swipe_confidence_velocity_weight", 60) / 100.f;
-    swipe_velocity_std = safeGetInt(_prefs, "swipe_velocity_std", 100) / 100.f;
-    swipe_turning_point_threshold = safeGetInt(_prefs, "swipe_turning_point_threshold", 45);
     swipe_first_letter_weight = safeGetInt(_prefs, "swipe_first_letter_weight", 150) / 100.f;
     swipe_last_letter_weight = safeGetInt(_prefs, "swipe_last_letter_weight", 150) / 100.f;
     swipe_endpoint_bonus_weight = safeGetInt(_prefs, "swipe_endpoint_bonus_weight", 200) / 100.f;

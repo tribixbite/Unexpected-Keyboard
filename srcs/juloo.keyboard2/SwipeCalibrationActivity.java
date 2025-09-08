@@ -203,7 +203,12 @@ public class SwipeCalibrationActivity extends Activity
     
     mainLayout.addView(buttonLayout);
     
-    setContentView(mainLayout);
+    // Create container for keyboard at bottom
+    LinearLayout container = new LinearLayout(this);
+    container.setOrientation(LinearLayout.VERTICAL);
+    container.addView(mainLayout);
+    
+    setContentView(container);
   }
   
   private Button createNeonButton(String text, int color)
@@ -223,12 +228,16 @@ public class SwipeCalibrationActivity extends Activity
   private void setupKeyboard()
   {
     _keyboardView = new NeuralKeyboardView(this);
-    _keyboardView.setLayoutParams(new ViewGroup.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, _keyboardHeight));
     
-    // Add keyboard at bottom
-    ViewGroup rootLayout = (ViewGroup) findViewById(android.R.id.content).getParent();
-    rootLayout.addView(_keyboardView);
+    // Create keyboard layout params to position at bottom
+    LinearLayout.LayoutParams keyboardParams = new LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, _keyboardHeight);
+    keyboardParams.gravity = android.view.Gravity.BOTTOM;
+    _keyboardView.setLayoutParams(keyboardParams);
+    
+    // Add keyboard to container
+    ViewGroup container = (ViewGroup) findViewById(android.R.id.content);
+    ((LinearLayout) container.getChildAt(0)).addView(_keyboardView);
     
     // Set keyboard dimensions for neural engine
     _neuralEngine.setKeyboardDimensions(_screenWidth, _keyboardHeight);
