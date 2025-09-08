@@ -17,24 +17,19 @@ public class NeuralSwipeTypingEngine
   private Context _context;
   private Config _config;
   private OnnxSwipePredictor _neuralPredictor;
-  private WordPredictor _fallbackPredictor;
-  private SwipeDetector _swipeDetector;
   
   // State tracking
-  private boolean _useNeuralPrediction = true;
   private boolean _initialized = false;
   
-  public NeuralSwipeTypingEngine(Context context, WordPredictor fallbackPredictor, Config config)
+  public NeuralSwipeTypingEngine(Context context, Config config)
   {
     _context = context;
-    _fallbackPredictor = fallbackPredictor;
     _config = config;
-    _swipeDetector = new SwipeDetector();
     
     // Initialize neural predictor
     _neuralPredictor = new OnnxSwipePredictor(context);
     
-    Log.d(TAG, "NeuralSwipeTypingEngine created");
+    Log.d(TAG, "NeuralSwipeTypingEngine created - pure neural, no fallbacks");
   }
   
   /**
@@ -49,31 +44,26 @@ public class NeuralSwipeTypingEngine
     
     try
     {
-      Log.d(TAG, "Initializing neural swipe engine...");
+      Log.d(TAG, "Initializing pure neural swipe engine...");
       
-      // Initialize neural predictor
+      // Initialize neural predictor - MUST succeed or throw error
       boolean neuralReady = _neuralPredictor.initialize();
       
-      // Configure neural prediction based on availability
-      _useNeuralPrediction = neuralReady && isNeuralEnabled();
-      
-      // Ensure fallback predictor is configured
-      if (_fallbackPredictor != null)
+      if (!neuralReady)
       {
-        _fallbackPredictor.setConfig(_config);
+        throw new RuntimeException("Failed to initialize ONNX neural models - no fallback available");
       }
       
       _initialized = true;
       
-      Log.d(TAG, String.format("Neural engine initialized: neural=%s, fallback=%s", 
-        _useNeuralPrediction, _fallbackPredictor != null));
+      Log.d(TAG, "Neural engine initialized successfully - pure neural mode");
       
       return true;
     }
     catch (Exception e)
     {
       Log.e(TAG, "Failed to initialize neural engine", e);
-      _useNeuralPrediction = false;
+      // Pure neural - no fallback variables needed
       _initialized = true;
       return false;
     }
@@ -89,57 +79,32 @@ public class NeuralSwipeTypingEngine
       initialize();
     }
     
-    Log.d(TAG, "=== NEURAL PREDICTION START ===");
+    Log.d(TAG, "=== PURE NEURAL PREDICTION START ===");
     Log.d(TAG, String.format(
       "Input: keySeq=%s, pathLen=%.1f, duration=%.2fs", 
       input.keySequence, input.pathLength, input.duration));
     
-    // Classify input type
-    SwipeDetector.SwipeClassification classification = _swipeDetector.classifyInput(input);
+    Log.d(TAG, "Using PURE NEURAL prediction - no classification needed");
     
-    Log.d(TAG, String.format(
-      "Classification: isSwipe=%s, confidence=%.2f, neural=%s",
-      classification.isSwipe, classification.confidence, _useNeuralPrediction));
-    
-    // Route prediction based on input type and model availability
-    if (!classification.isSwipe)
+    try
     {
-      // Regular typing - use fallback predictor
-      Log.d(TAG, "Using fallback prediction (not a swipe)");
-      return useFallbackPrediction(input);
-    }
-    else if (_useNeuralPrediction)
-    {
-      // Swipe input with neural prediction available
-      Log.d(TAG, "Using NEURAL prediction for swipe");
+      PredictionResult result = _neuralPredictor.predict(input);
       
-      try
+      if (result != null)
       {
-        PredictionResult result = _neuralPredictor.predict(input);
-        
-        if (result != null && !result.words.isEmpty())
-        {
-          Log.d(TAG, String.format("Neural prediction successful: %d candidates", 
-            result.words.size()));
-          return result;
-        }
-        else
-        {
-          Log.w(TAG, "Neural prediction returned empty, falling back");
-          return useFallbackPrediction(input);
-        }
+        Log.d(TAG, String.format("Neural prediction successful: %d candidates", 
+          result.words.size()));
+        return result;
       }
-      catch (Exception e)
+      else
       {
-        Log.e(TAG, "Neural prediction failed, using fallback", e);
-        return useFallbackPrediction(input);
+        throw new RuntimeException("Neural prediction returned null result");
       }
     }
-    else
+    catch (Exception e)
     {
-      // Swipe input but neural not available - use fallback
-      Log.d(TAG, "Using fallback prediction (neural not available)");
-      return useFallbackPrediction(input);
+      Log.e(TAG, "Neural prediction failed - no fallback available", e);
+      throw new RuntimeException("Neural prediction failed: " + e.getMessage());
     }
   }
   
@@ -181,52 +146,7 @@ public class NeuralSwipeTypingEngine
       _neuralPredictor.setConfig(config);
     }
     
-    // Update fallback predictor configuration
-    if (_fallbackPredictor != null)
-    {
-      _fallbackPredictor.setConfig(config);
-    }
-    
-    // Update neural prediction preference
-    _useNeuralPrediction = _neuralPredictor.isAvailable() && isNeuralEnabled();
-    
-    Log.d(TAG, String.format("Config updated: neural_enabled=%s, neural_available=%s",
-      isNeuralEnabled(), _neuralPredictor.isAvailable()));
-  }
-  
-  /**
-   * Check if neural prediction is enabled in config
-   */
-  private boolean isNeuralEnabled()
-  {
-    return _config == null || _config.neural_prediction_enabled;
-  }
-  
-  /**
-   * Use fallback prediction system
-   */
-  private PredictionResult useFallbackPrediction(SwipeInput input)
-  {
-    if (_fallbackPredictor != null)
-    {
-      // For swipe input, we need to convert to key sequence
-      // TODO: Implement fallback prediction with proper interface
-      return createEmptyResult();
-    }
-    else
-    {
-      return createEmptyResult();
-    }
-  }
-  
-  /**
-   * Create empty prediction result
-   */
-  private PredictionResult createEmptyResult()
-  {
-    return new PredictionResult(
-      new java.util.ArrayList<String>(), 
-      new java.util.ArrayList<Integer>());
+    Log.d(TAG, "Neural config updated");
   }
   
   /**
@@ -242,14 +162,7 @@ public class NeuralSwipeTypingEngine
    */
   public String getCurrentMode()
   {
-    if (_useNeuralPrediction && isNeuralAvailable())
-    {
-      return "neural";
-    }
-    else
-    {
-      return "fallback";
-    }
+    return isNeuralAvailable() ? "neural" : "error";
   }
   
   /**

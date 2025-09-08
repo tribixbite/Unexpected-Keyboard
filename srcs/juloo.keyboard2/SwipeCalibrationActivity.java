@@ -3,16 +3,11 @@ package juloo.keyboard2;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import juloo.keyboard2.DirectBootAwarePreferences;
-import juloo.keyboard2.FoldStateTracker;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PathMeasure;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,1478 +16,472 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.text.InputType;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import juloo.keyboard2.ml.SwipeMLData;
 import juloo.keyboard2.ml.SwipeMLDataStore;
-import juloo.keyboard2.ml.SwipeMLTrainer;
 
 /**
- * Complete swipe calibration implementation with keyboard visualization
+ * Pure neural swipe calibration with ONNX transformer prediction
+ * Matches web demo trace collection and animation styling
  */
 public class SwipeCalibrationActivity extends Activity
 {
-  private static final String TAG = "SwipeCalibration";
-  private static final String PREF_KEY_CALIBRATION_DATA = "swipe_calibration_data";
-  private static final String LOG_FILE = "/data/data/com.termux/files/home/calibration_log.txt";
+  private static final String TAG = "NeuralCalibration";
   
   // Calibration settings
-  private static final int WORDS_PER_SESSION = 20;  // Changed: 20 unique words instead of 10×2
-  private static final int REPS_PER_WORD = 1;      // Changed: No repetitions
+  private static final int WORDS_PER_SESSION = 20;
   
-  // Test words for calibration - will be replaced by frequency-based selection
-  private static final List<String> FALLBACK_WORDS = Arrays.asList(
-    "the", "and", "you", "that", "this",
-    "hello", "world", "thanks", "keyboard", "android",
-    "swipe", "typing", "calibration", "test", "quick"
+  // Test words matching web demo frequency distribution
+  private static final List<String> CALIBRATION_WORDS = Arrays.asList(
+    "the", "and", "for", "are", "but", "not", "you", "all", "can", "had",
+    "her", "was", "one", "our", "out", "day", "get", "has", "him", "his",
+    "how", "its", "new", "now", "old", "see", "two", "who", "boy", "did"
   );
   
-  // Top frequent words from dictionary (loaded dynamically)
-  private List<String> _frequentWords = new ArrayList<>();
-  private Map<String, Integer> _wordFrequencies = new HashMap<>();
-  
-  // QWERTY layout with actual key positions - 4 rows including bottom row
+  // QWERTY layout
   private static final String[][] KEYBOARD_LAYOUT = {
     {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"},
     {"a", "s", "d", "f", "g", "h", "j", "k", "l"},
-    {"shift", "z", "x", "c", "v", "b", "n", "m", "backspace"},
-    {"?123", ",", "space", ".", "enter"}
+    {"z", "x", "c", "v", "b", "n", "m"}
   };
   
   // UI Components
   private TextView _instructionText;
   private TextView _currentWordText;
   private TextView _progressText;
+  private TextView _benchmarkText;
   private ProgressBar _progressBar;
-  private KeyboardView _keyboardView;
+  private NeuralKeyboardView _keyboardView;
   private Button _nextButton;
   private Button _skipButton;
-  private Button _saveButton;
-  // REMOVED: _deleteButton (Delete Samples button removed)
-  // REMOVED: _exportButton (Export All button removed)
-  private Button _trainButton;
-  // Score UI elements removed with metrics cleanup
+  private Button _exportButton;
+  private Button _benchmarkButton;
   
-  // Navigation UI components
-  private LinearLayout _navigationLayout;
-  private Button _prevSwipeButton;
-  private Button _nextSwipeButton;
-  private TextView _swipeNavText;
-  private Button _deleteSwipeButton;
-  private Button _browseSwipesButton;
-  
-  // Real-time accuracy metrics components (REMOVED - UI elements deleted)
-  // Data tracking continues but no UI display
+  // Neural prediction
+  private NeuralSwipeTypingEngine _neuralEngine;
+  private Config _config;
   
   // Calibration state
   private int _currentIndex = 0;
-  // private int _currentRep = 0;  // No longer used - we have 20 unique words instead
   private String _currentWord;
   private List<String> _sessionWords;
-  private Map<String, List<SwipePattern>> _calibrationData;
-  private BufferedWriter _logWriter;
-  private List<PointF> _currentSwipePoints;
-  private List<Long> _currentSwipeTimestamps;
-  private long _swipeStartTime;
   private SwipeMLDataStore _mlDataStore;
   private int _screenWidth;
   private int _screenHeight;
   private int _keyboardHeight;
-  private DTWPredictor _dtwPredictor;
   
-  // Accuracy metrics tracking
-  private int _sessionCorrectCount = 0;
-  private int _sessionTotalCount = 0;
-  private int _overallCorrectCount = 0;
-  private int _overallTotalCount = 0;
-  private List<Long> _swipeDurations = new ArrayList<>();
-  private Map<String, Integer> _confusionMatrix = new HashMap<>();
-  private long _sessionStartTime;
-  private Handler _uiHandler;
-  private Path _displayedSwipePath;
-  private boolean _showingSwipeOverlay;
-  private float _characterSize;
-  private float _labelTextSize;
-  private float _keyVerticalMargin;
-  private float _keyHorizontalMargin;
-  
-  // Swipe navigation state
-  private List<SwipeMLData> _allSwipes;
-  private int _currentSwipeIndex = -1;
-  private boolean _isBrowsingMode = false;
-  
-  // ML Training
-  private SwipeMLTrainer _mlTrainer;
-  
-  // Template comparison features
-  private WordGestureTemplateGenerator _templateGenerator;
-  private TextView _templateComparisonText;
-  private Button _copyComparisonButton;
-  private StringBuilder _comparisonData;
-  
-  // REMOVED: CGR analysis display (section removed entirely)
-  
-  // Shared algorithm instance for live parameter control
-  private KeyboardSwipeRecognizer _sharedRecognizer;
-  
-  // Playground parameter storage
-  private Map<String, Integer> _playgroundParams = new HashMap<>();
-  private List<PointF> _lastSwipePoints = new ArrayList<>(); // Store for recalculation
-  
-  // Weight variables (kept to prevent crashes, UI removed)
-  private float _dtwWeight = 0.4f;
-  private float _gaussianWeight = 0.3f;
-  private float _ngramWeight = 0.2f;
-  private float _frequencyWeight = 0.1f;
-  private TextView _dtwWeightText, _gaussianWeightText, _ngramWeightText, _frequencyWeightText;
-  private android.widget.SeekBar _dtwWeightSlider, _gaussianWeightSlider, _ngramWeightSlider, _frequencyWeightSlider;
+  // Performance tracking
+  private List<Long> _predictionTimes = new ArrayList<>();
+  private int _correctPredictions = 0;
+  private int _totalPredictions = 0;
   
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     
-    Log.d(TAG, "=== CALIBRATION ACTIVITY STARTED ===");
-    initializeLogging();
+    Log.d(TAG, "=== NEURAL CALIBRATION ACTIVITY STARTED ===");
     
     // Initialize ML data store
     _mlDataStore = SwipeMLDataStore.getInstance(this);
     
-    // Initialize DTW predictor for scoring
-    _dtwPredictor = new DTWPredictor(null);
-    SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-    _dtwPredictor.setWeightConfig(weightConfig);
-    // Note: Don't load calibration data here as DTW predictor needs keyboard dimensions first
+    // Initialize neural prediction engine
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+    Config.initGlobalConfig(prefs, getResources(), null, false);
+    _config = Config.globalConfig();
+    _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
     
-    // Initialize UI handler for delayed operations
-    _uiHandler = new Handler();
-    
-    // Load frequency dictionary
-    loadFrequencyDictionary();
+    try
+    {
+      _neuralEngine.initialize();
+      Log.d(TAG, "Neural engine initialized successfully");
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Failed to initialize neural engine", e);
+      showErrorDialog("Neural models failed to load. Ensure ONNX models are available in assets/models/");
+      return;
+    }
     
     // Get screen dimensions
     android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
     getWindowManager().getDefaultDisplay().getMetrics(metrics);
     _screenWidth = metrics.widthPixels;
     _screenHeight = metrics.heightPixels;
+    _keyboardHeight = (int)(_screenHeight * 0.4f); // 40% of screen
     
-    // Load user's keyboard configuration from proper device-protected preferences
-    // Use DirectBootAwarePreferences to match the main keyboard's storage location
-    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+    // Prepare session words
+    _sessionWords = new ArrayList<>(CALIBRATION_WORDS);
+    java.util.Collections.shuffle(_sessionWords);
+    _sessionWords = _sessionWords.subList(0, WORDS_PER_SESSION);
     
-    // Debug: Log all preference keys and values
-    Log.d(TAG, "=== DEBUG: Reading preferences ===");
-    Log.d(TAG, "Preference keys found: " + prefs.getAll().keySet());
-    Log.d(TAG, "All preferences: " + prefs.getAll());
-    
-    // Try to read keyboard_height in different ways
-    try {
-      int kh = prefs.getInt("keyboard_height", -1);
-      Log.d(TAG, "keyboard_height as int: " + kh);
-    } catch (Exception e) {
-      Log.d(TAG, "Failed to read keyboard_height as int: " + e.getMessage());
-      try {
-        String kh = prefs.getString("keyboard_height", "null");
-        Log.d(TAG, "keyboard_height as string: " + kh);
-      } catch (Exception e2) {
-        Log.d(TAG, "Failed to read keyboard_height as string: " + e2.getMessage());
-      }
-    }
-    
-    // Check for foldable device state
-    FoldStateTracker foldTracker = new FoldStateTracker(this);
-    boolean foldableUnfolded = foldTracker.isUnfolded();
-    Log.d(TAG, "Foldable device unfolded: " + foldableUnfolded);
-    
-    // Get keyboard height percentage from user settings
-    // Check for landscape mode
-    boolean isLandscape = getResources().getConfiguration().orientation == 
-                          android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-    Log.d(TAG, "Is landscape: " + isLandscape);
-    
-    int keyboardHeightPref;
-    if (isLandscape)
-    {
-      // Check for foldable unfolded state first, then regular landscape
-      String key = foldableUnfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape";
-      keyboardHeightPref = prefs.getInt(key, 50);
-      Log.d(TAG, "Reading landscape height from key '" + key + "': " + keyboardHeightPref);
-    }
-    else
-    {
-      // Check for foldable unfolded state first, then regular portrait
-      String key = foldableUnfolded ? "keyboard_height_unfolded" : "keyboard_height";
-      keyboardHeightPref = prefs.getInt(key, 35);
-      Log.d(TAG, "Reading portrait height from key '" + key + "': " + keyboardHeightPref);
-    }
-    
-    // Calculate keyboard height
-    float keyboardHeightPercent = keyboardHeightPref / 100.0f;
-    _keyboardHeight = (int)(_screenHeight * keyboardHeightPercent);
-    Log.d(TAG, "Calculated keyboard height: " + _keyboardHeight + " pixels (" + keyboardHeightPref + "% of " + _screenHeight + ")");
-    
-    // Load user's text and margin settings
-    _characterSize = prefs.getFloat("character_size", 1.15f);
-    _labelTextSize = 0.33f; // Default label text size
-    _keyVerticalMargin = prefs.getFloat("key_vertical_margin", 1.5f) / 100;
-    
-    _keyHorizontalMargin = prefs.getFloat("key_horizontal_margin", 2.0f) / 100;
-    
-    // Create main layout
-    android.widget.RelativeLayout mainLayout = new android.widget.RelativeLayout(this);
-    mainLayout.setBackgroundColor(Color.BLACK);
-    
-    // Create top content layout
-    LinearLayout topLayout = new LinearLayout(this);
-    topLayout.setOrientation(LinearLayout.VERTICAL);
-    topLayout.setPadding(40, 40, 40, 20);
-    android.widget.RelativeLayout.LayoutParams topParams = new android.widget.RelativeLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-    topParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
-    topLayout.setLayoutParams(topParams);
+    setupUI();
+    setupKeyboard();
+    showNextWord();
+  }
+  
+  private void setupUI()
+  {
+    // Main layout with web demo styling
+    LinearLayout mainLayout = new LinearLayout(this);
+    mainLayout.setOrientation(LinearLayout.VERTICAL);
+    mainLayout.setBackgroundColor(0xFF0a0a0f); // Dark background
+    mainLayout.setPadding(20, 20, 20, 20);
     
     // Title
     TextView title = new TextView(this);
-    title.setText("Swipe Calibration");
+    title.setText("🧠 Neural Swipe Calibration");
     title.setTextSize(24);
-    title.setTextColor(Color.WHITE);
+    title.setTextColor(0xFF00d4ff); // Neon blue
     title.setPadding(0, 0, 0, 20);
-    topLayout.addView(title);
+    mainLayout.addView(title);
     
     // Instructions
     _instructionText = new TextView(this);
-    _instructionText.setText("Swipe the word shown below - auto-advances on completion");
-    _instructionText.setTextColor(Color.GRAY);
+    _instructionText.setText("Swipe the word below to collect neural training data");
+    _instructionText.setTextColor(0xFFFFFFFF);
     _instructionText.setPadding(0, 0, 0, 10);
-    topLayout.addView(_instructionText);
+    mainLayout.addView(_instructionText);
     
     // Current word display
     _currentWordText = new TextView(this);
     _currentWordText.setTextSize(32);
-    _currentWordText.setTextColor(Color.CYAN);
+    _currentWordText.setTextColor(0xFFb300ff); // Neon purple
     _currentWordText.setPadding(0, 20, 0, 20);
-    topLayout.addView(_currentWordText);
+    mainLayout.addView(_currentWordText);
     
     // Progress
     _progressText = new TextView(this);
-    _progressText.setTextColor(Color.WHITE);
-    topLayout.addView(_progressText);
+    _progressText.setTextColor(0xFFFFFFFF);
+    mainLayout.addView(_progressText);
     
     _progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-    _progressBar.setMax(WORDS_PER_SESSION);  // Total words = 20
-    topLayout.addView(_progressBar);
+    _progressBar.setMax(WORDS_PER_SESSION);
+    mainLayout.addView(_progressBar);
     
-    // ADD PLAYGROUND BUTTON EARLY in topLayout so it's visible
-    Button playgroundButton = new Button(this);
-    playgroundButton.setText("🎮 Playground");
-    playgroundButton.setTextSize(14);
-    playgroundButton.setOnClickListener(v -> showPlaygroundModal());
-    playgroundButton.setBackgroundColor(0xFF4CAF50);
-    playgroundButton.setTextColor(Color.WHITE);
-    playgroundButton.setPadding(8, 8, 8, 8);
-    topLayout.addView(playgroundButton);
+    // Benchmark display
+    _benchmarkText = new TextView(this);
+    _benchmarkText.setTextColor(0xFF00d4ff);
+    _benchmarkText.setTextSize(14);
+    _benchmarkText.setPadding(0, 10, 0, 10);
+    mainLayout.addView(_benchmarkText);
     
-    // REMOVED: Useless "Prediction Score: Not in top 10 predictions" section
-    // Redundant with main algorithm analysis
-    
-    // REMOVED: Entire useless Real-Time Metrics section
-    // - Session Accuracy: 0.0% (useless)
-    // - Overall Accuracy: 0.0% (useless)  
-    // - Speed (WPM): 51 (irrelevant for debugging)
-    // - "No errors yet - great job!" (meaningless)
-    // More space now available for useful algorithm debugging
-    
-    // REMOVED: CGR Recognition Analysis section entirely (as requested)
-    
-    // REMOVED: Algorithm flow chart section - same functionality available in Playground modal
-    
-    // Old live control layout removed - moved to Playground modal
-    
-    // Current word display - PROMINENT
-    LinearLayout currentWordLayout = new LinearLayout(this);
-    currentWordLayout.setOrientation(LinearLayout.VERTICAL);
-    currentWordLayout.setPadding(16, 24, 16, 16);
-    currentWordLayout.setBackgroundColor(0xFF0D47A1); // Blue background
-    
-    TextView currentWordLabel = new TextView(this);
-    currentWordLabel.setText("SWIPE THIS WORD:");
-    currentWordLabel.setTextSize(14);
-    currentWordLabel.setTextColor(Color.WHITE);
-    currentWordLabel.setGravity(android.view.Gravity.CENTER);
-    currentWordLayout.addView(currentWordLabel);
-    
-    _currentWordText = new TextView(this);
-    _currentWordText.setText("LOADING...");
-    _currentWordText.setTextSize(28);
-    _currentWordText.setTextColor(Color.YELLOW);
-    _currentWordText.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-    _currentWordText.setGravity(android.view.Gravity.CENTER);
-    _currentWordText.setPadding(0, 8, 0, 0);
-    currentWordLayout.addView(_currentWordText);
-    
-    // MOVED: Current word display will be placed right above keyboard
-    
-    // Buttons above keyboard
+    // Control buttons
     LinearLayout buttonLayout = new LinearLayout(this);
     buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
-    buttonLayout.setPadding(16, 16, 16, 8);
-    buttonLayout.setGravity(android.view.Gravity.CENTER);
     
-    _skipButton = new Button(this);
-    _skipButton.setText("Skip Word");
-    _skipButton.setOnClickListener(v -> skipWord());
-    _skipButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    buttonLayout.addView(_skipButton);
-    
-    _nextButton = new Button(this);
-    _nextButton.setText("Retry");
-    _nextButton.setEnabled(true);
-    _nextButton.setOnClickListener(v -> {
-      _keyboardView.reset();
-      Toast.makeText(this, "Try swiping again", Toast.LENGTH_SHORT).show();
-    });
-    _nextButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    _nextButton = createNeonButton("Next", 0xFF4CAF50);
+    _nextButton.setOnClickListener(v -> nextWord());
     buttonLayout.addView(_nextButton);
     
-    _saveButton = new Button(this);
-    _saveButton.setText("Save & Exit");
-    _saveButton.setOnClickListener(v -> saveAndExit());
-    _saveButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    buttonLayout.addView(_saveButton);
+    _skipButton = createNeonButton("Skip", 0xFFFF9800);
+    _skipButton.setOnClickListener(v -> skipWord());
+    buttonLayout.addView(_skipButton);
     
-    // REMOVED: Delete Samples button (as requested)
+    _exportButton = createNeonButton("Export", 0xFF2196F3);
+    _exportButton.setOnClickListener(v -> exportTrainingData());
+    buttonLayout.addView(_exportButton);
     
-    // REMOVED: Export All button (as requested)
+    _benchmarkButton = createNeonButton("Benchmark", 0xFFE91E63);
+    _benchmarkButton.setOnClickListener(v -> runBenchmark());
+    buttonLayout.addView(_benchmarkButton);
     
-    _trainButton = new Button(this);
-    _trainButton.setText("Train Model");
-    _trainButton.setOnClickListener(v -> startTraining());
-    buttonLayout.addView(_trainButton);
+    Button playgroundButton = createNeonButton("🎮 Playground", 0xFF9C27B0);
+    playgroundButton.setOnClickListener(v -> showNeuralPlayground());
+    buttonLayout.addView(playgroundButton);
     
-    _browseSwipesButton = new Button(this);
-    _browseSwipesButton.setText("Browse Swipes");
-    _browseSwipesButton.setOnClickListener(v -> enterBrowseMode());
-    buttonLayout.addView(_browseSwipesButton);
-    
-    topLayout.addView(buttonLayout);
-    
-    // Navigation controls (initially hidden)
-    _navigationLayout = new LinearLayout(this);
-    _navigationLayout.setOrientation(LinearLayout.HORIZONTAL);
-    _navigationLayout.setPadding(10, 10, 10, 10);
-    _navigationLayout.setGravity(android.view.Gravity.CENTER);
-    _navigationLayout.setVisibility(View.GONE);
-    
-    // FORCE: Ensure navigation layout stays hidden and doesn't break layout
-    _navigationLayout.setLayoutParams(new LinearLayout.LayoutParams(0, 0)); // Zero size when hidden
-    
-    _prevSwipeButton = new Button(this);
-    _prevSwipeButton.setText("◀ Previous");
-    _prevSwipeButton.setOnClickListener(v -> navigatePreviousSwipe());
-    _navigationLayout.addView(_prevSwipeButton);
-    
-    _swipeNavText = new TextView(this);
-    _swipeNavText.setText("Swipe 0 of 0");
-    _swipeNavText.setTextColor(Color.WHITE);
-    _swipeNavText.setPadding(20, 0, 20, 0);
-    _navigationLayout.addView(_swipeNavText);
-    
-    _nextSwipeButton = new Button(this);
-    _nextSwipeButton.setText("Next ▶");
-    _nextSwipeButton.setOnClickListener(v -> navigateNextSwipe());
-    _navigationLayout.addView(_nextSwipeButton);
-    
-    _deleteSwipeButton = new Button(this);
-    _deleteSwipeButton.setText("Delete This");
-    _deleteSwipeButton.setOnClickListener(v -> deleteCurrentSwipe());
-    _navigationLayout.addView(_deleteSwipeButton);
-    
-    Button exitBrowse = new Button(this);
-    exitBrowse.setText("Exit Browse");
-    exitBrowse.setOnClickListener(v -> exitBrowseMode());
-    _navigationLayout.addView(exitBrowse);
-    
-    topLayout.addView(_navigationLayout);
-    mainLayout.addView(topLayout);
-    
-    // Keyboard at bottom with real dimensions
-    _keyboardView = new KeyboardView(this);
-    android.widget.RelativeLayout.LayoutParams keyboardParams = new android.widget.RelativeLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, _keyboardHeight);
-    keyboardParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
-    _keyboardView.setLayoutParams(keyboardParams);
-    
-    // REMOVED: Duplicate playground button (moved to early position in topLayout)
-    
-    // Add current word display to top layout for proper positioning
-    topLayout.addView(currentWordLayout);
-    
-    // FIXED: Move output text area to topLayout to prevent off-screen issues
-    // Create combined output header with copy button
-    LinearLayout outputHeaderLayout = new LinearLayout(this);
-    outputHeaderLayout.setOrientation(LinearLayout.HORIZONTAL);
-    outputHeaderLayout.setPadding(16, 16, 16, 8);
-    
-    TextView outputLabel = new TextView(this);
-    outputLabel.setText("🔍 Swipe Analysis Output:");
-    outputLabel.setTextSize(16);
-    outputLabel.setTextColor(Color.CYAN);
-    outputLabel.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-    outputLabel.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    outputHeaderLayout.addView(outputLabel);
-    
-    _copyComparisonButton = new Button(this);
-    _copyComparisonButton.setText("📋 Copy");
-    _copyComparisonButton.setTextSize(12);
-    _copyComparisonButton.setOnClickListener(v -> copyComparisonData());
-    _copyComparisonButton.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-    _copyComparisonButton.setBackgroundColor(0xFF4CAF50);  // Green background for visibility
-    _copyComparisonButton.setTextColor(Color.WHITE);
-    _copyComparisonButton.setPadding(8, 8, 8, 8);
-    outputHeaderLayout.addView(_copyComparisonButton);
-    
-    topLayout.addView(outputHeaderLayout);
-    
-    // Template comparison text area - moved to topLayout for proper visibility
-    _templateComparisonText = new TextView(this);
-    _templateComparisonText.setText("Swipe words to see comprehensive algorithm analysis and predictions...");
-    _templateComparisonText.setTextSize(11);
-    _templateComparisonText.setPadding(12, 12, 12, 12);
-    _templateComparisonText.setTextColor(Color.WHITE);
-    _templateComparisonText.setBackgroundColor(0xFF1A1A1A);
-    _templateComparisonText.setTypeface(android.graphics.Typeface.MONOSPACE); // Fixed-width font
-    _templateComparisonText.setSingleLine(false);
-    _templateComparisonText.setMaxLines(Integer.MAX_VALUE);
-    
-    android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
-    scrollView.addView(_templateComparisonText);
-    scrollView.setLayoutParams(new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, 300)); // Constrained height to fit in topLayout
-    scrollView.setPadding(8, 8, 8, 8);
-    scrollView.setBackgroundColor(0xFF2B2B2B);
-    topLayout.addView(scrollView);
-
-    mainLayout.addView(_keyboardView);
+    mainLayout.addView(buttonLayout);
     
     setContentView(mainLayout);
-    
-    // Initialize template generator for comparison
-    _templateGenerator = new WordGestureTemplateGenerator();
-    _templateGenerator.loadDictionary(this);
-    
-    // Initialize shared algorithm instance for live parameter control
-    try {
-      _sharedRecognizer = new KeyboardSwipeRecognizer(this);
-      android.util.Log.d(TAG, "Shared KeyboardSwipeRecognizer initialized for live control");
-    } catch (Exception e) {
-      android.util.Log.e(TAG, "Failed to initialize shared recognizer: " + e.getMessage());
-    }
-    
-    // Keyboard dimensions will be set when view is laid out (see showNextWord())
-    
-    _comparisonData = new StringBuilder();
-    
-    // Initialize ML trainer
-    _mlTrainer = new SwipeMLTrainer(this);
-    _mlTrainer.setTrainingListener(new TrainingListenerImpl());
-    
-    // Initialize calibration
-    initializeCalibration();
-    
-    // Initialize dummy weight UI elements to prevent crashes
-    _dtwWeightText = new TextView(this);
-    _gaussianWeightText = new TextView(this);
-    _ngramWeightText = new TextView(this);
-    _frequencyWeightText = new TextView(this);
-    _dtwWeightSlider = new android.widget.SeekBar(this);
-    _gaussianWeightSlider = new android.widget.SeekBar(this);
-    _ngramWeightSlider = new android.widget.SeekBar(this);
-    _frequencyWeightSlider = new android.widget.SeekBar(this);
-    
-    // Load saved weights (now safe)
-    loadSavedWeights();
-    
-    // CRITICAL: Start calibration by showing first word
-    showNextWord();
   }
   
-  /**
-   * Normalize weights to sum to 100% (DISABLED - UI removed)
-   */
-  private void normalizeWeights()
+  private Button createNeonButton(String text, int color)
   {
-    return; // DISABLED - weight UI removed, CGR analysis replaces this
+    Button button = new Button(this);
+    button.setText(text);
+    button.setTextColor(0xFFFFFFFF);
+    button.setBackgroundColor(color);
+    button.setTextSize(14);
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+      0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+    params.setMargins(5, 5, 5, 5);
+    button.setLayoutParams(params);
+    return button;
   }
   
-  private void normalizeWeights_DISABLED()
+  private void setupKeyboard()
   {
-    float total = _dtwWeight + _gaussianWeight + _ngramWeight + _frequencyWeight;
-    if (total > 0)
-    {
-      // Update display text with normalized values
-      int dtwPercent = Math.round(_dtwWeight / total * 100);
-      int gaussianPercent = Math.round(_gaussianWeight / total * 100);
-      int ngramPercent = Math.round(_ngramWeight / total * 100);
-      int freqPercent = Math.round(_frequencyWeight / total * 100);
-      
-      // Ensure they sum to 100
-      int sum = dtwPercent + gaussianPercent + ngramPercent + freqPercent;
-      if (sum != 100)
-      {
-        dtwPercent += (100 - sum);
-      }
-      
-      _dtwWeightText.setText("DTW: " + dtwPercent + "%");
-      _gaussianWeightText.setText("Gaussian: " + gaussianPercent + "%");
-      _ngramWeightText.setText("N-gram: " + ngramPercent + "%");
-      _frequencyWeightText.setText("Frequency: " + freqPercent + "%");
-    }
+    _keyboardView = new NeuralKeyboardView(this);
+    _keyboardView.setLayoutParams(new ViewGroup.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT, _keyboardHeight));
     
-    // Save weights and update DTW predictor
-    saveWeights();
+    // Add keyboard at bottom
+    ViewGroup rootLayout = (ViewGroup) findViewById(android.R.id.content).getParent();
+    rootLayout.addView(_keyboardView);
     
-    // Update DTW predictor with new weights
-    SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-    weightConfig.saveWeights(_dtwWeight, _gaussianWeight, _ngramWeight, _frequencyWeight);
-    _dtwPredictor.setWeightConfig(weightConfig);
-  }
-  
-  /**
-   * Save algorithm weights to preferences
-   */
-  private void saveWeights()
-  {
-    // Use device-protected storage for weights to be consistent
-    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-    SharedPreferences.Editor editor = prefs.edit();
-    editor.putFloat("dtw_weight", _dtwWeight);
-    editor.putFloat("gaussian_weight", _gaussianWeight);
-    editor.putFloat("ngram_weight", _ngramWeight);
-    editor.putFloat("frequency_weight", _frequencyWeight);
-    editor.apply();
-  }
-  
-  /**
-   * Load saved algorithm weights
-   */
-  private void loadSavedWeights()
-  {
-    // Use device-protected storage for weights to be consistent
-    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-    _dtwWeight = prefs.getFloat("dtw_weight", 0.4f);
-    _gaussianWeight = prefs.getFloat("gaussian_weight", 0.3f);
-    _ngramWeight = prefs.getFloat("ngram_weight", 0.2f);
-    _frequencyWeight = prefs.getFloat("frequency_weight", 0.1f);
-    
-    // Update sliders
-    _dtwWeightSlider.setProgress(Math.round(_dtwWeight * 100));
-    _gaussianWeightSlider.setProgress(Math.round(_gaussianWeight * 100));
-    _ngramWeightSlider.setProgress(Math.round(_ngramWeight * 100));
-    _frequencyWeightSlider.setProgress(Math.round(_frequencyWeight * 100));
-    
-    normalizeWeights();
-  }
-  
-  private void initializeLogging()
-  {
-    try
-    {
-      _logWriter = new BufferedWriter(new FileWriter(LOG_FILE, true));
-      _logWriter.write("\n=== CALIBRATION SESSION STARTED: " + new Date() + " ===\n");
-      _logWriter.flush();
-    }
-    catch (IOException e)
-    {
-      Log.e(TAG, "Failed to initialize logging: " + e.getMessage());
-    }
-  }
-  
-  private void initializeCalibration()
-  {
-    _calibrationData = new HashMap<>();
-    _currentSwipePoints = new ArrayList<>();
-    _currentSwipeTimestamps = new ArrayList<>();
-    _sessionStartTime = System.currentTimeMillis();
-    
-    // Load overall accuracy from preferences
-    loadOverallAccuracy();
-    
-    // Select words from top 30% most frequent
-    Log.d(TAG, "Selecting calibration words. Dictionary size: " + _frequentWords.size());
-    if (_frequentWords.isEmpty())
-    {
-      // Fallback if dictionary didn't load
-      Log.w(TAG, "Dictionary is empty! Using fallback words");
-      _sessionWords = new ArrayList<>(FALLBACK_WORDS);
-      Collections.shuffle(_sessionWords);
-      _sessionWords = _sessionWords.subList(0, Math.min(WORDS_PER_SESSION, _sessionWords.size()));
-    }
-    else
-    {
-      // Use top 30% most frequent words
-      int topCount = Math.max(50, _frequentWords.size() * 30 / 100);
-      List<String> topWords = _frequentWords.subList(0, Math.min(topCount, _frequentWords.size()));
-      
-      // Filter for reasonable length (3-8 characters)
-      List<String> candidates = new ArrayList<>();
-      for (String word : topWords)
-      {
-        if (word.length() >= 3 && word.length() <= 8 && word.matches("[a-z]+"))
-        {
-          candidates.add(word);
-        }
-      }
-      
-      // Randomly select from candidates
-      Collections.shuffle(candidates, new Random());
-      _sessionWords = candidates.subList(0, Math.min(WORDS_PER_SESSION, candidates.size()));
-    }
-    
-    logMessage("Session words: " + _sessionWords);
-    
-    // Start with first word
-    _currentIndex = 0;
-    // _currentRep = 0;  // No longer used
-    showNextWord();
+    // Set keyboard dimensions for neural engine
+    _neuralEngine.setKeyboardDimensions(_screenWidth, _keyboardHeight);
   }
   
   private void showNextWord()
   {
     if (_currentIndex >= _sessionWords.size())
     {
-      // Calibration complete
       showCompletionMessage();
       return;
     }
     
     _currentWord = _sessionWords.get(_currentIndex);
-    _currentWordText.setText(_currentWord);
+    _currentWordText.setText(_currentWord.toUpperCase());
+    _progressText.setText(String.format("Word %d of %d", _currentIndex + 1, WORDS_PER_SESSION));
+    _progressBar.setProgress(_currentIndex);
     
-    int totalProgress = _currentIndex;  // No reps, just word index
-    _progressBar.setProgress(totalProgress);
-    _progressText.setText(String.format("Word %d of %d",
-      _currentIndex + 1, _sessionWords.size()));  // Simplified: no rep count
+    updateBenchmarkDisplay();
     
-    _nextButton.setEnabled(false);
-    _keyboardView.reset();
-    
-    logMessage("Showing word: " + _currentWord + " (word " + (_currentIndex + 1) + " of " + _sessionWords.size() + ")");
+    Log.d(TAG, "Showing word: " + _currentWord);
   }
   
-  private void recordSwipe(List<PointF> points)
+  private void updateBenchmarkDisplay()
   {
-    if (points.isEmpty()) return;
-    
-    long duration = System.currentTimeMillis() - _swipeStartTime;
-    
-    // Store swipe points for playground recalculation
-    _lastSwipePoints.clear();
-    _lastSwipePoints.addAll(points);
-    
-    // Show the swipe path overlay
-    showSwipePathOverlay(points);
-    
-    // ADD: Template comparison analysis for debugging (SAFE WRAPPER)
-    try
+    if (_totalPredictions > 0)
     {
-      addTemplateComparison(_currentWord, points);
-    }
-    catch (Exception e)
-    {
-      android.util.Log.e(TAG, "Template comparison failed: " + e.getMessage());
-    }
-    
-    // Create swipe pattern for legacy storage
-    SwipePattern pattern = new SwipePattern(_currentWord, points, duration);
-    
-    // Add to calibration data
-    if (!_calibrationData.containsKey(_currentWord))
-    {
-      _calibrationData.put(_currentWord, new ArrayList<>());
-    }
-    _calibrationData.get(_currentWord).add(pattern);
-    
-    // Create ML data object with actual keyboard dimensions
-    SwipeMLData mlData = new SwipeMLData(_currentWord, "calibration",
-                                         _screenWidth, _screenHeight, _keyboardHeight);
-    
-    // Add trace points with actual timestamps in keyboard-relative coordinates
-    for (int i = 0; i < points.size() && i < _currentSwipeTimestamps.size(); i++)
-    {
-      PointF p = points.get(i);
-      long timestamp = _currentSwipeTimestamps.get(i);
+      float accuracy = (_correctPredictions * 100.0f) / _totalPredictions;
+      long avgTime = _predictionTimes.stream().mapToLong(Long::longValue).sum() / _predictionTimes.size();
       
-      // Store keyboard-relative coordinates (already relative from KeyboardView)
-      mlData.addRawPoint(p.x, p.y, timestamp);
-      
-      // Add registered key
-      String key = _keyboardView.getKeyAt(p.x, p.y);
-      if (key != null)
-      {
-        mlData.addRegisteredKey(key);
-      }
+      _benchmarkText.setText(String.format(
+        "📊 Neural Performance: %.1f%% accuracy, %.1fms avg prediction time",
+        accuracy, avgTime / 1000000.0f)); // Convert nanoseconds to milliseconds
     }
-    
-    // Add keyboard dimensions metadata (keyboard is at bottom, so Y is screenHeight - keyboardHeight)
-    int keyboardY = _screenHeight - _keyboardHeight;
-    mlData.setKeyboardDimensions(_screenWidth, _keyboardHeight, keyboardY);
-    
-    // Store ML data
-    _mlDataStore.storeSwipeData(mlData);
-    
-    // Log the swipe with ML info
-    StringBuilder log = new StringBuilder();
-    log.append("SWIPE RECORDED: word=").append(_currentWord);
-    log.append(", points=").append(points.size());
-    log.append(", duration=").append(duration).append("ms");
-    log.append(", ML_trace_id=").append(mlData.getTraceId());
-    log.append(", registered_keys=").append(mlData.getRegisteredKeys().size());
-    log.append(", keyboard_height=").append(_keyboardHeight);
-    log.append(", keyboard_y=").append(keyboardY);
-    log.append(", path=[");
-    
-    for (String key : mlData.getRegisteredKeys())
+    else
     {
-      log.append(key);
+      _benchmarkText.setText("📊 Neural Performance: No data yet");
     }
-    log.append("]");
-    
-    logMessage(log.toString());
-    
-    // Calculate prediction score
-    calculateAndShowScore(points);
-    
-    // Show feedback
-    Toast.makeText(this, "Swipe recorded! Duration: " + duration + "ms", Toast.LENGTH_SHORT).show();
-    
-    // CRITICAL: Call template comparison to show analysis (was missing!)
-    try
-    {
-      addTemplateComparison(_currentWord, points);
-    }
-    catch (Exception e)
-    {
-      android.util.Log.e(TAG, "Template comparison failed: " + e.getMessage());
-    }
-    
-    // Auto-advance after showing overlay (with delay)
-    _uiHandler.postDelayed(() -> {
-      _showingSwipeOverlay = false;
-      _keyboardView.clearOverlay();
-      nextWord();
-    }, 1500); // Show overlay for 1.5 seconds
   }
   
   private void nextWord()
   {
-    // No repetitions - just move to next word
     _currentIndex++;
     showNextWord();
   }
   
   private void skipWord()
   {
-    logMessage("Skipped word: " + _currentWord);
-    // No repetitions - just move to next word
+    Log.d(TAG, "Skipped word: " + _currentWord);
     _currentIndex++;
     showNextWord();
   }
   
-  private void saveAndExit()
+  private void exportTrainingData()
   {
-    saveCalibrationData();
-    finish();
-  }
-  
-  private void saveCalibrationData()
-  {
-    // Use device-protected storage for calibration data
-    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-    SharedPreferences.Editor editor = prefs.edit();
+    List<SwipeMLData> allData = _mlDataStore.loadDataBySource("neural_calibration");
     
-    // Save calibration data
-    StringBuilder data = new StringBuilder();
-    for (Map.Entry<String, List<SwipePattern>> entry : _calibrationData.entrySet())
+    // Export in format matching web demo
+    StringBuilder export = new StringBuilder();
+    export.append("[\n");
+    
+    for (int i = 0; i < allData.size(); i++)
     {
-      String word = entry.getKey();
-      List<SwipePattern> patterns = entry.getValue();
+      SwipeMLData data = allData.get(i);
+      export.append("  {\n");
+      export.append("    \"word\": \"").append(data.getTargetWord()).append("\",\n");
+      export.append("    \"trajectory\": [\n");
       
-      data.append(word).append(":");
-      for (SwipePattern pattern : patterns)
+      for (SwipeMLData.TracePoint point : data.getTracePoints())
       {
-        data.append(pattern.serialize()).append(";");
+        export.append(String.format("      {\"x\": %.4f, \"y\": %.4f, \"t\": %d},\n",
+          point.x, point.y, point.tDeltaMs));
       }
-      data.append("\n");
+      
+      export.append("    ],\n");
+      export.append("    \"keys\": ").append(data.getRegisteredKeys()).append("\n");
+      export.append("  }").append(i < allData.size() - 1 ? "," : "").append("\n");
     }
     
-    editor.putString(PREF_KEY_CALIBRATION_DATA, data.toString());
-    editor.putLong("calibration_timestamp", System.currentTimeMillis());
-    editor.apply();
+    export.append("]\n");
     
-    logMessage("CALIBRATION SAVED: " + _calibrationData.size() + " words");
-    logMessage("Data: " + data.toString());
+    // Copy to clipboard
+    ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+    ClipData clip = ClipData.newPlainText("Neural Training Data", export.toString());
+    clipboard.setPrimaryClip(clip);
     
-    Toast.makeText(this, "Calibration data saved!", Toast.LENGTH_LONG).show();
+    Toast.makeText(this, "Training data exported to clipboard", Toast.LENGTH_LONG).show();
+  }
+  
+  private void runBenchmark()
+  {
+    Log.d(TAG, "Running neural prediction benchmark...");
+    
+    // TODO: Implement comprehensive benchmarking
+    Toast.makeText(this, "Benchmark feature coming soon", Toast.LENGTH_SHORT).show();
   }
   
   private void showCompletionMessage()
   {
-    _instructionText.setText("Calibration Complete!");
+    _instructionText.setText("🎉 Neural Calibration Complete!");
     _currentWordText.setText("✓");
-    _currentWordText.setTextColor(Color.GREEN);
+    _currentWordText.setTextColor(0xFF4CAF50);
     _progressBar.setProgress(_progressBar.getMax());
-    _nextButton.setEnabled(false);
-    _skipButton.setEnabled(false);
     
-    logMessage("=== CALIBRATION COMPLETE ===");
-    logMessage("Total words calibrated: " + _calibrationData.size());
+    updateBenchmarkDisplay();
     
-    for (Map.Entry<String, List<SwipePattern>> entry : _calibrationData.entrySet())
-    {
-      logMessage(entry.getKey() + ": " + entry.getValue().size() + " patterns");
-    }
+    Log.d(TAG, "=== NEURAL CALIBRATION COMPLETE ===");
   }
   
-  private void logMessage(String message)
+  private void showNeuralPlayground()
   {
-    Log.d(TAG, message);
-    if (_logWriter != null)
-    {
-      try
-      {
-        _logWriter.write("[" + new Date() + "] " + message + "\n");
-        _logWriter.flush();
-      }
-      catch (IOException e)
-      {
-        Log.e(TAG, "Failed to write log: " + e.getMessage());
-      }
-    }
-  }
-  
-  /**
-   * Load frequency dictionary for word selection
-   */
-  private void loadFrequencyDictionary()
-  {
-    try
-    {
-      BufferedReader reader = new BufferedReader(
-        new InputStreamReader(getAssets().open("dictionaries/en_enhanced.txt")));
-      
-      List<WordFrequency> wordList = new ArrayList<>();
-      String line;
-      while ((line = reader.readLine()) != null)
-      {
-        String[] parts = line.trim().split("\t");
-        if (parts.length >= 1)
-        {
-          String word = parts[0].toLowerCase();
-          int frequency = parts.length > 1 ? Integer.parseInt(parts[1]) : 1000;
-          wordList.add(new WordFrequency(word, frequency));
-          _wordFrequencies.put(word, frequency);
-        }
-      }
-      reader.close();
-      
-      // Sort by frequency (highest first)
-      Collections.sort(wordList, (a, b) -> Integer.compare(b.frequency, a.frequency));
-      
-      // Extract just the words
-      _frequentWords.clear();
-      for (WordFrequency wf : wordList)
-      {
-        _frequentWords.add(wf.word);
-      }
-      
-      // Load dictionary into DTW predictor
-      _dtwPredictor.loadDictionary(_wordFrequencies);
-      
-      Log.d(TAG, "Loaded " + _frequentWords.size() + " words from dictionary");
-      if (_frequentWords.size() > 0)
-      {
-        Log.d(TAG, "First 20 frequent words: " + _frequentWords.subList(0, Math.min(20, _frequentWords.size())));
-      }
-    }
-    catch (IOException e)
-    {
-      Log.e(TAG, "Failed to load dictionary: " + e.getMessage(), e);
-      e.printStackTrace();
-      _frequentWords.clear();
-    }
-  }
-  
-  /**
-   * Show confirmation dialog for deleting stored samples
-   */
-  private void confirmDeleteSamples()
-  {
-    // Create input dialog for number of traces to delete
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Delete Recent Traces");
+    builder.setTitle("🧠 Neural Parameters Playground");
     
-    final EditText input = new EditText(this);
-    input.setInputType(InputType.TYPE_CLASS_NUMBER);
-    input.setText("1"); // Default value of 1
-    input.setHint("Number of traces to delete (from most recent)");
-    builder.setView(input);
+    LinearLayout layout = new LinearLayout(this);
+    layout.setOrientation(LinearLayout.VERTICAL);
+    layout.setPadding(40, 20, 40, 20);
     
-    builder.setMessage("How many traces to delete starting from most recent?");
-    builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which)
-      {
-        try
-        {
-          int count = Integer.parseInt(input.getText().toString());
-          deleteRecentSamples(count);
-        }
-        catch (NumberFormatException e)
-        {
-          Toast.makeText(SwipeCalibrationActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
-        }
-      }
+    // Beam width control
+    addSliderControl(layout, "Beam Width", _config.neural_beam_width, 1, 16, 
+      value -> _config.neural_beam_width = value);
+    
+    // Max length control
+    addSliderControl(layout, "Max Length", _config.neural_max_length, 10, 50,
+      value -> _config.neural_max_length = value);
+    
+    // Confidence threshold control  
+    addFloatSliderControl(layout, "Confidence Threshold", _config.neural_confidence_threshold, 0.0f, 1.0f,
+      value -> _config.neural_confidence_threshold = (float)value);
+    
+    builder.setView(layout);
+    builder.setPositiveButton("Apply", (dialog, which) -> {
+      _neuralEngine.setConfig(_config);
+      Toast.makeText(this, "Neural parameters updated", Toast.LENGTH_SHORT).show();
     });
     builder.setNegativeButton("Cancel", null);
     builder.show();
   }
   
-  /**
-   * Delete specified number of most recent samples
-   */
-  private void deleteRecentSamples(int count)
+  private void addSliderControl(LinearLayout parent, String name, int currentValue, int min, int max,
+    java.util.function.IntConsumer setter)
   {
-    List<SwipeMLData> allSwipes = _mlDataStore.loadDataBySource("calibration");
-    if (allSwipes.isEmpty())
-    {
-      Toast.makeText(this, "No traces to delete", Toast.LENGTH_SHORT).show();
-      return;
-    }
+    TextView label = new TextView(this);
+    label.setText(String.format("%s: %d", name, currentValue));
+    label.setTextColor(0xFFFFFFFF);
+    parent.addView(label);
     
-    int actualCount = Math.min(count, allSwipes.size());
-    
-    // Delete most recent traces using existing deleteEntry method
-    for (int i = 0; i < actualCount; i++)
-    {
-      SwipeMLData mostRecent = allSwipes.get(allSwipes.size() - 1 - i);
-      _mlDataStore.deleteEntry(mostRecent);
-      android.util.Log.d(TAG, "Deleted trace: " + mostRecent.getTargetWord());
-    }
-    
-    Toast.makeText(this, "Deleted " + actualCount + " most recent traces", Toast.LENGTH_SHORT).show();
-    android.util.Log.d(TAG, "Deleted " + actualCount + " recent samples");
-  }
-  
-  /**
-   * Export calibration data to clipboard for debugging - now uses ML data store
-   */
-  private void exportToClipboard()
-  {
-    try
-    {
-      // Load all calibration swipes from ML data store
-      List<SwipeMLData> allSwipes = _mlDataStore.loadDataBySource("calibration");
-      
-      if (allSwipes.isEmpty())
-      {
-        Toast.makeText(this, "No calibration data to export", Toast.LENGTH_SHORT).show();
-        return;
-      }
-      
-      // Create comprehensive JSON export
-      StringBuilder export = new StringBuilder();
-      export.append("{\n");
-      export.append("  \"timestamp\": ").append(System.currentTimeMillis()).append(",\n");
-      export.append("  \"generated\": \"").append(new Date().toString()).append("\",\n");
-      export.append("  \"total_swipes\": ").append(allSwipes.size()).append(",\n");
-      export.append("  \"keyboard_height\": ").append(_keyboardHeight).append(",\n");
-      export.append("  \"screen_width\": ").append(_screenWidth).append(",\n");
-      export.append("  \"screen_height\": ").append(_screenHeight).append(",\n");
-      export.append("  \"algorithm_weights\": {\n");
-      export.append("    \"dtw\": ").append(_dtwWeight).append(",\n");
-      export.append("    \"gaussian\": ").append(_gaussianWeight).append(",\n");
-      export.append("    \"ngram\": ").append(_ngramWeight).append(",\n");
-      export.append("    \"frequency\": ").append(_frequencyWeight).append("\n");
-      export.append("  },\n");
-      export.append("  \"swipe_data\": [\n");
-      
-      boolean first = true;
-      for (SwipeMLData swipe : allSwipes)
-      {
-        if (!first) export.append(",\n");
-        
-        export.append("    {\n");
-        export.append("      \"word\": \"").append(swipe.getTargetWord()).append("\",\n");
-        export.append("      \"trace_id\": \"").append(swipe.getTraceId()).append("\",\n");
-        export.append("      \"timestamp_utc\": ").append(swipe.getTimestampUtc()).append(",\n");
-        export.append("      \"source\": \"").append(swipe.getCollectionSource()).append("\",\n");
-        
-        List<SwipeMLData.TracePoint> points = swipe.getTracePoints();
-        export.append("      \"point_count\": ").append(points.size()).append(",\n");
-        export.append("      \"duration_ms\": ").append(calculateDuration(points)).append(",\n");
-        export.append("      \"registered_keys\": ").append(swipe.getRegisteredKeys().toString()).append(",\n");
-        export.append("      \"normalized_trace\": [\n");
-        
-        boolean firstPoint = true;
-        for (SwipeMLData.TracePoint tp : points)
-        {
-          if (!firstPoint) export.append(",\n");
-          export.append("        {\"x\": ").append(tp.x)
-                .append(", \"y\": ").append(tp.y)
-                .append(", \"t_delta_ms\": ").append(tp.tDeltaMs).append("}");
-          firstPoint = false;
-        }
-        
-        export.append("\n      ]\n");
-        export.append("    }");
-        first = false;
-      }
-      
-      export.append("\n  ],\n");
-      export.append("  \"accuracy_metrics\": {\n");
-      export.append("    \"session_correct\": ").append(_sessionCorrectCount).append(",\n");
-      export.append("    \"session_total\": ").append(_sessionTotalCount).append(",\n");
-      export.append("    \"overall_correct\": ").append(_overallCorrectCount).append(",\n");
-      export.append("    \"overall_total\": ").append(_overallTotalCount).append("\n");
-      export.append("  },\n");
-      
-      // Add summary statistics
-      Map<String, Integer> wordCounts = new HashMap<>();
-      int totalPoints = 0;
-      long totalDuration = 0;
-      
-      for (SwipeMLData swipe : allSwipes)
-      {
-        String word = swipe.getTargetWord();
-        wordCounts.put(word, wordCounts.getOrDefault(word, 0) + 1);
-        
-        List<SwipeMLData.TracePoint> points = swipe.getTracePoints();
-        totalPoints += points.size();
-        totalDuration += calculateDuration(points);
-      }
-      
-      export.append("  \"summary_stats\": {\n");
-      export.append("    \"unique_words\": ").append(wordCounts.size()).append(",\n");
-      export.append("    \"avg_points_per_swipe\": ").append(totalPoints / allSwipes.size()).append(",\n");
-      export.append("    \"avg_duration_ms\": ").append(totalDuration / allSwipes.size()).append(",\n");
-      export.append("    \"words_practiced\": ").append(wordCounts.toString()).append("\n");
-      export.append("  }\n");
-      export.append("}");
-      
-      // Copy to clipboard
-      ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-      ClipData clip = ClipData.newPlainText("Swipe Calibration Data", export.toString());
-      clipboard.setPrimaryClip(clip);
-      
-      // Show success message with summary
-      String message = String.format("Exported %d swipes (%d words) to clipboard as JSON", 
-                                    allSwipes.size(), wordCounts.size());
-      Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-      logMessage("ML calibration data exported: " + allSwipes.size() + " swipes, " + export.length() + " bytes");
-    }
-    catch (Exception e)
-    {
-      Log.e(TAG, "Failed to export calibration data: " + e.getMessage(), e);
-      Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-    }
-  }
-  
-  /**
-   * Delete all stored calibration samples
-   */
-  private void deleteStoredSamples()
-  {
-    // Clear ML data store
-    _mlDataStore.clearAllData();
-    
-    // Clear SharedPreferences from device-protected storage
-    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-    prefs.edit().clear().apply();
-    
-    // Clear current session data
-    _calibrationData.clear();
-    
-    Toast.makeText(this, "All calibration samples deleted", Toast.LENGTH_LONG).show();
-    logMessage("All calibration samples deleted by user");
-  }
-  
-  /**
-   * Show the swipe path as an overlay on the keyboard
-   */
-  private void showSwipePathOverlay(List<PointF> points)
-  {
-    _showingSwipeOverlay = true;
-    _displayedSwipePath = new Path();
-    
-    if (!points.isEmpty())
-    {
-      PointF first = points.get(0);
-      _displayedSwipePath.moveTo(first.x, first.y);
-      
-      for (int i = 1; i < points.size(); i++)
-      {
-        PointF p = points.get(i);
-        _displayedSwipePath.lineTo(p.x, p.y);
-      }
-    }
-    
-    _keyboardView.setSwipeOverlay(_displayedSwipePath);
-  }
-  
-  /**
-   * Calculate and display prediction score for the swipe
-   */
-  private void calculateAndShowScore(List<PointF> points)
-  {
-    if (_dtwPredictor == null || _currentWord == null)
-      return;
-    
-    // Track swipe duration
-    long swipeDuration = System.currentTimeMillis() - _swipeStartTime;
-    _swipeDurations.add(swipeDuration);
-    
-    // Ensure DTW predictor is properly initialized before use
-    if (_keyboardView.getWidth() > 0 && _keyboardView.getHeight() > 0)
-    {
-      _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
-      _dtwPredictor.loadCalibrationData(this);
-    }
-    
-    // Get touched keys from keyboard view with position data
-    List<KeyboardData.Key> touchedKeys = new ArrayList<>();
-    Map<String, KeyButton> keyPositions = _keyboardView.getKeyPositions();
-    
-    for (PointF p : points)
-    {
-      String keyChar = _keyboardView.getKeyAt(p.x, p.y);
-      if (keyChar != null && keyPositions.containsKey(keyChar))
-      {
-        KeyButton keyButton = keyPositions.get(keyChar);
-        // Create a Key object with position data for DTW predictor
-        KeyValue kv = KeyValue.makeStringKey(keyChar);
-        // Store position in shift and width for DTW to use
-        KeyboardData.Key key = new KeyboardData.Key(
-          new KeyValue[]{kv, null, null, null, null},
-          null, // anticircle
-          0,    // flags
-          keyButton.width / _keyboardView.getWidth(), // normalized width
-          keyButton.x / _keyboardView.getWidth(), // normalized x position in shift
-          null  // indication
-        );
-        touchedKeys.add(key);
-      }
-    }
-    
-    // Get DTW predictions
-    DTWPredictor.DTWResult result = _dtwPredictor.predictWithCoordinates(points, touchedKeys);
-    
-    // Find ranking of correct word
-    int rank = -1;
-    float score = 0.0f;
-    String topPrediction = result.words.isEmpty() ? "" : result.words.get(0);
-    
-    for (int i = 0; i < result.words.size(); i++)
-    {
-      if (result.words.get(i).equals(_currentWord))
-      {
-        rank = i + 1; // 1-based ranking
-        score = result.scores.get(i);
-        break;
-      }
-    }
-    
-    // Update accuracy metrics
-    _sessionTotalCount++;
-    _overallTotalCount++;
-    
-    if (rank == 1)
-    {
-      _sessionCorrectCount++;
-      _overallCorrectCount++;
-    }
-    else if (!topPrediction.isEmpty())
-    {
-      // Track confusion patterns
-      String confusionKey = _currentWord + "→" + topPrediction;
-      _confusionMatrix.put(confusionKey, _confusionMatrix.getOrDefault(confusionKey, 0) + 1);
-    }
-    
-    // Update metrics display
-    updateMetricsDisplay();
-    
-    // Log score (UI elements removed)
-    if (rank > 0)
-    {
-      String scoreText = String.format("Rank #%d (Score: %.2f, Confidence: %.0f%%)",
-                                       rank, score, result.confidence * 100);
-      android.util.Log.d(TAG, "Score: " + scoreText);
-    }
-    else
-    {
-      android.util.Log.d(TAG, "Score: Not in top 10 predictions");
-    }
-    
-    // Log detailed results
-    logMessage("Prediction results for '" + _currentWord + "': " +
-               (rank > 0 ? "Rank #" + rank : "Not found") +
-               ", Top 3: " + (result.words.size() >= 3 ?
-                              result.words.subList(0, 3) : result.words));
-    
-    // Save overall accuracy periodically
-    if (_overallTotalCount % 5 == 0)
-    {
-      saveOverallAccuracy();
-    }
-  }
-  
-  /**
-   * Update the real-time metrics display (UI REMOVED - data tracking only)
-   */
-  private void updateMetricsDisplay()
-  {
-    // Calculate session accuracy for logging
-    float sessionAccuracy = _sessionTotalCount > 0 ? 
-      (float)_sessionCorrectCount / _sessionTotalCount * 100 : 0;
-    
-    // Calculate overall accuracy for logging
-    float overallAccuracy = _overallTotalCount > 0 ?
-      (float)_overallCorrectCount / _overallTotalCount * 100 : 0;
-    
-    // Calculate WPM for logging
-    int wpm = 0;
-    if (!_swipeDurations.isEmpty())
-    {
-      long avgDuration = 0;
-      for (Long duration : _swipeDurations)
-      {
-        avgDuration += duration;
-      }
-      avgDuration /= _swipeDurations.size();
-      
-      // Calculate WPM (60000 ms per minute / avg duration per word)
-      wpm = avgDuration > 0 ? (int)(60000 / avgDuration) : 0;
-    }
-    
-    // Log metrics for debugging (UI removed)
-    android.util.Log.d(TAG, String.format("Session accuracy: %.1f%%, Overall: %.1f%%, WPM: %d", 
-                                          sessionAccuracy, overallAccuracy, wpm));
-    
-    // Update confusion patterns tracking (no UI)
-    updateConfusionPatterns();
-  }
-  
-  /**
-   * Update the confusion patterns display (UI REMOVED - tracking only)
-   */
-  private void updateConfusionPatterns()
-  {
-    if (_confusionMatrix.isEmpty())
-    {
-      android.util.Log.d(TAG, "Confusion patterns: No errors yet - great job!");
-      return;
-    }
-    
-    // Find top 3 confusion patterns for logging
-    List<Map.Entry<String, Integer>> sortedConfusions = new ArrayList<>(_confusionMatrix.entrySet());
-    Collections.sort(sortedConfusions, new Comparator<Map.Entry<String, Integer>>() {
+    android.widget.SeekBar slider = new android.widget.SeekBar(this);
+    slider.setMax(max - min);
+    slider.setProgress(currentValue - min);
+    slider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
       @Override
-      public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
-        return b.getValue().compareTo(a.getValue());
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        int value = min + progress;
+        label.setText(String.format("%s: %d", name, value));
+        setter.accept(value);
       }
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
     });
-    
-    StringBuilder patterns = new StringBuilder("Common errors: ");
-    int count = 0;
-    for (Map.Entry<String, Integer> entry : sortedConfusions)
-    {
-      if (count >= 3) break;
-      if (count > 0) patterns.append(", ");
-      patterns.append(entry.getKey()).append(" (").append(entry.getValue()).append("×)");
-      count++;
-    }
-    
-    // Log instead of displaying in UI (UI removed)
-    android.util.Log.d(TAG, "Confusion patterns: " + patterns.toString());
+    parent.addView(slider);
   }
   
-  /**
-   * Load overall accuracy from preferences
-   */
-  private void loadOverallAccuracy()
+  private void addFloatSliderControl(LinearLayout parent, String name, float currentValue, float min, float max,
+    java.util.function.DoubleConsumer setter)
   {
-    // Use device-protected storage for metrics
-    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-    _overallCorrectCount = prefs.getInt("overall_correct", 0);
-    _overallTotalCount = prefs.getInt("overall_total", 0);
+    TextView label = new TextView(this);
+    label.setText(String.format("%s: %.3f", name, currentValue));
+    label.setTextColor(0xFFFFFFFF);
+    parent.addView(label);
     
-    // Load confusion matrix
-    String confusionData = prefs.getString("confusion_matrix", "");
-    if (!confusionData.isEmpty())
-    {
-      String[] pairs = confusionData.split(";");
-      for (String pair : pairs)
-      {
-        String[] parts = pair.split(":");
-        if (parts.length == 2)
-        {
-          try
-          {
-            _confusionMatrix.put(parts[0], Integer.parseInt(parts[1]));
-          }
-          catch (NumberFormatException e)
-          {
-            // Ignore invalid entries
-          }
-        }
+    android.widget.SeekBar slider = new android.widget.SeekBar(this);
+    slider.setMax(1000); // Fine granularity
+    slider.setProgress((int)((currentValue - min) * 1000 / (max - min)));
+    slider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+        float value = min + (progress / 1000.0f) * (max - min);
+        label.setText(String.format("%s: %.3f", name, value));
+        setter.accept(value);
       }
-    }
-    
-    // Update display with loaded data
-    updateMetricsDisplay();
+      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+    });
+    parent.addView(slider);
+  }
+  
+  private void showErrorDialog(String message)
+  {
+    new AlertDialog.Builder(this)
+      .setTitle("Neural Engine Error")
+      .setMessage(message)
+      .setPositiveButton("OK", (dialog, which) -> finish())
+      .setCancelable(false)
+      .show();
   }
   
   /**
-   * Save overall accuracy to preferences
+   * Neural keyboard view with web demo styling and animations
    */
-  private void saveOverallAccuracy()
+  private class NeuralKeyboardView extends View
   {
-    // Use device-protected storage for metrics
-    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-    SharedPreferences.Editor editor = prefs.edit();
-    editor.putInt("overall_correct", _overallCorrectCount);
-    editor.putInt("overall_total", _overallTotalCount);
-    
-    // Save confusion matrix
-    StringBuilder confusionData = new StringBuilder();
-    for (Map.Entry<String, Integer> entry : _confusionMatrix.entrySet())
-    {
-      if (confusionData.length() > 0) confusionData.append(";");
-      confusionData.append(entry.getKey()).append(":").append(entry.getValue());
-    }
-    editor.putString("confusion_matrix", confusionData.toString());
-    
-    editor.apply();
-  }
-  
-  /**
-   * Helper class for word frequency
-   */
-  private static class WordFrequency
-  {
-    final String word;
-    final int frequency;
-    
-    WordFrequency(String word, int frequency)
-    {
-      this.word = word;
-      this.frequency = frequency;
-    }
-  }
-  
-  @Override
-  protected void onDestroy()
-  {
-    super.onDestroy();
-    if (_logWriter != null)
-    {
-      try
-      {
-        _logWriter.write("=== CALIBRATION SESSION ENDED ===\n");
-        _logWriter.close();
-      }
-      catch (IOException e)
-      {
-        Log.e(TAG, "Failed to close log writer: " + e.getMessage());
-      }
-    }
-  }
-  
-  /**
-   * Custom keyboard view for swipe input
-   */
-  private class KeyboardView extends View
-  {
+    private Map<String, KeyButton> _keys = new HashMap<>();
     private Paint _keyPaint;
-    private Paint _keyBorderPaint;
     private Paint _textPaint;
-    private Paint _swipePaint;
-    private Paint _overlayPaint;
-    private Map<String, KeyButton> _keys;
-    private Path _swipePath;
-    private Path _overlayPath;
-    private List<PointF> _swipePoints;
-    private boolean _swiping;
+    private Paint _trailPaint;
+    private Paint _glowPaint;
     
-    public KeyboardView(Context context)
+    // Swipe state
+    private boolean _swiping = false;
+    private List<PointF> _swipePoints = new ArrayList<>();
+    private List<Long> _swipeTimestamps = new ArrayList<>();
+    private Path _swipePath = new Path();
+    private long _swipeStartTime;
+    
+    public NeuralKeyboardView(Context context)
     {
       super(context);
-      init();
+      setupPaints();
+      setOnTouchListener(this::onTouch);
     }
     
-    private void init()
+    private void setupPaints()
     {
+      // Key paint - dark theme matching web demo
       _keyPaint = new Paint();
-      _keyPaint.setColor(0xFF2B2B2B); // Darker gray similar to real keyboard
-      _keyPaint.setStyle(Paint.Style.FILL);
+      _keyPaint.setColor(0xFF1a1a2e); // Dark key color
       _keyPaint.setAntiAlias(true);
       
-      _keyBorderPaint = new Paint();
-      _keyBorderPaint.setColor(0xFF1A1A1A); // Even darker for border
-      _keyBorderPaint.setStyle(Paint.Style.STROKE);
-      _keyBorderPaint.setStrokeWidth(2);
-      _keyBorderPaint.setAntiAlias(true);
-      
+      // Text paint
       _textPaint = new Paint();
-      _textPaint.setColor(Color.WHITE);
-      _textPaint.setTextAlign(Paint.Align.CENTER);
+      _textPaint.setColor(0xFFFFFFFF);
       _textPaint.setAntiAlias(true);
-      _textPaint.setSubpixelText(true);
-      // Text size will be set in onSizeChanged based on key dimensions
+      _textPaint.setTextAlign(Paint.Align.CENTER);
+      _textPaint.setTextSize(40);
       
-      _swipePaint = new Paint();
-      _swipePaint.setColor(Color.CYAN);
-      _swipePaint.setStrokeWidth(8);
-      _swipePaint.setStyle(Paint.Style.STROKE);
-      _swipePaint.setAlpha(180);
-      _swipePaint.setAntiAlias(true);
-      _swipePaint.setStrokeCap(Paint.Cap.ROUND);
-      _swipePaint.setStrokeJoin(Paint.Join.ROUND);
+      // Trail paint with neon glow
+      _trailPaint = new Paint();
+      _trailPaint.setColor(0xFF00d4ff); // Neon blue
+      _trailPaint.setStrokeWidth(8);
+      _trailPaint.setStyle(Paint.Style.STROKE);
+      _trailPaint.setStrokeCap(Paint.Cap.ROUND);
+      _trailPaint.setAntiAlias(true);
       
-      _overlayPaint = new Paint();
-      _overlayPaint.setColor(Color.GREEN);
-      _overlayPaint.setStrokeWidth(10);
-      _overlayPaint.setStyle(Paint.Style.STROKE);
-      _overlayPaint.setAlpha(200);
-      _overlayPaint.setAntiAlias(true);
-      _overlayPaint.setStrokeCap(Paint.Cap.ROUND);
-      _overlayPaint.setStrokeJoin(Paint.Join.ROUND);
-      
-      _swipePath = new Path();
-      _overlayPath = null;
-      _swipePoints = new ArrayList<>();
-      _keys = new HashMap<>();
-      
-      setBackgroundColor(Color.BLACK);
+      // Glow paint for trail effect
+      _glowPaint = new Paint();
+      _glowPaint.setColor(0xFF00d4ff);
+      _glowPaint.setStrokeWidth(20);
+      _glowPaint.setStyle(Paint.Style.STROKE);
+      _glowPaint.setStrokeCap(Paint.Cap.ROUND);
+      _glowPaint.setMaskFilter(new android.graphics.BlurMaskFilter(10, android.graphics.BlurMaskFilter.Blur.NORMAL));
+      _glowPaint.setAntiAlias(true);
+      _glowPaint.setAlpha(100);
     }
     
     @Override
@@ -1500,111 +489,48 @@ public class SwipeCalibrationActivity extends Activity
     {
       super.onSizeChanged(w, h, oldw, oldh);
       layoutKeys(w, h);
+      
+      // Update neural engine with keyboard dimensions and key positions
+      _neuralEngine.setKeyboardDimensions(w, h);
+      
+      Map<Character, PointF> keyPositions = new HashMap<>();
+      for (Map.Entry<String, KeyButton> entry : _keys.entrySet())
+      {
+        String keyStr = entry.getKey();
+        if (keyStr.length() == 1)
+        {
+          char keyChar = keyStr.charAt(0);
+          KeyButton button = entry.getValue();
+          keyPositions.put(keyChar, new PointF(
+            button.x + button.width/2, 
+            button.y + button.height/2));
+        }
+      }
+      _neuralEngine.setRealKeyPositions(keyPositions);
     }
     
     private void layoutKeys(int width, int height)
     {
       _keys.clear();
       
-      // Use user's configuration for dimensions
       float keyWidth = width / 10f;
-      float rowHeight = height / 4f; // 4 rows now including bottom row
-      float verticalMargin = _keyVerticalMargin * rowHeight;
-      float horizontalMargin = _keyHorizontalMargin * keyWidth;
+      float keyHeight = height / 3f; // 3 rows
+      float margin = 4;
       
-      // Calculate text size using actual config values
-      float characterSize = _characterSize;
-      float labelTextSize = _labelTextSize;
-      
-      // Match the real keyboard's text size calculation
-      float baseSize = Math.min(
-        rowHeight - verticalMargin,
-        (keyWidth - horizontalMargin) * 3f/2f
-      );
-      float textSize = baseSize * characterSize * labelTextSize;
-      _textPaint.setTextSize(textSize);
-      
-      // Layout QWERTY keyboard with 4 rows
       for (int row = 0; row < KEYBOARD_LAYOUT.length; row++)
       {
         String[] rowKeys = KEYBOARD_LAYOUT[row];
+        float rowOffset = (row == 1) ? keyWidth * 0.5f : (row == 2) ? keyWidth : 0;
         
-        if (row == 0) // Top row - numbers row (q-p)
+        for (int col = 0; col < rowKeys.length; col++)
         {
-          for (int col = 0; col < rowKeys.length; col++)
-          {
-            String key = rowKeys[col];
-            float x = col * keyWidth + horizontalMargin / 2;
-            float y = row * rowHeight + verticalMargin / 2;
-            
-            KeyButton button = new KeyButton(key, x, y, 
-              keyWidth - horizontalMargin, rowHeight - verticalMargin);
-            _keys.put(key, button);
-          }
-        }
-        else if (row == 1) // Second row (a-l) - offset by half key
-        {
-          float rowOffset = keyWidth * 0.5f;
-          for (int col = 0; col < rowKeys.length; col++)
-          {
-            String key = rowKeys[col];
-            float x = rowOffset + col * keyWidth + horizontalMargin / 2;
-            float y = row * rowHeight + verticalMargin / 2;
-            
-            KeyButton button = new KeyButton(key, x, y, 
-              keyWidth - horizontalMargin, rowHeight - verticalMargin);
-            _keys.put(key, button);
-          }
-        }
-        else if (row == 2) // Third row (shift, z-m, backspace)
-        {
-          float currentX = horizontalMargin / 2;
-          for (int col = 0; col < rowKeys.length; col++)
-          {
-            String key = rowKeys[col];
-            float keyW = keyWidth - horizontalMargin;
-            
-            // Special keys are wider
-            if (key.equals("shift") || key.equals("backspace"))
-            {
-              keyW = keyWidth * 1.5f - horizontalMargin;
-            }
-            
-            float y = row * rowHeight + verticalMargin / 2;
-            
-            KeyButton button = new KeyButton(key, currentX, y, 
-              keyW, rowHeight - verticalMargin);
-            _keys.put(key, button);
-            
-            currentX += keyW + horizontalMargin;
-          }
-        }
-        else if (row == 3) // Bottom row (?123, comma, space, period, enter)
-        {
-          float currentX = horizontalMargin / 2;
-          for (int col = 0; col < rowKeys.length; col++)
-          {
-            String key = rowKeys[col];
-            float keyW = keyWidth - horizontalMargin;
-            
-            // Special key widths
-            if (key.equals("space"))
-            {
-              keyW = keyWidth * 5f - horizontalMargin; // Space bar is 5 keys wide
-            }
-            else if (key.equals("?123") || key.equals("enter"))
-            {
-              keyW = keyWidth * 1.5f - horizontalMargin;
-            }
-            
-            float y = row * rowHeight + verticalMargin / 2;
-            
-            KeyButton button = new KeyButton(key, currentX, y, 
-              keyW, rowHeight - verticalMargin);
-            _keys.put(key, button);
-            
-            currentX += keyW + horizontalMargin;
-          }
+          String key = rowKeys[col];
+          float x = rowOffset + col * keyWidth + margin;
+          float y = row * keyHeight + margin;
+          
+          KeyButton button = new KeyButton(key, x, y, 
+            keyWidth - margin * 2, keyHeight - margin * 2);
+          _keys.put(key, button);
         }
       }
     }
@@ -1617,24 +543,20 @@ public class SwipeCalibrationActivity extends Activity
       // Draw keys
       for (KeyButton key : _keys.values())
       {
-        key.draw(canvas, _keyPaint, _keyBorderPaint, _textPaint);
+        key.draw(canvas, _keyPaint, _textPaint);
       }
       
-      // Draw swipe path
+      // Draw swipe trail with neon glow effect
       if (!_swipePath.isEmpty())
       {
-        canvas.drawPath(_swipePath, _swipePaint);
-      }
-      
-      // Draw overlay path (displayed after swipe completion)
-      if (_overlayPath != null)
-      {
-        canvas.drawPath(_overlayPath, _overlayPaint);
+        // Draw glow first
+        canvas.drawPath(_swipePath, _glowPaint);
+        // Draw main trail
+        canvas.drawPath(_swipePath, _trailPaint);
       }
     }
     
-    @Override
-    public boolean onTouchEvent(MotionEvent event)
+    private boolean onTouch(View v, MotionEvent event)
     {
       float x = event.getX();
       float y = event.getY();
@@ -1642,65 +564,187 @@ public class SwipeCalibrationActivity extends Activity
       switch (event.getAction())
       {
         case MotionEvent.ACTION_DOWN:
-          _swiping = true;
-          _swipeStartTime = System.currentTimeMillis();
-          _swipePath.reset();
-          _swipePath.moveTo(x, y);
-          _swipePoints.clear();
-          _swipePoints.add(new PointF(x, y));
-          _currentSwipeTimestamps.clear();
-          _currentSwipeTimestamps.add(System.currentTimeMillis());
-          invalidate();
+          startSwipe(x, y);
           return true;
           
         case MotionEvent.ACTION_MOVE:
           if (_swiping)
           {
-            _swipePath.lineTo(x, y);
-            _swipePoints.add(new PointF(x, y));
-            _currentSwipeTimestamps.add(System.currentTimeMillis());
-            invalidate();
+            continueSwipe(x, y);
           }
           return true;
           
         case MotionEvent.ACTION_UP:
           if (_swiping)
           {
-            _swiping = false;
-            if (_swipePoints.size() > 5) // Minimum points for valid swipe
-            {
-              recordSwipe(new ArrayList<>(_swipePoints));
-            }
-            _currentSwipeTimestamps.clear();
+            endSwipe();
           }
           return true;
       }
       
-      return super.onTouchEvent(event);
+      return false;
     }
     
-    public void reset()
+    private void startSwipe(float x, float y)
     {
-      _swipePath.reset();
+      _swiping = true;
+      _swipeStartTime = System.currentTimeMillis();
+      
       _swipePoints.clear();
-      _currentSwipeTimestamps.clear();
-      _overlayPath = null;
+      _swipeTimestamps.clear();
+      _swipePath.reset();
+      
+      _swipePoints.add(new PointF(x, y));
+      _swipeTimestamps.add(_swipeStartTime);
+      _swipePath.moveTo(x, y);
+      
+      // Highlight key with glow effect
+      highlightKeyAt(x, y, true);
+      
       invalidate();
     }
     
-    public void setSwipeOverlay(Path path)
+    private void continueSwipe(float x, float y)
     {
-      _overlayPath = path;
+      _swipePoints.add(new PointF(x, y));
+      _swipeTimestamps.add(System.currentTimeMillis());
+      _swipePath.lineTo(x, y);
+      
+      // Highlight current key
+      highlightKeyAt(x, y, false);
+      
       invalidate();
     }
     
-    public void clearOverlay()
+    private void endSwipe()
     {
-      _overlayPath = null;
-      invalidate();
+      _swiping = false;
+      
+      if (_swipePoints.size() > 5)
+      {
+        processSwipe();
+      }
+      
+      // Clear highlights and trail after delay
+      new Handler().postDelayed(() -> {
+        clearHighlights();
+        _swipePath.reset();
+        invalidate();
+      }, 500);
     }
     
-    public String getKeyAt(float x, float y)
+    private void processSwipe()
+    {
+      Log.d(TAG, String.format("Processing neural swipe: %d points", _swipePoints.size()));
+      
+      // Create SwipeInput matching web demo format
+      String keySequence = extractKeySequence();
+      SwipeInput swipeInput = new SwipeInput(_swipePoints, _swipeTimestamps, new ArrayList<>());
+      
+      // Record ML data
+      recordMLData(swipeInput);
+      
+      // Run neural prediction with timing
+      long startTime = System.nanoTime();
+      
+      try
+      {
+        PredictionResult result = _neuralEngine.predict(swipeInput);
+        long endTime = System.nanoTime();
+        
+        _predictionTimes.add(endTime - startTime);
+        _totalPredictions++;
+        
+        // Check if prediction is correct
+        boolean correct = false;
+        for (int i = 0; i < result.words.size(); i++)
+        {
+          if (result.words.get(i).equals(_currentWord))
+          {
+            correct = true;
+            _correctPredictions++;
+            Log.d(TAG, String.format("✅ Correct prediction at rank %d: %s", i + 1, _currentWord));
+            break;
+          }
+        }
+        
+        if (!correct)
+        {
+          Log.d(TAG, String.format("❌ Incorrect prediction. Expected: %s, Got: %s", 
+            _currentWord, result.words.isEmpty() ? "none" : result.words.get(0)));
+        }
+        
+        updateBenchmarkDisplay();
+      }
+      catch (Exception e)
+      {
+        Log.e(TAG, "Neural prediction failed", e);
+        Toast.makeText(getContext(), "Neural prediction error: " + e.getMessage(), 
+          Toast.LENGTH_SHORT).show();
+      }
+      
+      // Auto-advance
+      new Handler().postDelayed(() -> nextWord(), 1000);
+    }
+    
+    private String extractKeySequence()
+    {
+      StringBuilder keySeq = new StringBuilder();
+      for (PointF point : _swipePoints)
+      {
+        String key = getKeyAt(point.x, point.y);
+        if (key != null && key.length() == 1)
+        {
+          keySeq.append(key);
+        }
+      }
+      return keySeq.toString();
+    }
+    
+    private void recordMLData(SwipeInput swipeInput)
+    {
+      SwipeMLData mlData = new SwipeMLData(_currentWord, "neural_calibration",
+        _screenWidth, _screenHeight, _keyboardHeight);
+      
+      // Add trace points with timestamps
+      for (int i = 0; i < _swipePoints.size(); i++)
+      {
+        PointF p = _swipePoints.get(i);
+        long timestamp = i < _swipeTimestamps.size() ? _swipeTimestamps.get(i) : System.currentTimeMillis();
+        mlData.addRawPoint(p.x, p.y, timestamp);
+      }
+      
+      // Add registered keys
+      String keySequence = extractKeySequence();
+      for (char c : keySequence.toCharArray())
+      {
+        mlData.addRegisteredKey(String.valueOf(c));
+      }
+      
+      _mlDataStore.storeSwipeData(mlData);
+      Log.d(TAG, "Stored neural ML data for: " + _currentWord);
+    }
+    
+    private void highlightKeyAt(float x, float y, boolean isStart)
+    {
+      String key = getKeyAt(x, y);
+      if (key != null && _keys.containsKey(key))
+      {
+        KeyButton button = _keys.get(key);
+        button.setHighlighted(true, isStart);
+        invalidate();
+      }
+    }
+    
+    private void clearHighlights()
+    {
+      for (KeyButton button : _keys.values())
+      {
+        button.setHighlighted(false, false);
+      }
+    }
+    
+    private String getKeyAt(float x, float y)
     {
       for (Map.Entry<String, KeyButton> entry : _keys.entrySet())
       {
@@ -1711,43 +755,17 @@ public class SwipeCalibrationActivity extends Activity
       }
       return null;
     }
-    
-    public Map<String, KeyButton> getKeyPositions()
-    {
-      return new HashMap<>(_keys);
-    }
-    
-    public void displaySwipeTrace(List<PointF> points)
-    {
-      if (points == null || points.isEmpty()) return;
-      
-      _overlayPath = new Path();
-      if (!points.isEmpty()) {
-        _overlayPath.moveTo(points.get(0).x, points.get(0).y);
-      }
-      
-      for (int i = 1; i < points.size(); i++)
-      {
-        _overlayPath.lineTo(points.get(i).x, points.get(i).y);
-      }
-      
-      invalidate();
-    }
-    
-    public void clearSwipeOverlay()
-    {
-      _overlayPath = null;
-      invalidate();
-    }
   }
   
   /**
-   * Represents a keyboard key
+   * Key button with neon styling matching web demo
    */
-  static class KeyButton
+  private static class KeyButton
   {
     String label;
     float x, y, width, height;
+    boolean highlighted = false;
+    boolean isStartKey = false;
     
     KeyButton(String label, float x, float y, float width, float height)
     {
@@ -1758,1477 +776,43 @@ public class SwipeCalibrationActivity extends Activity
       this.height = height;
     }
     
-    void draw(Canvas canvas, Paint keyPaint, Paint borderPaint, Paint textPaint)
+    void setHighlighted(boolean highlighted, boolean isStart)
     {
-      // Draw key background with rounded corners
-      android.graphics.RectF rect = new android.graphics.RectF(x, y, x + width, y + height);
-      float cornerRadius = Math.min(width, height) * 0.15f; // 15% of smallest dimension
-      canvas.drawRoundRect(rect, cornerRadius, cornerRadius, keyPaint);
+      this.highlighted = highlighted;
+      this.isStartKey = isStart;
+    }
+    
+    void draw(Canvas canvas, Paint keyPaint, Paint textPaint)
+    {
+      Paint activePaint = new Paint(keyPaint);
       
-      // Draw border
-      canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint);
-      
-      // Draw text centered properly (accounting for text metrics)
-      String displayLabel = label;
-      
-      // Handle special key labels
-      if (label.equals("space"))
+      if (highlighted)
       {
-        displayLabel = " "; // Space bar typically has no label or just a space
-      }
-      else if (label.equals("shift"))
-      {
-        displayLabel = "⇧"; // Shift arrow symbol
-      }
-      else if (label.equals("backspace"))
-      {
-        displayLabel = "⌫"; // Backspace symbol
-      }
-      else if (label.equals("enter"))
-      {
-        displayLabel = "↵"; // Enter/return symbol
-      }
-      else if (label.equals("?123"))
-      {
-        displayLabel = "?123"; // Keep as is
-      }
-      else
-      {
-        displayLabel = label.toUpperCase(); // Regular keys in uppercase
+        if (isStartKey)
+        {
+          // Start key gets special neon purple glow
+          activePaint.setColor(0xFFb300ff);
+          activePaint.setShadowLayer(20, 0, 0, 0xFFb300ff);
+        }
+        else
+        {
+          // Regular highlight with neon blue
+          activePaint.setColor(0xFF00d4ff);
+          activePaint.setShadowLayer(15, 0, 0, 0xFF00d4ff);
+        }
       }
       
-      float textY = y + (height - textPaint.ascent() - textPaint.descent()) / 2f;
-      canvas.drawText(displayLabel, x + width / 2, textY, textPaint);
+      // Draw key background
+      canvas.drawRoundRect(x, y, x + width, y + height, 8, 8, activePaint);
+      
+      // Draw text
+      float textY = y + height/2 - (textPaint.descent() + textPaint.ascent()) / 2;
+      canvas.drawText(label.toUpperCase(), x + width/2, textY, textPaint);
     }
     
     boolean contains(float px, float py)
     {
       return px >= x && px <= x + width && py >= y && py <= y + height;
-    }
-  }
-  
-  /**
-   * Represents a swipe pattern for a word
-   */
-  private static class SwipePattern
-  {
-    String word;
-    List<PointF> points;
-    long duration;
-    
-    SwipePattern(String word, List<PointF> points, long duration)
-    {
-      this.word = word;
-      this.points = new ArrayList<>(points);
-      this.duration = duration;
-    }
-    
-    String serialize()
-    {
-      StringBuilder sb = new StringBuilder();
-      sb.append(duration).append(",");
-      for (PointF p : points)
-      {
-        sb.append(p.x).append(",").append(p.y).append(",");
-      }
-      return sb.toString();
-    }
-  }
-  
-  // Helper methods for trace point conversion
-  private List<PointF> convertToNormalizedPoints(List<SwipeMLData.TracePoint> tracePoints)
-  {
-    List<PointF> points = new ArrayList<>();
-    for (SwipeMLData.TracePoint tp : tracePoints)
-    {
-      points.add(new PointF(tp.x, tp.y));  // Use public fields, not getters
-    }
-    return points;
-  }
-  
-  private long calculateDuration(List<SwipeMLData.TracePoint> tracePoints)
-  {
-    if (tracePoints.isEmpty()) return 0;
-    
-    // Duration is sum of all deltaMs values
-    long duration = 0;
-    for (SwipeMLData.TracePoint tp : tracePoints)
-    {
-      duration += tp.tDeltaMs;  // Use public field, not getter
-    }
-    return duration;
-  }
-  
-  // Navigation methods for browsing recorded swipes
-  private void enterBrowseMode()
-  {
-    _isBrowsingMode = true;
-    
-    // Load all swipes from database
-    _allSwipes = _mlDataStore.loadDataBySource("calibration");
-    
-    if (_allSwipes.isEmpty())
-    {
-      Toast.makeText(this, "No recorded swipes to browse", Toast.LENGTH_SHORT).show();
-      return;
-    }
-    
-    // Show navigation controls, hide normal controls
-    _navigationLayout.setVisibility(View.VISIBLE);
-    _nextButton.setEnabled(false);
-    _skipButton.setEnabled(false);
-    _instructionText.setText("Browsing recorded swipes - use arrows to navigate");
-    
-    // Start at first swipe
-    _currentSwipeIndex = 0;
-    displaySwipeAtIndex(0);
-    
-    Log.d(TAG, "Entered browse mode with " + _allSwipes.size() + " swipes");
-  }
-  
-  private void exitBrowseMode()
-  {
-    _isBrowsingMode = false;
-    _navigationLayout.setVisibility(View.GONE);
-    _nextButton.setEnabled(true);
-    _skipButton.setEnabled(true);
-    _instructionText.setText("Swipe the word shown below - auto-advances on completion");
-    
-    // Clear displayed trace
-    _keyboardView.clearSwipeOverlay();
-    
-    // Return to normal calibration
-    showNextWord();
-  }
-  
-  private void navigatePreviousSwipe()
-  {
-    if (_currentSwipeIndex > 0)
-    {
-      _currentSwipeIndex--;
-      displaySwipeAtIndex(_currentSwipeIndex);
-    }
-    else
-    {
-      Toast.makeText(this, "At first swipe", Toast.LENGTH_SHORT).show();
-    }
-  }
-  
-  private void navigateNextSwipe()
-  {
-    if (_currentSwipeIndex < _allSwipes.size() - 1)
-    {
-      _currentSwipeIndex++;
-      displaySwipeAtIndex(_currentSwipeIndex);
-    }
-    else
-    {
-      Toast.makeText(this, "At last swipe", Toast.LENGTH_SHORT).show();
-    }
-  }
-  
-  private void displaySwipeAtIndex(int index)
-  {
-    if (index < 0 || index >= _allSwipes.size()) return;
-    
-    SwipeMLData data = _allSwipes.get(index);
-    
-    // Update navigation text
-    _swipeNavText.setText(String.format("Swipe %d of %d", index + 1, _allSwipes.size()));
-    
-    // Show target word
-    _currentWordText.setText(data.getTargetWord());
-    
-    // Convert normalized points to screen points and display trace
-    List<PointF> screenPoints = new ArrayList<>();
-    List<PointF> normalizedPoints = convertToNormalizedPoints(data.getTracePoints());
-    
-    for (PointF p : normalizedPoints)
-    {
-      // Convert from normalized [0,1] to keyboard coordinates
-      float screenX = p.x * _keyboardView.getWidth();
-      float screenY = p.y * _keyboardView.getHeight();
-      screenPoints.add(new PointF(screenX, screenY));
-    }
-    
-    // Display the trace on keyboard
-    _keyboardView.displaySwipeTrace(screenPoints);
-    
-    // Log metadata (UI elements removed)
-    long duration = calculateDuration(data.getTracePoints());
-    int pointCount = normalizedPoints.size();
-    android.util.Log.d(TAG, String.format("Browse metadata - Duration: %dms, Points: %d", duration, pointCount));
-    
-    // Update navigation button states
-    _prevSwipeButton.setEnabled(index > 0);
-    _nextSwipeButton.setEnabled(index < _allSwipes.size() - 1);
-  }
-  
-  private void deleteCurrentSwipe()
-  {
-    if (_currentSwipeIndex < 0 || _currentSwipeIndex >= _allSwipes.size()) return;
-    
-    SwipeMLData toDelete = _allSwipes.get(_currentSwipeIndex);
-    
-    // Confirm deletion
-    new AlertDialog.Builder(this)
-      .setTitle("Delete Swipe")
-      .setMessage("Delete this swipe for '" + toDelete.getTargetWord() + "'?")
-      .setPositiveButton("Delete", (dialog, which) -> {
-        // Remove from database
-        _mlDataStore.deleteEntry(toDelete);
-        
-        // Remove from list
-        _allSwipes.remove(_currentSwipeIndex);
-        
-        // Adjust index and display
-        if (_allSwipes.isEmpty())
-        {
-          exitBrowseMode();
-          Toast.makeText(this, "No more swipes to browse", Toast.LENGTH_SHORT).show();
-        }
-        else
-        {
-          if (_currentSwipeIndex >= _allSwipes.size())
-          {
-            _currentSwipeIndex = _allSwipes.size() - 1;
-          }
-          displaySwipeAtIndex(_currentSwipeIndex);
-        }
-        
-        Toast.makeText(this, "Swipe deleted", Toast.LENGTH_SHORT).show();
-      })
-      .setNegativeButton("Cancel", null)
-      .show();
-  }
-  
-  private void startTraining()
-  {
-    if (_mlTrainer.isTraining())
-    {
-      Toast.makeText(this, "Training already in progress...", Toast.LENGTH_SHORT).show();
-      return;
-    }
-    
-    if (!_mlTrainer.canTrain())
-    {
-      Toast.makeText(this, "Need at least 100 samples to train. Record more swipes first.", Toast.LENGTH_LONG).show();
-      return;
-    }
-    
-    // Disable train button during training
-    _trainButton.setEnabled(false);
-    _trainButton.setText("Training...");
-    
-    // Start training
-    _mlTrainer.startTraining();
-  }
-  
-  private class TrainingListenerImpl implements SwipeMLTrainer.TrainingListener
-  {
-    @Override
-    public void onTrainingStarted()
-    {
-      runOnUiThread(() -> {
-        Toast.makeText(SwipeCalibrationActivity.this, "Training started...", Toast.LENGTH_SHORT).show();
-        logMessage("ML training started");
-      });
-    }
-    
-    @Override
-    public void onTrainingProgress(int progress, int total)
-    {
-      runOnUiThread(() -> {
-        _trainButton.setText(String.format("Training... %d%%", progress));
-        logMessage("Training progress: " + progress + "%");
-      });
-    }
-    
-    @Override
-    public void onTrainingCompleted(SwipeMLTrainer.TrainingResult result)
-    {
-      runOnUiThread(() -> {
-        _trainButton.setEnabled(true);
-        _trainButton.setText("Train Model");
-        
-        String message = String.format("Training completed!\n• %d samples used\n• Training time: %dms\n• Accuracy: %.1f%%", 
-                                       result.samplesUsed, result.trainingTimeMs, result.accuracy * 100);
-        
-        new AlertDialog.Builder(SwipeCalibrationActivity.this)
-          .setTitle("Training Complete")
-          .setMessage(message)
-          .setPositiveButton("OK", null)
-          .show();
-        
-        logMessage("Training completed: " + result.samplesUsed + " samples, " + 
-                  result.trainingTimeMs + "ms, accuracy=" + result.accuracy);
-        
-        // Apply training results to improve predictions
-        applyTrainingResults(result);
-      });
-    }
-    
-    @Override
-    public void onTrainingError(String error)
-    {
-      runOnUiThread(() -> {
-        _trainButton.setEnabled(true);
-        _trainButton.setText("Train Model");
-        
-        Toast.makeText(SwipeCalibrationActivity.this, "Training failed: " + error, Toast.LENGTH_LONG).show();
-        logMessage("Training error: " + error);
-      });
-    }
-  }
-  
-  private void applyTrainingResults(SwipeMLTrainer.TrainingResult result)
-  {
-    try
-    {
-      // Store original weights for comparison
-      float originalDtwWeight = _dtwWeight;
-      float originalGaussianWeight = _gaussianWeight;
-      float originalNgramWeight = _ngramWeight;
-      float originalFrequencyWeight = _frequencyWeight;
-      
-      // If training achieved good accuracy, adjust weights to favor the model
-      if (result.accuracy >= 0.8f)
-      {
-        // Increase DTW weight as it's our primary algorithm for now
-        _dtwWeight = Math.min(0.6f, _dtwWeight + 0.1f);
-        _gaussianWeight = Math.max(0.2f, _gaussianWeight - 0.05f);
-        
-        // Update UI
-        _dtwWeightSlider.setProgress(Math.round(_dtwWeight * 100));
-        _gaussianWeightSlider.setProgress(Math.round(_gaussianWeight * 100));
-        
-        normalizeWeights();
-        
-        // Calculate actual changes
-        float dtwChange = _dtwWeight - originalDtwWeight;
-        float gaussianChange = _gaussianWeight - originalGaussianWeight;
-        float ngramChange = _ngramWeight - originalNgramWeight;
-        float frequencyChange = _frequencyWeight - originalFrequencyWeight;
-        
-        // Create detailed visual feedback
-        StringBuilder changeMessage = new StringBuilder();
-        changeMessage.append("🎯 Algorithm Weights Updated!\n\n");
-        
-        if (Math.abs(dtwChange) > 0.001f)
-        {
-          changeMessage.append(String.format("📈 DTW: %.1f%% → %.1f%% (%+.1f%%)\n", 
-                                           originalDtwWeight * 100, _dtwWeight * 100, dtwChange * 100));
-        }
-        if (Math.abs(gaussianChange) > 0.001f)
-        {
-          changeMessage.append(String.format("📊 Gaussian: %.1f%% → %.1f%% (%+.1f%%)\n", 
-                                           originalGaussianWeight * 100, _gaussianWeight * 100, gaussianChange * 100));
-        }
-        if (Math.abs(ngramChange) > 0.001f)
-        {
-          changeMessage.append(String.format("📝 N-gram: %.1f%% → %.1f%% (%+.1f%%)\n", 
-                                           originalNgramWeight * 100, _ngramWeight * 100, ngramChange * 100));
-        }
-        if (Math.abs(frequencyChange) > 0.001f)
-        {
-          changeMessage.append(String.format("📊 Frequency: %.1f%% → %.1f%% (%+.1f%%)\n", 
-                                           originalFrequencyWeight * 100, _frequencyWeight * 100, frequencyChange * 100));
-        }
-        
-        changeMessage.append(String.format("\n✨ Training accuracy: %.1f%%", result.accuracy * 100));
-        changeMessage.append("\n💡 These optimizations should improve prediction accuracy!");
-        
-        // Show detailed dialog
-        new AlertDialog.Builder(this)
-          .setTitle("Weights Optimization Applied")
-          .setMessage(changeMessage.toString())
-          .setPositiveButton("Great!", null)
-          .setIcon(android.R.drawable.ic_dialog_info)
-          .show();
-        
-        logMessage("Applied training results: DTW " + String.format("%+.3f", dtwChange) + 
-                  ", Gaussian " + String.format("%+.3f", gaussianChange) + 
-                  ", N-gram " + String.format("%+.3f", ngramChange) + 
-                  ", Frequency " + String.format("%+.3f", frequencyChange));
-      }
-      else
-      {
-        // Show why weights weren't changed
-        String lowAccuracyMessage = String.format(
-          "⚠️ Training Accuracy Too Low\n\n" +
-          "Accuracy achieved: %.1f%%\n" +
-          "Minimum required: 80.0%%\n\n" +
-          "💡 Try recording more diverse swipe samples to improve training quality.\n\n" +
-          "Algorithm weights remain unchanged:",
-          result.accuracy * 100);
-          
-        lowAccuracyMessage += String.format(
-          "\n• DTW: %.1f%%\n• Gaussian: %.1f%%\n• N-gram: %.1f%%\n• Frequency: %.1f%%",
-          _dtwWeight * 100, _gaussianWeight * 100, _ngramWeight * 100, _frequencyWeight * 100);
-        
-        new AlertDialog.Builder(this)
-          .setTitle("Weights Not Changed")
-          .setMessage(lowAccuracyMessage)
-          .setPositiveButton("OK", null)
-          .setIcon(android.R.drawable.ic_dialog_alert)
-          .show();
-        
-        logMessage("Training accuracy too low to apply results: " + result.accuracy);
-      }
-      
-      // Store training metadata for future reference
-      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-      prefs.edit()
-        .putLong("last_training_time", System.currentTimeMillis())
-        .putInt("last_training_samples", result.samplesUsed)
-        .putFloat("last_training_accuracy", result.accuracy)
-        .putString("last_model_version", result.modelVersion)
-        .apply();
-    }
-    catch (Exception e)
-    {
-      Log.e(TAG, "Failed to apply training results", e);
-      Toast.makeText(this, "Failed to apply training results: " + e.getMessage(), Toast.LENGTH_LONG).show();
-    }
-  }
-  
-  /**
-   * Copy comparison data to clipboard
-   */
-  private void copyComparisonData()
-  {
-    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-    ClipData clip = ClipData.newPlainText("Template Comparison Data", _comparisonData.toString());
-    clipboard.setPrimaryClip(clip);
-    Toast.makeText(this, "Comparison data copied to clipboard", Toast.LENGTH_SHORT).show();
-  }
-  
-  /**
-   * Add template comparison data for a swiped word
-   */
-  private void addTemplateComparison(String word, List<PointF> userSwipe)
-  {
-    try
-    {
-      // Generate template for this word
-      ContinuousGestureRecognizer.Template template = _templateGenerator.generateWordTemplate(word);
-      if (template == null)
-      {
-        Log.w(TAG, "No template generated for word: " + word);
-        return;
-      }
-      
-      // DEBUGGING: Check template before any processing
-      Log.d(TAG, "Generated template for " + word + ": " + template.pts.size() + " points");
-      if (template.pts.size() >= 2)
-      {
-        ContinuousGestureRecognizer.Point first = template.pts.get(0);
-        ContinuousGestureRecognizer.Point last = template.pts.get(template.pts.size() - 1);
-        Log.d(TAG, "Raw template: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
-      }
-      
-      // Convert user swipe to CGR format and normalize to template coordinate space
-      List<ContinuousGestureRecognizer.Point> userPoints = new ArrayList<>();
-      
-      // Get keyboard dimensions for coordinate transformation
-      float keyboardWidth = _keyboardView.getWidth();
-      float keyboardHeight = _keyboardView.getHeight();
-      
-      // Fallback to calculated dimensions if view not measured yet
-      if (keyboardWidth <= 0 || keyboardHeight <= 0)
-      {
-        keyboardWidth = _screenWidth;
-        keyboardHeight = _keyboardHeight;
-        android.util.Log.d(TAG, "Using fallback keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
-      }
-      
-      // Set DYNAMIC keyboard dimensions for template generation
-      _templateGenerator.setKeyboardDimensions(keyboardWidth, keyboardHeight);
-      
-      // FORCE: Reload CGR parameters from settings on each swipe to test changes
-      android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-      int lengthFilter = prefs.getInt("cgr_length_filter", 70);
-      android.util.Log.d(TAG, "FORCE RELOAD: Length filter = " + lengthFilter + "%");
-      
-      for (PointF p : userSwipe)
-      {
-        // NO TRANSFORMATION NEEDED - both template and user in same screen coordinate space
-        userPoints.add(new ContinuousGestureRecognizer.Point(p.x, p.y));
-      }
-      
-      // Use shared recognizer that has playground parameters applied
-      if (_sharedRecognizer == null) {
-        _sharedRecognizer = new KeyboardSwipeRecognizer(this);
-      }
-      
-      // CRITICAL: Ensure keyboard dimensions are set before recognition
-      android.util.Log.e(TAG, "🖥️ CALIBRATION CGR SETUP:");
-      android.util.Log.e(TAG, "- Keyboard dimensions: " + keyboardWidth + "x" + keyboardHeight);
-      android.util.Log.e(TAG, "- Screen size: " + _screenWidth + "x" + _screenHeight);
-      _sharedRecognizer.setKeyboardDimensions(keyboardWidth, keyboardHeight);
-      
-      android.util.Log.d(TAG, "Using shared KeyboardSwipeRecognizer with playground parameters");
-      android.util.Log.d(TAG, "Playground params applied: " + _playgroundParams.size() + " parameters");
-      
-      // Convert to List<String> context (empty for now)
-      List<String> context = new ArrayList<>();
-      
-      // Log coordinate data for comparison with main keyboard
-      android.util.Log.e(TAG, "🎯 CALIBRATION COORDINATE DATA:");
-      android.util.Log.e(TAG, "- Target word: " + word);
-      android.util.Log.e(TAG, "- Swipe points: " + userSwipe.size());
-      if (userSwipe.size() > 0) {
-        android.graphics.PointF first = userSwipe.get(0);
-        android.graphics.PointF last = userSwipe.get(userSwipe.size() - 1);
-        android.util.Log.e(TAG, "- Coordinate range: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
-      }
-      
-      // Test algorithm with current playground parameters
-      List<KeyboardSwipeRecognizer.RecognitionResult> newResults = 
-        _sharedRecognizer.recognizeSwipe(userSwipe, context);
-      
-      // Convert results for display compatibility (WITH REAL TEMPLATES)
-      List<ContinuousGestureRecognizer.Result> results = new ArrayList<>();
-      for (KeyboardSwipeRecognizer.RecognitionResult newResult : newResults)
-      {
-        // Create real template instead of fake empty one
-        ContinuousGestureRecognizer.Template realTemplate = _templateGenerator.generateWordTemplate(newResult.word);
-        if (realTemplate == null) {
-          // Fallback to empty template but with proper handling
-          realTemplate = new ContinuousGestureRecognizer.Template(newResult.word, new ArrayList<>());
-        }
-        
-        ContinuousGestureRecognizer.Result compatResult = 
-          new ContinuousGestureRecognizer.Result(realTemplate, newResult.totalScore, new ArrayList<>());
-        results.add(compatResult);
-      }
-      
-      // Build detailed comparison data
-      StringBuilder comparison = new StringBuilder();
-      comparison.append("=== WORD: ").append(word.toUpperCase()).append(" ===\n");
-      comparison.append("Template points: ").append(template.pts.size()).append("\n");
-      comparison.append("User swipe points: ").append(userSwipe.size()).append("\n");
-      
-      // Template shape analysis
-      double templateLength = 0;
-      if (template.pts.size() >= 2)
-      {
-        ContinuousGestureRecognizer.Point first = template.pts.get(0);
-        ContinuousGestureRecognizer.Point last = template.pts.get(template.pts.size() - 1);
-        templateLength = calculatePathLength(template.pts);
-        comparison.append("Template: (").append(String.format("%.0f", first.x))
-                  .append(",").append(String.format("%.0f", first.y))
-                  .append(") → (").append(String.format("%.0f", last.x))
-                  .append(",").append(String.format("%.0f", last.y))
-                  .append(") len=").append(String.format("%.0f", templateLength)).append("\n");
-      }
-      
-      // User swipe analysis
-      double userLength = 0;
-      if (userSwipe.size() >= 2)
-      {
-        PointF first = userSwipe.get(0);
-        PointF last = userSwipe.get(userSwipe.size() - 1);
-        userLength = calculatePathLength(userSwipe);
-        comparison.append("User: (").append(String.format("%.0f", first.x))
-                  .append(",").append(String.format("%.0f", first.y))
-                  .append(") → (").append(String.format("%.0f", last.x))
-                  .append(",").append(String.format("%.0f", last.y))
-                  .append(") len=").append(String.format("%.0f", userLength)).append("\n");
-      }
-      
-      // ALGORITHM ANALYSIS: Show comprehensive recognition data
-      comparison.append("ALGORITHM RESULTS:\n");
-      for (int i = 0; i < Math.min(3, results.size()); i++)
-      {
-        ContinuousGestureRecognizer.Result result = results.get(i);
-        
-        // Calculate template attributes that impact prediction (NULL SAFE)
-        double resultTemplateLength = 0;
-        int templatePoints = 0;
-        ContinuousGestureRecognizer.Point tStart = null;
-        ContinuousGestureRecognizer.Point tEnd = null;
-        
-        if (result.template.pts != null && !result.template.pts.isEmpty()) {
-          resultTemplateLength = calculatePathLength(result.template.pts);
-          templatePoints = result.template.pts.size();
-          tStart = result.template.pts.get(0);
-          tEnd = result.template.pts.get(result.template.pts.size() - 1);
-        }
-        
-        comparison.append(String.format("  #%d: %s (prob=%.6f)\n", i + 1, result.template.id, result.prob));
-        comparison.append(String.format("      Length: %.0f, Points: %d\n", resultTemplateLength, templatePoints));
-        if (tStart != null && tEnd != null) {
-          comparison.append(String.format("      Coords: (%.0f,%.0f)→(%.0f,%.0f)\n", 
-                           tStart.x, tStart.y, tEnd.x, tEnd.y));
-        } else {
-          comparison.append("      Coords: No template coordinates available\n");
-        }
-        
-        // Show prediction equation factors
-        if (i == 0) // Only for top result
-        {
-          comparison.append("      PREDICTION FACTORS:\n");
-          comparison.append(String.format("      - Template vs User length ratio: %.3f\n", 
-                           resultTemplateLength / userLength));
-          comparison.append(String.format("      - Coordinate alignment score: %.3f\n", 
-                           calculateCoordinateAlignment(result.template.pts, userPoints)));
-        }
-      }
-      
-      if (results.isEmpty())
-      {
-        comparison.append("  No algorithm recognition results\n");
-      }
-      
-      // Match point calculation analysis
-      boolean correctMatch = !results.isEmpty() && results.get(0).template.id.equals(word);
-      comparison.append("MATCH ANALYSIS:\n");
-      comparison.append("  Correct recognition: ").append(correctMatch ? "YES" : "NO").append("\n");
-      if (!results.isEmpty())
-      {
-        comparison.append("  Confidence level: ");
-        double prob = results.get(0).prob;
-        if (prob > 0.5) comparison.append("HIGH");
-        else if (prob > 0.1) comparison.append("MEDIUM"); 
-        else if (prob > 0.01) comparison.append("LOW");
-        else comparison.append("VERY LOW");
-        comparison.append(String.format(" (%.6f)\n", prob));
-      }
-      
-      comparison.append("Timestamp: ").append(new Date().toString()).append("\n");
-      comparison.append("🎯 CGR EQUATION BREAKDOWN:\n");
-      comparison.append("========================\n");
-      
-      // Show CGR algorithm parameters that affect calculation
-      comparison.append("CURRENT CGR PARAMETERS:\n");
-      if (_sharedRecognizer != null) {
-        comparison.append(String.format("• Proximity Weight: %.2f\n", _sharedRecognizer.proximityWeight));
-        comparison.append(String.format("• Missing Key Penalty: %.2f\n", _sharedRecognizer.missingKeyPenalty));
-        comparison.append(String.format("• Extra Key Penalty: %.2f\n", _sharedRecognizer.extraKeyPenalty));
-        comparison.append(String.format("• Order Penalty: %.2f\n", _sharedRecognizer.orderPenalty));
-        comparison.append(String.format("• Start Point Weight: %.2f\n", _sharedRecognizer.startPointWeight));
-        comparison.append(String.format("• Key Zone Radius: %.0f px\n", _sharedRecognizer.keyZoneRadius));
-      } else {
-        comparison.append("• Shared recognizer not available\n");
-      }
-      comparison.append("\n");
-      
-      // Show letter detection debugging first
-      if (_sharedRecognizer != null) {
-        List<Character> detectedLetters = _sharedRecognizer.getDetectedLetters(userSwipe);
-        comparison.append("LETTER DETECTION DEBUG:\n");
-        comparison.append(String.format("• Detected letters: %s (%d total)\n", detectedLetters, detectedLetters.size()));
-        comparison.append(String.format("• Key zone radius: %.0f px\n", _sharedRecognizer.keyZoneRadius));
-        comparison.append(String.format("• Sample distance: %.0f px\n\n", _sharedRecognizer.pathSampleDistance));
-      }
-      
-      // Show actual CGR results with component breakdowns (already calculated in newResults)
-      comparison.append("CGR ALGORITHM COMPONENT SCORES (TOP 3):\n");
-      for (int i = 0; i < Math.min(3, newResults.size()); i++) {
-        KeyboardSwipeRecognizer.RecognitionResult result = newResults.get(i);
-        
-        comparison.append(String.format("#%d: %s (Total Score: %.6f)\n", 
-          i + 1, result.word.toUpperCase(), result.totalScore));
-        comparison.append(String.format("    • Proximity Score: %.6f (shape matching)\n", result.proximityScore));
-        comparison.append(String.format("    • Sequence Score: %.6f (letter order)\n", result.sequenceScore));
-        comparison.append(String.format("    • Start Point Score: %.6f (start accuracy)\n", result.startPointScore));
-        comparison.append(String.format("    • Language Score: %.6f (word frequency)\n", result.languageModelScore));
-        
-        // Show detailed Bayesian equation calculations step by step
-        double likelihood = result.proximityScore * result.sequenceScore * result.startPointScore;
-        comparison.append("    DETAILED CALCULATION STEPS:\n");
-        comparison.append(String.format("    Step 1: Proximity × Sequence × StartPoint\n"));
-        comparison.append(String.format("           = %.6f × %.6f × %.6f = %.6f\n", 
-          result.proximityScore, result.sequenceScore, result.startPointScore, likelihood));
-        comparison.append(String.format("    Step 2: Likelihood × Language Model\n"));
-        comparison.append(String.format("           = %.6f × %.6f = %.6f\n", 
-          likelihood, result.languageModelScore, result.totalScore));
-        
-        // Show specific input breakdown for score derivation
-        comparison.append("    SCORE COMPONENT BREAKDOWN:\n");
-        comparison.append(String.format("    • Proximity: %.6f (path shape similarity)\n", result.proximityScore));
-        comparison.append(String.format("    • Sequence: %.6f (letter order accuracy)\n", result.sequenceScore));  
-        comparison.append(String.format("    • StartPoint: %.6f (starting position accuracy)\n", result.startPointScore));
-        comparison.append(String.format("    • Language: %.6f (word frequency & context)\n", result.languageModelScore));
-        
-        // Add geometric analysis for ALL predictions, not just top one
-        if (userSwipe.size() > 0) {
-          comparison.append("    GEOMETRIC ANALYSIS:\n");
-          PointF userStart = userSwipe.get(0);
-          PointF userEnd = userSwipe.get(userSwipe.size() - 1);
-          comparison.append(String.format("    • User path: (%.0f,%.0f) → (%.0f,%.0f)\n", 
-            userStart.x, userStart.y, userEnd.x, userEnd.y));
-          comparison.append(String.format("    • Path length: %.0f px\n", userLength));
-          comparison.append(String.format("    • Point count: %d points\n", userSwipe.size()));
-          comparison.append(String.format("    • Point density: %.1f px/point\n", 
-            userLength / userSwipe.size()));
-          
-          // Add template-specific geometry if available (get from original template)
-          if (template != null && template.pts != null && !template.pts.isEmpty()) {
-            ContinuousGestureRecognizer.Point templateStart = template.pts.get(0);
-            ContinuousGestureRecognizer.Point templateEnd = template.pts.get(template.pts.size() - 1);
-            comparison.append(String.format("    • Template path: (%.0f,%.0f) → (%.0f,%.0f)\n", 
-              templateStart.x, templateStart.y, templateEnd.x, templateEnd.y));
-            comparison.append(String.format("    • Template length: %.0f px\n", templateLength));
-            comparison.append(String.format("    • Length ratio: %.3f (user/template)\n", 
-              userLength / templateLength));
-          }
-          
-          // Add detailed proximity score calculation breakdown
-          if (i == 0) { // Only for top result to avoid clutter
-            comparison.append("    PROXIMITY SCORE BREAKDOWN:\n");
-            comparison.append("    Algorithm: For each swipe point, calculate distance to corresponding template point\n");
-            comparison.append(String.format("    • Proximity formula: exp(-distance / keyZoneRadius)\n"));
-            comparison.append(String.format("    • Key zone radius: %.0f px\n", _sharedRecognizer != null ? _sharedRecognizer.keyZoneRadius : 120));
-            comparison.append(String.format("    • Start point weight: %.2fx (users begin precisely)\n", _sharedRecognizer != null ? _sharedRecognizer.startPointWeight : 3.0));
-            comparison.append(String.format("    • Position weighting: Higher at start, lower at end\n"));
-            comparison.append(String.format("    • Average of all point-to-point proximity scores\n"));
-          }
-        }
-        comparison.append("\n");
-      }
-      
-      comparison.append("----------------------------------------\n\n");
-      
-      // Add to accumulated data
-      _comparisonData.append(comparison);
-      
-      // Update comprehensive algorithm analysis display with new algorithm results
-      updateComprehensiveAnalysisDisplay(word, results, templateLength, userLength, userSwipe);
-      
-      // Update detailed comparison display with comprehensive analysis
-      StringBuilder display = new StringBuilder();
-      
-      // Show current detailed comparison data with CGR equation breakdown
-      display.append(comparison.toString());
-      
-      // Optionally add debug report if available
-      if (_sharedRecognizer != null && !_sharedRecognizer.lastErrorReport.isEmpty()) {
-        display.append("\n🔍 ADDITIONAL DEBUG INFO:\n");
-        display.append("===========================\n");
-        display.append(_sharedRecognizer.lastErrorReport);
-      }
-      
-      _templateComparisonText.setText(display.toString());
-      
-    }
-    catch (Exception e)
-    {
-      Log.e(TAG, "Error in template comparison: " + e.getMessage());
-      _templateComparisonText.setText("Error: " + e.getMessage());
-    }
-  }
-  
-  /**
-   * Add detailed DTW algorithm equation breakdown to debug display
-   */
-  private void addDTWEquationBreakdown(StringBuilder display, String targetWord, List<PointF> userSwipe)
-  {
-    try
-    {
-      // Get current weights
-      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-      float dtwWeight = weightConfig.getDtwWeight();
-      float gaussianWeight = weightConfig.getGaussianWeight();
-      float ngramWeight = weightConfig.getNgramWeight();
-      float frequencyWeight = weightConfig.getFrequencyWeight();
-      
-      display.append("Target Word: ").append(targetWord.toUpperCase()).append("\n");
-      display.append("User Swipe Points: ").append(userSwipe.size()).append("\n\n");
-      
-      // Get word frequency
-      int frequency = _wordFrequencies.getOrDefault(targetWord, 1000);
-      
-      display.append("ALGORITHM COMPONENT WEIGHTS:\n");
-      display.append(String.format("• DTW Weight: %.1f%%\n", dtwWeight * 100));
-      display.append(String.format("• Gaussian Weight: %.1f%%\n", gaussianWeight * 100));
-      display.append(String.format("• N-gram Weight: %.1f%%\n", ngramWeight * 100));  
-      display.append(String.format("• Frequency Weight: %.1f%%\n\n", frequencyWeight * 100));
-      
-      // GET ACTUAL CALCULATED COMPONENT SCORES FOR THIS SPECIFIC WORD
-      if (_dtwPredictor != null) {
-        // Set up DTW predictor with current keyboard dimensions
-        _dtwPredictor.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
-        
-        // Get detailed score breakdown for this specific word
-        DTWPredictor.ScoreBreakdown breakdown = _dtwPredictor.getScoreBreakdownForWord(targetWord, userSwipe);
-        
-        if (breakdown != null) {
-          display.append("ACTUAL CALCULATED COMPONENT SCORES FOR '").append(targetWord.toUpperCase()).append("':\n");
-          display.append(String.format("• DTW Score: %.6f (shape matching)\n", breakdown.dtwScore));
-          display.append(String.format("• Gaussian Score: %.6f (key position probability)\n", breakdown.gaussianScore));
-          display.append(String.format("• N-gram Score: %.6f (language context)\n", breakdown.ngramScore));
-          display.append(String.format("• Frequency Score: %.6f (word commonness)\n\n", breakdown.frequencyScore));
-          
-          display.append("ALGORITHM COMPONENT WEIGHTS (CURRENT):\n");
-          display.append(String.format("• DTW Weight: %.3f (%.1f%%)\n", dtwWeight, dtwWeight * 100));
-          display.append(String.format("• Gaussian Weight: %.3f (%.1f%%)\n", gaussianWeight, gaussianWeight * 100));
-          display.append(String.format("• N-gram Weight: %.3f (%.1f%%)\n", ngramWeight, ngramWeight * 100));  
-          display.append(String.format("• Frequency Weight: %.3f (%.1f%%)\n\n", frequencyWeight, frequencyWeight * 100));
-          
-          display.append("FULL WEIGHTED EQUATION WITH ACTUAL VALUES:\n");
-          display.append(String.format(
-              "Score = (%.6f × %.3f) + (%.6f × %.3f) + (%.6f × %.3f) + (%.6f × %.3f)\n",
-              breakdown.dtwScore, dtwWeight,
-              breakdown.gaussianScore, gaussianWeight,
-              breakdown.ngramScore, ngramWeight,
-              breakdown.frequencyScore, frequencyWeight
-          ));
-          
-          float calculatedScore = (breakdown.dtwScore * dtwWeight) + (breakdown.gaussianScore * gaussianWeight) +
-                                (breakdown.ngramScore * ngramWeight) + (breakdown.frequencyScore * frequencyWeight);
-                                
-          display.append(String.format("      = %.6f + %.6f + %.6f + %.6f = %.6f\n",
-              breakdown.dtwScore * dtwWeight,
-              breakdown.gaussianScore * gaussianWeight,
-              breakdown.ngramScore * ngramWeight,
-              breakdown.frequencyScore * frequencyWeight,
-              calculatedScore
-          ));
-
-          display.append(String.format("Final Result = %.6f × 1000 = %.2f\n", calculatedScore, breakdown.finalScore));
-          
-          // Get ranking from full prediction
-          DTWPredictor.DTWResult fullResult = _dtwPredictor.predictWithCoordinates(userSwipe, new ArrayList<>());
-          int rank = -1;
-          for (int i = 0; i < fullResult.words.size(); i++) {
-            if (fullResult.words.get(i).equals(targetWord)) {
-              rank = i + 1;
-              break;
-            }
-          }
-          display.append(String.format("Prediction Rank: %s\n", rank > 0 ? "#" + rank : "Not in top 10"));
-          
-        } else {
-          display.append("Could not generate score breakdown for '").append(targetWord).append("'\n");
-        }
-      } else {
-        display.append("DTW Predictor not available for detailed calculations\n");
-      }
-      
-    }
-    catch (Exception e)
-    {
-      display.append("Error generating DTW breakdown: ").append(e.getMessage()).append("\n");
-    }
-  }
-  
-  /**
-   * Calculate path length for comparison (handles both PointF and CGR Point types)
-   */
-  private double calculatePathLength(List<?> points)
-  {
-    if (points.size() < 2) return 0;
-    
-    double length = 0;
-    for (int i = 1; i < points.size(); i++)
-    {
-      double dx, dy;
-      if (points.get(0) instanceof PointF)
-      {
-        PointF p1 = (PointF) points.get(i - 1);
-        PointF p2 = (PointF) points.get(i);
-        dx = p2.x - p1.x;
-        dy = p2.y - p1.y;
-      }
-      else
-      {
-        ContinuousGestureRecognizer.Point p1 = (ContinuousGestureRecognizer.Point) points.get(i - 1);
-        ContinuousGestureRecognizer.Point p2 = (ContinuousGestureRecognizer.Point) points.get(i);
-        dx = p2.x - p1.x;
-        dy = p2.y - p1.y;
-      }
-      length += Math.sqrt(dx * dx + dy * dy);
-    }
-    return length;
-  }
-  
-  /**
-   * Calculate coordinate alignment score between template and user gesture
-   */
-  private double calculateCoordinateAlignment(List<ContinuousGestureRecognizer.Point> templatePts, 
-                                            List<ContinuousGestureRecognizer.Point> userPts)
-  {
-    if (templatePts == null || userPts == null || templatePts.isEmpty() || userPts.isEmpty()) return 0.0;
-    if (templatePts.size() < 2 || userPts.size() < 2) return 0.0;
-    
-    // Compare start and end point alignment
-    ContinuousGestureRecognizer.Point tStart = templatePts.get(0);
-    ContinuousGestureRecognizer.Point tEnd = templatePts.get(templatePts.size() - 1);
-    ContinuousGestureRecognizer.Point uStart = userPts.get(0);
-    ContinuousGestureRecognizer.Point uEnd = userPts.get(userPts.size() - 1);
-    
-    double startDist = Math.sqrt((tStart.x - uStart.x) * (tStart.x - uStart.x) + 
-                                (tStart.y - uStart.y) * (tStart.y - uStart.y));
-    double endDist = Math.sqrt((tEnd.x - uEnd.x) * (tEnd.x - uEnd.x) + 
-                              (tEnd.y - uEnd.y) * (tEnd.y - uEnd.y));
-    
-    // Convert to alignment score (lower distance = higher score)
-    double maxDist = 1000.0; // Max possible distance in 1000x1000 space
-    double alignmentScore = 1.0 - ((startDist + endDist) / 2.0) / maxDist;
-    return Math.max(0.0, alignmentScore);
-  }
-  
-  /**
-   * Update comprehensive algorithm analysis display (replacement for CGR analysis)
-   */
-  private void updateComprehensiveAnalysisDisplay(String word, List<ContinuousGestureRecognizer.Result> results, 
-                                                 double templateLength, double userLength, List<PointF> userSwipe)
-  {
-    // Since we don't have a dedicated analysis display anymore, 
-    // ensure the comparison data shows comprehensive analysis
-    android.util.Log.d(TAG, String.format("Comprehensive analysis for %s: %d results, template=%.0f, user=%.0f", 
-                      word, results.size(), templateLength, userLength));
-    
-    // The analysis is now shown in the _templateComparisonText through addTemplateComparison
-    // which includes the full KeyboardSwipeRecognizer analysis
-  }
-  
-  /**
-   * Create flow chart step layout with header
-   */
-  private LinearLayout createFlowStep(String title)
-  {
-    LinearLayout stepLayout = new LinearLayout(this);
-    stepLayout.setOrientation(LinearLayout.VERTICAL);
-    stepLayout.setPadding(8, 8, 8, 8);
-    stepLayout.setBackgroundColor(0xFF2D2D2D);
-    LinearLayout.LayoutParams stepParams = new LinearLayout.LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-    stepParams.setMargins(0, 4, 0, 4);
-    stepLayout.setLayoutParams(stepParams);
-    
-    TextView stepTitle = new TextView(this);
-    stepTitle.setText(title);
-    stepTitle.setTextSize(12);
-    stepTitle.setTextColor(Color.WHITE);
-    stepTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-    stepTitle.setPadding(0, 0, 0, 4);
-    stepLayout.addView(stepTitle);
-    
-    return stepLayout;
-  }
-  
-  /**
-   * Add configurable parameter slider to flow step
-   */
-  private void addConfigSlider(LinearLayout parent, String name, int min, int max, int defaultValue, String unit)
-  {
-    LinearLayout sliderLayout = new LinearLayout(this);
-    sliderLayout.setOrientation(LinearLayout.HORIZONTAL);
-    sliderLayout.setPadding(4, 2, 4, 2);
-    
-    TextView label = new TextView(this);
-    label.setText(name + ": " + defaultValue + unit);
-    label.setTextSize(10);
-    label.setTextColor(Color.LTGRAY);
-    label.setLayoutParams(new LinearLayout.LayoutParams(200, ViewGroup.LayoutParams.WRAP_CONTENT));
-    sliderLayout.addView(label);
-    
-    android.widget.SeekBar slider = new android.widget.SeekBar(this);
-    slider.setMax(max - min);
-    
-    // Check if we have an imported value for this parameter
-    Integer existingValue = _playgroundParams.get(name);
-    int initialValue = (existingValue != null) ? existingValue : defaultValue;
-    slider.setProgress(initialValue - min);
-    label.setText(name + ": " + initialValue + unit); // Update label with initial value
-    
-    // Store the initial value in the parameters map so export can find it
-    _playgroundParams.put(name, initialValue);
-    
-    slider.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-    slider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-        if (fromUser) {
-          int value = progress + min;
-          label.setText(name + ": " + value + unit);
-          // Store parameter for later application
-          _playgroundParams.put(name, value);
-          android.util.Log.d(TAG, "Playground parameter " + name + " changed to: " + value);
-        }
-      }
-      @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-      @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-    });
-    sliderLayout.addView(slider);
-    
-    parent.addView(sliderLayout);
-  }
-  
-  /**
-   * Show comprehensive algorithm playground modal
-   */
-  private void showPlaygroundModal()
-  {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("🎮 Algorithm Playground - Live Parameter Tuning");
-    
-    // Create scrollable content with all parameters
-    android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
-    LinearLayout modalLayout = new LinearLayout(this);
-    modalLayout.setOrientation(LinearLayout.VERTICAL);
-    modalLayout.setPadding(16, 16, 16, 16);
-    
-    // Add all configurable parameter groups
-    modalLayout.addView(createParameterGroup("🎯 Key Detection", new String[][]{
-      {"Key Zone Radius", "50", "200", "120", "px"},
-      {"Letter Confidence", "0", "100", "70", "%"},
-      {"Path Sampling Rate", "5", "50", "10", "points"}
-    }));
-    
-    modalLayout.addView(createParameterGroup("⚖️ Algorithm Weights", new String[][]{
-      {"Proximity Weight", "0", "500", "100", "%"},
-      {"Missing Key Penalty", "0", "2000", "1000", "×0.01"},
-      {"Extra Key Penalty", "0", "1000", "200", "×0.01"},
-      {"Order Penalty", "0", "1000", "500", "×0.01"},
-      {"Start Point Weight", "100", "1000", "300", "×0.01"}
-    }));
-    
-    // Add the main DTW algorithm component weights
-    modalLayout.addView(createParameterGroup("🎯 Main Algorithm Components", new String[][]{
-      {"DTW Weight", "0", "100", "40", "%"},
-      {"Gaussian Weight", "0", "100", "30", "%"},
-      {"N-gram Weight", "0", "100", "20", "%"},
-      {"Frequency Weight", "0", "100", "10", "%"}
-    }));
-    
-    modalLayout.addView(createParameterGroup("📐 Directional Analysis", new String[][]{
-      {"North/South Weight", "0", "200", "100", "%"},
-      {"East/West Weight", "0", "200", "100", "%"},
-      {"Diagonal Weight", "0", "200", "80", "%"}
-    }));
-    
-    modalLayout.addView(createParameterGroup("⏱️ Timing Analysis", new String[][]{
-      {"Stop Threshold", "50", "500", "150", "ms"},
-      {"Min Stop Duration", "25", "200", "50", "ms"},
-      {"Position Tolerance", "5", "50", "15", "px"}
-    }));
-    
-    modalLayout.addView(createParameterGroup("📐 Angle Detection", new String[][]{
-      {"Angle Threshold", "10", "90", "30", "°"},
-      {"Sharp Angle Limit", "45", "180", "90", "°"},
-      {"Analysis Window", "3", "10", "5", "points"}
-    }));
-    
-    // Add Import/Export buttons section with proper layout
-    LinearLayout importExportSection = new LinearLayout(this);
-    importExportSection.setOrientation(LinearLayout.VERTICAL);
-    importExportSection.setPadding(12, 12, 12, 12);
-    importExportSection.setBackgroundColor(0xFF1A4D1A); // Green background for settings
-    
-    TextView importExportTitle = new TextView(this);
-    importExportTitle.setText("📋 Global App Settings");
-    importExportTitle.setTextSize(14);
-    importExportTitle.setTextColor(Color.WHITE);
-    importExportTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-    importExportTitle.setPadding(0, 0, 0, 12);
-    importExportSection.addView(importExportTitle);
-    
-    LinearLayout buttonsLayout = new LinearLayout(this);
-    buttonsLayout.setOrientation(LinearLayout.HORIZONTAL);
-    buttonsLayout.setLayoutParams(new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT, 
-        LinearLayout.LayoutParams.WRAP_CONTENT));
-    
-    Button importButton = new Button(this);
-    importButton.setText("📥 Import");
-    importButton.setTextSize(12);
-    importButton.setTextColor(Color.WHITE);
-    importButton.setBackgroundColor(0xFF2E7D32);
-    LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(
-        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-    importParams.setMargins(0, 0, 8, 0);
-    importButton.setLayoutParams(importParams);
-    importButton.setOnClickListener(v -> importGlobalSettings());
-    
-    Button exportButton = new Button(this);
-    exportButton.setText("📤 Export");
-    exportButton.setTextSize(12);
-    exportButton.setTextColor(Color.WHITE);
-    exportButton.setBackgroundColor(0xFF388E3C);
-    LinearLayout.LayoutParams exportParams = new LinearLayout.LayoutParams(
-        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-    exportParams.setMargins(8, 0, 0, 0);
-    exportButton.setLayoutParams(exportParams);
-    exportButton.setOnClickListener(v -> exportGlobalSettings());
-    
-    buttonsLayout.addView(importButton);
-    buttonsLayout.addView(exportButton);
-    importExportSection.addView(buttonsLayout);
-    modalLayout.addView(importExportSection);
-    
-    // Add custom action buttons as a single row at the bottom
-    LinearLayout actionButtonsLayout = new LinearLayout(this);
-    actionButtonsLayout.setOrientation(LinearLayout.HORIZONTAL);
-    actionButtonsLayout.setPadding(16, 16, 16, 16);
-    actionButtonsLayout.setLayoutParams(new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT, 
-        LinearLayout.LayoutParams.WRAP_CONTENT));
-    
-    // Apply button
-    Button applyButton = new Button(this);
-    applyButton.setText("✅");
-    applyButton.setTextSize(16);
-    applyButton.setBackgroundColor(0xFF4CAF50);
-    applyButton.setTextColor(Color.WHITE);
-    LinearLayout.LayoutParams applyParams = new LinearLayout.LayoutParams(
-        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-    applyParams.setMargins(0, 0, 8, 0);
-    applyButton.setLayoutParams(applyParams);
-    applyButton.setOnClickListener(v -> {
-      applyPlaygroundChanges();
-      regenerateCurrentWordAnalysis();
-    });
-    
-    // Reset button
-    Button resetButton = new Button(this);
-    resetButton.setText("🔄");
-    resetButton.setTextSize(16);
-    resetButton.setBackgroundColor(0xFF888888);
-    resetButton.setTextColor(Color.WHITE);
-    LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(
-        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-    resetParams.setMargins(4, 0, 4, 0);
-    resetButton.setLayoutParams(resetParams);
-    resetButton.setOnClickListener(v -> {
-      resetPlaygroundToDefaults();
-      regenerateCurrentWordAnalysis();
-    });
-    
-    // Cancel button
-    Button cancelButton = new Button(this);
-    cancelButton.setText("❌");
-    cancelButton.setTextSize(16);
-    cancelButton.setBackgroundColor(0xFF757575);
-    cancelButton.setTextColor(Color.WHITE);
-    LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
-        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-    cancelParams.setMargins(8, 0, 0, 0);
-    cancelButton.setLayoutParams(cancelParams);
-    
-    actionButtonsLayout.addView(applyButton);
-    actionButtonsLayout.addView(resetButton);
-    actionButtonsLayout.addView(cancelButton);
-    modalLayout.addView(actionButtonsLayout);
-    
-    scrollView.addView(modalLayout);
-    builder.setView(scrollView);
-    
-    // Set cancel button to close dialog (done after dialog is created)
-    AlertDialog dialog = builder.create();
-    cancelButton.setOnClickListener(v -> dialog.dismiss());
-    dialog.show();
-  }
-  
-  /**
-   * Import global app parameter settings from SwipeWeightConfig
-   */
-  private void importGlobalSettings()
-  {
-    try
-    {
-      // Load algorithm component weights from SwipeWeightConfig
-      SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-      _playgroundParams.put("DTW Weight", (int)(weightConfig.getDtwWeight() * 100));
-      _playgroundParams.put("Gaussian Weight", (int)(weightConfig.getGaussianWeight() * 100));
-      _playgroundParams.put("N-gram Weight", (int)(weightConfig.getNgramWeight() * 100));
-      _playgroundParams.put("Frequency Weight", (int)(weightConfig.getFrequencyWeight() * 100));
-      
-      // Load other playground parameters from saved global settings
-      SharedPreferences prefs = getSharedPreferences("playground_global_settings", MODE_PRIVATE);
-      String[] otherParams = {
-        "Key Zone Radius", "Missing Key Penalty", "Extra Key Penalty", 
-        "Order Penalty", "Start Point Weight", "Proximity Weight", "Path Sampling Rate"
-      };
-      
-      int importedCount = 4; // Algorithm weights count
-      StringBuilder importedSummary = new StringBuilder();
-      importedSummary.append("Algorithm Weights:\n").append(weightConfig.toString()).append("\n\n");
-      
-      for (String paramName : otherParams) {
-        String prefKey = "playground_" + paramName.replace(" ", "_");
-        if (prefs.contains(prefKey)) {
-          int value = prefs.getInt(prefKey, -1);
-          _playgroundParams.put(paramName, value);
-          importedCount++;
-          importedSummary.append("• ").append(paramName).append(": ").append(value).append("\n");
-        }
-      }
-      
-      if (importedCount > 4) {
-        importedSummary.append("\nOther Parameters: ").append(importedCount - 4).append(" loaded");
-      } else {
-        importedSummary.append("\nOther Parameters: None saved (using defaults)");
-      }
-      
-      Toast.makeText(this, "✅ Imported " + importedCount + " global parameters!\n\n" + 
-        importedSummary.toString() + "\n\nOpen playground to see imported values.", Toast.LENGTH_LONG).show();
-      
-      Log.d(TAG, "Imported " + importedCount + " parameters successfully");
-      Log.d(TAG, "Algorithm weights: " + weightConfig.toString());
-    }
-    catch (Exception e)
-    {
-      Toast.makeText(this, "❌ Failed to import global settings: " + e.getMessage(), Toast.LENGTH_LONG).show();
-      Log.e(TAG, "Error importing global settings", e);
-    }
-  }
-  
-  /**
-   * Export current playground parameter settings to global app settings
-   */
-  private void exportGlobalSettings()
-  {
-    // Debug: Log all playground params
-    Log.d(TAG, "=== Export Debug Info ===");
-    Log.d(TAG, "Total playground params: " + _playgroundParams.size());
-    for (Map.Entry<String, Integer> entry : _playgroundParams.entrySet()) {
-      Log.d(TAG, "Param: " + entry.getKey() + " = " + entry.getValue());
-    }
-    
-    if (_playgroundParams.isEmpty()) {
-      Toast.makeText(this, "❌ No playground parameters to export.\nAdjust parameters in playground first.", Toast.LENGTH_LONG).show();
-      return;
-    }
-    
-    // Collect all functional playground parameters
-    Map<String, Integer> functionalParams = new HashMap<>();
-    String[] workingParams = {
-      "Key Zone Radius", "Missing Key Penalty", "Extra Key Penalty", 
-      "Order Penalty", "Start Point Weight", "Proximity Weight", "Path Sampling Rate",
-      "DTW Weight", "Gaussian Weight", "N-gram Weight", "Frequency Weight"
-    };
-    
-    StringBuilder summary = new StringBuilder();
-    summary.append("Parameters to export:\n\n");
-    
-    for (String paramName : workingParams) {
-      Integer value = _playgroundParams.get(paramName);
-      if (value != null) {
-        functionalParams.put(paramName, value);
-        summary.append("• ").append(paramName).append(": ").append(value);
-        if (paramName.contains("Weight") && !paramName.equals("Start Point Weight")) {
-          summary.append("%");
-        } else if (paramName.contains("Penalty") || paramName.equals("Start Point Weight")) {
-          summary.append("×0.01");
-        } else if (paramName.equals("Key Zone Radius")) {
-          summary.append("px");
-        } else if (paramName.equals("Path Sampling Rate")) {
-          summary.append(" points");
-        }
-        summary.append("\n");
-      }
-    }
-    
-    if (functionalParams.isEmpty()) {
-      Toast.makeText(this, "❌ No functional parameters found to export.\nTotal params: " + _playgroundParams.size(), Toast.LENGTH_LONG).show();
-      return;
-    }
-    
-    // Show confirmation dialog before overwriting global settings
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("⚠️ Export " + functionalParams.size() + " Parameters?");
-    builder.setMessage("This will save your playground settings as the new global defaults.\n\n" +
-      summary.toString() + "\n" +
-      "Continue with export?");
-    
-    builder.setPositiveButton("✅ Export", new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        performComprehensiveExport(functionalParams);
-      }
-    });
-    
-    builder.setNegativeButton("❌ Cancel", null);
-    builder.show();
-  }
-  
-  /**
-   * Perform comprehensive export of all playground parameters
-   */
-  private void performComprehensiveExport(Map<String, Integer> functionalParams)
-  {
-    try
-    {
-      SharedPreferences prefs = getSharedPreferences("playground_global_settings", MODE_PRIVATE);
-      SharedPreferences.Editor editor = prefs.edit();
-      
-      // Export algorithm component weights to SwipeWeightConfig
-      Integer dtwParam = functionalParams.get("DTW Weight");
-      Integer gaussianParam = functionalParams.get("Gaussian Weight");
-      Integer ngramParam = functionalParams.get("N-gram Weight");
-      Integer frequencyParam = functionalParams.get("Frequency Weight");
-      
-      if (dtwParam != null && gaussianParam != null && ngramParam != null && frequencyParam != null) {
-        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-        float dtwWeight = dtwParam / 100.0f;
-        float gaussianWeight = gaussianParam / 100.0f;
-        float ngramWeight = ngramParam / 100.0f;
-        float frequencyWeight = frequencyParam / 100.0f;
-        
-        weightConfig.saveWeights(dtwWeight, gaussianWeight, ngramWeight, frequencyWeight);
-        Log.d(TAG, "Saved algorithm weights: " + weightConfig.toString());
-      }
-      
-      // Export all other playground parameters to separate storage
-      int savedCount = 0;
-      StringBuilder savedParams = new StringBuilder();
-      
-      for (Map.Entry<String, Integer> entry : functionalParams.entrySet()) {
-        String paramName = entry.getKey();
-        Integer value = entry.getValue();
-        
-        // Skip algorithm weights (already handled above)
-        if (!paramName.equals("DTW Weight") && !paramName.equals("Gaussian Weight") && 
-            !paramName.equals("N-gram Weight") && !paramName.equals("Frequency Weight")) {
-          
-          editor.putInt("playground_" + paramName.replace(" ", "_"), value);
-          savedParams.append("• ").append(paramName).append(": ").append(value).append("\n");
-          savedCount++;
-        }
-      }
-      
-      editor.apply();
-      
-      Toast.makeText(this, "✅ Exported " + functionalParams.size() + " playground parameters!\n" +
-        "Algorithm weights saved to SwipeWeightConfig.\n" +
-        "Other parameters saved to global settings.\n\n" +
-        "These settings will now be used in normal typing.", Toast.LENGTH_LONG).show();
-      
-      Log.d(TAG, "Exported " + functionalParams.size() + " parameters successfully");
-      Log.d(TAG, "Algorithm weights exported, " + savedCount + " other parameters saved");
-    }
-    catch (Exception e)
-    {
-      Toast.makeText(this, "❌ Failed to export parameters: " + e.getMessage(), Toast.LENGTH_LONG).show();
-      Log.e(TAG, "Error exporting parameters", e);
-    }
-  }
-  
-  /**
-   * Create parameter group with multiple sliders
-   */
-  private LinearLayout createParameterGroup(String title, String[][] params)
-  {
-    LinearLayout groupLayout = new LinearLayout(this);
-    groupLayout.setOrientation(LinearLayout.VERTICAL);
-    groupLayout.setPadding(8, 8, 8, 8);
-    groupLayout.setBackgroundColor(0xFF2D2D2D);
-    
-    TextView groupTitle = new TextView(this);
-    groupTitle.setText(title);
-    groupTitle.setTextSize(14);
-    groupTitle.setTextColor(Color.CYAN);
-    groupTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-    groupTitle.setPadding(0, 0, 0, 8);
-    groupLayout.addView(groupTitle);
-    
-    for (String[] param : params)
-    {
-      String name = param[0];
-      int min = Integer.parseInt(param[1]);
-      int max = Integer.parseInt(param[2]);
-      int defaultVal = Integer.parseInt(param[3]);
-      String unit = param[4];
-      
-      addConfigSlider(groupLayout, name, min, max, defaultVal, unit);
-    }
-    
-    return groupLayout;
-  }
-  
-  /**
-   * Apply playground parameter changes to shared recognizer (COMPREHENSIVE)
-   */
-  private void applyPlaygroundChanges()
-  {
-    if (_sharedRecognizer != null && !_playgroundParams.isEmpty())
-    {
-      // Use comprehensive parameter application method
-      _sharedRecognizer.applyParameterMap(_playgroundParams);
-      
-      // CRITICAL: Also update DTW predictor with weight changes
-      Integer dtwParam = _playgroundParams.get("DTW Weight");
-      Integer gaussianParam = _playgroundParams.get("Gaussian Weight");
-      Integer ngramParam = _playgroundParams.get("N-gram Weight");
-      Integer frequencyParam = _playgroundParams.get("Frequency Weight");
-      
-      if (dtwParam != null && gaussianParam != null && ngramParam != null && frequencyParam != null) {
-        SwipeWeightConfig weightConfig = SwipeWeightConfig.getInstance(this);
-        // Update the weight config that DTW predictor uses
-        float dtwWeight = dtwParam / 100.0f;
-        float gaussianWeight = gaussianParam / 100.0f;
-        float ngramWeight = ngramParam / 100.0f;
-        float frequencyWeight = frequencyParam / 100.0f;
-        
-        // Save to config so DTW predictor picks up changes
-        weightConfig.saveWeights(dtwWeight, gaussianWeight, ngramWeight, frequencyWeight);
-        
-        // Update DTW predictor's weight config reference
-        if (_dtwPredictor != null) {
-          _dtwPredictor.setWeightConfig(weightConfig);
-        }
-        
-        android.util.Log.d(TAG, "Updated DTW predictor weights: " + weightConfig.toString());
-      }
-      
-      android.util.Log.d(TAG, "Applied " + _playgroundParams.size() + " playground parameter changes");
-      Toast.makeText(this, "Parameters applied - algorithm updated", Toast.LENGTH_SHORT).show();
-    }
-  }
-  
-  /**
-   * Reset playground parameters to defaults (IMPLEMENTED)
-   */
-  private void resetPlaygroundToDefaults()
-  {
-    if (_sharedRecognizer != null)
-    {
-      // Reset all parameters to production defaults (INCREASED key zone for better letter detection)
-      _sharedRecognizer.setKeyZoneRadius(180.0);          // Larger detection area for better letter recognition
-      _sharedRecognizer.setMissingKeyPenalty(10.0);       // Strong penalty for missing letters
-      _sharedRecognizer.setExtraKeyPenalty(2.0);          // Moderate penalty for extra letters
-      _sharedRecognizer.setOrderPenalty(5.0);             // Moderate order enforcement
-      _sharedRecognizer.setStartPointWeight(3.0);         // Strong start emphasis
-      _sharedRecognizer.setProximityWeight(1.0);          // Balanced proximity weight
-      _sharedRecognizer.setPathSampleDistance(5.0);       // More frequent sampling for better detection
-      
-      // Clear playground parameter storage
-      _playgroundParams.clear();
-      
-      android.util.Log.d(TAG, "Reset all playground parameters to production defaults");
-      Toast.makeText(this, "Parameters reset to production defaults", Toast.LENGTH_SHORT).show();
-    }
-  }
-  
-  /**
-   * Regenerate analysis for current word with new parameters (FUNCTIONAL)
-   */
-  private void regenerateCurrentWordAnalysis()
-  {
-    // Re-run the full analysis with updated algorithm parameters
-    if (_sharedRecognizer != null && _lastSwipePoints != null && !_lastSwipePoints.isEmpty())
-    {
-      android.util.Log.d(TAG, "Regenerating analysis with updated parameters for word: " + _currentWord);
-      
-      // Re-run addTemplateComparison with new parameters
-      try 
-      {
-        addTemplateComparison(_currentWord, _lastSwipePoints);
-        Toast.makeText(this, "✅ Recalculated with new parameters - check updated equations!", Toast.LENGTH_LONG).show();
-      }
-      catch (Exception e)
-      {
-        android.util.Log.e(TAG, "Failed to regenerate analysis: " + e.getMessage());
-        Toast.makeText(this, "❌ Failed to recalculate: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-      }
-    }
-    else
-    {
-      Toast.makeText(this, "No recent swipe to recalculate", Toast.LENGTH_SHORT).show();
     }
   }
 }

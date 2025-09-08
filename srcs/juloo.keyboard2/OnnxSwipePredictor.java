@@ -129,8 +129,7 @@ public class OnnxSwipePredictor
   {
     if (!_isModelLoaded)
     {
-      Log.w(TAG, "ONNX models not loaded, cannot predict");
-      return createEmptyResult();
+      throw new RuntimeException("ONNX models not loaded - no fallback available");
     }
     
     try
@@ -162,7 +161,7 @@ public class OnnxSwipePredictor
     catch (Exception e)
     {
       Log.e(TAG, "Neural prediction failed", e);
-      return createEmptyResult();
+      throw new RuntimeException("Neural prediction failed: " + e.getMessage());
     }
   }
   
