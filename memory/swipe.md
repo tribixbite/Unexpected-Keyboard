@@ -397,3 +397,276 @@ Input B (Key Path) → Embedding(16) → Masking → GRU(64)
 - With Gaussian probability: 70-80% (matching FlorisBoard)
 - Significant reduction in false key detections
 - Better handling of fast vs slow gestures
+
+---
+
+# 🚀 ONNX TRANSFORMER REPLACEMENT STRATEGY
+
+## EXECUTIVE SUMMARY
+
+**OBJECTIVE**: Complete replacement of current Bayesian/DTW-based swipe prediction pipeline with state-of-the-art ONNX transformer encoder-decoder architecture demonstrated in the web demo.
+
+**KEY INSIGHT**: The `web_demo/swipe-onnx.html` already implements a working transformer with beam search that can be ported to Android with ONNX Runtime.
+
+**CRITICAL REQUIREMENTS**:
+- ✅ **Zero Breaking Changes**: All existing UI/UX preserved
+- ✅ **Backward Compatibility**: Legacy system available as automatic fallback 
+- ✅ **Performance**: Neural predictions faster than current DTW
+- ✅ **Accuracy**: Measurable improvement over current Bayesian system
+
+---
+
+## 🎯 REPLACEMENT ARCHITECTURE
+
+### Current System (TO REPLACE)
+```
+┌─────────────────────────────────────────────────────────┐
+│                LEGACY PIPELINE                          │
+├─────────────────────────────────────────────────────────┤
+│ SwipeTypingEngine                                       │
+│  ├─ KeyboardSwipeRecognizer (Bayesian P(word|swipe))   │
+│  ├─ DTWPredictor (Dynamic Time Warping)                │
+│  ├─ GaussianKeyModel (Probabilistic key detection)     │
+│  ├─ BigramModel/NgramModel (Language modeling)         │
+│  └─ SwipeScorer (Multi-weight scoring)                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Target System (NEW NEURAL PIPELINE)
+```
+┌─────────────────────────────────────────────────────────┐
+│                ONNX TRANSFORMER PIPELINE               │
+├─────────────────────────────────────────────────────────┤
+│ NeuralSwipeTypingEngine                                 │
+│  ├─ OnnxSwipePredictor                                  │
+│  │   ├─ SwipeTrajectoryProcessor                        │
+│  │   │   ├─ Feature extraction: [x,y,vx,vy,ax,ay]      │
+│  │   │   ├─ Sequence normalization to MAX_LENGTH       │
+│  │   │   └─ Nearest key tokenization                    │
+│  │   ├─ ONNX Runtime Android                           │
+│  │   │   ├─ Transformer Encoder (trajectory → memory)  │
+│  │   │   └─ Transformer Decoder (memory → words)       │
+│  │   └─ Beam Search Decoder (width=8, maxlen=35)       │
+│  └─ Fallback to Legacy System (if ONNX fails)          │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📋 COMPONENT MAPPING
+
+| **Current Component** | **ONNX Replacement** | **Status** |
+|----------------------|----------------------|------------|
+| `KeyboardSwipeRecognizer.java` | `OnnxSwipePredictor.java` | 🔄 Replace |
+| `DTWPredictor.java` | `SwipeTrajectoryProcessor.java` | 🔄 Replace |
+| `GaussianKeyModel.java` | Neural encoder features | 🔄 Replace |
+| `BigramModel.java` | Transformer language model | 🔄 Replace |
+| `SwipeTypingEngine.java` | `NeuralSwipeTypingEngine.java` | 🔄 Replace |
+| `SwipeCalibrationActivity.java` | **PRESERVE UI** - swap backend | ✅ Preserve |
+| `SwipeWeightConfig.java` | Neural hyperparameters | 🔄 Adapt |
+| `SwipeMLData/DataStore.java` | **PRESERVE** for training | ✅ Preserve |
+| All Settings UI | **PRESERVE** - adapt parameters | ✅ Preserve |
+
+---
+
+## 🔧 IMPLEMENTATION PHASES
+
+### **PHASE 1: FOUNDATION** (Week 1-2)
+**Infrastructure Setup:**
+1. ✅ Add ONNX Runtime Android dependency to `build.gradle`
+2. ✅ Create base neural prediction classes:
+   - `OnnxSwipePredictor.java`
+   - `SwipeTrajectoryProcessor.java` 
+   - `NeuralSwipeTypingEngine.java`
+3. ✅ Implement tokenizer and model loading infrastructure
+4. ✅ Create feature extraction pipeline matching web demo
+
+**Deliverable**: Basic ONNX integration without replacing existing system
+
+### **PHASE 2: NEURAL PREDICTOR IMPLEMENTATION** (Week 3-4)
+**Core Prediction Engine:**
+1. ✅ Port web demo's transformer encoder/decoder logic to Java
+2. ✅ Implement beam search decoding algorithm (width=8, maxlen=35)
+3. ✅ Add trajectory normalization and feature processing
+4. ✅ Create prediction result mapping to existing `WordPredictor.PredictionResult` interface
+
+**Key Technical Details**:
+```java
+// Feature extraction matching web demo
+trajectoryData[baseIdx + 0] = point.x;                    // Position X
+trajectoryData[baseIdx + 1] = point.y;                    // Position Y 
+trajectoryData[baseIdx + 2] = point.x - prevPoint.x;      // Velocity X
+trajectoryData[baseIdx + 3] = point.y - prevPoint.y;      // Velocity Y
+trajectoryData[baseIdx + 4] = vx - prevVx;                // Acceleration X
+trajectoryData[baseIdx + 5] = vy - prevVy;                // Acceleration Y
+```
+
+**Deliverable**: Functional neural predictor with same interface as legacy system
+
+### **PHASE 3: CALIBRATION INTEGRATION** (Week 5)
+**Seamless UI Preservation:**
+1. ✅ Modify `SwipeCalibrationActivity.java` to use new neural predictor
+2. ✅ Preserve ALL existing UI elements:
+   - Browse/navigate recorded swipes
+   - Delete individual swipes functionality  
+   - Train button (adapt to neural training)
+   - Export to clipboard
+3. ✅ Ensure data collection continues to work for future model improvements
+4. ✅ Maintain all existing calibration workflows
+
+**CRITICAL**: Zero UI changes - users should not notice any difference in calibration page
+
+**Deliverable**: Calibration activity fully functional with neural backend
+
+### **PHASE 4: SETTINGS MIGRATION** (Week 6) 
+**Replace Legacy Weights with Neural Controls:**
+
+**Remove from Settings:**
+- DTW algorithm weights (shape, location, velocity)
+- Gaussian model parameters (sigma factors, min probability)
+- N-gram smoothing parameters
+- Manual weight sliders and normalization
+
+**Add to Settings:**
+- Neural prediction confidence threshold (0.1-0.9)
+- Beam search width (1-16)
+- Maximum sequence length (20-50)
+- Model selection (if multiple models available)
+- Enable/disable neural prediction toggle
+
+**Preserve:**
+- All existing preference infrastructure
+- Settings UI layouts and navigation
+- User data and calibration history
+
+**Deliverable**: Clean settings interface focused on neural parameters
+
+### **PHASE 5: INTEGRATION & TESTING** (Week 7-8)
+**Production Integration:**
+1. ✅ Modify `SwipeTypingEngine.predict()` to dispatch between neural/legacy:
+```java
+public WordPredictor.PredictionResult predict(SwipeInput input) {
+    if (config.useNeuralPrediction && isOnnxModelLoaded) {
+        return neuralPredictor.predict(input);
+    } else {
+        return legacyPredictor.predict(input); // automatic fallback
+    }
+}
+```
+2. ✅ Add configuration flag for neural prediction enable/disable
+3. ✅ Implement graceful fallback if ONNX model loading fails
+4. ✅ Comprehensive testing with existing calibration data
+
+**Deliverable**: Hybrid system with seamless neural/legacy switching
+
+### **PHASE 6: DEPLOYMENT & OPTIMIZATION** (Week 9-10)
+**Production Readiness:**
+1. ✅ Model size optimization and quantization (INT8)
+2. ✅ Memory usage profiling and optimization (<20MB target)
+3. ✅ Performance benchmarking vs legacy system (<50ms target)
+4. ✅ A/B testing framework for gradual rollout
+
+**Performance Targets**:
+- Inference time: <50ms (vs current DTW ~100ms)
+- Model loading: <500ms
+- Memory overhead: <20MB
+- Accuracy improvement: >20% vs current system
+
+**Deliverable**: Production-ready neural swipe system
+
+---
+
+## ⚠️ CRITICAL SUCCESS FACTORS
+
+### **1. ZERO BREAKING CHANGES**
+- All existing UI/UX preserved exactly
+- Same keyboard layouts and visual appearance
+- Identical calibration workflow and data export
+- No changes to user interaction patterns
+
+### **2. BACKWARD COMPATIBILITY** 
+- Legacy system available as automatic fallback
+- Existing calibration data fully compatible
+- Settings migration preserves user preferences
+- Graceful degradation if neural models unavailable
+
+### **3. PERFORMANCE REQUIREMENTS**
+- Neural predictions faster than current DTW system
+- Memory efficient model loading and caching
+- Async processing prevents UI blocking
+- Battery usage equivalent or better
+
+### **4. ACCURACY IMPROVEMENTS**
+- Measurable improvement over current Bayesian approach
+- Better handling of complex swipe patterns
+- Improved recognition of longer words
+- Enhanced personalization capabilities
+
+---
+
+## 🛡️ RISK MITIGATION
+
+| **Risk** | **Mitigation Strategy** |
+|----------|------------------------|
+| Model loading failures | Automatic fallback to legacy predictor |
+| Memory constraints | Model pruning, quantization, lazy loading |
+| Performance regression | Async processing, timeout fallbacks |
+| User disruption | Gradual rollout with opt-out capability |
+| Calibration data loss | Backward-compatible data formats |
+| Settings corruption | Migration scripts with validation |
+
+---
+
+## 🔗 KEY INTEGRATION POINTS
+
+### **Main Prediction Interface** (MUST PRESERVE)
+```java
+public WordPredictor.PredictionResult predict(SwipeInput input)
+```
+
+### **Configuration Integration** (MUST PRESERVE)
+```java
+public void setConfig(Config config)
+public void setKeyboardDimensions(float width, float height)
+public void setRealKeyPositions(Map<Character, PointF> realPositions)
+```
+
+### **Calibration Integration** (UI PRESERVED, BACKEND SWAPPED)
+- Same UI elements and workflows
+- Neural predictor called instead of legacy
+- Data collection format maintained
+- Export functionality preserved
+
+---
+
+## 📊 EXPECTED OUTCOMES
+
+### **Immediate Benefits**:
+- 🚀 **50%+ faster predictions** (neural vs DTW)
+- 🎯 **20%+ accuracy improvement** (transformer vs Bayesian)
+- 🧠 **Better complex pattern recognition** (multi-character sequences)
+- ⚡ **Reduced battery usage** (efficient ONNX inference)
+
+### **Long-term Benefits**:
+- 🔄 **Continuous model improvements** (retrain with user data)
+- 🌐 **Multi-language support** (unified transformer architecture)
+- 📱 **Cross-device consistency** (same models across platforms)
+- 🛠️ **Advanced personalization** (neural adaptation)
+
+---
+
+## 📚 TECHNICAL REFERENCES
+
+### **Web Demo Implementation**: `/web_demo/swipe-onnx.html`
+- Working transformer encoder/decoder with beam search
+- Feature extraction: trajectory + velocity + acceleration
+- ONNX Runtime Web integration example
+- Tokenizer and sequence processing reference
+
+### **Current Android Components**: `/srcs/juloo.keyboard2/`
+- `SwipeTypingEngine.java` - Main integration point
+- `SwipeCalibrationActivity.java` - UI preservation target
+- `SwipeMLData*.java` - Data collection infrastructure
+- `Config.java` - Settings integration
+
+---
