@@ -51,7 +51,7 @@ public class NeuralSwipeTypingEngine
       
       if (!neuralReady)
       {
-        throw new RuntimeException("Failed to initialize ONNX neural models - no fallback available");
+        throw new RuntimeException("Failed to initialize ONNX neural models");
       }
       
       _initialized = true;
@@ -103,7 +103,7 @@ public class NeuralSwipeTypingEngine
     }
     catch (Exception e)
     {
-      Log.e(TAG, "Neural prediction failed - no fallback available", e);
+      Log.e(TAG, "Neural prediction failed", e);
       throw new RuntimeException("Neural prediction failed: " + e.getMessage());
     }
   }
