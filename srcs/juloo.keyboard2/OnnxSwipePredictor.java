@@ -265,10 +265,21 @@ public class OnnxSwipePredictor
   {
     try
     {
+      Log.d(TAG, "Loading ONNX model: " + modelPath);
       InputStream inputStream = _context.getAssets().open(modelPath);
-      byte[] modelData = new byte[inputStream.available()];
-      inputStream.read(modelData);
+      int available = inputStream.available();
+      Log.d(TAG, "Model file size: " + available + " bytes");
+      
+      byte[] modelData = new byte[available];
+      int totalRead = 0;
+      while (totalRead < available) {
+        int read = inputStream.read(modelData, totalRead, available - totalRead);
+        if (read == -1) break;
+        totalRead += read;
+      }
       inputStream.close();
+      
+      Log.d(TAG, "Successfully loaded " + totalRead + " bytes from " + modelPath);
       return modelData;
     }
     catch (IOException e)
