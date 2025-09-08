@@ -20,7 +20,6 @@ Generated version info:  ()
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
 > Task :packageDebugResources
-> Task :mergeDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest FROM-CACHE
@@ -33,26 +32,19 @@ Generated version info:  ()
 > Task :compressDebugAssets FROM-CACHE
 > Task :parseDebugLocalResources
 > Task :processDebugJavaRes NO-SOURCE
+> Task :mergeDebugResources
 > Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeDebugJniLibFolders
 > Task :checkDebugDuplicateClasses
+> Task :mergeDebugJniLibFolders
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
+> Task :mergeDebugJavaResource
 > Task :writeDebugSigningConfigVersions
 > Task :mergeDebugNativeLibs
-> Task :mergeDebugJavaResource
 
 > Task :stripDebugDebugSymbols
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
-[CXX1102] Location specified by ndk.dir (/data/data/com.termux/files/home/android-sdk/ndk) did not contain a valid NDK and couldn't be used
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
@@ -69,5 +61,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 42s
+BUILD SUCCESSFUL in 29s
 34 actionable tasks: 24 executed, 10 from cache

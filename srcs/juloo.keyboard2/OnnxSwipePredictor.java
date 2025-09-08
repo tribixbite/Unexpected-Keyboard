@@ -80,20 +80,34 @@ public class OnnxSwipePredictor
     {
       Log.d(TAG, "Loading ONNX models...");
       
-      // Load encoder model
-      byte[] encoderModelData = loadModelFromAssets("models/swipe_encoder.onnx");
+      // Load encoder model (using correct name from web demo)
+      byte[] encoderModelData = loadModelFromAssets("models/swipe_model_character_quant.onnx");
       if (encoderModelData != null)
       {
-        _encoderSession = _ortEnvironment.createSession(encoderModelData);
+        OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
+        _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
         Log.d(TAG, "Encoder model loaded successfully");
+        Log.d(TAG, "Encoder inputs: " + _encoderSession.getInputNames());
+        Log.d(TAG, "Encoder outputs: " + _encoderSession.getOutputNames());
+      }
+      else
+      {
+        Log.e(TAG, "Failed to load encoder model data");
       }
       
-      // Load decoder model
-      byte[] decoderModelData = loadModelFromAssets("models/swipe_decoder.onnx");
+      // Load decoder model (using correct name from web demo)
+      byte[] decoderModelData = loadModelFromAssets("models/swipe_decoder_character_quant.onnx");
       if (decoderModelData != null)
       {
-        _decoderSession = _ortEnvironment.createSession(decoderModelData);
+        OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
+        _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
         Log.d(TAG, "Decoder model loaded successfully");
+        Log.d(TAG, "Decoder inputs: " + _decoderSession.getInputNames());
+        Log.d(TAG, "Decoder outputs: " + _decoderSession.getOutputNames());
+      }
+      else
+      {
+        Log.e(TAG, "Failed to load decoder model data");
       }
       
       // Load tokenizer configuration
@@ -158,20 +172,20 @@ public class OnnxSwipePredictor
         encoderInputs.put("nearest_keys", nearestKeysTensor);
         encoderInputs.put("src_mask", srcMaskTensor);
         
-        encoderResult = _encoderSession.run(encoderInputs);
-      
-        // Run beam search decoding
-        List<BeamSearchCandidate> candidates = runBeamSearch(encoderResult, features);
-        
-        // Convert to prediction result
-        return createPredictionResult(candidates);
+        // Run encoder inference with try-with-resources
+        try (OrtSession.Result encoderResults = _encoderSession.run(encoderInputs)) {
+          // Run beam search decoding
+          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, features);
+          
+          // Convert to prediction result
+          return createPredictionResult(candidates);
+        }
         
       } finally {
         // Proper memory cleanup
         if (trajectoryTensor != null) trajectoryTensor.close();
         if (nearestKeysTensor != null) nearestKeysTensor.close();
         if (srcMaskTensor != null) srcMaskTensor.close();
-        if (encoderResult != null) encoderResult.close();
       }
     }
     catch (Exception e)
@@ -292,49 +306,64 @@ public class OnnxSwipePredictor
   private OnnxTensor createTrajectoryTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features) 
     throws OrtException
   {
-    float[] trajectoryData = new float[MAX_SEQUENCE_LENGTH * TRAJECTORY_FEATURES];
+    // Create direct buffer as recommended by ONNX docs
+    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH * TRAJECTORY_FEATURES * 4); // 4 bytes per float
+    byteBuffer.order(java.nio.ByteOrder.nativeOrder());
+    java.nio.FloatBuffer buffer = byteBuffer.asFloatBuffer();
     
     for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
     {
-      int baseIdx = i * TRAJECTORY_FEATURES;
-      
       if (i < features.normalizedPoints.size())
       {
         SwipeTrajectoryProcessor.TrajectoryPoint point = features.normalizedPoints.get(i);
-        trajectoryData[baseIdx + 0] = point.x;
-        trajectoryData[baseIdx + 1] = point.y;
-        trajectoryData[baseIdx + 2] = point.vx;
-        trajectoryData[baseIdx + 3] = point.vy;
-        trajectoryData[baseIdx + 4] = point.ax;
-        trajectoryData[baseIdx + 5] = point.ay;
+        buffer.put(point.x);
+        buffer.put(point.y);
+        buffer.put(point.vx);
+        buffer.put(point.vy);
+        buffer.put(point.ax);
+        buffer.put(point.ay);
       }
-      // Padding handled by zero initialization
+      else
+      {
+        // Padding with zeros
+        buffer.put(0.0f); // x
+        buffer.put(0.0f); // y
+        buffer.put(0.0f); // vx
+        buffer.put(0.0f); // vy
+        buffer.put(0.0f); // ax
+        buffer.put(0.0f); // ay
+      }
     }
     
+    buffer.rewind();
     long[] shape = {1, MAX_SEQUENCE_LENGTH, TRAJECTORY_FEATURES};
-    return OnnxTensor.createTensor(_ortEnvironment, java.nio.FloatBuffer.wrap(trajectoryData), shape);
+    return OnnxTensor.createTensor(_ortEnvironment, buffer, shape);
   }
   
   private OnnxTensor createNearestKeysTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
-    long[] nearestKeysData = new long[MAX_SEQUENCE_LENGTH];
+    // Create direct buffer as recommended by ONNX docs
+    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH * 8); // 8 bytes per long
+    byteBuffer.order(java.nio.ByteOrder.nativeOrder());
+    java.nio.LongBuffer buffer = byteBuffer.asLongBuffer();
     
     for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
     {
       if (i < features.nearestKeys.size())
       {
         char key = features.nearestKeys.get(i);
-        nearestKeysData[i] = _tokenizer.charToIndex(key);
+        buffer.put(_tokenizer.charToIndex(key));
       }
       else
       {
-        nearestKeysData[i] = PAD_IDX; // Padding
+        buffer.put(PAD_IDX); // Padding
       }
     }
     
+    buffer.rewind();
     long[] shape = {1, MAX_SEQUENCE_LENGTH};
-    return OnnxTensor.createTensor(_ortEnvironment, java.nio.LongBuffer.wrap(nearestKeysData), shape);
+    return OnnxTensor.createTensor(_ortEnvironment, buffer, shape);
   }
   
   private OnnxTensor createSourceMaskTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)

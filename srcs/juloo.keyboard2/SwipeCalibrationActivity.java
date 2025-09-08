@@ -130,7 +130,39 @@ public class SwipeCalibrationActivity extends Activity
     getWindowManager().getDefaultDisplay().getMetrics(metrics);
     _screenWidth = metrics.widthPixels;
     _screenHeight = metrics.heightPixels;
-    _keyboardHeight = (int)(_screenHeight * 0.4f); // 40% of screen
+    
+    // Load user's keyboard height setting properly
+    FoldStateTracker foldTracker = new FoldStateTracker(this);
+    boolean foldableUnfolded = foldTracker.isUnfolded();
+    
+    // Get keyboard height percentage from user settings
+    boolean isLandscape = getResources().getConfiguration().orientation == 
+                          android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    
+    int keyboardHeightPref;
+    if (isLandscape)
+    {
+      String key = foldableUnfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape";
+      keyboardHeightPref = prefs.getInt(key, 50);
+      Log.d(TAG, "Reading landscape height from key '" + key + "': " + keyboardHeightPref);
+    }
+    else
+    {
+      String key = foldableUnfolded ? "keyboard_height_unfolded" : "keyboard_height";
+      keyboardHeightPref = prefs.getInt(key, 35);
+      Log.d(TAG, "Reading portrait height from key '" + key + "': " + keyboardHeightPref);
+    }
+    
+    // Calculate keyboard height using user setting
+    float keyboardHeightPercent = keyboardHeightPref / 100.0f;
+    _keyboardHeight = (int)(_screenHeight * keyboardHeightPercent);
+    Log.d(TAG, "Calculated keyboard height: " + _keyboardHeight + " pixels (" + keyboardHeightPref + "% of " + _screenHeight + ")");
+    
+    // Load user's text and margin settings  
+    _characterSize = prefs.getFloat("character_size", 1.15f);
+    _labelTextSize = 0.33f;
+    _keyVerticalMargin = prefs.getFloat("key_vertical_margin", 1.5f) / 100;
+    _keyHorizontalMargin = prefs.getFloat("key_horizontal_margin", 2.0f) / 100;
     
     // Prepare session words
     _sessionWords = new ArrayList<>(CALIBRATION_WORDS);
