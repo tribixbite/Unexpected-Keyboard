@@ -187,6 +187,31 @@ public class OnnxSwipePredictor
   }
   
   /**
+   * Set keyboard dimensions for trajectory processing
+   */
+  public void setKeyboardDimensions(float width, float height)
+  {
+    if (_trajectoryProcessor != null)
+    {
+      _trajectoryProcessor.setKeyboardLayout(null, width, height);
+    }
+  }
+  
+  /**
+   * Set real key positions for trajectory processing
+   */
+  public void setRealKeyPositions(Map<Character, PointF> realPositions)
+  {
+    if (_trajectoryProcessor != null && realPositions != null)
+    {
+      // Get current keyboard dimensions
+      float width = _trajectoryProcessor._keyboardWidth;
+      float height = _trajectoryProcessor._keyboardHeight;
+      _trajectoryProcessor.setKeyboardLayout(realPositions, width, height);
+    }
+  }
+  
+  /**
    * Check if neural prediction is available
    */
   public boolean isAvailable()
@@ -304,16 +329,246 @@ public class OnnxSwipePredictor
   private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult, 
     SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
   {
-    // TODO: Implement beam search decoding with decoder model
-    // This is a placeholder implementation
-    List<BeamSearchCandidate> candidates = new ArrayList<>();
+    if (_decoderSession == null)
+    {
+      Log.e(TAG, "Decoder not loaded, cannot decode");
+      return new ArrayList<>();
+    }
     
-    // For now, create dummy candidates
-    candidates.add(new BeamSearchCandidate("hello", 0.9f));
-    candidates.add(new BeamSearchCandidate("world", 0.8f));
-    candidates.add(new BeamSearchCandidate("test", 0.7f));
+    // Beam search parameters matching web demo
+    int beamWidth = _beamWidth;
+    int maxLength = _maxLength;
+    int decoderSeqLength = 20; // Fixed decoder sequence length
+    int vocabSize = _tokenizer.getVocabSize();
     
-    return candidates;
+    // Get memory from encoder output
+    OnnxTensor memory = null;
+    try {
+      memory = (OnnxTensor) encoderResult.get(0); // Get first output
+    } catch (Exception e) {
+      Log.e(TAG, "Failed to get encoder output", e);
+      return new ArrayList<>();
+    }
+    
+    if (memory == null)
+    {
+      Log.e(TAG, "No memory tensor from encoder");
+      return new ArrayList<>();
+    }
+    
+    Log.d(TAG, String.format("Decoder memory shape: %s", java.util.Arrays.toString(memory.getInfo().getShape())));
+    
+    // Initialize beams with SOS token
+    List<BeamSearchState> beams = new ArrayList<>();
+    beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
+    
+    // Beam search loop
+    for (int step = 0; step < maxLength; step++)
+    {
+      List<BeamSearchState> candidates = new ArrayList<>();
+      
+      for (BeamSearchState beam : beams)
+      {
+        if (beam.finished)
+        {
+          candidates.add(beam);
+          continue;
+        }
+        
+        try
+        {
+          // Prepare decoder input - pad tokens to fixed length
+          long[] paddedTokens = new long[decoderSeqLength];
+          for (int i = 0; i < Math.min(beam.tokens.size(), decoderSeqLength); i++)
+          {
+            paddedTokens[i] = beam.tokens.get(i);
+          }
+          // Pad rest with PAD_IDX
+          for (int i = beam.tokens.size(); i < decoderSeqLength; i++)
+          {
+            paddedTokens[i] = PAD_IDX;
+          }
+          
+          // Create target mask - 1 for PADDED positions, 0 for real tokens
+          boolean[] tgtMask = new boolean[decoderSeqLength];
+          for (int i = beam.tokens.size(); i < decoderSeqLength; i++)
+          {
+            tgtMask[i] = true; // Mark padded positions
+          }
+          
+          // Create source mask (0 for all positions - all encoder positions valid)
+          boolean[] srcMask = new boolean[(int)memory.getInfo().getShape()[1]];
+          // All false (no masking) - arrays initialize to false
+          
+          // Create tensors
+          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
+            java.nio.LongBuffer.wrap(paddedTokens), new long[]{1, decoderSeqLength});
+          OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, tgtMask);
+          OnnxTensor srcMaskTensor = OnnxTensor.createTensor(_ortEnvironment, srcMask);
+          
+          // Run decoder
+          Map<String, OnnxTensor> decoderInputs = new HashMap<>();
+          decoderInputs.put("memory", memory);
+          decoderInputs.put("target_tokens", targetTokensTensor);
+          decoderInputs.put("target_mask", targetMaskTensor);
+          decoderInputs.put("src_mask", srcMaskTensor);
+          
+          OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
+          OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0); // Get first output
+          
+          // Get logits for position after last real token
+          int tokenPosition = Math.min(beam.tokens.size() - 1, decoderSeqLength - 1);
+          float[] logitsData = (float[]) logitsTensor.getValue();
+          
+          int startIdx = tokenPosition * vocabSize;
+          float[] relevantLogits = java.util.Arrays.copyOfRange(logitsData, startIdx, startIdx + vocabSize);
+          
+          // Apply softmax
+          float[] probs = softmax(relevantLogits);
+          
+          // Get top k tokens
+          int[] topK = getTopKIndices(probs, beamWidth);
+          
+          for (int idx : topK)
+          {
+            BeamSearchState newBeam = new BeamSearchState(beam);
+            newBeam.tokens.add((long)idx);
+            newBeam.score += Math.log(probs[idx]);
+            newBeam.finished = (idx == EOS_IDX);
+            candidates.add(newBeam);
+          }
+          
+          // Clean up tensors
+          targetTokensTensor.close();
+          targetMaskTensor.close();
+          srcMaskTensor.close();
+          decoderOutput.close();
+          
+        }
+        catch (Exception e)
+        {
+          Log.e(TAG, "Decoder step error", e);
+          continue;
+        }
+      }
+      
+      // Select top beams
+      candidates.sort((a, b) -> Float.compare(b.score, a.score));
+      beams = candidates.subList(0, Math.min(candidates.size(), beamWidth));
+      
+      // Check if all beams finished or have enough predictions
+      boolean allFinished = true;
+      int finishedCount = 0;
+      for (BeamSearchState beam : beams) {
+        if (!beam.finished) allFinished = false;
+        if (beam.finished) finishedCount++;
+      }
+      
+      if (allFinished || (step >= 10 && finishedCount >= 3))
+      {
+        break;
+      }
+    }
+    
+    // Convert token sequences to words
+    List<BeamSearchCandidate> results = new ArrayList<>();
+    for (BeamSearchState beam : beams)
+    {
+      StringBuilder word = new StringBuilder();
+      for (Long token : beam.tokens)
+      {
+        int idx = token.intValue();
+        if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) continue;
+        
+        char ch = _tokenizer.indexToChar(idx);
+        if (ch != '?' && !Character.toString(ch).startsWith("<"))
+        {
+          word.append(ch);
+        }
+      }
+      
+      String wordStr = word.toString();
+      if (wordStr.length() > 0)
+      {
+        results.add(new BeamSearchCandidate(wordStr, (float)Math.exp(beam.score)));
+      }
+    }
+    
+    return results;
+  }
+  
+  private float[] softmax(float[] logits)
+  {
+    float maxLogit = 0.0f;
+    for (float logit : logits) {
+      if (logit > maxLogit) maxLogit = logit;
+    }
+    float[] expScores = new float[logits.length];
+    float sumExpScores = 0.0f;
+    
+    for (int i = 0; i < logits.length; i++)
+    {
+      expScores[i] = (float)Math.exp(logits[i] - maxLogit);
+      sumExpScores += expScores[i];
+    }
+    
+    for (int i = 0; i < expScores.length; i++)
+    {
+      expScores[i] /= sumExpScores;
+    }
+    
+    return expScores;
+  }
+  
+  private int[] getTopKIndices(float[] array, int k)
+  {
+    List<IndexValue> indexed = new ArrayList<>();
+    for (int i = 0; i < array.length; i++)
+    {
+      indexed.add(new IndexValue(i, array[i]));
+    }
+    
+    indexed.sort((a, b) -> Float.compare(b.value, a.value));
+    
+    int[] result = new int[Math.min(k, indexed.size())];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = indexed.get(i).index;
+    }
+    return result;
+  }
+  
+  private static class BeamSearchState
+  {
+    public List<Long> tokens;
+    public float score;
+    public boolean finished;
+    
+    public BeamSearchState(int startToken, float startScore, boolean isFinished)
+    {
+      tokens = new ArrayList<>();
+      tokens.add((long)startToken);
+      score = startScore;
+      finished = isFinished;
+    }
+    
+    public BeamSearchState(BeamSearchState other)
+    {
+      tokens = new ArrayList<>(other.tokens);
+      score = other.score;
+      finished = other.finished;
+    }
+  }
+  
+  private static class IndexValue
+  {
+    public int index;
+    public float value;
+    
+    public IndexValue(int index, float value)
+    {
+      this.index = index;
+      this.value = value;
+    }
   }
   
   private PredictionResult createPredictionResult(List<BeamSearchCandidate> candidates)

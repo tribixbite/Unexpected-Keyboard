@@ -150,7 +150,7 @@ public class NeuralSwipeTypingEngine
   {
     if (_neuralPredictor != null)
     {
-      // Pass dimensions to trajectory processor
+      _neuralPredictor.setKeyboardDimensions(width, height);
       Log.d(TAG, String.format("Set keyboard dimensions: %.0fx%.0f", width, height));
     }
   }
@@ -162,7 +162,7 @@ public class NeuralSwipeTypingEngine
   {
     if (_neuralPredictor != null)
     {
-      // Pass key positions to trajectory processor
+      _neuralPredictor.setRealKeyPositions(realPositions);
       Log.d(TAG, String.format("Set key positions: %d keys", 
         realPositions != null ? realPositions.size() : 0));
     }

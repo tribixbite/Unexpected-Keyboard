@@ -16,8 +16,8 @@ public class SwipeTrajectoryProcessor
   
   // Keyboard layout for nearest key detection
   private java.util.Map<Character, PointF> _keyPositions;
-  private float _keyboardWidth = 1.0f;
-  private float _keyboardHeight = 1.0f;
+  public float _keyboardWidth = 1.0f;
+  public float _keyboardHeight = 1.0f;
   
   public SwipeTrajectoryProcessor()
   {
