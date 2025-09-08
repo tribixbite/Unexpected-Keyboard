@@ -12,6 +12,10 @@ import java.util.Map;
  */
 public class NeuralSwipeTypingEngine
 {
+  public interface DebugLogger
+  {
+    void log(String message);
+  }
   private static final String TAG = "NeuralSwipeTypingEngine";
   
   private Context _context;
@@ -20,6 +24,9 @@ public class NeuralSwipeTypingEngine
   
   // State tracking
   private boolean _initialized = false;
+  
+  // Debug logging callback
+  private DebugLogger _debugLogger;
   
   public NeuralSwipeTypingEngine(Context context, Config config)
   {
@@ -163,6 +170,26 @@ public class NeuralSwipeTypingEngine
   public String getCurrentMode()
   {
     return isNeuralAvailable() ? "neural" : "error";
+  }
+  
+  /**
+   * Set debug logger for detailed logging
+   */
+  public void setDebugLogger(DebugLogger logger)
+  {
+    _debugLogger = logger;
+    if (_neuralPredictor != null)
+    {
+      _neuralPredictor.setDebugLogger(logger);
+    }
+  }
+  
+  private void logDebug(String message)
+  {
+    if (_debugLogger != null)
+    {
+      _debugLogger.log(message);
+    }
   }
   
   /**

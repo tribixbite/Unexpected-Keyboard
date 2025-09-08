@@ -68,6 +68,11 @@ public class SwipeCalibrationActivity extends Activity
   private Button _exportButton;
   private Button _benchmarkButton;
   
+  // Results logging
+  private TextView _resultsTextBox;
+  private Button _copyResultsButton;
+  private StringBuilder _resultsLog = new StringBuilder();
+  
   // Swipe data collection (needed by keyboard view)
   private List<PointF> _currentSwipePoints = new ArrayList<>();
   private List<Long> _currentSwipeTimestamps = new ArrayList<>();
@@ -112,16 +117,20 @@ public class SwipeCalibrationActivity extends Activity
     Config.initGlobalConfig(prefs, getResources(), null, false);
     _config = Config.globalConfig();
     _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
+    // Set up logging callback for neural engine
+    _neuralEngine.setDebugLogger(this::logToResults);
     
     try
     {
       _neuralEngine.initialize();
       Log.d(TAG, "Neural engine initialized successfully");
+      logToResults("✅ Neural engine initialized successfully");
     }
     catch (Exception e)
     {
       Log.e(TAG, "Failed to initialize neural engine", e);
-      showErrorDialog("Neural models failed to load. Ensure ONNX models are available in assets/models/");
+      logToResults("❌ Neural engine initialization failed: " + e.getMessage());
+      showErrorDialog("Neural models failed to load. Error: " + e.getMessage());
       return;
     }
     
@@ -236,6 +245,43 @@ public class SwipeCalibrationActivity extends Activity
     playgroundButton.setTextColor(Color.WHITE);
     playgroundButton.setPadding(8, 8, 8, 8);
     topLayout.addView(playgroundButton);
+    
+    // Results textbox with copy button
+    LinearLayout resultsHeaderLayout = new LinearLayout(this);
+    resultsHeaderLayout.setOrientation(LinearLayout.HORIZONTAL);
+    resultsHeaderLayout.setPadding(16, 16, 16, 8);
+    
+    TextView resultsLabel = new TextView(this);
+    resultsLabel.setText("🔍 Neural Results Log:");
+    resultsLabel.setTextSize(14);
+    resultsLabel.setTextColor(0xFF00d4ff);
+    resultsLabel.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+    resultsLabel.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+    resultsHeaderLayout.addView(resultsLabel);
+    
+    _copyResultsButton = new Button(this);
+    _copyResultsButton.setText("📋");
+    _copyResultsButton.setTextSize(16);
+    _copyResultsButton.setOnClickListener(v -> copyResultsToClipboard());
+    _copyResultsButton.setBackgroundColor(0xFF4CAF50);
+    _copyResultsButton.setTextColor(Color.WHITE);
+    _copyResultsButton.setPadding(8, 8, 8, 8);
+    resultsHeaderLayout.addView(_copyResultsButton);
+    
+    topLayout.addView(resultsHeaderLayout);
+    
+    // Results textbox
+    _resultsTextBox = new TextView(this);
+    _resultsTextBox.setText("Neural system starting...\n");
+    _resultsTextBox.setTextSize(10);
+    _resultsTextBox.setPadding(12, 12, 12, 12);
+    _resultsTextBox.setTextColor(Color.WHITE);
+    _resultsTextBox.setBackgroundColor(0xFF1A1A1A);
+    _resultsTextBox.setTypeface(android.graphics.Typeface.MONOSPACE);
+    _resultsTextBox.setMaxLines(8);
+    _resultsTextBox.setVerticalScrollBarEnabled(true);
+    _resultsTextBox.setMovementMethod(new android.text.method.ScrollingMovementMethod());
+    topLayout.addView(_resultsTextBox);
     
     // Control buttons
     LinearLayout buttonLayout = new LinearLayout(this);
@@ -492,6 +538,37 @@ public class SwipeCalibrationActivity extends Activity
       .setPositiveButton("OK", (dialog, which) -> finish())
       .setCancelable(false)
       .show();
+  }
+  
+  // Results logging methods
+  private void logToResults(String message)
+  {
+    String timestamp = new java.text.SimpleDateFormat("HH:mm:ss.SSS").format(new java.util.Date());
+    String logEntry = "[" + timestamp + "] " + message + "\n";
+    _resultsLog.append(logEntry);
+    
+    if (_resultsTextBox != null)
+    {
+      _resultsTextBox.setText(_resultsLog.toString());
+      // Auto-scroll to bottom
+      _resultsTextBox.post(() -> {
+        android.text.Layout layout = _resultsTextBox.getLayout();
+        if (layout != null) {
+          int scrollAmount = layout.getLineTop(_resultsTextBox.getLineCount()) - _resultsTextBox.getHeight();
+          if (scrollAmount > 0) {
+            _resultsTextBox.scrollTo(0, scrollAmount);
+          }
+        }
+      });
+    }
+  }
+  
+  private void copyResultsToClipboard()
+  {
+    ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+    ClipData clip = ClipData.newPlainText("Neural Results Log", _resultsLog.toString());
+    clipboard.setPrimaryClip(clip);
+    Toast.makeText(this, "Results copied to clipboard", Toast.LENGTH_SHORT).show();
   }
   
   /**
@@ -873,7 +950,9 @@ public class SwipeCalibrationActivity extends Activity
     
     _mlDataStore.storeSwipeData(mlData);
     
-    // Run neural prediction
+    // Run neural prediction with full logging
+    logToResults("🌀 Swipe recorded for '" + _currentWord + "': " + points.size() + " points, " + duration + "ms, keys: " + keySequence);
+    
     try
     {
       long startTime = System.nanoTime();
@@ -883,29 +962,43 @@ public class SwipeCalibrationActivity extends Activity
       _predictionTimes.add(endTime - startTime);
       _totalPredictions++;
       
+      // Log full prediction results
+      long predTimeMs = (endTime - startTime) / 1000000;
+      logToResults("🧠 Neural prediction completed in " + predTimeMs + "ms");
+      logToResults("   Predictions: " + result.words.size() + " candidates");
+      
+      // Log all predictions
+      for (int i = 0; i < Math.min(5, result.words.size()); i++)
+      {
+        logToResults("   " + (i + 1) + ". " + result.words.get(i) + " (score: " + result.scores.get(i) + ")");
+      }
+      
       // Check if prediction is correct
       boolean correct = false;
+      int rank = -1;
       for (int i = 0; i < result.words.size(); i++)
       {
         if (result.words.get(i).equals(_currentWord))
         {
           correct = true;
+          rank = i + 1;
           _correctPredictions++;
-          Log.d(TAG, String.format("✅ Neural prediction correct at rank %d: %s", i + 1, _currentWord));
+          logToResults("✅ Correct! Target '" + _currentWord + "' found at rank " + rank);
           break;
         }
       }
       
       if (!correct)
       {
-        Log.d(TAG, String.format("❌ Neural prediction incorrect. Expected: %s, Got: %s", 
-          _currentWord, result.words.isEmpty() ? "none" : result.words.get(0)));
+        logToResults("❌ Incorrect. Expected '" + _currentWord + "', got: " + 
+          (result.words.isEmpty() ? "no predictions" : "'" + result.words.get(0) + "'"));
       }
       
       updateBenchmarkDisplay();
     }
     catch (Exception e)
     {
+      logToResults("💥 Neural prediction FAILED: " + e.getClass().getSimpleName() + " - " + e.getMessage());
       Log.e(TAG, "Neural prediction failed", e);
       Toast.makeText(this, "Neural prediction error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
     }

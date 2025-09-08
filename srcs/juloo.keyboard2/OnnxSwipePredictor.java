@@ -56,6 +56,9 @@ public class OnnxSwipePredictor
   private int _maxLength = DEFAULT_MAX_LENGTH;
   private float _confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD;
   
+  // Debug logging
+  private NeuralSwipeTypingEngine.DebugLogger _debugLogger;
+  
   public OnnxSwipePredictor(Context context)
   {
     _context = context;
@@ -79,19 +82,23 @@ public class OnnxSwipePredictor
     try
     {
       Log.d(TAG, "Loading ONNX models...");
+      logDebug("🔄 Loading ONNX transformer models...");
       
       // Load encoder model (using correct name from web demo)
       byte[] encoderModelData = loadModelFromAssets("models/swipe_model_character_quant.onnx");
       if (encoderModelData != null)
       {
+        logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
         OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
         _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
+        logDebug("✅ Encoder session created successfully");
+        logDebug("   Inputs: " + _encoderSession.getInputNames());
+        logDebug("   Outputs: " + _encoderSession.getOutputNames());
         Log.d(TAG, "Encoder model loaded successfully");
-        Log.d(TAG, "Encoder inputs: " + _encoderSession.getInputNames());
-        Log.d(TAG, "Encoder outputs: " + _encoderSession.getOutputNames());
       }
       else
       {
+        logDebug("❌ Failed to load encoder model data");
         Log.e(TAG, "Failed to load encoder model data");
       }
       
@@ -99,36 +106,43 @@ public class OnnxSwipePredictor
       byte[] decoderModelData = loadModelFromAssets("models/swipe_decoder_character_quant.onnx");
       if (decoderModelData != null)
       {
+        logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
         OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
         _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
+        logDebug("✅ Decoder session created successfully");
+        logDebug("   Inputs: " + _decoderSession.getInputNames());
+        logDebug("   Outputs: " + _decoderSession.getOutputNames());
         Log.d(TAG, "Decoder model loaded successfully");
-        Log.d(TAG, "Decoder inputs: " + _decoderSession.getInputNames());
-        Log.d(TAG, "Decoder outputs: " + _decoderSession.getOutputNames());
       }
       else
       {
+        logDebug("❌ Failed to load decoder model data");
         Log.e(TAG, "Failed to load decoder model data");
       }
       
       // Load tokenizer configuration
-      _tokenizer.loadFromAssets(_context);
+      boolean tokenizerLoaded = _tokenizer.loadFromAssets(_context);
+      logDebug("📝 Tokenizer loaded: " + tokenizerLoaded + " (vocab size: " + _tokenizer.getVocabSize() + ")");
       
       _isModelLoaded = (_encoderSession != null && _decoderSession != null);
       _isInitialized = true;
       
       if (_isModelLoaded)
       {
+        logDebug("🧠 ONNX neural prediction system ready!");
         Log.d(TAG, "ONNX neural prediction system ready");
       }
       else
       {
-        Log.w(TAG, "Failed to load ONNX models - will use fallback");
+        logDebug("⚠️ ONNX models failed to load - missing encoder or decoder session");
+        Log.w(TAG, "Failed to load ONNX models");
       }
       
       return _isModelLoaded;
     }
     catch (Exception e)
     {
+      logDebug("💥 ONNX initialization exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
       Log.e(TAG, "Failed to initialize ONNX models", e);
       _isInitialized = true;
       _isModelLoaded = false;
@@ -237,6 +251,22 @@ public class OnnxSwipePredictor
       float width = _trajectoryProcessor._keyboardWidth;
       float height = _trajectoryProcessor._keyboardHeight;
       _trajectoryProcessor.setKeyboardLayout(realPositions, width, height);
+    }
+  }
+  
+  /**
+   * Set debug logger for detailed logging
+   */
+  public void setDebugLogger(NeuralSwipeTypingEngine.DebugLogger logger)
+  {
+    _debugLogger = logger;
+  }
+  
+  private void logDebug(String message)
+  {
+    if (_debugLogger != null)
+    {
+      _debugLogger.log(message);
     }
   }
   
