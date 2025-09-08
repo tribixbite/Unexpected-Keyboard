@@ -29,8 +29,7 @@ jobs:
         run: git lfs install && git lfs pull
 
       - name: Prepare deployment files
-        run: cd web_demo && echo "📁 Web demo files:" && ls -la && mkdir -p ../deploy && echo "📦 Copying files..." && (cp *.html ../deploy/ 2>/dev/null || echo "No HTML files") && (cp *.js ../deploy/ 2>/dev/null || echo "No JS files") && (cp *.json ../deploy/ 2>/dev/null || echo "No JSON files") && (cp *.onnx ../deploy/ 2>/dev/null || echo "No ONNX files") && ([ -f swipe-onnx.html ] && cp swipe-onnx.html ../deploy/index.html && echo "✅ Main file: swipe-onnx.html → index.html" || (echo "❌ No main HTML file found!" && exit 1)) && cd ../deploy && echo "🚀 Deployment files ready:" && ls -la && echo "📊 File sizes:" && (du -h || true)
-
+        run: 'cd web_demo && echo "📁 Web demo files:" && ls -la && mkdir -p ../deploy && echo "📦 Copying files..." && (cp *.html ../deploy/ 2>/dev/null || echo "No HTML files") && (cp *.js ../deploy/ 2>/dev/null || echo "No JS files") && (cp *.json ../deploy/ 2>/dev/null || echo "No JSON files") && (cp *.onnx ../deploy/ 2>/dev/null || echo "No ONNX files") && ([ -f swipe-onnx.html ] && cp swipe-onnx.html ../deploy/index.html && echo "✅ Main file: swipe-onnx.html → index.html" || (echo "❌ No main HTML file found!" && exit 1)) && cd ../deploy && echo "🚀 Deployment files ready:" && ls -la && echo "📊 File sizes:" && (du -h || true)'
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
