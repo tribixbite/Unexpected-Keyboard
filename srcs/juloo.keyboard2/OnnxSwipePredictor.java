@@ -142,23 +142,37 @@ public class OnnxSwipePredictor
       SwipeTrajectoryProcessor.TrajectoryFeatures features = 
         _trajectoryProcessor.extractFeatures(input, MAX_SEQUENCE_LENGTH);
       
-      // Run encoder inference
-      OnnxTensor trajectoryTensor = createTrajectoryTensor(features);
-      OnnxTensor nearestKeysTensor = createNearestKeysTensor(features);
-      OnnxTensor srcMaskTensor = createSourceMaskTensor(features);
+      // Run encoder inference with proper ONNX API
+      OnnxTensor trajectoryTensor = null;
+      OnnxTensor nearestKeysTensor = null; 
+      OnnxTensor srcMaskTensor = null;
+      OrtSession.Result encoderResult = null;
       
-      Map<String, OnnxTensor> encoderInputs = new HashMap<>();
-      encoderInputs.put("trajectory_features", trajectoryTensor);
-      encoderInputs.put("nearest_keys", nearestKeysTensor);
-      encoderInputs.put("src_mask", srcMaskTensor);
+      try {
+        trajectoryTensor = createTrajectoryTensor(features);
+        nearestKeysTensor = createNearestKeysTensor(features);
+        srcMaskTensor = createSourceMaskTensor(features);
+        
+        Map<String, OnnxTensor> encoderInputs = new HashMap<>();
+        encoderInputs.put("trajectory_features", trajectoryTensor);
+        encoderInputs.put("nearest_keys", nearestKeysTensor);
+        encoderInputs.put("src_mask", srcMaskTensor);
+        
+        encoderResult = _encoderSession.run(encoderInputs);
       
-      OrtSession.Result encoderResult = _encoderSession.run(encoderInputs);
-      
-      // Run beam search decoding
-      List<BeamSearchCandidate> candidates = runBeamSearch(encoderResult, features);
-      
-      // Convert to prediction result
-      return createPredictionResult(candidates);
+        // Run beam search decoding
+        List<BeamSearchCandidate> candidates = runBeamSearch(encoderResult, features);
+        
+        // Convert to prediction result
+        return createPredictionResult(candidates);
+        
+      } finally {
+        // Proper memory cleanup
+        if (trajectoryTensor != null) trajectoryTensor.close();
+        if (nearestKeysTensor != null) nearestKeysTensor.close();
+        if (srcMaskTensor != null) srcMaskTensor.close();
+        if (encoderResult != null) encoderResult.close();
+      }
     }
     catch (Exception e)
     {
@@ -287,7 +301,7 @@ public class OnnxSwipePredictor
     }
     
     long[] shape = {1, MAX_SEQUENCE_LENGTH, TRAJECTORY_FEATURES};
-    return OnnxTensor.createTensor(_ortEnvironment, FloatBuffer.wrap(trajectoryData), shape);
+    return OnnxTensor.createTensor(_ortEnvironment, java.nio.FloatBuffer.wrap(trajectoryData), shape);
   }
   
   private OnnxTensor createNearestKeysTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
@@ -342,10 +356,11 @@ public class OnnxSwipePredictor
     int decoderSeqLength = 20; // Fixed decoder sequence length
     int vocabSize = _tokenizer.getVocabSize();
     
-    // Get memory from encoder output
+    // Get memory from encoder output using proper ONNX API
     OnnxTensor memory = null;
     try {
-      memory = (OnnxTensor) encoderResult.get(0); // Get first output
+      // Get first output from result
+      memory = (OnnxTensor) encoderResult.get(0);
     } catch (Exception e) {
       Log.e(TAG, "Failed to get encoder output", e);
       return new ArrayList<>();
@@ -401,7 +416,7 @@ public class OnnxSwipePredictor
           boolean[] srcMask = new boolean[(int)memory.getInfo().getShape()[1]];
           // All false (no masking) - arrays initialize to false
           
-          // Create tensors
+          // Create tensors with proper ONNX API
           OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
             java.nio.LongBuffer.wrap(paddedTokens), new long[]{1, decoderSeqLength});
           OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, tgtMask);
