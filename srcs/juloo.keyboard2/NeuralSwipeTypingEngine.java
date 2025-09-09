@@ -53,6 +53,12 @@ public class NeuralSwipeTypingEngine
     {
       Log.d(TAG, "Initializing pure neural swipe engine...");
       
+      // Propagate debug logger to predictor
+      if (_debugLogger != null)
+      {
+        _neuralPredictor.setDebugLogger(_debugLogger);
+      }
+      
       // Initialize neural predictor - MUST succeed or throw error
       boolean neuralReady = _neuralPredictor.initialize();
       
