@@ -28,10 +28,10 @@ Generated version info:  ()
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :parseDebugLocalResources
-> Task :mergeDebugResources
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
+> Task :parseDebugLocalResources
+> Task :mergeDebugResources
 > Task :processDebugJavaRes NO-SOURCE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE

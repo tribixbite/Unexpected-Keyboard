@@ -186,7 +186,7 @@ public class OnnxSwipePredictor
         logDebug("🔧 Encoder input tensor shapes:");
         logDebug("   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
         logDebug("   nearest_keys: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
-        logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()));
+        logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL)");
         
         Map<String, OnnxTensor> encoderInputs = new HashMap<>();
         encoderInputs.put("trajectory_features", trajectoryTensor);
@@ -418,7 +418,7 @@ public class OnnxSwipePredictor
     
     buffer.rewind();
     long[] shape = {1, MAX_SEQUENCE_LENGTH};
-    return OnnxTensor.createTensor(_ortEnvironment, buffer, shape);
+    return OnnxTensor.createTensor(_ortEnvironment, buffer, shape, OnnxJavaType.BOOL);
   }
   
   private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult, 
@@ -508,16 +508,16 @@ public class OnnxSwipePredictor
           OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
             java.nio.LongBuffer.wrap(paddedTokens), new long[]{1, decoderSeqLength});
           OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, 
-            tgtMaskBuffer, new long[]{1, decoderSeqLength});
+            tgtMaskBuffer, new long[]{1, decoderSeqLength}, OnnxJavaType.BOOL);
           OnnxTensor srcMaskTensor = OnnxTensor.createTensor(_ortEnvironment, 
-            srcMaskBuffer, new long[]{1, srcMaskSize});
+            srcMaskBuffer, new long[]{1, srcMaskSize}, OnnxJavaType.BOOL);
           
           // Log decoder tensor shapes
           logDebug("🔧 Decoder input tensor shapes:");
           logDebug("   memory: " + java.util.Arrays.toString(memory.getInfo().getShape()));
           logDebug("   target_tokens: " + java.util.Arrays.toString(targetTokensTensor.getInfo().getShape()));
-          logDebug("   target_mask: " + java.util.Arrays.toString(targetMaskTensor.getInfo().getShape()));
-          logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()));
+          logDebug("   target_mask: " + java.util.Arrays.toString(targetMaskTensor.getInfo().getShape()) + " (BOOL)");
+          logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL)");
           
           // Run decoder
           Map<String, OnnxTensor> decoderInputs = new HashMap<>();
