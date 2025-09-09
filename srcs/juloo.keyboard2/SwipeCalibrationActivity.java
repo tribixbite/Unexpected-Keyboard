@@ -310,6 +310,13 @@ public class SwipeCalibrationActivity extends Activity
     _exportButton.setTextColor(Color.WHITE);
     buttonLayout.addView(_exportButton);
     
+    Button testTensorsButton = new Button(this);
+    testTensorsButton.setText("Test Tensors");
+    testTensorsButton.setOnClickListener(v -> testTensorCreation());
+    testTensorsButton.setBackgroundColor(0xFFE91E63);
+    testTensorsButton.setTextColor(Color.WHITE);
+    buttonLayout.addView(testTensorsButton);
+    
     topLayout.addView(buttonLayout);
     mainLayout.addView(topLayout);
     
@@ -438,6 +445,44 @@ public class SwipeCalibrationActivity extends Activity
     
     // TODO: Implement comprehensive benchmarking
     Toast.makeText(this, "Benchmark feature coming soon", Toast.LENGTH_SHORT).show();
+  }
+  
+  private void testTensorCreation()
+  {
+    logToResults("🔧 Testing tensor creation directly...");
+    
+    try {
+      ai.onnxruntime.OrtEnvironment env = ai.onnxruntime.OrtEnvironment.getEnvironment();
+      
+      // Test 1D boolean array
+      boolean[] mask1D = new boolean[100];
+      for (int i = 50; i < 100; i++) mask1D[i] = true;
+      
+      ai.onnxruntime.OnnxTensor tensor1D = ai.onnxruntime.OnnxTensor.createTensor(env, mask1D);
+      logToResults("1D boolean[100] creates shape: " + java.util.Arrays.toString(tensor1D.getInfo().getShape()));
+      tensor1D.close();
+      
+      // Test 2D boolean array
+      boolean[][] mask2D = new boolean[1][100];
+      for (int i = 50; i < 100; i++) mask2D[0][i] = true;
+      
+      ai.onnxruntime.OnnxTensor tensor2D = ai.onnxruntime.OnnxTensor.createTensor(env, mask2D);
+      logToResults("2D boolean[1][100] creates shape: " + java.util.Arrays.toString(tensor2D.getInfo().getShape()));
+      tensor2D.close();
+      
+      // Test with explicit shape parameter
+      boolean[] mask1DExplicit = new boolean[100];
+      for (int i = 50; i < 100; i++) mask1DExplicit[i] = true;
+      
+      // Test current approach
+      logToResults("Current approach uses boolean[1][100] - should create [1, 100] tensor");
+      
+      logToResults("✅ Tensor creation tests complete");
+      
+    } catch (Exception e) {
+      logToResults("💥 Tensor creation test failed: " + e.getMessage());
+      Log.e(TAG, "Tensor test failed", e);
+    }
   }
   
   private void showCompletionMessage()
