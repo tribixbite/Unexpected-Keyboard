@@ -406,7 +406,7 @@ public class OnnxSwipePredictor
   private OnnxTensor createSourceMaskTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
-    // Create ByteBuffer for mask (ONNX doesn't support boolean arrays)
+    // Create ByteBuffer for boolean tensor (proper ONNX API signature)
     java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH);
     buffer.order(java.nio.ByteOrder.nativeOrder());
     
@@ -504,7 +504,7 @@ public class OnnxSwipePredictor
           }
           srcMaskBuffer.rewind();
           
-          // Create tensors with proper ONNX API and 2D shapes
+          // Create tensors with proper ONNX API signature
           OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
             java.nio.LongBuffer.wrap(paddedTokens), new long[]{1, decoderSeqLength});
           OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, 
