@@ -406,17 +406,16 @@ public class OnnxSwipePredictor
   private OnnxTensor createSourceMaskTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
-    // Try boolean array directly with ONNX Runtime 1.20.0
-    boolean[] maskData = new boolean[MAX_SEQUENCE_LENGTH];
+    // Create 2D boolean array for proper tensor shape [1, MAX_SEQUENCE_LENGTH]
+    boolean[][] maskData = new boolean[1][MAX_SEQUENCE_LENGTH];
     
     // Mask padded positions (true = masked/padded, false = valid)
     for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
     {
-      maskData[i] = (i >= features.actualLength);
+      maskData[0][i] = (i >= features.actualLength);
     }
     
-    long[] shape = {1, MAX_SEQUENCE_LENGTH};
-    // Try direct boolean array creation (might be supported in 1.20.0)
+    // Use 2D boolean array - ONNX API will infer shape as [1, 100]
     return OnnxTensor.createTensor(_ortEnvironment, maskData);
   }
   
@@ -484,11 +483,11 @@ public class OnnxSwipePredictor
             paddedTokens[i] = PAD_IDX;
           }
           
-          // Create target mask boolean array - true for PADDED positions, false for real tokens
-          boolean[] targetMaskData = new boolean[decoderSeqLength];
+          // Create target mask 2D boolean array - true for PADDED positions, false for real tokens
+          boolean[][] targetMaskData = new boolean[1][decoderSeqLength];
           for (int i = 0; i < decoderSeqLength; i++)
           {
-            targetMaskData[i] = (i >= beam.tokens.size());
+            targetMaskData[0][i] = (i >= beam.tokens.size());
           }
           
           // Create tensors with ONNX Runtime 1.20.0
