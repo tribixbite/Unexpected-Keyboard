@@ -46,7 +46,7 @@ public class OnnxSwipePredictor
   private OrtSession _decoderSession;
   private SwipeTokenizer _tokenizer;
   private SwipeTrajectoryProcessor _trajectoryProcessor;
-  private NeuralVocabulary _vocabulary;
+  // private NeuralVocabulary _vocabulary; // Removed for core testing
   
   // Model state
   private boolean _isModelLoaded = false;
@@ -66,7 +66,7 @@ public class OnnxSwipePredictor
     _ortEnvironment = OrtEnvironment.getEnvironment();
     _trajectoryProcessor = new SwipeTrajectoryProcessor();
     _tokenizer = new SwipeTokenizer();
-    _vocabulary = new NeuralVocabulary();
+    // _vocabulary = new NeuralVocabulary(); // Removed for core testing
     
     Log.d(TAG, "OnnxSwipePredictor initialized");
   }
@@ -126,9 +126,9 @@ public class OnnxSwipePredictor
       boolean tokenizerLoaded = _tokenizer.loadFromAssets(_context);
       logDebug("📝 Tokenizer loaded: " + tokenizerLoaded + " (vocab size: " + _tokenizer.getVocabSize() + ")");
       
-      // Load vocabulary with multi-level caching
-      boolean vocabularyLoaded = _vocabulary.loadVocabulary();
-      logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getVocabularySize() + ")");
+      // Skip vocabulary loading for now - focus on core transformer
+      // boolean vocabularyLoaded = _vocabulary.loadVocabulary();
+      // logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getVocabularySize() + ")");
       
       _isModelLoaded = (_encoderSession != null && _decoderSession != null);
       _isInitialized = true;
@@ -461,11 +461,13 @@ public class OnnxSwipePredictor
     // Initialize beams with SOS token
     List<BeamSearchState> beams = new ArrayList<>();
     beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
+    logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
     
     // Beam search loop
     for (int step = 0; step < maxLength; step++)
     {
       List<BeamSearchState> candidates = new ArrayList<>();
+      logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
       
       for (BeamSearchState beam : beams)
       {
@@ -531,21 +533,27 @@ public class OnnxSwipePredictor
           int tokenPosition = Math.min(beam.tokens.size() - 1, decoderSeqLength - 1);
           float[] relevantLogits = new float[vocabSize];
           
-          // Web demo approach: treat logits as flattened array (shape [1, 20, 30] but accessed flat)
-          // This matches: const relevantLogits = logitsData.slice(startIdx, endIdx);
-          float[] logitsFlat = (float[]) logitsValue;
-          int startIdx = tokenPosition * vocabSize;
-          int endIdx = startIdx + vocabSize;
+          // Java ONNX: tensor with shape [1, 20, 30] returns float[][][] (not flat array like JS)
+          // Log type shows [[[F which confirms it's float[][][]
+          float[][][] logits3D = (float[][][]) logitsValue;
+          logDebug("   Logits 3D dimensions: [" + logits3D.length + "][" + logits3D[0].length + "][" + 
+            (logits3D[0].length > 0 ? logits3D[0][0].length : "N/A") + "]");
           
-          logDebug("   Flattened array length: " + logitsFlat.length + 
-            ", extracting [" + startIdx + ":" + endIdx + "] for position " + tokenPosition);
-          
-          if (endIdx <= logitsFlat.length) {
-            System.arraycopy(logitsFlat, startIdx, relevantLogits, 0, vocabSize);
-            logDebug("   ✅ Extracted logits successfully");
+          // Extract logits for batch=0, position=tokenPosition (direct access, no flattening)
+          if (tokenPosition >= 0 && tokenPosition < logits3D[0].length) {
+            float[] positionLogits = logits3D[0][tokenPosition];
+            logDebug("   Accessing position " + tokenPosition + ", vocab length: " + positionLogits.length);
+            
+            if (positionLogits.length >= vocabSize) {
+              System.arraycopy(positionLogits, 0, relevantLogits, 0, vocabSize);
+              logDebug("   ✅ Extracted 3D logits successfully");
+            } else {
+              throw new RuntimeException("Vocab size mismatch: expected " + vocabSize + 
+                ", got " + positionLogits.length);
+            }
           } else {
-            throw new RuntimeException("Logits bounds error: need " + endIdx + ", have " + logitsFlat.length + 
-              " (position=" + tokenPosition + ", vocab=" + vocabSize + ")");
+            throw new RuntimeException("Token position " + tokenPosition + 
+              " out of bounds [0, " + logits3D[0].length + "]");
           }
           
           // Apply softmax
@@ -553,6 +561,16 @@ public class OnnxSwipePredictor
           
           // Get top k tokens
           int[] topK = getTopKIndices(probs, beamWidth);
+          logDebug("   Top " + beamWidth + " tokens: " + java.util.Arrays.toString(topK));
+          
+          // Show token details
+          StringBuilder tokenDetails = new StringBuilder("   Token details: ");
+          for (int i = 0; i < Math.min(5, topK.length); i++) {
+            int tokenIdx = topK[i];
+            char ch = _tokenizer.indexToChar(tokenIdx);
+            tokenDetails.append(tokenIdx).append("='").append(ch).append("' ");
+          }
+          logDebug(tokenDetails.toString());
           
           for (int idx : topK)
           {
@@ -595,17 +613,27 @@ public class OnnxSwipePredictor
       }
     }
     
-    // Convert token sequences to words
+    // Convert token sequences to words with detailed debugging
     List<BeamSearchCandidate> results = new ArrayList<>();
-    for (BeamSearchState beam : beams)
-    {
+    logDebug("🔤 Converting " + beams.size() + " beams to words...");
+    
+    for (int b = 0; b < beams.size(); b++) {
+      BeamSearchState beam = beams.get(b);
       StringBuilder word = new StringBuilder();
+      
+      logDebug("   Beam " + b + " tokens: " + beam.tokens + " (score: " + beam.score + ")");
+      
       for (Long token : beam.tokens)
       {
         int idx = token.intValue();
-        if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) continue;
+        if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
+          logDebug("     Token " + idx + " -> SPECIAL (skipped)");
+          continue;
+        }
         
         char ch = _tokenizer.indexToChar(idx);
+        logDebug("     Token " + idx + " -> '" + ch + "'");
+        
         if (ch != '?' && !Character.toString(ch).startsWith("<"))
         {
           word.append(ch);
@@ -615,10 +643,15 @@ public class OnnxSwipePredictor
       String wordStr = word.toString();
       if (wordStr.length() > 0)
       {
-        results.add(new BeamSearchCandidate(wordStr, (float)Math.exp(beam.score)));
+        float confidence = (float)Math.exp(beam.score);
+        results.add(new BeamSearchCandidate(wordStr, confidence));
+        logDebug("   ✅ Beam " + b + " -> '" + wordStr + "' (confidence: " + confidence + ")");
+      } else {
+        logDebug("   ❌ Beam " + b + " -> empty word (tokens only special)");
       }
     }
     
+    logDebug("🎯 Generated " + results.size() + " word candidates from " + beams.size() + " beams");
     return results;
   }
   
@@ -701,35 +734,17 @@ public class OnnxSwipePredictor
     List<String> words = new ArrayList<>();
     List<Integer> scores = new ArrayList<>();
     
-    // Filter candidates through vocabulary system like web demo
-    List<String> candidateWords = new ArrayList<>();
+    // For testing: return all candidates without vocabulary filtering
     for (BeamSearchCandidate candidate : candidates)
     {
       if (candidate.confidence >= _confidenceThreshold)
       {
-        candidateWords.add(candidate.word);
+        words.add(candidate.word);
+        scores.add((int)(candidate.confidence * 1000)); // Convert to 0-1000 range
       }
     }
     
-    // Apply vocabulary filtering for valid words only
-    List<String> filteredWords = _vocabulary.filterPredictions(candidateWords);
-    
-    // Rebuild scores for filtered words
-    for (String word : filteredWords)
-    {
-      // Find original candidate and score
-      for (BeamSearchCandidate candidate : candidates)
-      {
-        if (candidate.word.equals(word))
-        {
-          words.add(word);
-          scores.add((int)(candidate.confidence * 1000)); // Convert to 0-1000 range
-          break;
-        }
-      }
-    }
-    
-    logDebug("📊 Filtered predictions: " + candidateWords.size() + " → " + filteredWords.size() + " valid words");
+    logDebug("📊 Raw predictions: " + candidates.size() + " total, " + words.size() + " above threshold");
     
     return new PredictionResult(words, scores);
   }
