@@ -22,8 +22,8 @@ public class OnnxSwipePredictor
 {
   private static final String TAG = "OnnxSwipePredictor";
   
-  // Model configuration matching web demo
-  private static final int MAX_SEQUENCE_LENGTH = 100;
+  // Model configuration matching web demo exactly
+  private static final int MAX_SEQUENCE_LENGTH = 150; // Must match web demo training
   private static final int TRAJECTORY_FEATURES = 6; // x, y, vx, vy, ax, ay
   private static final float NORMALIZED_WIDTH = 1.0f;
   private static final float NORMALIZED_HEIGHT = 1.0f;

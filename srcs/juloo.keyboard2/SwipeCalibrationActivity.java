@@ -441,10 +441,36 @@ public class SwipeCalibrationActivity extends Activity
   
   private void runBenchmark()
   {
-    Log.d(TAG, "Running neural prediction benchmark...");
+    logToResults("🧪 Testing minimal neural prediction pipeline...");
     
-    // TODO: Implement comprehensive benchmarking
-    Toast.makeText(this, "Benchmark feature coming soon", Toast.LENGTH_SHORT).show();
+    try {
+      // Create minimal test swipe 
+      List<PointF> testPoints = new ArrayList<>();
+      List<Long> testTimestamps = new ArrayList<>();
+      long baseTime = System.currentTimeMillis();
+      
+      // Simple 5-point swipe
+      for (int i = 0; i < 5; i++) {
+        testPoints.add(new PointF(i * 50f, 200f)); // Horizontal line
+        testTimestamps.add(baseTime + i * 100);
+      }
+      
+      SwipeInput testSwipe = new SwipeInput(testPoints, testTimestamps, new ArrayList<>());
+      logToResults("Test swipe created with " + testPoints.size() + " points");
+      
+      // Test neural prediction
+      PredictionResult result = _neuralEngine.predict(testSwipe);
+      
+      logToResults("✅ Neural prediction test successful!");
+      logToResults("   Predictions: " + result.words.size());
+      
+      for (int i = 0; i < Math.min(3, result.words.size()); i++) {
+        logToResults("   " + (i + 1) + ". " + result.words.get(i) + " (score: " + result.scores.get(i) + ")");
+      }
+      
+    } catch (Exception e) {
+      logToResults("💥 Neural prediction test failed: " + e.getMessage());
+    }
   }
   
   private void testTensorCreation()
@@ -476,6 +502,17 @@ public class SwipeCalibrationActivity extends Activity
       
       // Test current approach
       logToResults("Current approach uses boolean[1][100] - should create [1, 100] tensor");
+      
+      // Test if the issue is with our tensor creation specifically
+      try {
+        boolean[][] testMask = new boolean[1][10];
+        testMask[0][5] = true;
+        ai.onnxruntime.OnnxTensor testTensor = ai.onnxruntime.OnnxTensor.createTensor(env, testMask);
+        logToResults("Small test boolean[1][10] shape: " + java.util.Arrays.toString(testTensor.getInfo().getShape()));
+        testTensor.close();
+      } catch (Exception e) {
+        logToResults("❌ Small test failed: " + e.getMessage());
+      }
       
       logToResults("✅ Tensor creation tests complete");
       

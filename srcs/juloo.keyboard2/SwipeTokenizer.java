@@ -119,19 +119,14 @@ public class SwipeTokenizer
     addMapping(SOS_IDX, '^');   // Start of sequence
     addMapping(EOS_IDX, '$');   // End of sequence
     
-    // Alphabet (a-z)
+    // Alphabet (a-z) - exactly matching web demo
     int idx = 4;
     for (char c = 'a'; c <= 'z'; c++)
     {
       addMapping(idx++, c);
     }
     
-    // Common symbols and punctuation
-    char[] symbols = {' ', '.', ',', '!', '?', ':', ';', '-', '_', '@', '#'};
-    for (char symbol : symbols)
-    {
-      addMapping(idx++, symbol);
-    }
+    // No extra symbols - web demo only uses 4 special tokens + 26 letters = 30 total
     
     Log.d(TAG, String.format("Default tokenizer initialized with %d tokens", _charToIdx.size()));
   }
