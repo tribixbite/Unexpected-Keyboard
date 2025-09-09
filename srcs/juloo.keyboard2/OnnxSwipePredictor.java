@@ -195,8 +195,8 @@ public class OnnxSwipePredictor
         
         // Run encoder inference with try-with-resources
         try (OrtSession.Result encoderResults = _encoderSession.run(encoderInputs)) {
-          // Run beam search decoding
-          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, features);
+          // Run beam search decoding, passing the original source mask
+          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, srcMaskTensor, features);
           
           // Convert to prediction result
           return createPredictionResult(candidates);
@@ -406,23 +406,22 @@ public class OnnxSwipePredictor
   private OnnxTensor createSourceMaskTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
-    // Create ByteBuffer for boolean tensor (proper ONNX API signature)
-    java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH);
-    buffer.order(java.nio.ByteOrder.nativeOrder());
+    // Try boolean array directly with ONNX Runtime 1.20.0
+    boolean[] maskData = new boolean[MAX_SEQUENCE_LENGTH];
     
-    // Mask padded positions (1 = masked/padded, 0 = valid)
+    // Mask padded positions (true = masked/padded, false = valid)
     for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
     {
-      buffer.put((byte)(i >= features.actualLength ? 1 : 0));
+      maskData[i] = (i >= features.actualLength);
     }
     
-    buffer.rewind();
     long[] shape = {1, MAX_SEQUENCE_LENGTH};
-    return OnnxTensor.createTensor(_ortEnvironment, buffer, shape, OnnxJavaType.BOOL);
+    // Try direct boolean array creation (might be supported in 1.20.0)
+    return OnnxTensor.createTensor(_ortEnvironment, maskData);
   }
   
   private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult, 
-    SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
+    OnnxTensor srcMaskTensor, SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
   {
     if (_decoderSession == null)
     {
@@ -485,39 +484,25 @@ public class OnnxSwipePredictor
             paddedTokens[i] = PAD_IDX;
           }
           
-          // Create target mask ByteBuffer - 1 for PADDED positions, 0 for real tokens
-          java.nio.ByteBuffer tgtMaskBuffer = java.nio.ByteBuffer.allocateDirect(decoderSeqLength);
-          tgtMaskBuffer.order(java.nio.ByteOrder.nativeOrder());
+          // Create target mask boolean array - true for PADDED positions, false for real tokens
+          boolean[] targetMaskData = new boolean[decoderSeqLength];
           for (int i = 0; i < decoderSeqLength; i++)
           {
-            tgtMaskBuffer.put((byte)(i >= beam.tokens.size() ? 1 : 0));
+            targetMaskData[i] = (i >= beam.tokens.size());
           }
-          tgtMaskBuffer.rewind();
           
-          // Create source mask ByteBuffer (0 for all positions - all encoder positions valid)
-          int srcMaskSize = (int)memory.getInfo().getShape()[1];
-          java.nio.ByteBuffer srcMaskBuffer = java.nio.ByteBuffer.allocateDirect(srcMaskSize);
-          srcMaskBuffer.order(java.nio.ByteOrder.nativeOrder());
-          for (int i = 0; i < srcMaskSize; i++)
-          {
-            srcMaskBuffer.put((byte)0); // No masking
-          }
-          srcMaskBuffer.rewind();
-          
-          // Create tensors with proper ONNX API signature
+          // Create tensors with ONNX Runtime 1.20.0
           OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
             java.nio.LongBuffer.wrap(paddedTokens), new long[]{1, decoderSeqLength});
-          OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, 
-            tgtMaskBuffer, new long[]{1, decoderSeqLength}, OnnxJavaType.BOOL);
-          OnnxTensor srcMaskTensor = OnnxTensor.createTensor(_ortEnvironment, 
-            srcMaskBuffer, new long[]{1, srcMaskSize}, OnnxJavaType.BOOL);
+          OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, targetMaskData);
+          // Reuse the original srcMaskTensor from encoder (don't create new one)
           
           // Log decoder tensor shapes
           logDebug("🔧 Decoder input tensor shapes:");
           logDebug("   memory: " + java.util.Arrays.toString(memory.getInfo().getShape()));
           logDebug("   target_tokens: " + java.util.Arrays.toString(targetTokensTensor.getInfo().getShape()));
           logDebug("   target_mask: " + java.util.Arrays.toString(targetMaskTensor.getInfo().getShape()) + " (BOOL)");
-          logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL)");
+          logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL - reused)");
           
           // Run decoder
           Map<String, OnnxTensor> decoderInputs = new HashMap<>();
@@ -551,10 +536,9 @@ public class OnnxSwipePredictor
             candidates.add(newBeam);
           }
           
-          // Clean up tensors
+          // Clean up local tensors (don't close srcMaskTensor - managed by caller)
           targetTokensTensor.close();
           targetMaskTensor.close();
-          srcMaskTensor.close();
           decoderOutput.close();
           
         }
