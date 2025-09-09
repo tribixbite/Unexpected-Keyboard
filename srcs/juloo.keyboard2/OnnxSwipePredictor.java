@@ -519,12 +519,34 @@ public class OnnxSwipePredictor
           OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
           OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0); // Get first output
           
-          // Get logits for position after last real token
-          int tokenPosition = Math.min(beam.tokens.size() - 1, decoderSeqLength - 1);
-          float[] logitsData = (float[]) logitsTensor.getValue();
+          // Handle 3D logits tensor [1, seq_len, vocab_size]
+          long[] logitsShape = logitsTensor.getInfo().getShape(); 
+          logDebug("   Logits shape: " + java.util.Arrays.toString(logitsShape));
           
-          int startIdx = tokenPosition * vocabSize;
-          float[] relevantLogits = java.util.Arrays.copyOfRange(logitsData, startIdx, startIdx + vocabSize);
+          // Get logits tensor data - handle as 3D array
+          Object logitsValue = logitsTensor.getValue();
+          
+          // Extract logits for the position after last real token
+          int tokenPosition = Math.min(beam.tokens.size() - 1, decoderSeqLength - 1);
+          float[] relevantLogits = new float[vocabSize];
+          
+          if (logitsValue instanceof float[][][])
+          {
+            float[][][] logits3D = (float[][][]) logitsValue;
+            // Extract logits for batch=0, position=tokenPosition, all vocab
+            System.arraycopy(logits3D[0][tokenPosition], 0, relevantLogits, 0, vocabSize);
+          }
+          else if (logitsValue instanceof float[])
+          {
+            // Flattened array - calculate offset
+            float[] logitsFlat = (float[]) logitsValue;
+            int startIdx = tokenPosition * vocabSize;
+            System.arraycopy(logitsFlat, startIdx, relevantLogits, 0, vocabSize);
+          }
+          else
+          {
+            throw new RuntimeException("Unexpected logits tensor format: " + logitsValue.getClass());
+          }
           
           // Apply softmax
           float[] probs = softmax(relevantLogits);
