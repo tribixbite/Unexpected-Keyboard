@@ -531,42 +531,21 @@ public class OnnxSwipePredictor
           int tokenPosition = Math.min(beam.tokens.size() - 1, decoderSeqLength - 1);
           float[] relevantLogits = new float[vocabSize];
           
-          try {
-            // Try 3D tensor first [batch, seq_len, vocab_size]
-            float[][][] logits3D = (float[][][]) logitsValue;
-            logDebug("   Accessing logits3D[0][" + tokenPosition + "] (vocab=" + vocabSize + ")");
-            
-            // Verify bounds
-            if (tokenPosition >= 0 && tokenPosition < logits3D[0].length && 
-                logits3D[0][tokenPosition].length >= vocabSize) {
-              System.arraycopy(logits3D[0][tokenPosition], 0, relevantLogits, 0, vocabSize);
-              logDebug("   ✅ Extracted 3D logits successfully");
-            } else {
-              throw new RuntimeException("Logits bounds error: pos=" + tokenPosition + 
-                ", seq_len=" + logits3D[0].length + 
-                ", vocab=" + (logits3D[0].length > 0 ? logits3D[0][0].length : "N/A"));
-            }
-          }
-          catch (ClassCastException e3D) {
-            logDebug("   3D cast failed, trying flattened array...");
-            try {
-              // Try flattened array
-              float[] logitsFlat = (float[]) logitsValue;
-              int startIdx = tokenPosition * vocabSize;
-              logDebug("   Flattened array length: " + logitsFlat.length + ", extracting from " + startIdx);
-              
-              if (startIdx + vocabSize <= logitsFlat.length) {
-                System.arraycopy(logitsFlat, startIdx, relevantLogits, 0, vocabSize);
-                logDebug("   ✅ Extracted flattened logits successfully");
-              } else {
-                throw new RuntimeException("Flattened logits bounds error");
-              }
-            }
-            catch (ClassCastException eFlat) {
-              logDebug("   💥 Both 3D and flat casting failed!");
-              throw new RuntimeException("Unsupported logits tensor format: " + logitsValue.getClass().getName() + 
-                ". Expected float[][][] or float[]");
-            }
+          // Web demo approach: treat logits as flattened array (shape [1, 20, 30] but accessed flat)
+          // This matches: const relevantLogits = logitsData.slice(startIdx, endIdx);
+          float[] logitsFlat = (float[]) logitsValue;
+          int startIdx = tokenPosition * vocabSize;
+          int endIdx = startIdx + vocabSize;
+          
+          logDebug("   Flattened array length: " + logitsFlat.length + 
+            ", extracting [" + startIdx + ":" + endIdx + "] for position " + tokenPosition);
+          
+          if (endIdx <= logitsFlat.length) {
+            System.arraycopy(logitsFlat, startIdx, relevantLogits, 0, vocabSize);
+            logDebug("   ✅ Extracted logits successfully");
+          } else {
+            throw new RuntimeException("Logits bounds error: need " + endIdx + ", have " + logitsFlat.length + 
+              " (position=" + tokenPosition + ", vocab=" + vocabSize + ")");
           }
           
           // Apply softmax
