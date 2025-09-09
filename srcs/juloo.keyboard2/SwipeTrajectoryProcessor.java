@@ -51,11 +51,8 @@ public class SwipeTrajectoryProcessor
     
     Log.d(TAG, String.format("Extracting features from %d raw points", rawPath.size()));
     
-    // Normalize coordinates to [0,1] range
-    List<TrajectoryPoint> normalizedPoints = normalizeTrajectory(rawPath, maxSequenceLength);
-    
-    // Calculate velocities and accelerations
-    calculateDerivatives(normalizedPoints);
+    // Extract features inline like web demo (more efficient, exact match)
+    List<TrajectoryPoint> normalizedPoints = extractFeaturesInline(rawPath, maxSequenceLength);
     
     // Find nearest keys for each point
     List<Character> nearestKeys = findNearestKeys(rawPath);
@@ -104,27 +101,67 @@ public class SwipeTrajectoryProcessor
     return normalized;
   }
   
-  private void calculateDerivatives(List<TrajectoryPoint> points)
+  /**
+   * Extract features inline exactly matching web demo approach for efficiency
+   */
+  private List<TrajectoryPoint> extractFeaturesInline(List<PointF> rawPath, int maxLength)
   {
-    // Calculate velocities (first derivative)
-    for (int i = 1; i < points.size(); i++)
+    List<TrajectoryPoint> points = new ArrayList<>();
+    
+    // Resample to exact length first
+    List<PointF> resampled = resamplePath(rawPath, Math.min(rawPath.size(), maxLength));
+    
+    // Pad to maxLength if necessary
+    while (resampled.size() < maxLength)
     {
-      TrajectoryPoint curr = points.get(i);
-      TrajectoryPoint prev = points.get(i - 1);
-      
-      curr.vx = curr.x - prev.x;
-      curr.vy = curr.y - prev.y;
+      PointF lastPoint = resampled.isEmpty() ? new PointF(0, 0) : resampled.get(resampled.size() - 1);
+      resampled.add(new PointF(lastPoint.x, lastPoint.y));
     }
     
-    // Calculate accelerations (second derivative)
-    for (int i = 2; i < points.size(); i++)
+    // Calculate features inline like web demo (single pass, more efficient)
+    for (int i = 0; i < maxLength; i++)
     {
-      TrajectoryPoint curr = points.get(i);
-      TrajectoryPoint prev = points.get(i - 1);
+      PointF rawPoint = resampled.get(i);
+      TrajectoryPoint point = new TrajectoryPoint();
       
-      curr.ax = curr.vx - prev.vx;
-      curr.ay = curr.vy - prev.vy;
+      // Position (normalized 0-1) - exactly like web demo
+      point.x = rawPoint.x / _keyboardWidth;
+      point.y = rawPoint.y / _keyboardHeight;
+      
+      // Clamp to [0,1] range
+      point.x = Math.max(0.0f, Math.min(1.0f, point.x));
+      point.y = Math.max(0.0f, Math.min(1.0f, point.y));
+      
+      // Velocity (difference from previous point) - exactly like web demo
+      if (i > 0)
+      {
+        TrajectoryPoint prevPoint = points.get(i - 1);
+        point.vx = point.x - prevPoint.x; // vx
+        point.vy = point.y - prevPoint.y; // vy
+      }
+      else
+      {
+        point.vx = 0.0f;
+        point.vy = 0.0f;
+      }
+      
+      // Acceleration (difference of velocities) - exactly like web demo
+      if (i > 1)
+      {
+        TrajectoryPoint prevPoint = points.get(i - 1);
+        point.ax = point.vx - prevPoint.vx; // ax
+        point.ay = point.vy - prevPoint.vy; // ay
+      }
+      else
+      {
+        point.ax = 0.0f;
+        point.ay = 0.0f;
+      }
+      
+      points.add(point);
     }
+    
+    return points;
   }
   
   private List<PointF> resamplePath(List<PointF> originalPath, int targetLength)

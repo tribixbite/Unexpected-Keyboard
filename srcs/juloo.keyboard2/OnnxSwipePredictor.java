@@ -46,6 +46,7 @@ public class OnnxSwipePredictor
   private OrtSession _decoderSession;
   private SwipeTokenizer _tokenizer;
   private SwipeTrajectoryProcessor _trajectoryProcessor;
+  private NeuralVocabulary _vocabulary;
   
   // Model state
   private boolean _isModelLoaded = false;
@@ -65,6 +66,7 @@ public class OnnxSwipePredictor
     _ortEnvironment = OrtEnvironment.getEnvironment();
     _trajectoryProcessor = new SwipeTrajectoryProcessor();
     _tokenizer = new SwipeTokenizer();
+    _vocabulary = new NeuralVocabulary();
     
     Log.d(TAG, "OnnxSwipePredictor initialized");
   }
@@ -123,6 +125,10 @@ public class OnnxSwipePredictor
       // Load tokenizer configuration
       boolean tokenizerLoaded = _tokenizer.loadFromAssets(_context);
       logDebug("📝 Tokenizer loaded: " + tokenizerLoaded + " (vocab size: " + _tokenizer.getVocabSize() + ")");
+      
+      // Load vocabulary with multi-level caching
+      boolean vocabularyLoaded = _vocabulary.loadVocabulary();
+      logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getVocabularySize() + ")");
       
       _isModelLoaded = (_encoderSession != null && _decoderSession != null);
       _isInitialized = true;
@@ -673,14 +679,35 @@ public class OnnxSwipePredictor
     List<String> words = new ArrayList<>();
     List<Integer> scores = new ArrayList<>();
     
+    // Filter candidates through vocabulary system like web demo
+    List<String> candidateWords = new ArrayList<>();
     for (BeamSearchCandidate candidate : candidates)
     {
       if (candidate.confidence >= _confidenceThreshold)
       {
-        words.add(candidate.word);
-        scores.add((int)(candidate.confidence * 1000)); // Convert to 0-1000 range
+        candidateWords.add(candidate.word);
       }
     }
+    
+    // Apply vocabulary filtering for valid words only
+    List<String> filteredWords = _vocabulary.filterPredictions(candidateWords);
+    
+    // Rebuild scores for filtered words
+    for (String word : filteredWords)
+    {
+      // Find original candidate and score
+      for (BeamSearchCandidate candidate : candidates)
+      {
+        if (candidate.word.equals(word))
+        {
+          words.add(word);
+          scores.add((int)(candidate.confidence * 1000)); // Convert to 0-1000 range
+          break;
+        }
+      }
+    }
+    
+    logDebug("📊 Filtered predictions: " + candidateWords.size() + " → " + filteredWords.size() + " valid words");
     
     return new PredictionResult(words, scores);
   }
