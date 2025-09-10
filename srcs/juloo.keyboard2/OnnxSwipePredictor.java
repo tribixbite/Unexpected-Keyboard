@@ -142,7 +142,7 @@ public class OnnxSwipePredictor
       if (encoderModelData != null)
       {
         logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
-        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions();
+        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Encoder");
         _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
         logDebug("✅ Encoder session created successfully");
         logDebug("   Inputs: " + _encoderSession.getInputNames());
@@ -160,7 +160,7 @@ public class OnnxSwipePredictor
       if (decoderModelData != null)
       {
         logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
-        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions();
+        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Decoder");
         _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
         logDebug("✅ Decoder session created successfully");
         logDebug("   Inputs: " + _decoderSession.getInputNames());
@@ -228,6 +228,7 @@ public class OnnxSwipePredictor
   
   /**
    * Predict words from swipe input using neural transformer
+   * OPTIMIZATION: Added detailed performance timing for bottleneck analysis
    */
   public PredictionResult predict(SwipeInput input)
   {
@@ -240,12 +241,18 @@ public class OnnxSwipePredictor
     
     try
     {
+      // OPTIMIZATION: Detailed performance timing for bottleneck analysis
+      long totalStartTime = System.nanoTime();
+      
       Log.d(TAG, "Neural prediction for swipe with " + input.coordinates.size() + " points");
       logDebug("🚀 Starting neural prediction for " + input.coordinates.size() + " points");
       
-      // Extract trajectory features
+      // Extract trajectory features with timing
+      long preprocessStartTime = System.nanoTime();
       SwipeTrajectoryProcessor.TrajectoryFeatures features = 
         _trajectoryProcessor.extractFeatures(input, MAX_SEQUENCE_LENGTH);
+      long preprocessTime = System.nanoTime() - preprocessStartTime;
+      logDebug("⏱️ Feature extraction: " + (preprocessTime / 1_000_000.0) + "ms");
       
       // Run encoder inference with proper ONNX API
       OnnxTensor trajectoryTensor = null;
@@ -269,13 +276,33 @@ public class OnnxSwipePredictor
         encoderInputs.put("nearest_keys", nearestKeysTensor);
         encoderInputs.put("src_mask", srcMaskTensor);
         
-        // Run encoder inference with try-with-resources
+        // Run encoder inference with detailed timing
+        long encoderStartTime = System.nanoTime();
         try (OrtSession.Result encoderResults = _encoderSession.run(encoderInputs)) {
-          // Run beam search decoding, passing the original source mask
-          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, srcMaskTensor, features);
+          long encoderTime = System.nanoTime() - encoderStartTime;
+          logDebug("⏱️ Encoder inference: " + (encoderTime / 1_000_000.0) + "ms");
           
-          // Convert to prediction result
-          return createPredictionResult(candidates);
+          // Run beam search decoding with timing
+          long beamSearchStartTime = System.nanoTime();
+          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, srcMaskTensor, features);
+          long beamSearchTime = System.nanoTime() - beamSearchStartTime;
+          logDebug("⏱️ Beam search total: " + (beamSearchTime / 1_000_000.0) + "ms");
+          
+          // Post-processing with timing
+          long postprocessStartTime = System.nanoTime();
+          PredictionResult result = createPredictionResult(candidates);
+          long postprocessTime = System.nanoTime() - postprocessStartTime;
+          logDebug("⏱️ Post-processing: " + (postprocessTime / 1_000_000.0) + "ms");
+          
+          // Total timing summary
+          long totalTime = System.nanoTime() - totalStartTime;
+          logDebug("📊 Performance breakdown: Total=" + (totalTime / 1_000_000.0) + 
+            "ms (Preprocess=" + (preprocessTime / 1_000_000.0) + 
+            "ms, Encoder=" + (encoderTime / 1_000_000.0) + 
+            "ms, BeamSearch=" + (beamSearchTime / 1_000_000.0) + 
+            "ms, Postprocess=" + (postprocessTime / 1_000_000.0) + "ms)");
+          
+          return result;
         }
         
       } finally {
@@ -289,6 +316,61 @@ public class OnnxSwipePredictor
     {
       Log.e(TAG, "Neural prediction failed", e);
       throw new RuntimeException("Neural prediction failed: " + e.getMessage());
+    }
+  }
+  
+  /**
+   * OPTIMIZATION: Create optimized SessionOptions with NNAPI and performance settings
+   * Implements Gemini's recommendations for maximum ONNX Runtime performance
+   */
+  private OrtSession.SessionOptions createOptimizedSessionOptions(String sessionName)
+  {
+    try
+    {
+      OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
+      
+      // OPTIMIZATION 1: Maximum graph optimization level (operator fusion, layout transforms)
+      sessionOptions.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
+      logDebug("⚙️ Set optimization level to ALL_OPT for " + sessionName);
+      
+      // OPTIMIZATION 2: Let ONNX Runtime determine optimal thread count for mobile
+      sessionOptions.setIntraOpNumThreads(0); // 0 = auto-detect based on CPU cores
+      logDebug("🧵 Set intra-op threads to auto-detect for " + sessionName);
+      
+      // OPTIMIZATION 3: Memory pattern optimization for repeated inference
+      sessionOptions.setMemoryPatternOptimization(true);
+      logDebug("🧠 Enabled memory pattern optimization for " + sessionName);
+      
+      // OPTIMIZATION 4: Try NNAPI hardware acceleration with fallback
+      try
+      {
+        sessionOptions.addNnapi();
+        logDebug("🚀 NNAPI execution provider enabled for " + sessionName);
+        Log.d(TAG, "NNAPI enabled for " + sessionName + " - hardware acceleration active");
+      }
+      catch (Exception nnapiError)
+      {
+        logDebug("⚠️ NNAPI not available for " + sessionName + ": " + nnapiError.getMessage());
+        Log.w(TAG, "NNAPI not available for " + sessionName + ", using optimized CPU: " + nnapiError.getMessage());
+        // Continue with optimized CPU settings
+      }
+      
+      return sessionOptions;
+    }
+    catch (Exception e)
+    {
+      logDebug("💥 Failed to create optimized SessionOptions for " + sessionName + ": " + e.getMessage());
+      Log.e(TAG, "Failed to create optimized SessionOptions", e);
+      
+      // Ultimate fallback: basic session options
+      try
+      {
+        return new OrtSession.SessionOptions();
+      }
+      catch (Exception fallbackError)
+      {
+        throw new RuntimeException("Cannot create any SessionOptions", fallbackError);
+      }
     }
   }
   
