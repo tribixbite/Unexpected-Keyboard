@@ -38,15 +38,15 @@ public class OnnxSwipePredictor
   private static final float NORMALIZED_WIDTH = 1.0f;
   private static final float NORMALIZED_HEIGHT = 1.0f;
   
-  // Beam search parameters
-  private static final int DEFAULT_BEAM_WIDTH = 8;
-  private static final int DEFAULT_MAX_LENGTH = 35;
+  // Beam search parameters (OPTIMIZED for speed)
+  private static final int DEFAULT_BEAM_WIDTH = 5; // Reduced from 8 for speed
+  private static final int DEFAULT_MAX_LENGTH = 20; // Reduced from 35 for speed
   private static final float DEFAULT_CONFIDENCE_THRESHOLD = 0.1f;
   
-  // OPTIMIZATION: Early termination thresholds (2x speedup expected)
-  private static final float EARLY_TERMINATION_CONFIDENCE = 0.8f; // Stop if top beam >80% confident
-  private static final int MIN_STEPS_BEFORE_EARLY_TERMINATION = 2; // Allow minimum word length
-  private static final float BEAM_PRUNING_THRESHOLD = 0.3f; // Prune beams >30% behind leader
+  // OPTIMIZATION: Aggressive early termination thresholds (3x speedup expected)
+  private static final float EARLY_TERMINATION_CONFIDENCE = 0.5f; // Stop if top beam >50% confident (was 80%)
+  private static final int MIN_STEPS_BEFORE_EARLY_TERMINATION = 1; // Allow after 2 characters (was 2)
+  private static final float BEAM_PRUNING_THRESHOLD = 0.5f; // More aggressive pruning (was 0.3f)
   
   // Special tokens
   private static final int PAD_IDX = 0;
@@ -596,6 +596,11 @@ public class OnnxSwipePredictor
     beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
     logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
     
+    // Performance tracking
+    long beamSearchStart = System.nanoTime();
+    long totalInferenceTime = 0;
+    long totalTensorTime = 0;
+    
     // Beam search loop
     for (int step = 0; step < maxLength; step++)
     {
@@ -612,15 +617,23 @@ public class OnnxSwipePredictor
         
         try
         {
+          long stepStart = System.nanoTime();
           logDebug("   🔍 Starting decoder step for beam with " + beam.tokens.size() + " tokens");
           
           // OPTIMIZATION: Use pre-allocated reusable tensors instead of creating new ones
+          long updateStart = System.nanoTime();
           updateReusableTokens(beam, decoderSeqLength);
+          long updateTime = (System.nanoTime() - updateStart) / 1_000_000;
           
           // Create tensors using reusable buffers (MUCH faster than creating new ones)
+          long tensorStart = System.nanoTime();
           OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
             java.nio.LongBuffer.wrap(_reusableTokensArray), new long[]{1, decoderSeqLength});
           OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, _reusableTargetMaskArray);
+          long tensorTime = (System.nanoTime() - tensorStart) / 1_000_000;
+          totalTensorTime += tensorTime;
+          
+          logDebug("   ⏱️ Timing - Update: " + updateTime + "ms, Tensor: " + tensorTime + "ms");
           // Reuse the original srcMaskTensor from encoder (don't create new one)
           
           // Log decoder tensor shapes
@@ -631,6 +644,7 @@ public class OnnxSwipePredictor
           logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL - reused)");
           
           // Run decoder
+          long inferenceStart = System.nanoTime();
           Map<String, OnnxTensor> decoderInputs = new HashMap<>();
           decoderInputs.put("memory", memory);
           decoderInputs.put("target_tokens", targetTokensTensor);
@@ -638,6 +652,9 @@ public class OnnxSwipePredictor
           decoderInputs.put("src_mask", srcMaskTensor);
           
           OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
+          long inferenceTime = (System.nanoTime() - inferenceStart) / 1_000_000;
+          totalInferenceTime += inferenceTime;
+          logDebug("   ⏱️ Inference: " + inferenceTime + "ms");
           OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0); // Get first output
           
           // Handle 3D logits tensor [1, seq_len, vocab_size]
@@ -722,10 +739,15 @@ public class OnnxSwipePredictor
       {
         BeamSearchState bestBeam = candidates.get(0);
         float bestConfidence = (float)Math.exp(bestBeam.score);
+        // Actual word length (exclude SOS/EOS tokens)
+        int actualWordLength = Math.max(0, bestBeam.tokens.size() - 1); // Subtract SOS token
         
-        if (bestConfidence > EARLY_TERMINATION_CONFIDENCE && bestBeam.tokens.size() >= 3)
+        logDebug("🔍 Early termination check: step=" + step + ", confidence=" + String.format("%.3f", bestConfidence) + 
+                 ", actualWordLength=" + actualWordLength + ", threshold=" + EARLY_TERMINATION_CONFIDENCE);
+        
+        if (bestConfidence > EARLY_TERMINATION_CONFIDENCE && actualWordLength >= 3)
         {
-          logDebug("⚡ Early termination: confidence=" + bestConfidence + ", tokens=" + bestBeam.tokens.size());
+          logDebug("⚡ Early termination TRIGGERED: confidence=" + bestConfidence + ", wordLength=" + actualWordLength);
           beams = candidates.subList(0, Math.min(candidates.size(), Math.min(beamWidth, 3))); // Keep fewer beams
           break; // Exit beam search early
         }
@@ -767,6 +789,15 @@ public class OnnxSwipePredictor
         break;
       }
     }
+    
+    // Performance summary
+    long totalBeamSearchTime = (System.nanoTime() - beamSearchStart) / 1_000_000;
+    logDebug("📊 Beam search performance:");
+    logDebug("   Total time: " + totalBeamSearchTime + "ms");
+    logDebug("   Total inference: " + totalInferenceTime + "ms (" + 
+             String.format("%.1f", (totalInferenceTime * 100.0 / totalBeamSearchTime)) + "%)");
+    logDebug("   Total tensor creation: " + totalTensorTime + "ms (" + 
+             String.format("%.1f", (totalTensorTime * 100.0 / totalBeamSearchTime)) + "%)");
     
     // Convert token sequences to words with detailed debugging
     List<BeamSearchCandidate> results = new ArrayList<>();
