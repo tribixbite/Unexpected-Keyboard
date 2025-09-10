@@ -139,7 +139,7 @@ public class OnnxSwipePredictor
       if (encoderModelData != null)
       {
         logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
-        OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
+        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions();
         _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
         logDebug("✅ Encoder session created successfully");
         logDebug("   Inputs: " + _encoderSession.getInputNames());
@@ -157,7 +157,7 @@ public class OnnxSwipePredictor
       if (decoderModelData != null)
       {
         logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
-        OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
+        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions();
         _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
         logDebug("✅ Decoder session created successfully");
         logDebug("   Inputs: " + _decoderSession.getInputNames());
@@ -309,6 +309,29 @@ public class OnnxSwipePredictor
     {
       Log.e(TAG, "Failed to initialize reusable buffers", e);
     }
+  }
+  
+  /**
+   * OPTIMIZATION: Create optimized ONNX session options for maximum performance
+   * Uses available optimization settings for the current ONNX Runtime version
+   */
+  private OrtSession.SessionOptions createOptimizedSessionOptions() throws OrtException
+  {
+    OrtSession.SessionOptions options = new OrtSession.SessionOptions();
+    
+    // Enable all available optimization levels
+    options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
+    
+    // Enable memory pattern optimization if available
+    try {
+      options.setMemoryPatternOptimization(true);
+      Log.d(TAG, "Memory pattern optimization enabled");
+    } catch (Exception e) {
+      Log.d(TAG, "Memory pattern optimization not available in this ONNX version");
+    }
+    
+    Log.d(TAG, "ONNX session options optimized for current runtime version");
+    return options;
   }
   
   /**
