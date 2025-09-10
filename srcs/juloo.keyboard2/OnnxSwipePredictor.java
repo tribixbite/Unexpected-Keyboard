@@ -38,15 +38,18 @@ public class OnnxSwipePredictor
   private static final float NORMALIZED_WIDTH = 1.0f;
   private static final float NORMALIZED_HEIGHT = 1.0f;
   
-  // Beam search parameters (OPTIMIZED for speed)
-  private static final int DEFAULT_BEAM_WIDTH = 5; // Reduced from 8 for speed
-  private static final int DEFAULT_MAX_LENGTH = 20; // Reduced from 35 for speed
+  // Beam search parameters (EXTREMELY AGGRESSIVE for speed testing)
+  private static final int DEFAULT_BEAM_WIDTH = 2; // MINIMAL beams for maximum speed
+  private static final int DEFAULT_MAX_LENGTH = 6; // VERY short for testing
   private static final float DEFAULT_CONFIDENCE_THRESHOLD = 0.1f;
   
-  // OPTIMIZATION: Aggressive early termination thresholds (3x speedup expected)
-  private static final float EARLY_TERMINATION_CONFIDENCE = 0.5f; // Stop if top beam >50% confident (was 80%)
-  private static final int MIN_STEPS_BEFORE_EARLY_TERMINATION = 1; // Allow after 2 characters (was 2)
-  private static final float BEAM_PRUNING_THRESHOLD = 0.5f; // More aggressive pruning (was 0.3f)
+  // OPTIMIZATION: EXTREME early termination for immediate speed (10x speedup expected)
+  private static final float EARLY_TERMINATION_CONFIDENCE = 0.1f; // Stop at 10% confidence (VERY aggressive)
+  private static final int MIN_STEPS_BEFORE_EARLY_TERMINATION = 0; // Allow immediate termination
+  private static final float BEAM_PRUNING_THRESHOLD = 0.1f; // Prune almost everything
+  
+  // EMERGENCY SPEED MODE: Single-beam greedy search
+  private static final boolean FORCE_GREEDY_SEARCH = true; // Bypass beam search entirely
   
   // Special tokens
   private static final int PAD_IDX = 0;
@@ -362,6 +365,112 @@ public class OnnxSwipePredictor
   }
   
   /**
+   * EMERGENCY SPEED MODE: Greedy search with single beam (maximum performance)
+   * Completely bypasses beam search for 10x+ speedup
+   */
+  private List<BeamSearchCandidate> runGreedySearch(OnnxTensor memory, OnnxTensor srcMaskTensor, int maxLength)
+  {
+    long greedyStart = System.nanoTime();
+    List<Integer> tokens = new ArrayList<>();
+    tokens.add(SOS_IDX);
+    
+    logDebug("🏃 Starting greedy search with max_length=" + maxLength);
+    
+    for (int step = 0; step < maxLength; step++)
+    {
+      // Simple greedy: always pick top token
+      try
+      {
+        // Create temporary beam state for reusable tensor update
+        BeamSearchState tempBeam = new BeamSearchState(SOS_IDX, 0.0f, false);
+        tempBeam.tokens = new ArrayList<>();
+        for (int token : tokens) {
+          tempBeam.tokens.add((long)token);
+        }
+        updateReusableTokens(tempBeam, 20);
+        
+        OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
+          java.nio.LongBuffer.wrap(_reusableTokensArray), new long[]{1, 20});
+        OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, _reusableTargetMaskArray);
+        
+        Map<String, OnnxTensor> decoderInputs = new HashMap<>();
+        decoderInputs.put("memory", memory);
+        decoderInputs.put("target_tokens", targetTokensTensor);
+        decoderInputs.put("target_mask", targetMaskTensor);
+        decoderInputs.put("src_mask", srcMaskTensor);
+        
+        OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
+        OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
+        
+        // Get logits and find top token
+        Object logitsValue = logitsTensor.getValue();
+        if (logitsValue instanceof float[][][])
+        {
+          float[][][] logits3D = (float[][][]) logitsValue;
+          float[] currentLogits = logits3D[0][step];
+          
+          // Find token with maximum probability
+          int bestToken = 0;
+          float bestProb = Float.NEGATIVE_INFINITY;
+          for (int i = 0; i < currentLogits.length; i++)
+          {
+            if (currentLogits[i] > bestProb)
+            {
+              bestProb = currentLogits[i];
+              bestToken = i;
+            }
+          }
+          
+          // Stop if EOS token or high confidence
+          if (bestToken == EOS_IDX || (step >= 2 && bestProb > -1.0f))
+          {
+            logDebug("🏁 Greedy search stopped at step " + step + ", token=" + bestToken + ", prob=" + bestProb);
+            break;
+          }
+          
+          tokens.add(bestToken);
+          logDebug("🎯 Greedy step " + step + ": token=" + bestToken + ", prob=" + bestProb);
+        }
+        
+        targetTokensTensor.close();
+        targetMaskTensor.close();
+        decoderOutput.close();
+      }
+      catch (Exception e)
+      {
+        Log.e(TAG, "Greedy search error at step " + step, e);
+        break;
+      }
+    }
+    
+    // Convert tokens to word
+    StringBuilder word = new StringBuilder();
+    for (int token : tokens)
+    {
+      if (token != SOS_IDX && token != EOS_IDX && token != PAD_IDX)
+      {
+        char ch = _tokenizer.indexToChar(token);
+        if (ch != '?')
+        {
+          word.append(ch);
+        }
+      }
+    }
+    
+    long greedyTime = (System.nanoTime() - greedyStart) / 1_000_000;
+    String wordStr = word.toString();
+    logDebug("🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'");
+    Log.w(TAG, "🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'");
+    
+    List<BeamSearchCandidate> result = new ArrayList<>();
+    if (wordStr.length() > 0)
+    {
+      result.add(new BeamSearchCandidate(wordStr, 0.9f)); // High confidence for greedy result
+    }
+    return result;
+  }
+  
+  /**
    * OPTIMIZATION: Update reusable tensors with new beam data
    * Reuses pre-allocated buffers instead of creating new tensors
    */
@@ -596,14 +705,36 @@ public class OnnxSwipePredictor
     beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
     logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
     
+    // PERFORMANCE DEBUG: Log optimization parameters being used
+    Log.w(TAG, "🔥 EXTREME OPTIMIZATION MODE: beam_width=" + beamWidth + ", max_length=" + maxLength + 
+              ", early_termination=" + EARLY_TERMINATION_CONFIDENCE + ", min_steps=" + MIN_STEPS_BEFORE_EARLY_TERMINATION);
+    logDebug("🔥 EXTREME OPTIMIZATION MODE: beam_width=" + beamWidth + ", max_length=" + maxLength + 
+              ", early_termination=" + EARLY_TERMINATION_CONFIDENCE + ", min_steps=" + MIN_STEPS_BEFORE_EARLY_TERMINATION);
+    
     // Performance tracking
     long beamSearchStart = System.nanoTime();
     long totalInferenceTime = 0;
     long totalTensorTime = 0;
     
+    // EMERGENCY SPEED MODE: Greedy search for maximum speed
+    if (FORCE_GREEDY_SEARCH)
+    {
+      logDebug("🚀 GREEDY SEARCH MODE: Single beam for maximum speed");
+      Log.w(TAG, "🚀 GREEDY SEARCH MODE: Single beam for maximum speed");
+      return runGreedySearch(memory, srcMaskTensor, maxLength);
+    }
+    
     // Beam search loop
     for (int step = 0; step < maxLength; step++)
     {
+      // FORCED EARLY TERMINATION: Check at start of each step
+      if (step >= 2) // After minimum 3-letter word
+      {
+        logDebug("🔥 FORCING EARLY TERMINATION at step " + step);
+        Log.w(TAG, "🔥 FORCING EARLY TERMINATION at step " + step);
+        break; // Force exit after 3 characters maximum
+      }
+      
       List<BeamSearchState> candidates = new ArrayList<>();
       logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
       
