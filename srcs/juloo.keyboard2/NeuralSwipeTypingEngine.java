@@ -33,10 +33,10 @@ public class NeuralSwipeTypingEngine
     _context = context;
     _config = config;
     
-    // Initialize neural predictor
-    _neuralPredictor = new OnnxSwipePredictor(context);
+    // OPTIMIZATION: Use singleton predictor with session persistence
+    _neuralPredictor = OnnxSwipePredictor.getInstance(context);
     
-    Log.d(TAG, "NeuralSwipeTypingEngine created - pure neural, no fallbacks");
+    Log.d(TAG, "NeuralSwipeTypingEngine created - using persistent singleton predictor");
   }
   
   /**
@@ -60,6 +60,7 @@ public class NeuralSwipeTypingEngine
       }
       
       // Initialize neural predictor - MUST succeed or throw error
+      // Note: Singleton may already be initialized, which is optimal for performance
       boolean neuralReady = _neuralPredictor.initialize();
       
       if (!neuralReady)
