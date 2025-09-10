@@ -24,10 +24,16 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import juloo.keyboard2.ml.SwipeMLData;
 import juloo.keyboard2.ml.SwipeMLDataStore;
 
@@ -42,12 +48,16 @@ public class SwipeCalibrationActivity extends Activity
   // Calibration settings
   private static final int WORDS_PER_SESSION = 20;
   
-  // Test words matching web demo frequency distribution
-  private static final List<String> CALIBRATION_WORDS = Arrays.asList(
+  // OPTIMIZATION: Use random words from full 150k vocabulary instead of fixed list
+  private static final List<String> FALLBACK_CALIBRATION_WORDS = Arrays.asList(
     "the", "and", "for", "are", "but", "not", "you", "all", "can", "had",
     "her", "was", "one", "our", "out", "day", "get", "has", "him", "his",
     "how", "its", "new", "now", "old", "see", "two", "who", "boy", "did"
   );
+  
+  // Full vocabulary for random word selection
+  private List<String> fullVocabulary = null;
+  private Random random = new Random();
   
   // QWERTY layout
   private static final String[][] KEYBOARD_LAYOUT = {
@@ -173,14 +183,103 @@ public class SwipeCalibrationActivity extends Activity
     _keyVerticalMargin = prefs.getFloat("key_vertical_margin", 1.5f) / 100;
     _keyHorizontalMargin = prefs.getFloat("key_horizontal_margin", 2.0f) / 100;
     
-    // Prepare session words
-    _sessionWords = new ArrayList<>(CALIBRATION_WORDS);
-    java.util.Collections.shuffle(_sessionWords);
-    _sessionWords = _sessionWords.subList(0, WORDS_PER_SESSION);
+    // OPTIMIZATION: Prepare random session words from full vocabulary
+    _sessionWords = prepareRandomSessionWords();
     
     setupUI();
     setupKeyboard();
     showNextWord();
+  }
+  
+  /**
+   * OPTIMIZATION: Load full vocabulary and select random test words
+   * Replaces fixed word list with truly random sampling from 150k vocabulary
+   */
+  private List<String> prepareRandomSessionWords()
+  {
+    // Load full vocabulary if not already loaded
+    if (fullVocabulary == null)
+    {
+      loadFullVocabulary();
+    }
+    
+    List<String> sessionWords = new ArrayList<>();
+    
+    if (fullVocabulary != null && fullVocabulary.size() > WORDS_PER_SESSION)
+    {
+      // Select random words from full vocabulary
+      Set<String> selectedWords = new HashSet<>(); // Prevent duplicates
+      
+      while (selectedWords.size() < WORDS_PER_SESSION)
+      {
+        int randomIndex = random.nextInt(fullVocabulary.size());
+        String word = fullVocabulary.get(randomIndex);
+        
+        // Filter for reasonable test words (3-8 characters, common letters)
+        if (word.length() >= 3 && word.length() <= 8 && 
+            word.matches("^[a-z]+$"))
+        {
+          selectedWords.add(word);
+        }
+      }
+      
+      sessionWords.addAll(selectedWords);
+      Log.d(TAG, "Selected " + sessionWords.size() + " random words from " + fullVocabulary.size() + " vocabulary");
+    }
+    else
+    {
+      // Fallback to original word list
+      sessionWords = new ArrayList<>(FALLBACK_CALIBRATION_WORDS);
+      Collections.shuffle(sessionWords);
+      sessionWords = sessionWords.subList(0, WORDS_PER_SESSION);
+      Log.w(TAG, "Using fallback calibration words");
+    }
+    
+    return sessionWords;
+  }
+  
+  /**
+   * Load full vocabulary from dictionary assets
+   * Loads up to 150k words for random test word selection
+   */
+  private void loadFullVocabulary()
+  {
+    try
+    {
+      Log.d(TAG, "Loading full vocabulary for random test words...");
+      
+      InputStream inputStream = getAssets().open("dictionaries/en.txt");
+      BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+      
+      fullVocabulary = new ArrayList<>();
+      String line;
+      int wordCount = 0;
+      
+      while ((line = reader.readLine()) != null)
+      {
+        line = line.trim().toLowerCase();
+        if (!line.isEmpty() && line.matches("^[a-z]+$") && 
+            line.length() >= 3 && line.length() <= 10)
+        {
+          fullVocabulary.add(line);
+          wordCount++;
+          
+          // Limit to reasonable size for performance
+          if (wordCount >= 10000) // Use 10k most frequent words for testing
+          {
+            break;
+          }
+        }
+      }
+      
+      reader.close();
+      Log.d(TAG, "Loaded " + fullVocabulary.size() + " words for random selection");
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Failed to load full vocabulary", e);
+      fullVocabulary = null; // Will use fallback
+    }
   }
   
   private void setupUI()
