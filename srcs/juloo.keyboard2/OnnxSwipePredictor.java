@@ -316,7 +316,7 @@ public class OnnxSwipePredictor
   
   /**
    * OPTIMIZATION: Create optimized ONNX session options for maximum performance
-   * Uses available optimization settings for the current ONNX Runtime version
+   * CRITICAL: Uses NNAPI execution provider for ARM64 hardware acceleration
    */
   private OrtSession.SessionOptions createOptimizedSessionOptions() throws OrtException
   {
@@ -324,6 +324,17 @@ public class OnnxSwipePredictor
     
     // Enable all available optimization levels
     options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
+    
+    // CRITICAL OPTIMIZATION: Use Android NNAPI execution provider for hardware acceleration
+    try {
+      // Try to enable NNAPI with basic configuration
+      options.addNnapi();
+      Log.w(TAG, "🚀 NNAPI execution provider enabled for ARM64 hardware acceleration");
+      logDebug("🚀 NNAPI execution provider enabled for ARM64 hardware acceleration");
+    } catch (Exception e) {
+      Log.w(TAG, "⚠️ NNAPI not available, using CPU provider: " + e.getMessage());
+      logDebug("⚠️ NNAPI not available, using CPU provider: " + e.getMessage());
+    }
     
     // Enable memory pattern optimization if available
     try {
@@ -333,7 +344,10 @@ public class OnnxSwipePredictor
       Log.d(TAG, "Memory pattern optimization not available in this ONNX version");
     }
     
-    Log.d(TAG, "ONNX session options optimized for current runtime version");
+    // Note: GPU execution provider method may not be available in this ONNX Runtime version
+    Log.d(TAG, "GPU execution provider configuration skipped for compatibility");
+    
+    Log.w(TAG, "🔧 ONNX session options optimized with hardware acceleration");
     return options;
   }
   
