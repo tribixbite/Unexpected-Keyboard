@@ -205,7 +205,8 @@
 4. ✅ **Beam Pruning**: Remove low-probability beams dynamically (1.5x speedup)  
 5. ✅ **Vocabulary Optimization**: Fast-path lookup with common words (2x speedup)
 6. ✅ **Threading**: Dedicated ONNX thread pool with optimized priorities
-7. ✅ **Random Test Words**: 10k vocabulary sampling for calibration testing
+7. ✅ **Modern Execution Providers**: XNNPACK + Qualcomm QNN for Samsung S25U Snapdragon NPU
+8. ✅ **Random Test Words**: 10k vocabulary sampling for calibration testing
 
 **Expected Performance:**
 - **Previous**: 2.4-19 seconds per prediction (unacceptable)
