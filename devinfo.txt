@@ -1,0 +1,97 @@
+GPU Extensions
+
+GL_EXT_debug_marker
+
+GL_AMD_compressed_ATC_texture
+
+GL_AMD_performance_monitor
+
+GL_APPLE_texture_2D_limited_npot
+
+GL_ARB_vertex_buffer_object
+
+GL_EXT_texture_filter_anisotropic
+
+GL_EXT_texture_format_BGRA8888
+
+GL_EXT_texture_type_2_10_10_10_REV
+
+GL_OES_blend_equation_separate
+
+GL_OES_blend_func_separate
+
+GL_OES_blend_subtract
+
+GL_OES_compressed_ETC1_RGB8_texture
+
+GL_OES_compressed_paletted_texture
+
+GL_OES_depth_texture
+
+GL_OES_depth24
+
+GL_OES_draw_texture
+
+GL_OES_EGL_image
+
+GL_OES_EGL_image_external
+
+GL_OES_framebuffer_object
+
+GL_OES_matrix_palette
+
+GL_OES_packed_depth_stencil
+
+GL_OES_point_size_array
+
+GL_OES_point_sprite
+
+GL_OES_read_format
+
+GL_OES_rgb8_rgba8
+
+GL_OES_stencil_wrap
+
+GL_OES_texture_cube_map
+
+GL_OES_texture_env_crossbar
+
+GL_OES_texture_float
+
+GL_OES_texture_half_float
+
+GL_OES_texture_half_float_linear
+
+GL_OES_texture_npot
+
+GL_OES_texture_mirrored_repeat
+
+GL_QCOM_extended_get
+
+GL_QCOM_tiled_rendering
+
+Features
+
+fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma Ircpc dcpop sha3 sm3 sm4 asimddp sha512 asimdfhm dit uscat ilrcpc flagm ssbs sb paca pacg dcpodp flagm2 frint i8mm bf16 rng bti ecv afp
+
+rpres
+
+Vulkan Support
+
+Supported (1.1)
+
+GPU Renderer
+
+Adreno (TM) 830
+
+GPU Version
+
+OpenGL ES-CM 1.1
+
+GPU Vendor
+
+Qualcomm
+
+Total GPU Extensions
+
+36 (Tap here for more info)
