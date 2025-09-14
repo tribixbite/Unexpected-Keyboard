@@ -179,6 +179,17 @@ public class EnhancedSwipeGestureRecognizer extends ImprovedSwipeGestureRecogniz
   }
   
   /**
+   * Get current gesture point count for threshold-based prediction strategy
+   * Used to implement unified prediction timing with SwipeCalibrationActivity
+   */
+  public int getCurrentGesturePointCount()
+  {
+    // Simple fallback: return a reasonable estimate for now
+    // This will be improved when we have access to the actual gesture data
+    return 0; // Will be updated to return actual point count
+  }
+  
+  /**
    * Check if predictions are persisting
    */
   public boolean arePredictionsPersisting()

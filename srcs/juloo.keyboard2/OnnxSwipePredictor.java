@@ -38,18 +38,15 @@ public class OnnxSwipePredictor
   private static final float NORMALIZED_WIDTH = 1.0f;
   private static final float NORMALIZED_HEIGHT = 1.0f;
   
-  // Beam search parameters (EXTREMELY AGGRESSIVE for speed testing)
-  private static final int DEFAULT_BEAM_WIDTH = 2; // MINIMAL beams for maximum speed
-  private static final int DEFAULT_MAX_LENGTH = 6; // VERY short for testing
+  // Beam search parameters - standard defaults that respect playground settings
+  private static final int DEFAULT_BEAM_WIDTH = 8; // Standard beam width
+  private static final int DEFAULT_MAX_LENGTH = 35; // Standard max length  
   private static final float DEFAULT_CONFIDENCE_THRESHOLD = 0.1f;
   
-  // OPTIMIZATION: EXTREME early termination for immediate speed (10x speedup expected)
-  private static final float EARLY_TERMINATION_CONFIDENCE = 0.1f; // Stop at 10% confidence (VERY aggressive)
-  private static final int MIN_STEPS_BEFORE_EARLY_TERMINATION = 0; // Allow immediate termination
-  private static final float BEAM_PRUNING_THRESHOLD = 0.1f; // Prune almost everything
+  // Proper beam search parameters - no aggressive optimizations that break quality
   
-  // EMERGENCY SPEED MODE: Single-beam greedy search
-  private static final boolean FORCE_GREEDY_SEARCH = true; // Bypass beam search entirely
+  // Use proper beam search that respects playground settings
+  private static final boolean FORCE_GREEDY_SEARCH = false; // Use beam search with playground settings
   
   // Special tokens
   private static final int PAD_IDX = 0;
@@ -664,10 +661,10 @@ public class OnnxSwipePredictor
             }
           }
           
-          // Stop if EOS token or high confidence
-          if (bestToken == EOS_IDX || (step >= 2 && bestProb > -1.0f))
+          // Only stop if EOS token - no arbitrary early termination
+          if (bestToken == EOS_IDX)
           {
-            logDebug("🏁 Greedy search stopped at step " + step + ", token=" + bestToken + ", prob=" + bestProb);
+            logDebug("🏁 Greedy search stopped at step " + step + " - EOS token");
             break;
           }
           
@@ -948,35 +945,20 @@ public class OnnxSwipePredictor
     beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
     logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
     
-    // PERFORMANCE DEBUG: Log optimization parameters being used
-    Log.w(TAG, "🔥 EXTREME OPTIMIZATION MODE: beam_width=" + beamWidth + ", max_length=" + maxLength + 
-              ", early_termination=" + EARLY_TERMINATION_CONFIDENCE + ", min_steps=" + MIN_STEPS_BEFORE_EARLY_TERMINATION);
-    logDebug("🔥 EXTREME OPTIMIZATION MODE: beam_width=" + beamWidth + ", max_length=" + maxLength + 
-              ", early_termination=" + EARLY_TERMINATION_CONFIDENCE + ", min_steps=" + MIN_STEPS_BEFORE_EARLY_TERMINATION);
+    // PERFORMANCE DEBUG: Log beam search parameters
+    Log.w(TAG, "🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
+    logDebug("🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
     
     // Performance tracking
     long beamSearchStart = System.nanoTime();
     long totalInferenceTime = 0;
     long totalTensorTime = 0;
     
-    // EMERGENCY SPEED MODE: Greedy search for maximum speed
-    if (FORCE_GREEDY_SEARCH)
-    {
-      logDebug("🚀 GREEDY SEARCH MODE: Single beam for maximum speed");
-      Log.w(TAG, "🚀 GREEDY SEARCH MODE: Single beam for maximum speed");
-      return runGreedySearch(memory, srcMaskTensor, maxLength);
-    }
+    // Always use proper beam search - greedy search disabled
     
     // Beam search loop
     for (int step = 0; step < maxLength; step++)
     {
-      // FORCED EARLY TERMINATION: Check at start of each step
-      if (step >= 2) // After minimum 3-letter word
-      {
-        logDebug("🔥 FORCING EARLY TERMINATION at step " + step);
-        Log.w(TAG, "🔥 FORCING EARLY TERMINATION at step " + step);
-        break; // Force exit after 3 characters maximum
-      }
       
       List<BeamSearchState> candidates = new ArrayList<>();
       logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
@@ -1108,57 +1090,16 @@ public class OnnxSwipePredictor
       // Select top beams
       candidates.sort((a, b) -> Float.compare(b.score, a.score));
       
-      // OPTIMIZATION: Early termination for high-confidence short words (2x speedup)
-      if (step >= MIN_STEPS_BEFORE_EARLY_TERMINATION && !candidates.isEmpty())
-      {
-        BeamSearchState bestBeam = candidates.get(0);
-        float bestConfidence = (float)Math.exp(bestBeam.score);
-        // Actual word length (exclude SOS/EOS tokens)
-        int actualWordLength = Math.max(0, bestBeam.tokens.size() - 1); // Subtract SOS token
-        
-        logDebug("🔍 Early termination check: step=" + step + ", confidence=" + String.format("%.3f", bestConfidence) + 
-                 ", actualWordLength=" + actualWordLength + ", threshold=" + EARLY_TERMINATION_CONFIDENCE);
-        
-        if (bestConfidence > EARLY_TERMINATION_CONFIDENCE && actualWordLength >= 3)
-        {
-          logDebug("⚡ Early termination TRIGGERED: confidence=" + bestConfidence + ", wordLength=" + actualWordLength);
-          beams = candidates.subList(0, Math.min(candidates.size(), Math.min(beamWidth, 3))); // Keep fewer beams
-          break; // Exit beam search early
-        }
-      }
+      // Select top beams without aggressive optimization that breaks predictions
+      beams = candidates.subList(0, Math.min(candidates.size(), beamWidth));
       
-      // OPTIMIZATION: Beam pruning - remove beams too far behind leader (1.5x speedup)
-      if (!candidates.isEmpty())
-      {
-        float leaderScore = candidates.get(0).score;
-        List<BeamSearchState> prunedBeams = new ArrayList<>();
-        
-        for (BeamSearchState candidate : candidates)
-        {
-          if (prunedBeams.size() >= beamWidth) break;
-          
-          float scoreDiff = leaderScore - candidate.score;
-          if (scoreDiff <= BEAM_PRUNING_THRESHOLD || prunedBeams.size() < 2) // Keep minimum 2 beams
-          {
-            prunedBeams.add(candidate);
-          }
-        }
-        beams = prunedBeams;
-      }
-      else
-      {
-        beams = candidates.subList(0, Math.min(candidates.size(), beamWidth));
-      }
-      
-      // Check if all beams finished or have enough predictions
+      // Check if all beams finished naturally
       boolean allFinished = true;
-      int finishedCount = 0;
       for (BeamSearchState beam : beams) {
         if (!beam.finished) allFinished = false;
-        if (beam.finished) finishedCount++;
       }
       
-      if (allFinished || (step >= 10 && finishedCount >= 3))
+      if (allFinished)
       {
         break;
       }

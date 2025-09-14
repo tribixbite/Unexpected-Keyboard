@@ -97,10 +97,9 @@ public class Keyboard2View extends View
         @Override
         public void onSwipePredictionUpdate(List<String> predictions)
         {
-          android.util.Log.d("Keyboard2View", "CGR real-time predictions: " + predictions.size() + " words");
-          // Need to find a way to communicate with Keyboard2 service
-          // For now, store predictions for later access
-          storeCGRPredictions(predictions, false);
+          // DISABLED: No real-time predictions during swipe
+          // All predictions now wait for gesture completion like SwipeCalibrationActivity
+          android.util.Log.d("Keyboard2View", "CGR real-time predictions DISABLED - waiting for completion");
         }
         
         @Override

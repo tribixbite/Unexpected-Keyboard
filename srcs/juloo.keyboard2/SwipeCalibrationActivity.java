@@ -48,12 +48,6 @@ public class SwipeCalibrationActivity extends Activity
   // Calibration settings
   private static final int WORDS_PER_SESSION = 20;
   
-  // OPTIMIZATION: Use random words from full 150k vocabulary instead of fixed list
-  private static final List<String> FALLBACK_CALIBRATION_WORDS = Arrays.asList(
-    "the", "and", "for", "are", "but", "not", "you", "all", "can", "had",
-    "her", "was", "one", "our", "out", "day", "get", "has", "him", "his",
-    "how", "its", "new", "now", "old", "see", "two", "who", "boy", "did"
-  );
   
   // Full vocabulary for random word selection
   private List<String> fullVocabulary = null;
@@ -101,10 +95,11 @@ public class SwipeCalibrationActivity extends Activity
   private int _screenHeight;
   private int _keyboardHeight;
   
-  // Performance tracking
+  // Performance tracking  
   private List<Long> _predictionTimes = new ArrayList<>();
   private int _correctPredictions = 0;
   private int _totalPredictions = 0;
+  
   
   // User configuration (needed for keyboard layout)
   private float _characterSize = 1.15f;
@@ -193,7 +188,7 @@ public class SwipeCalibrationActivity extends Activity
   
   /**
    * OPTIMIZATION: Load full vocabulary and select random test words
-   * Replaces fixed word list with truly random sampling from 150k vocabulary
+   * Replaces fixed word list with truly random sampling from available dictionaries
    */
   private List<String> prepareRandomSessionWords()
   {
@@ -207,32 +202,23 @@ public class SwipeCalibrationActivity extends Activity
     
     if (fullVocabulary != null && fullVocabulary.size() > WORDS_PER_SESSION)
     {
-      // Select random words from full vocabulary
+      // Select completely random words from full vocabulary
       Set<String> selectedWords = new HashSet<>(); // Prevent duplicates
       
       while (selectedWords.size() < WORDS_PER_SESSION)
       {
         int randomIndex = random.nextInt(fullVocabulary.size());
         String word = fullVocabulary.get(randomIndex);
-        
-        // Filter for reasonable test words (3-8 characters, common letters)
-        if (word.length() >= 3 && word.length() <= 8 && 
-            word.matches("^[a-z]+$"))
-        {
-          selectedWords.add(word);
-        }
+        selectedWords.add(word); // No filtering - use any word from dictionary
       }
       
       sessionWords.addAll(selectedWords);
-      Log.d(TAG, "Selected " + sessionWords.size() + " random words from " + fullVocabulary.size() + " vocabulary");
+      Log.d(TAG, "Selected " + sessionWords.size() + " completely random words from " + fullVocabulary.size() + " total vocabulary");
     }
     else
     {
-      // Fallback to original word list
-      sessionWords = new ArrayList<>(FALLBACK_CALIBRATION_WORDS);
-      Collections.shuffle(sessionWords);
-      sessionWords = sessionWords.subList(0, WORDS_PER_SESSION);
-      Log.w(TAG, "Using fallback calibration words");
+      Log.e(TAG, "No vocabulary loaded - cannot generate session words");
+      return new ArrayList<>(); // Return empty list if no vocabulary
     }
     
     return sessionWords;
@@ -240,40 +226,50 @@ public class SwipeCalibrationActivity extends Activity
   
   /**
    * Load full vocabulary from dictionary assets
-   * Loads up to 150k words for random test word selection
+   * Loads from both en.txt and en_enhanced.txt for maximum word variety
    */
   private void loadFullVocabulary()
   {
     try
     {
-      Log.d(TAG, "Loading full vocabulary for random test words...");
-      
-      InputStream inputStream = getAssets().open("dictionaries/en.txt");
-      BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+      Log.d(TAG, "Loading full vocabulary from multiple dictionaries for random test words...");
       
       fullVocabulary = new ArrayList<>();
-      String line;
-      int wordCount = 0;
+      Set<String> uniqueWords = new HashSet<>(); // Prevent duplicates across files
       
-      while ((line = reader.readLine()) != null)
+      // Load from both dictionary files for maximum variety
+      String[] dictFiles = {"dictionaries/en.txt", "dictionaries/en_enhanced.txt"};
+      
+      for (String dictFile : dictFiles)
       {
-        line = line.trim().toLowerCase();
-        if (!line.isEmpty() && line.matches("^[a-z]+$") && 
-            line.length() >= 3 && line.length() <= 10)
+        try
         {
-          fullVocabulary.add(line);
-          wordCount++;
+          InputStream inputStream = getAssets().open(dictFile);
+          BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
           
-          // Limit to reasonable size for performance
-          if (wordCount >= 10000) // Use 10k most frequent words for testing
+          String line;
+          int fileWordCount = 0;
+          
+          while ((line = reader.readLine()) != null)
           {
-            break;
+            line = line.trim().toLowerCase();
+            if (!line.isEmpty() && uniqueWords.add(line)) // Only add if not already present
+            {
+              fullVocabulary.add(line);
+              fileWordCount++;
+            }
           }
+          
+          reader.close();
+          Log.d(TAG, "Loaded " + fileWordCount + " words from " + dictFile);
+        }
+        catch (Exception e)
+        {
+          Log.w(TAG, "Failed to load " + dictFile + ": " + e.getMessage());
         }
       }
       
-      reader.close();
-      Log.d(TAG, "Loaded " + fullVocabulary.size() + " words for random selection");
+      Log.d(TAG, "Total loaded: " + fullVocabulary.size() + " unique words for random selection");
     }
     catch (Exception e)
     {
@@ -281,6 +277,7 @@ public class SwipeCalibrationActivity extends Activity
       fullVocabulary = null; // Will use fallback
     }
   }
+  
   
   private void setupUI()
   {
@@ -656,8 +653,16 @@ public class SwipeCalibrationActivity extends Activity
     
     builder.setView(layout);
     builder.setPositiveButton("Apply", (dialog, which) -> {
+      // Save settings to SharedPreferences for persistence
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+      SharedPreferences.Editor editor = prefs.edit();
+      editor.putInt("neural_beam_width", _config.neural_beam_width);
+      editor.putInt("neural_max_length", _config.neural_max_length);
+      editor.putFloat("neural_confidence_threshold", _config.neural_confidence_threshold);
+      editor.apply();
+      
       _neuralEngine.setConfig(_config);
-      Toast.makeText(this, "Neural parameters updated", Toast.LENGTH_SHORT).show();
+      Toast.makeText(this, "Neural parameters saved and applied", Toast.LENGTH_SHORT).show();
     });
     builder.setNegativeButton("Cancel", null);
     builder.show();
@@ -991,6 +996,7 @@ public class SwipeCalibrationActivity extends Activity
       switch (event.getAction())
       {
         case MotionEvent.ACTION_DOWN:
+          Log.d(TAG, "🔥 ACTION_DOWN - Starting swipe");
           _swiping = true;
           _swipeStartTime = System.currentTimeMillis();
           _swipePath.reset();
@@ -1016,8 +1022,10 @@ public class SwipeCalibrationActivity extends Activity
           if (_swiping)
           {
             _swiping = false;
+            Log.d(TAG, "🔥 ACTION_UP detected, swipe points: " + _swipePoints.size());
             if (_swipePoints.size() > 5) // Minimum points for valid swipe
             {
+              Log.d(TAG, "🔥 About to call recordSwipe with " + _swipePoints.size() + " points");
               recordSwipe(new ArrayList<>(_swipePoints));
             }
             _currentSwipeTimestamps.clear();
@@ -1093,6 +1101,7 @@ public class SwipeCalibrationActivity extends Activity
   // Add recordSwipe method needed by keyboard view
   private void recordSwipe(List<PointF> points)
   {
+    Log.d(TAG, "🔥 recordSwipe called with " + points.size() + " points");
     if (points.isEmpty()) return;
     
     long duration = System.currentTimeMillis() - _swipeStartTime;
@@ -1131,24 +1140,26 @@ public class SwipeCalibrationActivity extends Activity
     
     _mlDataStore.storeSwipeData(mlData);
     
-    // Run neural prediction with full logging
+    // Run neural prediction with full logging for performance debugging
     logToResults("🌀 Swipe recorded for '" + _currentWord + "': " + points.size() + " points, " + duration + "ms, keys: " + keySequence);
     
     try
     {
+      Log.d(TAG, "🔥 About to call neural prediction");
       long startTime = System.nanoTime();
       PredictionResult result = _neuralEngine.predict(swipeInput);
       long endTime = System.nanoTime();
+      Log.d(TAG, "🔥 Neural prediction completed");
       
       _predictionTimes.add(endTime - startTime);
       _totalPredictions++;
       
-      // Log full prediction results
+      // Log detailed prediction timing for debugging slow performance
       long predTimeMs = (endTime - startTime) / 1000000;
       logToResults("🧠 Neural prediction completed in " + predTimeMs + "ms");
       logToResults("   Predictions: " + result.words.size() + " candidates");
       
-      // Log all predictions
+      // Log all predictions to debug quality
       for (int i = 0; i < Math.min(5, result.words.size()); i++)
       {
         logToResults("   " + (i + 1) + ". " + result.words.get(i) + " (score: " + result.scores.get(i) + ")");

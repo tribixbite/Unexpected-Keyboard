@@ -88,6 +88,14 @@ public class NeuralSwipeTypingEngine
    */
   public PredictionResult predict(SwipeInput input)
   {
+    // Add stack trace to see who's calling this
+    Log.d(TAG, "🔥🔥🔥 NEURAL PREDICTION CALLED FROM:");
+    for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+      if (element.getClassName().contains("juloo.keyboard2")) {
+        Log.d(TAG, "🔥   " + element.getClassName() + "." + element.getMethodName() + ":" + element.getLineNumber());
+      }
+    }
+    
     if (!_initialized)
     {
       initialize();

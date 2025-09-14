@@ -41,6 +41,8 @@ public class Keyboard2 extends InputMethodService
   implements SharedPreferences.OnSharedPreferenceChangeListener,
   SuggestionBar.OnSuggestionSelectedListener
 {
+  // Unified prediction strategy: All predictions wait for gesture completion
+  // to match SwipeCalibrationActivity behavior and eliminate premature predictions
   private Keyboard2View _keyboardView;
   private KeyEventHandler _keyeventhandler;
   /** If not 'null', the layout to use instead of [_config.current_layout]. */
@@ -1182,13 +1184,19 @@ public class Keyboard2 extends InputMethodService
                                             timestamps != null ? timestamps : new ArrayList<>(),
                                             swipedKeys);
       
+      // UNIFIED PREDICTION STRATEGY: All predictions wait for gesture completion
+      // This matches SwipeCalibrationActivity behavior and eliminates premature predictions
+      android.util.Log.d("Keyboard2", "🎯 Gesture completion: " + 
+        (swipePath != null ? swipePath.size() : 0) + " points, requesting final prediction");
+      
       // Cancel any pending predictions first
       if (_asyncPredictionHandler != null)
       {
         _asyncPredictionHandler.cancelPendingPredictions();
       }
       
-      // Request predictions asynchronously
+      // Request predictions asynchronously - always done on gesture completion
+      // which matches the calibration activity's ACTION_UP behavior
       if (_asyncPredictionHandler != null)
       {
         _asyncPredictionHandler.requestPredictions(swipeInput, new AsyncPredictionHandler.PredictionCallback()

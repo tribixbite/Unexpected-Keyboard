@@ -48,6 +48,12 @@
 - **Feature Extraction**: [x,y,vx,vy,ax,ay] + nearest key tokenization
 - **Confidence Scoring**: Softmax probabilities with configurable thresholds
 
+#### ✅ Recent Improvements (2025-09-12):
+- **SwipeCalibrationActivity Enhanced**: Fully random word selection from 20k+ vocabulary
+- **Dictionary Loading**: Combined en.txt + en_enhanced.txt for maximum word variety  
+- **Word Filtering**: Smart filtering removes obscure/uncommon test words
+- **Performance**: 4-8 character words, no artificial 10k limit, better test diversity
+
 #### ✅ Technical Excellence:
 - **Full Web Demo Compatibility**: Ported complete JavaScript implementation
 - **Proper API Usage**: Fixed all ONNX Runtime compatibility issues  
