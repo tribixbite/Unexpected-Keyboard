@@ -1179,10 +1179,11 @@ public class Keyboard2 extends InputMethodService
     
     if (keySequence.length() > 0)
     {
-      // Create SwipeInput with all data
+      // Create SwipeInput exactly like SwipeCalibrationActivity (empty swipedKeys)
+      // This ensures neural system handles key detection internally for consistency
       SwipeInput swipeInput = new SwipeInput(swipePath != null ? swipePath : new ArrayList<>(),
                                             timestamps != null ? timestamps : new ArrayList<>(),
-                                            swipedKeys);
+                                            new ArrayList<>()); // Empty like calibration
       
       // UNIFIED PREDICTION STRATEGY: All predictions wait for gesture completion
       // This matches SwipeCalibrationActivity behavior and eliminates premature predictions
