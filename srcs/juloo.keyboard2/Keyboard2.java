@@ -861,8 +861,17 @@ public class Keyboard2 extends InputMethodService
         }
       }
       
-      // Commit the selected word with a space
-      ic.commitText(word + " ", 1);
+      // Commit the selected word - use Termux mode if enabled
+      if (_config.termux_mode_enabled)
+      {
+        // Termux mode: Insert word without automatic space for better terminal compatibility
+        ic.commitText(word, 1);
+      }
+      else
+      {
+        // Normal mode: Insert word with space
+        ic.commitText(word + " ", 1);
+      }
       
       // Update context with the selected word
       updateContext(word);

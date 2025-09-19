@@ -962,6 +962,7 @@ public class OnnxSwipePredictor
       
       List<BeamSearchState> candidates = new ArrayList<>();
       logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
+      logDebug("⚠️  PERFORMANCE WARNING: Using sequential processing - each beam requires separate inference call");
       
       for (BeamSearchState beam : beams)
       {

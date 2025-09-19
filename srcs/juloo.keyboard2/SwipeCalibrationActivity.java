@@ -274,7 +274,7 @@ public class SwipeCalibrationActivity extends Activity
     catch (Exception e)
     {
       Log.e(TAG, "Failed to load full vocabulary", e);
-      fullVocabulary = null; // Will use fallback
+      throw new RuntimeException("Vocabulary loading failed - no fallback allowed", e);
     }
   }
   

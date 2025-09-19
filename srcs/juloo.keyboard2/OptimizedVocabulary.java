@@ -81,9 +81,8 @@ public class OptimizedVocabulary
     }
     catch (Exception e)
     {
-      Log.e(TAG, "Failed to load vocabulary", e);
-      loadFallbackVocabulary();
-      return false;
+      Log.e(TAG, "Failed to load vocabulary - NO FALLBACK ALLOWED", e);
+      throw new RuntimeException("Dictionary loading failed - fallback vocabulary deleted", e);
     }
   }
   
@@ -307,36 +306,9 @@ public class OptimizedVocabulary
     return filtered.size() > 0 ? filtered : predictions.subList(0, Math.min(predictions.size(), 5));
   }
   
-  /**
-   * Load fallback vocabulary if main loading fails
-   */
-  private void loadFallbackVocabulary()
-  {
-    Log.w(TAG, "Loading fallback vocabulary...");
-    
-    String[] fallbackWords = {
-      "the", "of", "and", "to", "a", "in", "for", "is", "on", "that",
-      "by", "this", "with", "i", "you", "it", "not", "or", "be", "are",
-      "from", "at", "as", "your", "all", "would", "will", "there", "their",
-      "what", "so", "if", "about", "which", "when", "one", "can", "had"
-    };
-    
-    for (int i = 0; i < fallbackWords.length; i++)
-    {
-      float freq = 1e-4f * (float)Math.pow(0.9, i);
-      wordFrequencies.put(fallbackWords[i], freq);
-    }
-    
-    // Add all to common words since it's a small set
-    commonWords.addAll(Arrays.asList(fallbackWords));
-    top5000.addAll(Arrays.asList(fallbackWords));
-    
-    createLengthBasedLookup();
-    isLoaded = true;
-  }
   
   /**
-   * Convert raw predictions to filtered format (fallback)
+   * Convert raw predictions to filtered format
    */
   private List<FilteredPrediction> convertToFiltered(List<CandidateWord> rawPredictions)
   {

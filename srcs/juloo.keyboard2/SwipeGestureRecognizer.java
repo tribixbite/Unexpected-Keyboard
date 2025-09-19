@@ -14,6 +14,7 @@ public class SwipeGestureRecognizer
   private final List<KeyboardData.Key> _touchedKeys;
   private final List<Long> _timestamps;
   private boolean _isSwipeTyping;
+  private boolean _isMediumSwipe;
   private long _startTime;
   private float _totalDistance;
   private KeyboardData.Key _lastKey;
@@ -21,6 +22,8 @@ public class SwipeGestureRecognizer
   
   // Minimum distance to consider it a swipe typing gesture
   private static final float MIN_SWIPE_DISTANCE = 50.0f;
+  // Minimum distance for medium swipe (two-letter spans)
+  private static final float MIN_MEDIUM_SWIPE_DISTANCE = 35.0f;
   // Maximum time between touch points to continue swipe
   private static final long MAX_POINT_INTERVAL_MS = 500;
   // Velocity threshold in pixels per millisecond (based on FlorisBoard's 0.10 dp/ms)
@@ -36,6 +39,7 @@ public class SwipeGestureRecognizer
     _touchedKeys = new ArrayList<>();
     _timestamps = new ArrayList<>();
     _isSwipeTyping = false;
+    _isMediumSwipe = false;
     // Initialize loop detector with approximate key dimensions
     // These will be updated when actual keyboard dimensions are known
     _loopDetector = new LoopGestureDetector(100.0f, 80.0f);
@@ -83,11 +87,21 @@ public class SwipeGestureRecognizer
     long now = System.currentTimeMillis();
     long timeSinceStart = now - _startTime;
     
-    // Check if this should be considered swipe typing
-    if (!_isSwipeTyping && timeSinceStart > 100 && _totalDistance > MIN_SWIPE_DISTANCE)
+    // Check if this should be considered swipe typing or medium swipe
+    // Require minimum time to avoid false triggers on quick taps/swipes
+    if (!_isSwipeTyping && !_isMediumSwipe && timeSinceStart > 150)
     {
-      _isSwipeTyping = shouldConsiderSwipeTyping();
-      // android.util.Log.d("SwipeGesture", "Swipe typing check: " + _isSwipeTyping);
+      if (_totalDistance > MIN_SWIPE_DISTANCE)
+      {
+        _isSwipeTyping = shouldConsiderSwipeTyping();
+        // android.util.Log.d("SwipeGesture", "Swipe typing check: " + _isSwipeTyping);
+      }
+      else if (_totalDistance > MIN_MEDIUM_SWIPE_DISTANCE && timeSinceStart > 200)
+      {
+        // Medium swipe needs slightly more time to avoid conflicts with directional swipes
+        _isMediumSwipe = shouldConsiderMediumSwipe();
+        // android.util.Log.d("SwipeGesture", "Medium swipe check: " + _isMediumSwipe);
+      }
     }
     
     PointF lastPoint = _swipePath.get(_swipePath.size() - 1);
@@ -165,6 +179,11 @@ public class SwipeGestureRecognizer
       // android.util.Log.d("SwipeGesture", "Returning " + _touchedKeys.size() + " keys");
       return new ArrayList<>(_touchedKeys);
     }
+    else if (_isMediumSwipe && _touchedKeys.size() == 2)
+    {
+      // android.util.Log.d("SwipeGesture", "Returning medium swipe with 2 keys");
+      return new ArrayList<>(_touchedKeys);
+    }
     // android.util.Log.d("SwipeGesture", "Not enough keys or not swipe typing");
     return null;
   }
@@ -177,15 +196,36 @@ public class SwipeGestureRecognizer
     // Need at least 2 alphabetic keys
     if (_touchedKeys.size() < 2)
       return false;
-      
+
     // Check if all touched keys are alphabetic
     for (KeyboardData.Key key : _touchedKeys)
     {
       if (key.keys[0] == null || !isAlphabeticKey(key.keys[0]))
         return false;
     }
-    
+
     return true;
+  }
+
+  /**
+   * Check if the current gesture should be considered a medium swipe (exactly 2 letters)
+   */
+  private boolean shouldConsiderMediumSwipe()
+  {
+    // Need exactly 2 alphabetic keys for medium swipe
+    if (_touchedKeys.size() != 2)
+      return false;
+
+    // Check if all touched keys are alphabetic
+    for (KeyboardData.Key key : _touchedKeys)
+    {
+      if (key.keys[0] == null || !isAlphabeticKey(key.keys[0]))
+        return false;
+    }
+
+    // Additional check: medium swipe should have moderate distance
+    // This helps avoid false positives for quick directional swipes
+    return _totalDistance >= MIN_MEDIUM_SWIPE_DISTANCE && _totalDistance < MIN_SWIPE_DISTANCE;
   }
   
   /**
@@ -214,6 +254,14 @@ public class SwipeGestureRecognizer
   {
     return _isSwipeTyping;
   }
+
+  /**
+   * Check if currently in medium swipe mode (exactly 2 letters)
+   */
+  public boolean isMediumSwipe()
+  {
+    return _isMediumSwipe;
+  }
   
   /**
    * Reset the recognizer for a new gesture
@@ -224,6 +272,7 @@ public class SwipeGestureRecognizer
     _touchedKeys.clear();
     _timestamps.clear();
     _isSwipeTyping = false;
+    _isMediumSwipe = false;
     _lastKey = null;
     _totalDistance = 0;
   }

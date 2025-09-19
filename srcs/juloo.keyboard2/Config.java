@@ -86,10 +86,11 @@ public final class Config
   public int suggestion_bar_opacity; // 0 - 100
   
   // Neural swipe prediction configuration
-  public boolean neural_prediction_enabled; 
+  public boolean neural_prediction_enabled;
   public int neural_beam_width; // 1 - 16
-  public int neural_max_length; // 10 - 50  
+  public int neural_max_length; // 10 - 50
   public float neural_confidence_threshold; // 0.0 - 1.0
+  public boolean termux_mode_enabled; // Termux-compatible prediction insertion
 
   // Dynamically set
   public boolean shouldOfferVoiceTyping;
@@ -228,6 +229,7 @@ public final class Config
     neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 8);
     neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);
     neural_confidence_threshold = _prefs.getFloat("neural_confidence_threshold", 0.1f);
+    termux_mode_enabled = _prefs.getBoolean("termux_mode_enabled", false);
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;

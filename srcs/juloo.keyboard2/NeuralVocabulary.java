@@ -44,8 +44,8 @@ public class NeuralVocabulary
   {
     Log.d(TAG, "Loading vocabulary with multi-level caching...");
     
-    // Load fallback vocabulary for now (matching web demo pattern)
-    loadFallbackVocabulary();
+    // Force proper dictionary loading - no fallback vocabulary
+    Log.e(TAG, "NeuralVocabulary disabled - using OptimizedVocabulary instead");
     
     // Build performance indexes
     buildPerformanceIndexes();
@@ -113,37 +113,6 @@ public class NeuralVocabulary
     return filtered;
   }
   
-  private void loadFallbackVocabulary()
-  {
-    // Common English words with frequencies (matching web demo fallback)
-    String[] fallbackWords = {
-      "the", "of", "and", "to", "a", "in", "for", "is", "on", "that",
-      "by", "this", "with", "i", "you", "it", "not", "or", "be", "are",
-      "from", "at", "as", "your", "all", "would", "will", "there", "their",
-      "what", "so", "if", "about", "which", "when", "one", "can", "had",
-      "hello", "world", "test", "how", "now", "but", "our", "out", "old",
-      "boy", "get", "has", "him", "his", "new", "see", "two", "who", "did"
-    };
-    
-    for (int i = 0; i < fallbackWords.length; i++)
-    {
-      String word = fallbackWords[i];
-      float freq = (float)(1e-4 * Math.pow(0.9, i)); // Decreasing frequency
-      _wordFreq.put(word, freq);
-    }
-    
-    // Common words are first 20
-    for (int i = 0; i < Math.min(20, fallbackWords.length); i++)
-    {
-      _commonWords.add(fallbackWords[i]);
-    }
-    
-    // Top 5000 is all we have
-    for (String word : fallbackWords)
-    {
-      _top5000.add(word);
-    }
-  }
   
   private void buildPerformanceIndexes()
   {
