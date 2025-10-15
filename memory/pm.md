@@ -2,6 +2,63 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Critical Fix: Short Gestures Blocking Swipe Path Collection 🔧
+
+**Version**: 1.32.35 (84) ✅ BUILD SUCCESSFUL
+
+**Critical Bug Fixed**: Short gesture detection was completely blocking swipe typing path collection
+
+**The Problem**:
+- Short gesture check ran during `onTouchMove()` events
+- When user moved within first key during swipe typing, `isShortGesture=true` triggered
+- System fell through to normal gesture processing
+- Outputted directional character immediately (@, #, etc.)
+- Blocked swipe typing from continuing
+- Result: Swipe typing path collection completely broken
+
+**The Solution** (Pointers.java):
+1. **Removed short gesture check from onTouchMove()**:
+   - Lines 342-359: Now ALWAYS track swipe path for potential swipe typing
+   - No more premature short gesture detection during movement
+   - Path collection happens uninterrupted
+
+2. **Added short gesture detection to onTouchUp()**:
+   - Lines 166-202: Check for short gestures ONLY after finger release
+   - Uses `getSwipePath()` to get last point
+   - Calculates direction and triggers gesture if criteria met
+   - Criteria: stayed in key + moved >= configured distance
+
+**Technical Details**:
+```java
+// OLD (onTouchMove) - BLOCKED swipe typing:
+if (isShortGesture) {
+  // Fall through to normal gesture → outputs character → blocks swipe
+}
+
+// NEW (onTouchMove) - ALWAYS track path:
+_handler.onSwipeMove(x, y, _swipeRecognizer);  // Collect path
+if (_swipeRecognizer.isSwipeTyping()) {
+  ptr.flags |= FLAG_P_SWIPE_TYPING;  // Confirm swipe typing
+}
+return;  // Skip normal gestures entirely
+
+// NEW (onTouchUp) - Check short gestures after release:
+if (short_gestures_enabled && !hasLeftStartingKey) {
+  List<PointF> path = _swipeRecognizer.getSwipePath();
+  // Calculate direction from last point, trigger gesture
+}
+```
+
+**Impact**:
+- ✅ Swipe typing path collection works correctly
+- ✅ Short gestures still work (swipe-up for @ etc.)
+- ✅ No more false positive directional characters
+- ✅ Proper separation: swipe typing vs short gestures
+
+**Commit**: `12390d8c` - fix(gestures): move short gesture detection from MOVE to UP event
+
+---
+
 ### Swipe Pipeline Debug Activity 🐛
 
 **Update (v1.32.34 - 83)**: Fixed broadcast communication issues
