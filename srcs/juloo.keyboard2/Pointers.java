@@ -144,7 +144,7 @@ public final class Pointers implements Handler.Callback
     Pointer ptr = getPtr(pointerId);
     if (ptr == null)
       return;
-    
+
     // Handle swipe typing completion
     if (_config.swipe_typing_enabled && ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
     {
@@ -153,7 +153,7 @@ public final class Pointers implements Handler.Callback
       removePtr(ptr);
       return;
     }
-    
+
     if (ptr.hasFlagsAny(FLAG_P_SLIDING))
     {
       clearLatched();
@@ -162,6 +162,15 @@ public final class Pointers implements Handler.Callback
     }
     stopLongPress(ptr);
     KeyValue ptr_value = ptr.value;
+
+    // If we delayed character output (mightBeSwipe), output it now if it wasn't a swipe
+    // This handles quick taps that were initially treated as potential swipes
+    if (_config.swipe_typing_enabled && ptr.gesture == null &&
+        !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
+        ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char)
+    {
+      _handler.onPointerDown(ptr_value, false);
+    }
     if (ptr.gesture != null && ptr.gesture.is_in_progress())
     {
       // A gesture was in progress
@@ -233,19 +242,21 @@ public final class Pointers implements Handler.Callback
     Pointer ptr = make_pointer(pointerId, key, value, x, y, mods);
     _ptrs.add(ptr);
 
-    // Don't start long press timer if we might be swipe typing
-    if (!(_config.swipe_typing_enabled && _swipeRecognizer.isSwipeTyping()))
-    {
-      startLongPress(ptr);
-    }
-
-    // CRITICAL FIX: Don't output character immediately when swipe typing might start
-    // This prevents 4-10x character repetition due to input lag
-    // The character will be output in onTouchUp if it turns out not to be a swipe
+    // CRITICAL FIX: Detect if this might be the start of a swipe gesture
+    // Don't output character or start long press timer if so
+    // This prevents tap/hold events from firing during swipes
     boolean mightBeSwipe = _config.swipe_typing_enabled && _ptrs.size() == 1 &&
                            key != null && key.keys[0] != null &&
                            key.keys[0].getKind() == KeyValue.Kind.Char;
 
+    // Don't start long press timer if we might be swipe typing
+    if (!mightBeSwipe && !(_config.swipe_typing_enabled && _swipeRecognizer.isSwipeTyping()))
+    {
+      startLongPress(ptr);
+    }
+
+    // Don't output character immediately when swipe typing might start
+    // The character will be output in onTouchUp if it turns out not to be a swipe
     if (!mightBeSwipe)
     {
       _handler.onPointerDown(value, false);
