@@ -206,9 +206,16 @@ public class Keyboard2 extends InputMethodService
         // Set keyboard dimensions if available
         if (_keyboardView != null)
         {
-          _neuralEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+          int width = _keyboardView.getWidth();
+          int height = _keyboardView.getHeight();
+          android.util.Log.d("Keyboard2", String.format("Setting neural engine dimensions: %dx%d", width, height));
+          _neuralEngine.setKeyboardDimensions(width, height);
         }
-        
+        else
+        {
+          android.util.Log.w("Keyboard2", "Cannot set neural dimensions - keyboard view is null");
+        }
+
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
       }
     }
@@ -1184,6 +1191,26 @@ public class Keyboard2 extends InputMethodService
         swipePath != null ? swipePath.size() : 0,
         swipedKeys != null ? swipedKeys.size() : 0));
 
+    // DEBUG: Log keyboard dimensions and first/last path points
+    if (_keyboardView != null && swipePath != null && swipePath.size() > 0)
+    {
+      sendDebugLog(String.format("Keyboard dimensions: %dx%d\n",
+          _keyboardView.getWidth(), _keyboardView.getHeight()));
+      android.graphics.PointF first = swipePath.get(0);
+      android.graphics.PointF last = swipePath.get(swipePath.size() - 1);
+      sendDebugLog(String.format("Path: (%.1f, %.1f) → (%.1f, %.1f)\n",
+          first.x, first.y, last.x, last.y));
+
+      // Calculate and log sampling rate
+      if (timestamps != null && timestamps.size() > 1)
+      {
+        long totalTime = timestamps.get(timestamps.size() - 1) - timestamps.get(0);
+        float samplingHz = (timestamps.size() - 1) * 1000.0f / totalTime;
+        sendDebugLog(String.format("Sampling rate: %.1f Hz (%.0fms total)\n",
+            samplingHz, (float)totalTime));
+      }
+    }
+
     if (!_config.swipe_typing_enabled)
     {
       return;
@@ -1198,16 +1225,23 @@ public class Keyboard2 extends InputMethodService
       }
       // Initialize engine on the fly
       _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
-      
+
       // Initialize async handler if not already done
       if (_asyncPredictionHandler == null)
       {
         _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
       }
-      
+
       if (_keyboardView != null)
       {
-        _neuralEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+        int width = _keyboardView.getWidth();
+        int height = _keyboardView.getHeight();
+        android.util.Log.d("Keyboard2", String.format("Setting neural engine dimensions (handleSwipeTyping): %dx%d", width, height));
+        _neuralEngine.setKeyboardDimensions(width, height);
+      }
+      else
+      {
+        android.util.Log.w("Keyboard2", "Cannot set neural dimensions in handleSwipeTyping - keyboard view is null");
       }
     }
     
