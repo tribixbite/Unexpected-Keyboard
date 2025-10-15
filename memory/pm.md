@@ -33,8 +33,14 @@ if (_suggestionBar != null && _suggestionBar.hasSuggestions())
 - **Better UX** for multi-word input workflow
 - **Clean code** with debug logging removed
 
-**Version**: 1.32.15 (64)
-**Commit**: `ff94c4be` - feat(swipe): auto-insert middle prediction on consecutive swipes
+**Build Fix**: Orphaned string expressions from debug log cleanup
+- Fixed 6 compilation errors from sed cleanup
+- Commit: `2fef54c4`
+
+**Version**: 1.32.17 (66) ✅ BUILD SUCCESSFUL
+**Commits**:
+- `ff94c4be` - feat(swipe): auto-insert middle prediction on consecutive swipes
+- `2fef54c4` - fix(build): remove orphaned string expressions
 
 ---
 
