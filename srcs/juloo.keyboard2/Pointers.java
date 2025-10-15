@@ -323,29 +323,32 @@ public final class Pointers implements Handler.Callback
       return;
     }
 
-    // Track swipe typing if enabled and single pointer on character key
-    if (_config.swipe_typing_enabled && _ptrs.size() == 1 &&
-        ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char &&
-        !ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
+    // Skip normal gesture processing if already confirmed as swipe typing
+    if (ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
     {
-      // Let handler track the swipe movement (it has access to key positions)
+      _handler.onSwipeMove(x, y, _swipeRecognizer);
+      return;
+    }
+
+    // CRITICAL: For potential swipe typing (single pointer on char key), skip ALL normal gesture
+    // processing to prevent false positive symbol swipes (e.g., h→i triggering "=")
+    // Only track swipe movement, don't process as normal gesture
+    if (_config.swipe_typing_enabled && _ptrs.size() == 1 &&
+        ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char)
+    {
+      // Track swipe movement for visual trail and detection
       _handler.onSwipeMove(x, y, _swipeRecognizer);
 
-      // Check if this has become a swipe typing gesture (multi-key path detected)
+      // Check if this has become a confirmed swipe typing gesture
       if (_swipeRecognizer.isSwipeTyping())
       {
         ptr.flags |= FLAG_P_SWIPE_TYPING;
-        // Cancel long press timer if swipe typing detected
         stopLongPress(ptr);
-        // CRITICAL: Return here to skip normal gesture processing ONLY after swipe confirmed
-        return;
       }
-      // If not yet confirmed as swipe typing, allow normal gestures to continue
-    }
 
-    // Skip normal gesture processing if swipe typing confirmed
-    if (ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
+      // Skip ALL normal gesture processing for potential swipes
       return;
+    }
 
     // The position in a IME windows is clampled to view.
     // For a better up swipe behaviour, set the y position to a negative value when clamped.

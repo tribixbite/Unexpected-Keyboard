@@ -288,10 +288,8 @@ public class Keyboard2View extends View
   {
     KeyboardData.Key key = getKeyAtPosition(x, y);
     recognizer.addPoint(x, y, key);
-    if (recognizer.isSwipeTyping())
-    {
-      invalidate(); // Redraw to show swipe trail
-    }
+    // Always invalidate to show visual trail, even before swipe typing confirmed
+    invalidate();
   }
   
   public void onSwipeEnd(ImprovedSwipeGestureRecognizer recognizer)
