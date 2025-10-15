@@ -2,6 +2,56 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Debug Build: Spacing Detection Investigation 🔍
+
+**Issue**: Auto-inserted swipe predictions not adding space between words
+- User reports: swipe "hello" + swipe "world" = "helloworld" instead of "hello world"
+- Spacing logic exists but may not be working correctly
+
+**Debug Logging Added** (Keyboard2.java:869-902):
+- Log textBefore content and length
+- Log prevChar value and isWhitespace check
+- Log needsSpaceBefore calculation
+- Log Termux vs Normal mode selection
+- Log final text being inserted
+
+**To diagnose**: Run and check logs:
+```bash
+adb logcat | grep "SPACING DEBUG"
+```
+
+**Expected behavior**:
+```
+# First swipe "hello":
+textBefore='' length=0 → needsSpaceBefore=false
+Normal mode, inserting 'hello '
+
+# Second swipe "world":
+textBefore=' ' length=1 → prevChar=' ' isWhitespace=true
+needsSpaceBefore=false
+Normal mode, inserting 'world '
+Result: "hello world "
+```
+
+**Possible issues to check**:
+1. Is textBefore returning correct value?
+2. Is trailing space preserved after first insertion?
+3. Is Termux mode enabled (different spacing rules)?
+4. Is cursor position incorrect after auto-insertion?
+
+**Recent fixes**:
+- ✅ Removed clearSuggestions() interference (commit `95a2df6f`)
+- ✅ Re-display predictions after auto-insertion
+
+**Version**: 1.32.23 (72) ✅ BUILD SUCCESSFUL (DEBUG)
+**Commits**:
+- `89738bdd` - debug(swipe): add comprehensive spacing detection logging
+- `95a2df6f` - fix(swipe): preserve suggestions after auto-insertion
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### Critical Swipe UX Fixes - Eliminate Repeat Keys + Keep Predictions Visible 🎯
 
 **Issue 1: Repeat key detection during swipes (lag-induced)**
