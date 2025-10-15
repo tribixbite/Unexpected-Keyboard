@@ -203,21 +203,8 @@ public class Keyboard2 extends InputMethodService
         
         // CGR recognizer doesn't need separate calibration data loading
         
-        // Set keyboard dimensions if available
-        if (_keyboardView != null)
-        {
-          int width = _keyboardView.getWidth();
-          int height = _keyboardView.getHeight();
-          android.util.Log.d("Keyboard2", String.format("Setting neural engine dimensions: %dx%d", width, height));
-          _neuralEngine.setKeyboardDimensions(width, height);
-
-          // CRITICAL: Set real key positions for neural key detection
-          setNeuralKeyboardLayout();
-        }
-        else
-        {
-          android.util.Log.w("Keyboard2", "Cannot set neural dimensions - keyboard view is null");
-        }
+        // Note: Key positions will be set in onStartInputView after layout is complete
+        android.util.Log.d("Keyboard2", "Neural engine initialized - dimensions and key positions will be set after layout");
 
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
       }
@@ -523,10 +510,9 @@ public class Keyboard2 extends InputMethodService
                 float keyboardHeight = calculateDynamicKeyboardHeight();
                 
                 _neuralEngine.setKeyboardDimensions(keyboardWidth, keyboardHeight);
-                
-                // CRITICAL: Also set real key positions for 100% accurate coordinate mapping
-                java.util.Map<Character, android.graphics.PointF> realKeyPositions = _keyboardView.getRealKeyPositions();
-                _neuralEngine.setRealKeyPositions(realKeyPositions);
+
+                // CRITICAL: Set real key positions for 100% accurate coordinate mapping
+                setNeuralKeyboardLayout();
 
                 // Remove the listener to avoid repeated calls
                 _keyboardView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
@@ -1235,20 +1221,7 @@ public class Keyboard2 extends InputMethodService
         _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
       }
 
-      if (_keyboardView != null)
-      {
-        int width = _keyboardView.getWidth();
-        int height = _keyboardView.getHeight();
-        android.util.Log.d("Keyboard2", String.format("Setting neural engine dimensions (handleSwipeTyping): %dx%d", width, height));
-        _neuralEngine.setKeyboardDimensions(width, height);
-
-        // CRITICAL: Set real key positions for neural key detection
-        setNeuralKeyboardLayout();
-      }
-      else
-      {
-        android.util.Log.w("Keyboard2", "Cannot set neural dimensions in handleSwipeTyping - keyboard view is null");
-      }
+      // Neural engine dimensions and key positions already set in onStartInputView
     }
     
     // Mark that last input was a swipe for ML data collection
@@ -1493,23 +1466,42 @@ public class Keyboard2 extends InputMethodService
    */
   private void setNeuralKeyboardLayout()
   {
-    if (_neuralEngine == null || _keyboardView == null)
+    android.util.Log.d("Keyboard2", ">>> setNeuralKeyboardLayout() CALLED <<<");
+    sendDebugLog(">>> setNeuralKeyboardLayout() CALLED\n");
+
+    if (_neuralEngine == null)
     {
+      android.util.Log.w("Keyboard2", ">>> ERROR: neural engine is null");
+      sendDebugLog(">>> ERROR: neural engine is null\n");
+      return;
+    }
+
+    if (_keyboardView == null)
+    {
+      android.util.Log.w("Keyboard2", ">>> ERROR: keyboard view is null");
+      sendDebugLog(">>> ERROR: keyboard view is null\n");
       return;
     }
 
     try
     {
       // Use reflection to access _keyboard field from Keyboard2View
+      android.util.Log.d("Keyboard2", ">>> Attempting reflection...");
+      sendDebugLog(">>> Attempting reflection to get keyboard data...\n");
+
       java.lang.reflect.Field keyboardField = _keyboardView.getClass().getDeclaredField("_keyboard");
       keyboardField.setAccessible(true);
       KeyboardData keyboard = (KeyboardData) keyboardField.get(_keyboardView);
 
       if (keyboard == null)
       {
-        android.util.Log.w("Keyboard2", "Cannot extract key positions - keyboard data is null");
+        android.util.Log.w("Keyboard2", ">>> ERROR: keyboard data is null after reflection");
+        sendDebugLog(">>> ERROR: keyboard data is null after reflection\n");
         return;
       }
+
+      android.util.Log.d("Keyboard2", ">>> Reflection successful!");
+      sendDebugLog(">>> Reflection successful!\n");
 
       // Extract key positions
       java.util.Map<Character, android.graphics.PointF> keyPositions = new java.util.HashMap<>();
@@ -1517,12 +1509,20 @@ public class Keyboard2 extends InputMethodService
       float keyboardWidth = _keyboardView.getWidth();
       float keyboardHeight = _keyboardView.getHeight();
 
+      android.util.Log.d("Keyboard2", String.format(">>> Keyboard dimensions: %.0fx%.0f", keyboardWidth, keyboardHeight));
+      sendDebugLog(String.format(">>> Keyboard dimensions: %.0fx%.0f\n", keyboardWidth, keyboardHeight));
+
       // Calculate scale factors
       float scaleX = keyboardWidth / keyboard.keysWidth;
       float scaleY = keyboardHeight / keyboard.keysHeight;
 
+      android.util.Log.d("Keyboard2", String.format(">>> Scale factors: %.3f x %.3f", scaleX, scaleY));
+      sendDebugLog(String.format(">>> Scale: %.3fx%.3f, Layout: %.1fx%.1f\n",
+        scaleX, scaleY, keyboard.keysWidth, keyboard.keysHeight));
+
       // Track Y position as we iterate through rows
       float currentY = 0;
+      int rowNum = 0;
 
       for (KeyboardData.Row row : keyboard.rows)
       {
@@ -1534,6 +1534,7 @@ public class Keyboard2 extends InputMethodService
 
         // Track X position as we iterate through keys in row
         float currentX = 0;
+        int keyNum = 0;
 
         for (KeyboardData.Key key : row.keys)
         {
@@ -1550,6 +1551,14 @@ public class Keyboard2 extends InputMethodService
               // Calculate center X position
               float centerX = currentX + (key.width * scaleX / 2.0f);
               keyPositions.put(c, new android.graphics.PointF(centerX, centerY));
+
+              // Log first key of each row for debugging
+              if (keyNum == 0)
+              {
+                android.util.Log.d("Keyboard2", String.format(">>> Row %d first key '%c' at (%.1f, %.1f)",
+                  rowNum, c, centerX, centerY));
+              }
+              keyNum++;
             }
           }
 
@@ -1559,19 +1568,34 @@ public class Keyboard2 extends InputMethodService
 
         // Move to next row position
         currentY += row.height * scaleY;
+        rowNum++;
       }
 
-      android.util.Log.d("Keyboard2", "Extracted " + keyPositions.size() + " key positions for neural engine");
+      android.util.Log.d("Keyboard2", ">>> Extracted " + keyPositions.size() + " key positions");
+      sendDebugLog(String.format(">>> Extracted %d key positions\n", keyPositions.size()));
 
-      // DEBUG: Log sample of key positions
-      sendDebugLog(String.format("Set %d key positions on neural engine\n", keyPositions.size()));
+      // Log sample positions for verification
+      if (keyPositions.containsKey('q') && keyPositions.containsKey('a') && keyPositions.containsKey('z'))
+      {
+        android.graphics.PointF qPos = keyPositions.get('q');
+        android.graphics.PointF aPos = keyPositions.get('a');
+        android.graphics.PointF zPos = keyPositions.get('z');
+        sendDebugLog(String.format(">>> Sample positions: q=(%.0f,%.0f) a=(%.0f,%.0f) z=(%.0f,%.0f)\n",
+          qPos.x, qPos.y, aPos.x, aPos.y, zPos.x, zPos.y));
+      }
 
       // Set the real key positions on the neural engine
+      android.util.Log.d("Keyboard2", ">>> Calling _neuralEngine.setRealKeyPositions()");
+      sendDebugLog(">>> Calling setRealKeyPositions() on neural engine...\n");
       _neuralEngine.setRealKeyPositions(keyPositions);
+
+      android.util.Log.d("Keyboard2", ">>> setRealKeyPositions() completed successfully");
+      sendDebugLog(">>> setRealKeyPositions() COMPLETED ✓\n");
     }
     catch (Exception e)
     {
-      android.util.Log.e("Keyboard2", "Failed to extract key positions", e);
+      android.util.Log.e("Keyboard2", ">>> EXCEPTION in setNeuralKeyboardLayout", e);
+      sendDebugLog(String.format(">>> EXCEPTION: %s: %s\n", e.getClass().getSimpleName(), e.getMessage()));
     }
   }
 
