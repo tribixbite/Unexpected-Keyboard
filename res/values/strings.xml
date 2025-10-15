@@ -75,11 +75,6 @@
     <string name="pref_theme_e_monetlight">Monet (Light)</string>
     <string name="pref_theme_e_monetdark">Monet (Dark)</string>
     <string name="pref_theme_e_rosepine">Rosé Pine</string>
-    <string name="pref_swipe_dist_e_very_short">Very short</string>
-    <string name="pref_swipe_dist_e_short">Short</string>
-    <string name="pref_swipe_dist_e_default">Normal</string>
-    <string name="pref_swipe_dist_e_far">Far</string>
-    <string name="pref_swipe_dist_e_very_far">Very far</string>
     <string name="pref_word_prediction_title">Enable word predictions</string>
     <string name="pref_word_prediction_summary">Show word suggestions while typing</string>
     <string name="pref_suggestion_bar_opacity_title">Suggestion bar opacity</string>

@@ -80,6 +80,10 @@ public class Keyboard2 extends InputMethodService
   // User adaptation
   private UserAdaptationManager _adaptationManager;
 
+  // Debug mode for swipe pipeline logging
+  private boolean _debugMode = false;
+  private android.content.BroadcastReceiver _debugModeReceiver;
+
   /** Layout currently visible before it has been modified. */
   KeyboardData current_layout_unmodified()
   {
@@ -208,6 +212,25 @@ public class Keyboard2 extends InputMethodService
         _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
       }
     }
+
+    // Register broadcast receiver for debug mode control
+    _debugModeReceiver = new android.content.BroadcastReceiver()
+    {
+      @Override
+      public void onReceive(android.content.Context context, android.content.Intent intent)
+      {
+        if ("juloo.keyboard2.SET_DEBUG_MODE".equals(intent.getAction()))
+        {
+          _debugMode = intent.getBooleanExtra("debug_enabled", false);
+          if (_debugMode)
+          {
+            sendDebugLog("=== Debug mode enabled ===\n");
+          }
+        }
+      }
+    };
+    android.content.IntentFilter debugFilter = new android.content.IntentFilter("juloo.keyboard2.SET_DEBUG_MODE");
+    registerReceiver(_debugModeReceiver, debugFilter, android.content.Context.RECEIVER_NOT_EXPORTED);
   }
 
   @Override
@@ -215,12 +238,46 @@ public class Keyboard2 extends InputMethodService
     super.onDestroy();
 
     _foldStateTracker.close();
-    
+
     // Cleanup async prediction handler
     if (_asyncPredictionHandler != null)
     {
       _asyncPredictionHandler.shutdown();
       _asyncPredictionHandler = null;
+    }
+
+    // Unregister debug mode receiver
+    if (_debugModeReceiver != null)
+    {
+      try
+      {
+        unregisterReceiver(_debugModeReceiver);
+      }
+      catch (Exception e)
+      {
+        // Already unregistered
+      }
+      _debugModeReceiver = null;
+    }
+  }
+
+  /**
+   * Send debug log message to SwipeDebugActivity if debug mode is enabled.
+   * Only logs when debug mode is active (SwipeDebugActivity is open).
+   */
+  private void sendDebugLog(String message)
+  {
+    if (!_debugMode) return;
+
+    try
+    {
+      android.content.Intent intent = new android.content.Intent(SwipeDebugActivity.ACTION_DEBUG_LOG);
+      intent.putExtra(SwipeDebugActivity.EXTRA_LOG_MESSAGE, message);
+      sendBroadcast(intent);
+    }
+    catch (Exception e)
+    {
+      // Silently fail if debug activity is not available
     }
   }
 
@@ -892,25 +949,20 @@ public class Keyboard2 extends InputMethodService
           _lastAutoInsertedWord = null;
         }
 
-        // CRITICAL FIX: Add space before word if previous character isn't whitespace
-        // This prevents "helloworld" when user swipes "hello" then swipes "world"
+        // Add space before word if previous character isn't whitespace
         boolean needsSpaceBefore = false;
         try
         {
           CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
-          android.util.Log.d("Keyboard2", "SPACING DEBUG: textBefore='" + textBefore + "' length=" + (textBefore != null ? textBefore.length() : "null"));
           if (textBefore != null && textBefore.length() > 0)
           {
             char prevChar = textBefore.charAt(0);
-            android.util.Log.d("Keyboard2", "SPACING DEBUG: prevChar='" + prevChar + "' isWhitespace=" + Character.isWhitespace(prevChar));
             // Add space if previous char is not whitespace and not punctuation start
             needsSpaceBefore = !Character.isWhitespace(prevChar) && prevChar != '(' && prevChar != '[' && prevChar != '{';
           }
-          android.util.Log.d("Keyboard2", "SPACING DEBUG: needsSpaceBefore=" + needsSpaceBefore);
         }
         catch (Exception e)
         {
-          android.util.Log.e("Keyboard2", "SPACING DEBUG: Exception getting text before cursor", e);
           // If getTextBeforeCursor fails, assume we don't need space before
           needsSpaceBefore = false;
         }
@@ -921,17 +973,14 @@ public class Keyboard2 extends InputMethodService
         {
           // Termux mode: Insert word without automatic space for better terminal compatibility
           textToInsert = needsSpaceBefore ? " " + word : word;
-          android.util.Log.d("Keyboard2", "SPACING DEBUG: Termux mode, inserting '" + textToInsert + "'");
         }
         else
         {
           // Normal mode: Insert word with space after (and before if needed)
           textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
-          android.util.Log.d("Keyboard2", "SPACING DEBUG: Normal mode, inserting '" + textToInsert + "'");
         }
 
         ic.commitText(textToInsert, 1);
-        android.util.Log.d("Keyboard2", "SPACING DEBUG: Committed text, cursor should be after inserted text");
       }
       catch (Exception e)
       {
