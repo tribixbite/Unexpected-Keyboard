@@ -150,6 +150,7 @@ public class SwipeDebugActivity extends Activity
   {
     // Broadcast debug mode state to keyboard service
     Intent intent = new Intent("juloo.keyboard2.SET_DEBUG_MODE");
+    intent.setPackage(getPackageName());  // Explicit package for broadcast
     intent.putExtra("debug_enabled", enabled);
     sendBroadcast(intent);
   }

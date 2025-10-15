@@ -272,6 +272,7 @@ public class Keyboard2 extends InputMethodService
     try
     {
       android.content.Intent intent = new android.content.Intent(SwipeDebugActivity.ACTION_DEBUG_LOG);
+      intent.setPackage(getPackageName());  // Explicit package for broadcast
       intent.putExtra(SwipeDebugActivity.EXTRA_LOG_MESSAGE, message);
       sendBroadcast(intent);
     }
@@ -837,11 +838,6 @@ public class Keyboard2 extends InputMethodService
       return;
     }
 
-    // Log predictions for debugging
-    for (int i = 0; i < Math.min(5, predictions.size()); i++)
-    {
-    }
-    
     // Update suggestion bar (scores are already integers from neural system)
     if (_suggestionBar != null)
     {
@@ -1188,33 +1184,9 @@ public class Keyboard2 extends InputMethodService
         swipePath != null ? swipePath.size() : 0,
         swipedKeys != null ? swipedKeys.size() : 0));
 
-    // COORDINATE DEBUGGING: Log detailed coordinate information
-    if (swipePath.size() > 0) {
-      android.graphics.PointF first = swipePath.get(0);
-      android.graphics.PointF last = swipePath.get(swipePath.size() - 1);
-      
-      // Log first few points for analysis
-      for (int i = 0; i < Math.min(5, swipePath.size()); i++) {
-        android.graphics.PointF p = swipePath.get(i);
-      }
-    }
-    
-    // CRITICAL: Log detected keys to compare with calibration
-    StringBuilder detectedKeySeq = new StringBuilder();
-    for (int i = 0; i < swipedKeys.size(); i++) {
-      KeyboardData.Key key = swipedKeys.get(i);
-      if (key != null) {
-        // Use key's string representation for debugging
-        String keyStr = key.toString();
-        detectedKeySeq.append(keyStr).append(" ");
-      } else {
-      }
-    }
-    
     if (!_config.swipe_typing_enabled)
     {
       return;
-    } else {
     }
     
     if (_neuralEngine == null)

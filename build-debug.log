@@ -22,8 +22,8 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :parseDebugLocalResources
 > Task :mergeDebugResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
@@ -32,15 +32,15 @@ Generated version info:  ()
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :processDebugManifestForPackage
-> Task :mergeDebugJavaResource
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
+> Task :mergeDebugJavaResource
 > Task :writeDebugSigningConfigVersions
 > Task :mergeDebugNativeLibs
 
@@ -96,7 +96,7 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 29s
+BUILD SUCCESSFUL in 31s
 34 actionable tasks: 27 executed, 7 from cache
 g: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
@@ -113,26 +113,25 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 29s
+BUILD SUCCESSFUL in 31s
 34 actionable tasks: 27 executed, 7 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 43M Oct 15 14:27 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 43M Oct 15 14:34 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /sdcard/unexpected/ for updates...
 APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 43M Oct 15 14:28 /sdcard/unexpected/debug-kb.apk
+-rw-rw----. 1 u0_a315 media_rw 43M Oct 15 14:34 /sdcard/unexpected/debug-kb.apk
 
 Step 6: Attempting ADB connection and installation...
-No ADB device connected, attempting wireless connection...
-Scanning for ADB on host: 192.168.1.247
-Scanning ports 30000-50000 for ADB...
-Trying 192.168.1.247:5555... no response
-Trying 192.168.1.247:40627... no response
-Trying 192.168.1.247:42283... no response
-Trying 192.168.1.247:43625... no response
-No working ADB port found on 192.168.1.247
-❌ Could not establish ADB connection
+✅ ADB device already connected
+
+Uninstalling previous debug version...
+  ℹ️  No previous version found
+
+Installing new APK via ADB...
+./build-on-termux.sh: line 280: /data/data/com.termux/files/home/android-sdk/platform-tools/adb: cannot execute binary file: Exec format error
+❌ ADB install failed, falling back to manual installation
 Opening APK for installation...
