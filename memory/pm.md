@@ -2,6 +2,62 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Critical Swipe UX Fixes - Eliminate Repeat Keys + Keep Predictions Visible 🎯
+
+**Issue 1: Repeat key detection during swipes (lag-induced)**
+- User swipes but sees unwanted character repetition from side keys
+- Caused by normal gesture processing running during swipe detection
+- If user moved slowly or system had lag, gesture handler fired before swipe confirmed
+
+**Root Cause** (Pointers.java):
+- Normal gesture code (line 360-381) processed movement BEFORE swipe detected
+- Gesture handler called `onPointerDown(new_value, true)` for side keys
+- Happened BEFORE `FLAG_P_SWIPE_TYPING` was set at line 337
+- Timing window allowed unwanted gesture characters to output
+
+**Solution 1** (Pointers.java:323-344):
+- Check `isPotentialSwipe` BEFORE all gesture processing
+- If swipe_typing_enabled + single pointer + character key = suppress gestures
+- Skip ALL normal gesture processing with early return
+- Only track swipe movement, never output gesture characters
+
+**Issue 2: Predictions disappear after auto-insertion**
+- User couldn't select different prediction if auto-inserted one was wrong
+- Suggestions cleared after insertion, no fallback option
+
+**Solution 2** (Keyboard2.java:788-790):
+- Re-display suggestions immediately after auto-insertion
+- User can now tap a different prediction if needed
+- Predictions remain visible until next swipe or manual clear
+
+**Code Changes**:
+```java
+// Pointers.java - Suppress gesture processing for potential swipes
+boolean isPotentialSwipe = _config.swipe_typing_enabled && _ptrs.size() == 1 &&
+                            ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char;
+if (isPotentialSwipe) {
+  _handler.onSwipeMove(x, y, _swipeRecognizer);
+  // ... detect swipe typing ...
+  return;  // Skip ALL normal gesture processing
+}
+
+// Keyboard2.java - Keep predictions visible after auto-insert
+onSuggestionSelected(middlePrediction);
+_suggestionBar.setSuggestionsWithScores(predictions, scores);  // Re-display!
+```
+
+**Impact**:
+- **No more repeat keys** during swipe gestures
+- **Clean swipe input** without character spam
+- **Visible fallback options** for correction
+
+**Version**: 1.32.20 (69) ✅ BUILD SUCCESSFUL
+**Commit**: `7553bee2` - fix(swipe): eliminate repeat keys + keep predictions visible
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### Critical Gesture Detection Fix - No More Tap/Hold During Swipes 🎯
 
 **Problem**: Short swipes and key holds registering DURING swipe gestures
