@@ -219,27 +219,37 @@ public final class Pointers implements Handler.Callback
     // touch events can happen while the pointer travels on top of other keys.
     if (isSliding())
       return;
-    
+
     // Initialize swipe typing if enabled and this could be the start of a swipe
     if (_config.swipe_typing_enabled && _ptrs.isEmpty() && key != null)
     {
       _swipeRecognizer.startSwipe(x, y, key);
     }
-    
+
     // Don't take latched modifiers into account if an other key is pressed.
     // The other key already "own" the latched modifiers and will clear them.
     Modifiers mods = getModifiers(isOtherPointerDown());
     KeyValue value = _handler.modifyKey(key.keys[0], mods);
     Pointer ptr = make_pointer(pointerId, key, value, x, y, mods);
     _ptrs.add(ptr);
-    
+
     // Don't start long press timer if we might be swipe typing
     if (!(_config.swipe_typing_enabled && _swipeRecognizer.isSwipeTyping()))
     {
       startLongPress(ptr);
     }
-    
-    _handler.onPointerDown(value, false);
+
+    // CRITICAL FIX: Don't output character immediately when swipe typing might start
+    // This prevents 4-10x character repetition due to input lag
+    // The character will be output in onTouchUp if it turns out not to be a swipe
+    boolean mightBeSwipe = _config.swipe_typing_enabled && _ptrs.size() == 1 &&
+                           key != null && key.keys[0] != null &&
+                           key.keys[0].getKind() == KeyValue.Kind.Char;
+
+    if (!mightBeSwipe)
+    {
+      _handler.onPointerDown(value, false);
+    }
   }
 
   static final int[] DIRECTION_TO_INDEX = new int[]{

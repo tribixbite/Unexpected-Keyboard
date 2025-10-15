@@ -59,7 +59,7 @@ public class OptimizedVocabulary
   {
     try
     {
-      Log.d(TAG, "Loading optimized vocabulary from assets...");
+      // Log.d(TAG, "Loading optimized vocabulary from assets...");
       
       // Load full vocabulary with frequencies from dictionary
       loadWordFrequencies();
@@ -74,8 +74,8 @@ public class OptimizedVocabulary
       createLengthBasedLookup();
       
       isLoaded = true;
-      Log.d(TAG, String.format("Vocabulary loaded: %d total words, %d common, %d top5000", 
-        wordFrequencies.size(), commonWords.size(), top5000.size()));
+      // Log.d(TAG, String.format("Vocabulary loaded: %d total words, %d common, %d top5000",
+        // wordFrequencies.size(), commonWords.size(), top5000.size()));
       
       return true;
     }
@@ -205,7 +205,7 @@ public class OptimizedVocabulary
       }
       
       reader.close();
-      Log.d(TAG, "Loaded " + wordCount + " words with frequencies");
+      // Log.d(TAG, "Loaded " + wordCount + " words with frequencies");
     }
     catch (IOException e)
     {

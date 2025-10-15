@@ -19,18 +19,17 @@ Generated version info:  ()
 > Task :checkDebugAarMetadata
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
+> Task :mergeDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :processDebugMainManifest
 > Task :parseDebugLocalResources
-> Task :mergeDebugResources
+> Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :processDebugManifestForPackage
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
 > Task :desugarDebugFileDependencies FROM-CACHE
@@ -39,9 +38,10 @@ Generated version info:  ()
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :validateSigningDebug
+> Task :processDebugManifestForPackage
+> Task :mergeDebugJavaResource
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :mergeDebugJavaResource
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -59,7 +59,7 @@ Generated version info:  ()
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linu/data/data/com.termux/files/home/android-sdk/ndk/26.1.10
 
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
@@ -74,9 +74,10 @@ Try one of the following options:
 For more details on how to configure these settings, see https://developer.android.com/build/jdks.
 To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
 warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target value 8 is obsolete and will be removed in a future release
-warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-Note: Some input files use or override a deprecated API.
+warning: [options] target
+> Task :compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the follNote: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
@@ -88,9 +89,9 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 25s
+BUILD SUCCESSFUL in 51s
 34 actionable tasks: 27 executed, 7 from cache
- [options] source value 8 is obsolete and will be removed in a future release
+: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
 warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
 Note: Some input files use or override a deprecated API.
@@ -105,25 +106,25 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 25s
+BUILD SUCCESSFUL in 51s
 34 actionable tasks: 27 executed, 7 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 43M Oct 15 00:19 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 43M Oct 15 00:45 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /sdcard/unexpected/ for updates...
 APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 43M Oct 15 00:19 /sdcard/unexpected/debug-kb.apk
+-rw-rw----. 1 u0_a315 media_rw 43M Oct 15 00:45 /sdcard/unexpected/debug-kb.apk
 
 Step 6: Attempting ADB connection and installation...
-No ADB device connected, attempting wireless connection...
-Scanning for ADB on host: 192.168.1.247
-Scanning ports 30000-50000 for ADB...
-Trying 192.168.1.247:5555... no response
-Trying 192.168.1.247:34001... no response
-Trying 192.168.1.247:44413... no response
-No working ADB port found on 192.168.1.247
-❌ Could not establish ADB connection
+✅ ADB device already connected
+
+Uninstalling previous debug version...
+  ℹ️  No previous version found
+
+Installing new APK via ADB...
+./build-on-termux.sh: line 280: /data/data/com.termux/files/home/android-sdk/platform-tools/adb: cannot execute binary file: Exec format error
+❌ ADB install failed, falling back to manual installation
 Opening APK for installation...

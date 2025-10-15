@@ -101,7 +101,7 @@ public class OnnxSwipePredictor
     _tokenizer = new SwipeTokenizer();
     _vocabulary = new OptimizedVocabulary(context); // OPTIMIZATION: Initialize vocabulary
     
-    Log.d(TAG, "OnnxSwipePredictor initialized with session persistence");
+    // Log.d(TAG, "OnnxSwipePredictor initialized with session persistence");
   }
   
   /**
@@ -118,7 +118,7 @@ public class OnnxSwipePredictor
         {
           _singletonInstance = new OnnxSwipePredictor(context);
           boolean success = _singletonInstance.initialize();
-          Log.d(TAG, "Singleton instance created, initialization: " + success);
+          // Log.d(TAG, "Singleton instance created, initialization: " + success);
         }
       }
     }
@@ -133,34 +133,34 @@ public class OnnxSwipePredictor
   {
     if (_isInitialized)
     {
-      Log.d(TAG, "Already initialized, models loaded: " + _isModelLoaded);
+      // Log.d(TAG, "Already initialized, models loaded: " + _isModelLoaded);
       return _isModelLoaded;
     }
     
     try
     {
-      Log.d(TAG, "Loading ONNX models...");
-      logDebug("🔄 Loading ONNX transformer models...");
+      // Log.d(TAG, "Loading ONNX models...");
+      // logDebug("🔄 Loading ONNX transformer models...");
       
       // Load encoder model (using correct name from web demo)
       byte[] encoderModelData = loadModelFromAssets("models/swipe_model_character_quant.onnx");
       if (encoderModelData != null)
       {
-        logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
+        // logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
         OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Encoder");
         _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
-        logDebug("✅ Encoder session created successfully");
-        logDebug("   Inputs: " + _encoderSession.getInputNames());
-        logDebug("   Outputs: " + _encoderSession.getOutputNames());
+        // logDebug("✅ Encoder session created successfully");
+        // logDebug("   Inputs: " + _encoderSession.getInputNames());
+        // logDebug("   Outputs: " + _encoderSession.getOutputNames());
         
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_encoderSession, "Encoder");
         
-        Log.d(TAG, "Encoder model loaded successfully");
+        // Log.d(TAG, "Encoder model loaded successfully");
       }
       else
       {
-        logDebug("❌ Failed to load encoder model data");
+        // logDebug("❌ Failed to load encoder model data");
         Log.e(TAG, "Failed to load encoder model data");
       }
       
@@ -168,31 +168,31 @@ public class OnnxSwipePredictor
       byte[] decoderModelData = loadModelFromAssets("models/swipe_decoder_character_quant.onnx");
       if (decoderModelData != null)
       {
-        logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
+        // logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
         OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Decoder");
         _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
-        logDebug("✅ Decoder session created successfully");
-        logDebug("   Inputs: " + _decoderSession.getInputNames());
-        logDebug("   Outputs: " + _decoderSession.getOutputNames());
+        // logDebug("✅ Decoder session created successfully");
+        // logDebug("   Inputs: " + _decoderSession.getInputNames());
+        // logDebug("   Outputs: " + _decoderSession.getOutputNames());
         
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_decoderSession, "Decoder");
         
-        Log.d(TAG, "Decoder model loaded successfully");
+        // Log.d(TAG, "Decoder model loaded successfully");
       }
       else
       {
-        logDebug("❌ Failed to load decoder model data");
+        // logDebug("❌ Failed to load decoder model data");
         Log.e(TAG, "Failed to load decoder model data");
       }
       
       // Load tokenizer configuration
       boolean tokenizerLoaded = _tokenizer.loadFromAssets(_context);
-      logDebug("📝 Tokenizer loaded: " + tokenizerLoaded + " (vocab size: " + _tokenizer.getVocabSize() + ")");
+      // logDebug("📝 Tokenizer loaded: " + tokenizerLoaded + " (vocab size: " + _tokenizer.getVocabSize() + ")");
       
       // OPTIMIZATION: Load vocabulary for fast filtering
       boolean vocabularyLoaded = _vocabulary.loadVocabulary();
-      logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getStats().totalWords + ")");
+      // logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getStats().totalWords + ")");
       
       _isModelLoaded = (_encoderSession != null && _decoderSession != null);
       
@@ -201,12 +201,12 @@ public class OnnxSwipePredictor
       {
         initializeReusableBuffers();
         initializeThreadPool();
-        logDebug("🧠 ONNX neural prediction system ready!");
-        Log.d(TAG, "ONNX neural prediction system ready with optimized vocabulary");
+        // logDebug("🧠 ONNX neural prediction system ready!");
+        // Log.d(TAG, "ONNX neural prediction system ready with optimized vocabulary");
       }
       else
       {
-        logDebug("⚠️ ONNX models failed to load - missing encoder or decoder session");
+        // logDebug("⚠️ ONNX models failed to load - missing encoder or decoder session");
         Log.w(TAG, "Failed to load ONNX models");
       }
       
@@ -214,7 +214,7 @@ public class OnnxSwipePredictor
     }
     catch (Exception e)
     {
-      logDebug("💥 ONNX initialization exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+      // logDebug("💥 ONNX initialization exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
       Log.e(TAG, "Failed to initialize ONNX models", e);
       _isInitialized = true;
       _isModelLoaded = false;
@@ -257,15 +257,15 @@ public class OnnxSwipePredictor
       // OPTIMIZATION: Detailed performance timing for bottleneck analysis
       long totalStartTime = System.nanoTime();
       
-      Log.d(TAG, "Neural prediction for swipe with " + input.coordinates.size() + " points");
-      logDebug("🚀 Starting neural prediction for " + input.coordinates.size() + " points");
+      // Log.d(TAG, "Neural prediction for swipe with " + input.coordinates.size() + " points");
+      // logDebug("🚀 Starting neural prediction for " + input.coordinates.size() + " points");
       
       // Extract trajectory features with timing
       long preprocessStartTime = System.nanoTime();
       SwipeTrajectoryProcessor.TrajectoryFeatures features = 
         _trajectoryProcessor.extractFeatures(input, MAX_SEQUENCE_LENGTH);
       long preprocessTime = System.nanoTime() - preprocessStartTime;
-      logDebug("⏱️ Feature extraction: " + (preprocessTime / 1_000_000.0) + "ms");
+      // logDebug("⏱️ Feature extraction: " + (preprocessTime / 1_000_000.0) + "ms");
       
       // Run encoder inference with proper ONNX API
       OnnxTensor trajectoryTensor = null;
@@ -279,10 +279,10 @@ public class OnnxSwipePredictor
         srcMaskTensor = createSourceMaskTensor(features);
         
         // Log tensor shapes for debugging
-        logDebug("🔧 Encoder input tensor shapes:");
-        logDebug("   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
-        logDebug("   nearest_keys: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
-        logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL)");
+        // logDebug("🔧 Encoder input tensor shapes:");
+        // logDebug("   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
+        // logDebug("   nearest_keys: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
+        // logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL)");
         
         Map<String, OnnxTensor> encoderInputs = new HashMap<>();
         encoderInputs.put("trajectory_features", trajectoryTensor);
@@ -293,27 +293,27 @@ public class OnnxSwipePredictor
         long encoderStartTime = System.nanoTime();
         try (OrtSession.Result encoderResults = _encoderSession.run(encoderInputs)) {
           long encoderTime = System.nanoTime() - encoderStartTime;
-          logDebug("⏱️ Encoder inference: " + (encoderTime / 1_000_000.0) + "ms");
+          // logDebug("⏱️ Encoder inference: " + (encoderTime / 1_000_000.0) + "ms");
           
           // Run beam search decoding with timing
           long beamSearchStartTime = System.nanoTime();
           List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, srcMaskTensor, features);
           long beamSearchTime = System.nanoTime() - beamSearchStartTime;
-          logDebug("⏱️ Beam search total: " + (beamSearchTime / 1_000_000.0) + "ms");
+          // logDebug("⏱️ Beam search total: " + (beamSearchTime / 1_000_000.0) + "ms");
           
           // Post-processing with timing
           long postprocessStartTime = System.nanoTime();
           PredictionResult result = createPredictionResult(candidates);
           long postprocessTime = System.nanoTime() - postprocessStartTime;
-          logDebug("⏱️ Post-processing: " + (postprocessTime / 1_000_000.0) + "ms");
+          // logDebug("⏱️ Post-processing: " + (postprocessTime / 1_000_000.0) + "ms");
           
           // Total timing summary
           long totalTime = System.nanoTime() - totalStartTime;
-          logDebug("📊 Performance breakdown: Total=" + (totalTime / 1_000_000.0) + 
-            "ms (Preprocess=" + (preprocessTime / 1_000_000.0) + 
-            "ms, Encoder=" + (encoderTime / 1_000_000.0) + 
-            "ms, BeamSearch=" + (beamSearchTime / 1_000_000.0) + 
-            "ms, Postprocess=" + (postprocessTime / 1_000_000.0) + "ms)");
+          // logDebug("📊 Performance breakdown: Total=" + (totalTime / 1_000_000.0) +
+            // "ms (Preprocess=" + (preprocessTime / 1_000_000.0) +
+            // "ms, Encoder=" + (encoderTime / 1_000_000.0) +
+            // "ms, BeamSearch=" + (beamSearchTime / 1_000_000.0) +
+            // "ms, Postprocess=" + (postprocessTime / 1_000_000.0) + "ms)");
           
           return result;
         }
@@ -344,25 +344,25 @@ public class OnnxSwipePredictor
       
       // OPTIMIZATION 1: Maximum graph optimization level (operator fusion, layout transforms)
       sessionOptions.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
-      logDebug("⚙️ Set optimization level to ALL_OPT for " + sessionName);
+      // logDebug("⚙️ Set optimization level to ALL_OPT for " + sessionName);
       
       // OPTIMIZATION 2: Let ONNX Runtime determine optimal thread count for mobile
       sessionOptions.setIntraOpNumThreads(0); // Will be overridden by execution provider config
-      logDebug("🧵 Set intra-op threads to auto-detect for " + sessionName);
+      // logDebug("🧵 Set intra-op threads to auto-detect for " + sessionName);
       
       // OPTIMIZATION 3: Memory pattern optimization for repeated inference
       sessionOptions.setMemoryPatternOptimization(true);
-      logDebug("🧠 Enabled memory pattern optimization for " + sessionName);
+      // logDebug("🧠 Enabled memory pattern optimization for " + sessionName);
       
       // OPTIMIZATION 4: Enable verbose logging for execution provider verification
       try
       {
         sessionOptions.setSessionLogLevel(OrtLoggingLevel.ORT_LOGGING_LEVEL_VERBOSE);
-        logDebug("🔍 Verbose logging enabled for execution provider verification");
+        // logDebug("🔍 Verbose logging enabled for execution provider verification");
       }
       catch (Exception logError)
       {
-        logDebug("⚠️ Verbose logging not available: " + logError.getMessage());
+        // logDebug("⚠️ Verbose logging not available: " + logError.getMessage());
       }
       
       // OPTIMIZATION 5: Modern execution providers (QNN NPU priority for Samsung S25U)
@@ -372,7 +372,7 @@ public class OnnxSwipePredictor
     }
     catch (Exception e)
     {
-      logDebug("💥 Failed to create optimized SessionOptions for " + sessionName + ": " + e.getMessage());
+      // logDebug("💥 Failed to create optimized SessionOptions for " + sessionName + ": " + e.getMessage());
       Log.e(TAG, "Failed to create optimized SessionOptions", e);
       
       // Ultimate fallback: basic session options
@@ -404,7 +404,7 @@ public class OnnxSwipePredictor
       // CRITICAL OPTIMIZATION: Initialize batch processing buffers
       initializeBatchProcessingBuffers(decoderSeqLength);
       
-      Log.d(TAG, "Reusable tensor buffers initialized (decoderSeqLength: " + decoderSeqLength + ")");
+      // Log.d(TAG, "Reusable tensor buffers initialized (decoderSeqLength: " + decoderSeqLength + ")");
     }
     catch (Exception e)
     {
@@ -425,8 +425,8 @@ public class OnnxSwipePredictor
       _batchedMaskArray = new boolean[_beamWidth][decoderSeqLength];
       _batchedMemoryArray = new float[_beamWidth][150][256]; // Encoder memory for each beam
       
-      Log.d(TAG, "Batch processing buffers initialized: " + _beamWidth + " beams × " + decoderSeqLength + " seq_length");
-      logDebug("🚀 Batch processing initialized: " + _beamWidth + "×" + decoderSeqLength + " decoder optimization");
+      // Log.d(TAG, "Batch processing buffers initialized: " + _beamWidth + " beams × " + decoderSeqLength + " seq_length");
+      // logDebug("🚀 Batch processing initialized: " + _beamWidth + "×" + decoderSeqLength + " decoder optimization");
     }
     catch (Exception e)
     {
@@ -454,22 +454,22 @@ public class OnnxSwipePredictor
       // Try to enable NNAPI with basic configuration
       options.addNnapi();
       Log.w(TAG, "🚀 NNAPI execution provider enabled for ARM64 hardware acceleration");
-      logDebug("🚀 NNAPI execution provider enabled for ARM64 hardware acceleration");
+      // logDebug("🚀 NNAPI execution provider enabled for ARM64 hardware acceleration");
     } catch (Exception e) {
       Log.w(TAG, "⚠️ NNAPI not available, using CPU provider: " + e.getMessage());
-      logDebug("⚠️ NNAPI not available, using CPU provider: " + e.getMessage());
+      // logDebug("⚠️ NNAPI not available, using CPU provider: " + e.getMessage());
     }
     
     // Enable memory pattern optimization if available
     try {
       options.setMemoryPatternOptimization(true);
-      Log.d(TAG, "Memory pattern optimization enabled");
+      // Log.d(TAG, "Memory pattern optimization enabled");
     } catch (Exception e) {
-      Log.d(TAG, "Memory pattern optimization not available in this ONNX version");
+      // Log.d(TAG, "Memory pattern optimization not available in this ONNX version");
     }
     
     // Note: GPU execution provider method may not be available in this ONNX Runtime version
-    Log.d(TAG, "GPU execution provider configuration skipped for compatibility");
+    // Log.d(TAG, "GPU execution provider configuration skipped for compatibility");
     
     Log.w(TAG, "🔧 ONNX session options optimized with hardware acceleration");
     return options;
@@ -497,14 +497,14 @@ public class OnnxSwipePredictor
       {
         sessionOptions.addConfigEntry("qnn_" + entry.getKey(), entry.getValue());
       }
-      logDebug("🚀 QNN execution provider enabled for Samsung S25U Snapdragon NPU");
-      logDebug("   🔥 HTP burst mode active for maximum performance");
-      Log.d(TAG, "QNN HTP NPU enabled for " + sessionName + " - Snapdragon hardware acceleration");
+      // logDebug("🚀 QNN execution provider enabled for Samsung S25U Snapdragon NPU");
+      // logDebug("   🔥 HTP burst mode active for maximum performance");
+      // Log.d(TAG, "QNN HTP NPU enabled for " + sessionName + " - Snapdragon hardware acceleration");
       return true;
     }
     catch (Exception qnnError)
     {
-      logDebug("⚠️ QNN not available (requires quantized model): " + qnnError.getMessage());
+      // logDebug("⚠️ QNN not available (requires quantized model): " + qnnError.getMessage());
       Log.w(TAG, "QNN not available for " + sessionName + " (may need quantized model), trying XNNPACK");
       
       // Priority 2: Fallback to XNNPACK for optimized ARM CPU
@@ -520,14 +520,14 @@ public class OnnxSwipePredictor
         sessionOptions.setIntraOpNumThreads(4);  // Match XNNPACK threads
         sessionOptions.setInterOpNumThreads(1);  // Dedicate resources to single stream
         
-        logDebug("🚀 XNNPACK execution provider enabled for Samsung S25U");
-        logDebug("   📱 4-core ARM sequential optimization for latency");
-        Log.d(TAG, "XNNPACK enabled for " + sessionName + " - optimized ARM acceleration");
+        // logDebug("🚀 XNNPACK execution provider enabled for Samsung S25U");
+        // logDebug("   📱 4-core ARM sequential optimization for latency");
+        // Log.d(TAG, "XNNPACK enabled for " + sessionName + " - optimized ARM acceleration");
         accelerationEnabled = true;
       }
       catch (Exception xnnpackError)
       {
-        logDebug("⚠️ XNNPACK not available: " + xnnpackError.getMessage());
+        // logDebug("⚠️ XNNPACK not available: " + xnnpackError.getMessage());
         Log.w(TAG, "No hardware acceleration available, using optimized CPU");
         accelerationEnabled = false;
       }
@@ -551,31 +551,31 @@ public class OnnxSwipePredictor
       // TODO: Use reflection or alternative method to get actual providers when available
       
       boolean hardwareAccelerated = false;
-      logDebug("🔍 Execution providers verification for " + sessionName + " (limited API)");
+      // logDebug("🔍 Execution providers verification for " + sessionName + " (limited API)");
       
       for (String provider : providers)
       {
-        Log.d(TAG, "Active execution provider: " + provider + " for " + sessionName);
-        logDebug("  - " + provider);
+        // Log.d(TAG, "Active execution provider: " + provider + " for " + sessionName);
+        // logDebug("  - " + provider);
         
         if (provider.contains("XNNPACK") || provider.contains("QNN") || provider.contains("GPU"))
         {
           hardwareAccelerated = true;
-          Log.d(TAG, "✅ Hardware acceleration confirmed: " + provider + " for " + sessionName);
-          logDebug("✅ Hardware acceleration confirmed: " + provider);
+          // Log.d(TAG, "✅ Hardware acceleration confirmed: " + provider + " for " + sessionName);
+          // logDebug("✅ Hardware acceleration confirmed: " + provider);
         }
       }
       
       // Since we can't reliably detect providers, assume XNNPACK worked if no exception occurred
-      Log.d(TAG, "✅ Hardware acceleration configuration completed for " + sessionName);
-      logDebug("✅ Hardware acceleration configuration completed (verification limited by API)");
+      // Log.d(TAG, "✅ Hardware acceleration configuration completed for " + sessionName);
+      // logDebug("✅ Hardware acceleration configuration completed (verification limited by API)");
       
       return true; // Optimistically assume acceleration is working
     }
     catch (Exception e)
     {
       Log.w(TAG, "Failed to verify execution providers for " + sessionName + ": " + e.getMessage());
-      logDebug("⚠️ Failed to verify execution providers: " + e.getMessage());
+      // logDebug("⚠️ Failed to verify execution providers: " + e.getMessage());
       return false;
     }
   }
@@ -602,7 +602,7 @@ public class OnnxSwipePredictor
           }
         });
         
-        Log.d(TAG, "ONNX thread pool initialized for optimized inference");
+        // Log.d(TAG, "ONNX thread pool initialized for optimized inference");
       }
     }
   }
@@ -617,7 +617,7 @@ public class OnnxSwipePredictor
     List<Integer> tokens = new ArrayList<>();
     tokens.add(SOS_IDX);
     
-    logDebug("🏃 Starting greedy search with max_length=" + maxLength);
+    // logDebug("🏃 Starting greedy search with max_length=" + maxLength);
     
     for (int step = 0; step < maxLength; step++)
     {
@@ -677,12 +677,12 @@ public class OnnxSwipePredictor
           // Only stop if EOS token - no arbitrary early termination
           if (bestToken == EOS_IDX)
           {
-            logDebug("🏁 Greedy search stopped at step " + step + " - EOS token");
+            // logDebug("🏁 Greedy search stopped at step " + step + " - EOS token");
             break;
           }
           
           tokens.add(bestToken);
-          logDebug("🎯 Greedy step " + step + ": token=" + bestToken + ", prob=" + bestProb);
+          // logDebug("🎯 Greedy step " + step + ": token=" + bestToken + ", prob=" + bestProb);
         }
         
         targetTokensTensor.close();
@@ -712,7 +712,7 @@ public class OnnxSwipePredictor
     
     long greedyTime = (System.nanoTime() - greedyStart) / 1_000_000;
     String wordStr = word.toString();
-    logDebug("🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'");
+    // logDebug("🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'");
     Log.w(TAG, "🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'");
     
     List<BeamSearchCandidate> result = new ArrayList<>();
@@ -741,8 +741,8 @@ public class OnnxSwipePredictor
         config.neural_confidence_threshold : DEFAULT_CONFIDENCE_THRESHOLD;
     }
     
-    Log.d(TAG, String.format("Neural config: beam_width=%d, max_length=%d, threshold=%.3f",
-      _beamWidth, _maxLength, _confidenceThreshold));
+    // Log.d(TAG, String.format("Neural config: beam_width=%d, max_length=%d, threshold=%.3f",
+      // _beamWidth, _maxLength, _confidenceThreshold));
   }
   
   /**
@@ -799,10 +799,10 @@ public class OnnxSwipePredictor
   {
     try
     {
-      Log.d(TAG, "Loading ONNX model: " + modelPath);
+      // Log.d(TAG, "Loading ONNX model: " + modelPath);
       InputStream inputStream = _context.getAssets().open(modelPath);
       int available = inputStream.available();
-      Log.d(TAG, "Model file size: " + available + " bytes");
+      // Log.d(TAG, "Model file size: " + available + " bytes");
       
       byte[] modelData = new byte[available];
       int totalRead = 0;
@@ -813,7 +813,7 @@ public class OnnxSwipePredictor
       }
       inputStream.close();
       
-      Log.d(TAG, "Successfully loaded " + totalRead + " bytes from " + modelPath);
+      // Log.d(TAG, "Successfully loaded " + totalRead + " bytes from " + modelPath);
       return modelData;
     }
     catch (IOException e)
@@ -934,16 +934,16 @@ public class OnnxSwipePredictor
       return new ArrayList<>();
     }
 
-    Log.d(TAG, String.format("Decoder memory shape: %s", java.util.Arrays.toString(memory.getInfo().getShape())));
+    // Log.d(TAG, String.format("Decoder memory shape: %s", java.util.Arrays.toString(memory.getInfo().getShape())));
 
     // Initialize beams with SOS token - matching CLI test (line 158)
     List<BeamSearchState> beams = new ArrayList<>();
     beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
-    logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
+    // logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
 
     // PERFORMANCE DEBUG: Log beam search parameters
     Log.w(TAG, "🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
-    logDebug("🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
+    // logDebug("🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
 
     // Performance tracking
     long beamSearchStart = System.nanoTime();
@@ -956,7 +956,7 @@ public class OnnxSwipePredictor
       List<BeamSearchState> candidates = new ArrayList<>();
       // PERFORMANCE: Only log every 5th step to reduce overhead
       if (step % 5 == 0) {
-        logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
+        // logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
       }
 
       for (BeamSearchState beam : beams)
@@ -1079,7 +1079,7 @@ public class OnnxSwipePredictor
         }
         catch (Exception e)
         {
-          logDebug("💥 Decoder step error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+          // logDebug("💥 Decoder step error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
           Log.e(TAG, "Decoder step error", e);
           continue;
         }
@@ -1097,40 +1097,40 @@ public class OnnxSwipePredictor
 
       if (allFinished)
       {
-        logDebug("🏁 All beams finished at step " + step);
+        // logDebug("🏁 All beams finished at step " + step);
         break;
       }
     }
     
     // Performance summary
     long totalBeamSearchTime = (System.nanoTime() - beamSearchStart) / 1_000_000;
-    logDebug("📊 Beam search performance:");
-    logDebug("   Total time: " + totalBeamSearchTime + "ms");
-    logDebug("   Total inference: " + totalInferenceTime + "ms (" + 
-             String.format("%.1f", (totalInferenceTime * 100.0 / totalBeamSearchTime)) + "%)");
-    logDebug("   Total tensor creation: " + totalTensorTime + "ms (" + 
-             String.format("%.1f", (totalTensorTime * 100.0 / totalBeamSearchTime)) + "%)");
+    // logDebug("📊 Beam search performance:");
+    // logDebug("   Total time: " + totalBeamSearchTime + "ms");
+    // logDebug("   Total inference: " + totalInferenceTime + "ms (" +
+             // String.format("%.1f", (totalInferenceTime * 100.0 / totalBeamSearchTime)) + "%)");
+    // logDebug("   Total tensor creation: " + totalTensorTime + "ms (" +
+             // String.format("%.1f", (totalTensorTime * 100.0 / totalBeamSearchTime)) + "%)");
     
     // Convert token sequences to words with detailed debugging
     List<BeamSearchCandidate> results = new ArrayList<>();
-    logDebug("🔤 Converting " + beams.size() + " beams to words...");
+    // logDebug("🔤 Converting " + beams.size() + " beams to words...");
     
     for (int b = 0; b < beams.size(); b++) {
       BeamSearchState beam = beams.get(b);
       StringBuilder word = new StringBuilder();
       
-      logDebug("   Beam " + b + " tokens: " + beam.tokens + " (score: " + beam.score + ")");
+      // logDebug("   Beam " + b + " tokens: " + beam.tokens + " (score: " + beam.score + ")");
       
       for (Long token : beam.tokens)
       {
         int idx = token.intValue();
         if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
-          logDebug("     Token " + idx + " -> SPECIAL (skipped)");
+          // logDebug("     Token " + idx + " -> SPECIAL (skipped)");
           continue;
         }
         
         char ch = _tokenizer.indexToChar(idx);
-        logDebug("     Token " + idx + " -> '" + ch + "'");
+        // logDebug("     Token " + idx + " -> '" + ch + "'");
         
         if (ch != '?' && !Character.toString(ch).startsWith("<"))
         {
@@ -1145,13 +1145,13 @@ public class OnnxSwipePredictor
         // Since score is positive (accumulated -log(prob)), use exp(-score)
         float confidence = (float)Math.exp(-beam.score);
         results.add(new BeamSearchCandidate(wordStr, confidence));
-        logDebug("   ✅ Beam " + b + " -> '" + wordStr + "' (score: " + beam.score + ", confidence: " + confidence + ")");
+        // logDebug("   ✅ Beam " + b + " -> '" + wordStr + "' (score: " + beam.score + ", confidence: " + confidence + ")");
       } else {
-        logDebug("   ❌ Beam " + b + " -> empty word (tokens only special)");
+        // logDebug("   ❌ Beam " + b + " -> empty word (tokens only special)");
       }
     }
     
-    logDebug("🎯 Generated " + results.size() + " word candidates from " + beams.size() + " beams");
+    // logDebug("🎯 Generated " + results.size() + " word candidates from " + beams.size() + " beams");
     return results;
   }
   
@@ -1250,7 +1250,7 @@ public class OnnxSwipePredictor
       }
     }
     
-    logDebug("📊 Raw predictions: " + candidates.size() + " total, " + words.size() + " above threshold");
+    // logDebug("📊 Raw predictions: " + candidates.size() + " total, " + words.size() + " above threshold");
     return new PredictionResult(words, scores);
   }
   
@@ -1281,10 +1281,10 @@ public class OnnxSwipePredictor
       scores.add((int)(pred.score * 1000)); // Convert combined score to 0-1000 range
     }
     
-    logDebug("📊 Optimized predictions: " + candidates.size() + " raw → " + filtered.size() + " filtered");
-    logDebug("   Fast-path breakdown: " + 
-      filtered.stream().mapToLong(p -> p.source.equals("common") ? 1 : 0).sum() + " common, " +
-      filtered.stream().mapToLong(p -> p.source.equals("top5000") ? 1 : 0).sum() + " top5000");
+    // logDebug("📊 Optimized predictions: " + candidates.size() + " raw → " + filtered.size() + " filtered");
+    // logDebug("   Fast-path breakdown: " +
+      // filtered.stream().mapToLong(p -> p.source.equals("common") ? 1 : 0).sum() + " common, " +
+      // filtered.stream().mapToLong(p -> p.source.equals("top5000") ? 1 : 0).sum() + " top5000");
     
     return new PredictionResult(words, scores);
   }
@@ -1307,7 +1307,7 @@ public class OnnxSwipePredictor
   {
     if (!_keepSessionsInMemory || forceCleanup)
     {
-      Log.d(TAG, "Cleaning up ONNX sessions (forced: " + forceCleanup + ")");
+      // Log.d(TAG, "Cleaning up ONNX sessions (forced: " + forceCleanup + ")");
       
       try
       {
@@ -1324,7 +1324,7 @@ public class OnnxSwipePredictor
         }
         
         _isModelLoaded = false;
-        Log.d(TAG, "ONNX sessions cleaned up");
+        // Log.d(TAG, "ONNX sessions cleaned up");
       }
       catch (Exception e)
       {
@@ -1333,7 +1333,7 @@ public class OnnxSwipePredictor
     }
     else
     {
-      Log.d(TAG, "Keeping ONNX sessions in memory for performance");
+      // Log.d(TAG, "Keeping ONNX sessions in memory for performance");
     }
     
     // Clean up thread pool if forcing cleanup
@@ -1345,7 +1345,7 @@ public class OnnxSwipePredictor
         {
           _onnxExecutor.shutdown();
           _onnxExecutor = null;
-          Log.d(TAG, "ONNX thread pool cleaned up");
+          // Log.d(TAG, "ONNX thread pool cleaned up");
         }
       }
     }
@@ -1362,7 +1362,7 @@ public class OnnxSwipePredictor
       {
         _singletonInstance.cleanup(true);
         _singletonInstance = null;
-        Log.d(TAG, "Singleton instance reset");
+        // Log.d(TAG, "Singleton instance reset");
       }
     }
   }

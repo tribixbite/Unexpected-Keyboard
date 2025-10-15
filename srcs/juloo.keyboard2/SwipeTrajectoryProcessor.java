@@ -25,7 +25,7 @@ public class SwipeTrajectoryProcessor
 
   public SwipeTrajectoryProcessor()
   {
-    Log.d(TAG, "SwipeTrajectoryProcessor initialized");
+    // Log.d(TAG, "SwipeTrajectoryProcessor initialized");
   }
 
   /**
@@ -38,8 +38,8 @@ public class SwipeTrajectoryProcessor
     _keyboardWidth = width;
     _keyboardHeight = height;
 
-    Log.d(TAG, String.format("Keyboard layout set: %.0fx%.0f with %d keys",
-      width, height, keyPositions != null ? keyPositions.size() : 0));
+    // Log.d(TAG, String.format("Keyboard layout set: %.0fx%.0f with %d keys",
+      // width, height, keyPositions != null ? keyPositions.size() : 0));
   }
 
   /**
@@ -56,13 +56,13 @@ public class SwipeTrajectoryProcessor
       return new TrajectoryFeatures();
     }
 
-    Log.d(TAG, String.format("🔬 Extracting features from %d raw points", coordinates.size()));
+    // Log.d(TAG, String.format("🔬 Extracting features from %d raw points", coordinates.size()));
 
     // 1. Filter duplicate starting points (FIX #34 from cleverkeys)
     List<PointF> filteredCoords = filterDuplicateStartingPoints(coordinates);
     if (filteredCoords.size() < coordinates.size()) {
-      Log.d(TAG, String.format("🔧 Filtered %d duplicate starting points (%d → %d)",
-        coordinates.size() - filteredCoords.size(), coordinates.size(), filteredCoords.size()));
+      // Log.d(TAG, String.format("🔧 Filtered %d duplicate starting points (%d → %d)",
+        // coordinates.size() - filteredCoords.size(), coordinates.size(), filteredCoords.size()));
     }
 
     // 2. Normalize coordinates FIRST (0-1 range) - matches cleverkeys
@@ -120,12 +120,12 @@ public class SwipeTrajectoryProcessor
 
     // Verification logging (first 3 points)
     if (!points.isEmpty()) {
-      Log.d(TAG, "🔬 Feature calculation (first 3 points):");
+      // Log.d(TAG, "🔬 Feature calculation (first 3 points):");
       for (int i = 0; i < Math.min(3, points.size()); i++) {
         TrajectoryPoint p = points.get(i);
         int key = finalNearestKeys.get(i);
-        Log.d(TAG, String.format("   Point[%d]: x=%.4f, y=%.4f, vx=%.4f, vy=%.4f, ax=%.4f, ay=%.4f, nearest_key=%d",
-          i, p.x, p.y, p.vx, p.vy, p.ax, p.ay, key));
+        // Log.d(TAG, String.format("   Point[%d]: x=%.4f, y=%.4f, vx=%.4f, vy=%.4f, ax=%.4f, ay=%.4f, nearest_key=%d",
+          // i, p.x, p.y, p.vx, p.vy, p.ax, p.ay, key));
       }
     }
 
@@ -134,8 +134,8 @@ public class SwipeTrajectoryProcessor
     features.nearestKeys = finalNearestKeys;  // Now integer token indices!
     features.actualLength = Math.min(filteredCoords.size(), MAX_TRAJECTORY_POINTS);
 
-    Log.d(TAG, String.format("✅ Extracted features: %d points, %d keys (both padded to 150)",
-      points.size(), finalNearestKeys.size()));
+    // Log.d(TAG, String.format("✅ Extracted features: %d points, %d keys (both padded to 150)",
+      // points.size(), finalNearestKeys.size()));
 
     return features;
   }
