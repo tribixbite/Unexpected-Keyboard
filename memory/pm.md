@@ -1,6 +1,28 @@
 # Project Management - Unexpected Keyboard
 
-## 🔥 LATEST CRITICAL FIX (2025-10-14)
+## 🔥 LATEST UPDATES (2025-10-14)
+
+### Build System Fixed - Termux ARM64 Now Working ✅
+
+**Problem**: Build suddenly stopped working with AAPT2 errors on Termux ARM64
+- Gradle was caching x86_64 AAPT2 binary that fails on ARM64
+- Missing local.properties SDK configuration
+- Greedy search still using old reusable buffer pattern
+
+**Solution**: Complete build system configuration for Termux
+- ✅ Added `android.aapt2FromMavenOverride` in gradle.properties
+- ✅ Points to qemu-wrapped AAPT2 in tools/aapt2-arm64/
+- ✅ Created local.properties with SDK path
+- ✅ Fixed greedy search to use fresh tensors
+
+**Result**:
+- Clean build: BUILD SUCCESSFUL in 34s
+- APK size: 43MB with full ONNX integration
+- Ready for device testing
+
+**Commits**: `259d6e79` - fix(build): resolve Termux ARM64 build issues
+
+---
 
 ### ONNX Beam Search Rewrite - Main Keyboard Now Working ✅
 
