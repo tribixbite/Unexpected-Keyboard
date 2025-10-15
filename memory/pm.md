@@ -50,40 +50,36 @@ if (!mightBeSwipe) onPointerDown(value);
 **Problem**: Cannot swipe multiple words consecutively
 - Swiping 3 words in a row required manual taps between each swipe
 - Workflow: swipe → tap → swipe → tap → swipe (slow)
-- Predictions displayed but not auto-inserted on new swipe
+- Predictions displayed but not auto-inserted
 
-**Solution**: Auto-insert middle prediction on new swipe start
-- ✅ Check for existing predictions at start of handleSwipeTyping()
-- ✅ Auto-insert middle suggestion (index 2 of 5) before processing new swipe
-- ✅ Uses existing onSuggestionSelected() for proper spacing
-- ✅ Removed all debug logging for clean production code
+**Solution**: Auto-insert middle prediction AFTER each swipe completes
+- ✅ Insert immediately after predictions displayed (Keyboard2.java:780-787)
+- ✅ Auto-insert middle suggestion (index 2 of 5) right after swipe
+- ✅ Uses existing onSuggestionSelected() for proper spacing:
+  * No space if first text in field
+  * Space before if there's existing text
+  * Space after word (normal mode, not Termux mode)
 
 **Implementation**:
 ```java
-// At start of handleSwipeTyping():
-if (_suggestionBar != null && _suggestionBar.hasSuggestions())
+// After displaying predictions in handlePredictionResults():
+_suggestionBar.setSuggestionsWithScores(predictions, scores);
+
+// Auto-insert middle prediction immediately
+String middlePrediction = _suggestionBar.getMiddleSuggestion();
+if (middlePrediction != null && !middlePrediction.isEmpty())
 {
-  String middlePrediction = _suggestionBar.getMiddleSuggestion();
-  if (middlePrediction != null && !middlePrediction.isEmpty())
-  {
-    onSuggestionSelected(middlePrediction);  // Auto-insert with spacing
-  }
+  onSuggestionSelected(middlePrediction);  // Handles spacing logic
 }
 ```
 
 **Impact**:
-- **Rapid consecutive swiping** - swipe 3+ words without manual taps
+- **Rapid consecutive swiping** - each swipe immediately inserts its prediction
+- **Proper spacing** - automatic detection of field start vs continuation
 - **Better UX** for multi-word input workflow
-- **Clean code** with debug logging removed
 
-**Build Fix**: Orphaned string expressions from debug log cleanup
-- Fixed 6 compilation errors from sed cleanup
-- Commit: `2fef54c4`
-
-**Version**: 1.32.17 (66) ✅ BUILD SUCCESSFUL
-**Commits**:
-- `ff94c4be` - feat(swipe): auto-insert middle prediction on consecutive swipes
-- `2fef54c4` - fix(build): remove orphaned string expressions
+**Version**: 1.32.19 (68) ✅ BUILD SUCCESSFUL
+**Commit**: `f62ab7a0` - refactor(swipe): insert prediction after swipe completes
 
 ---
 
