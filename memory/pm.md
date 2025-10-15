@@ -2,6 +2,49 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Critical Gesture Detection Fix - No More Tap/Hold During Swipes 🎯
+
+**Problem**: Short swipes and key holds registering DURING swipe gestures
+- User swipes a word, but short taps/holds fire mid-swipe
+- Caused unwanted character output while swiping
+- Long press timer started immediately on touch down
+- Timer could fire before swipe detection if movement < threshold
+
+**Root Cause** (Pointers.java):
+- Long press timer started at line 239 before checking mightBeSwipe (line 245)
+- Character output delayed correctly, but timer was not
+- If user moved slowly or distance < swipe_dist_px, timer fired before swipe detected
+
+**Solution**: Delay BOTH character output AND long press timer
+- ✅ Check mightBeSwipe BEFORE starting timer (Pointers.java:239-247)
+- ✅ Only start timer if NOT potential swipe
+- ✅ Output delayed character on touch up if it wasn't a swipe (Pointers.java:166-173)
+
+**Code Changes**:
+```java
+// BEFORE: Timer started before mightBeSwipe check
+startLongPress(ptr);
+boolean mightBeSwipe = ...;
+if (!mightBeSwipe) onPointerDown(value);
+
+// AFTER: Timer delayed for potential swipes
+boolean mightBeSwipe = ...;
+if (!mightBeSwipe && !isSwipeTyping()) startLongPress(ptr);
+if (!mightBeSwipe) onPointerDown(value);
+```
+
+**Impact**:
+- **Clean swipe gestures** without accidental taps/holds
+- **No interruptions** during swipe input
+- **Proper tap handling** for non-swipe touches
+
+**Version**: 1.32.18 (67) ✅ BUILD SUCCESSFUL
+**Commit**: `48232ac4` - fix(gestures): prevent tap/hold events during swipe gestures
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### Consecutive Swipe Auto-Insertion - Rapid Multi-Word Input 🚀
 
 **Problem**: Cannot swipe multiple words consecutively
