@@ -860,17 +860,30 @@ public class Keyboard2 extends InputMethodService
           ic.deleteSurroundingText(1, 0);
         }
       }
-      
+
+      // CRITICAL FIX: Add space before word if previous character isn't whitespace
+      // This prevents "helloworld" when user swipes "hello" then swipes "world"
+      boolean needsSpaceBefore = false;
+      CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+      if (textBefore != null && textBefore.length() > 0)
+      {
+        char prevChar = textBefore.charAt(0);
+        // Add space if previous char is not whitespace and not punctuation start
+        needsSpaceBefore = !Character.isWhitespace(prevChar) && prevChar != '(' && prevChar != '[' && prevChar != '{';
+      }
+
       // Commit the selected word - use Termux mode if enabled
       if (_config.termux_mode_enabled)
       {
         // Termux mode: Insert word without automatic space for better terminal compatibility
-        ic.commitText(word, 1);
+        String textToInsert = needsSpaceBefore ? " " + word : word;
+        ic.commitText(textToInsert, 1);
       }
       else
       {
-        // Normal mode: Insert word with space
-        ic.commitText(word + " ", 1);
+        // Normal mode: Insert word with space after (and before if needed)
+        String textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
+        ic.commitText(textToInsert, 1);
       }
       
       // Update context with the selected word
