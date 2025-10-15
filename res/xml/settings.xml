@@ -32,6 +32,7 @@
     </PreferenceScreen>
     <PreferenceScreen android:key="export_swipe_ml_data" android:title="@string/pref_export_swipe_ml_data_title" android:summary="@string/pref_export_swipe_ml_data_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="train_swipe_ml_model" android:title="@string/pref_train_swipe_ml_title" android:summary="@string/pref_train_swipe_ml_summary" android:dependency="swipe_typing_enabled"/>
+    <PreferenceScreen android:key="swipe_debug" android:title="🐛 Swipe Debug Log" android:summary="Real-time swipe typing pipeline analysis and debugging" android:dependency="swipe_typing_enabled"/>
     <CheckBoxPreference android:key="short_gestures_enabled" android:title="@string/pref_short_gestures_enabled_title" android:summary="@string/pref_short_gestures_enabled_summary" android:defaultValue="true"/>
     <juloo.keyboard2.prefs.IntSlideBarPreference android:key="short_gesture_min_distance" android:title="@string/pref_short_gesture_distance_title" android:summary="@string/pref_short_gesture_distance_summary" android:defaultValue="30" min="10" max="95" android:dependency="short_gestures_enabled"/>
     <ListPreference android:key="circle_sensitivity" android:title="@string/pref_circle_sensitivity_title" android:summary="%s" android:defaultValue="2" android:entries="@array/pref_circle_sensitivity_entries" android:entryValues="@array/pref_circle_sensitivity_values"/>

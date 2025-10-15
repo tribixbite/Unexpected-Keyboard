@@ -816,16 +816,27 @@ public class Keyboard2 extends InputMethodService
    */
   private void handlePredictionResults(List<String> predictions, List<Integer> scores)
   {
-    
+    // DEBUG: Log predictions received
+    sendDebugLog(String.format("Predictions received: %d\n", predictions != null ? predictions.size() : 0));
+    if (predictions != null && !predictions.isEmpty())
+    {
+      for (int i = 0; i < Math.min(5, predictions.size()); i++)
+      {
+        int score = (scores != null && i < scores.size()) ? scores.get(i) : 0;
+        sendDebugLog(String.format("  [%d] \"%s\" (score: %d)\n", i+1, predictions.get(i), score));
+      }
+    }
+
     if (predictions.isEmpty())
     {
+      sendDebugLog("No predictions - clearing suggestions\n");
       if (_suggestionBar != null)
       {
         _suggestionBar.clearSuggestions();
       }
       return;
     }
-    
+
     // Log predictions for debugging
     for (int i = 0; i < Math.min(5, predictions.size()); i++)
     {
@@ -845,14 +856,20 @@ public class Keyboard2 extends InputMethodService
         // Track this as auto-inserted so tapping another suggestion will replace it
         _lastAutoInsertedWord = middlePrediction;
 
+        // DEBUG: Log auto-insertion
+        sendDebugLog(String.format("Auto-inserting: \"%s\"\n", middlePrediction));
+
         // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
         onSuggestionSelected(middlePrediction);
 
         // CRITICAL: Re-display suggestions after auto-insertion
         // User can still tap a different prediction if the auto-inserted one was wrong
         _suggestionBar.setSuggestionsWithScores(predictions, scores);
+
+        sendDebugLog("Suggestions re-displayed for correction\n");
       }
     }
+    sendDebugLog("========== SWIPE COMPLETE ==========\n\n");
   }
   
   @Override
@@ -1165,6 +1182,12 @@ public class Keyboard2 extends InputMethodService
     // Clear auto-inserted word tracking when new swipe starts
     _lastAutoInsertedWord = null;
 
+    // DEBUG: Log swipe start
+    sendDebugLog("\n========== NEW SWIPE ==========\n");
+    sendDebugLog(String.format("Path points: %d, Keys detected: %d\n",
+        swipePath != null ? swipePath.size() : 0,
+        swipedKeys != null ? swipedKeys.size() : 0));
+
     // COORDINATE DEBUGGING: Log detailed coordinate information
     if (swipePath.size() > 0) {
       android.graphics.PointF first = swipePath.get(0);
@@ -1255,8 +1278,10 @@ public class Keyboard2 extends InputMethodService
         }
       }
     }
-    
-    
+
+    // DEBUG: Log detected key sequence
+    sendDebugLog(String.format("Key sequence: \"%s\"\n", keySequence.toString()));
+
     // Log to file for analysis
     if (_logWriter != null)
     {

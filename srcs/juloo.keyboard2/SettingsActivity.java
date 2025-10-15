@@ -101,7 +101,23 @@ public class SettingsActivity extends PreferenceActivity
         }
       });
     }
-    
+
+    // Set up debug preference click handler
+    Preference debugPref = findPreference("swipe_debug");
+    if (debugPref != null)
+    {
+      debugPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          Intent intent = new Intent(SettingsActivity.this, SwipeDebugActivity.class);
+          startActivity(intent);
+          return true;
+        }
+      });
+    }
+
     // Set up ML data export preference (PreferenceScreen type)
     Preference exportMLDataPref = findPreference("export_swipe_ml_data");
     if (exportMLDataPref != null)

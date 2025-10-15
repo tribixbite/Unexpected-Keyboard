@@ -25,6 +25,8 @@
     </activity>
 
     <activity android:name="juloo.keyboard2.SwipeCalibrationActivity" android:label="@string/pref_swipe_calibration_title" android:theme="@style/settingsTheme" android:exported="false" android:directBootAware="true"/>
+
+    <activity android:name="juloo.keyboard2.SwipeDebugActivity" android:label="Swipe Debug" android:theme="@style/settingsTheme" android:exported="false" android:directBootAware="true"/>
   </application>
 
   <!-- To query enabled input methods for voice IME detection -->
