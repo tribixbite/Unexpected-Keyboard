@@ -2,6 +2,48 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Single-Lookup Vocabulary Optimization - 66% Fewer Hash Ops ⚡
+
+**Problem**: Multiple hash lookups per word in hot path
+- 3 separate data structures (wordFrequencies, commonWords, top5000)
+- 3 hash operations per word prediction
+- Unnecessary memory overhead from duplicate structures
+
+**Solution**: Unified vocabulary with embedded tier
+- ✅ Single HashMap with WordInfo{frequency, tier}
+- ✅ Reduced from 3 lookups → 1 lookup (66% reduction)
+- ✅ Better cache locality with single structure
+- ✅ Lower memory usage (no duplicate string references)
+
+**Before vs After**:
+```java
+// BEFORE: 3 lookups per word
+Float freq = wordFrequencies.get(word);        // Lookup #1
+if (commonWords.contains(word))                // Lookup #2
+else if (top5000.contains(word))               // Lookup #3
+
+// AFTER: 1 lookup per word
+WordInfo info = vocabulary.get(word);          // Single lookup!
+switch (info.tier) {  // tier: 0=regular, 1=top5000, 2=common
+  case 2: boost = COMMON_BOOST; break;
+  case 1: boost = TOP5000_BOOST; break;
+  ...
+}
+```
+
+**Impact**:
+- **66% fewer hash operations** in prediction hot path
+- **Lower memory** from unified structure
+- **Better cache performance** (single HashMap)
+- **Cleaner code** with embedded tier logic
+
+**Version**: 1.32.14 (63)
+**Commit**: `c15f5430` - perf(vocab): single-lookup optimization - 3 hash ops → 1
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### Critical UX Fix: Auto-Insert Space Before Predictions 🔧
 
 **Problem**: Predictions appending without spaces
