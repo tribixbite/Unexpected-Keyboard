@@ -24,9 +24,9 @@ public class OptimizedVocabulary
   
   // Fast-path vocabulary sets for performance
   private Set<String> commonWords;           // ~100 most frequent words
-  private Set<String> top5000;               // Top 5000 words for quick filtering  
+  private Set<String> top5000;               // Top 5000 words for quick filtering
   private Map<String, Float> wordFrequencies; // Full vocabulary with frequencies
-  private Map<Integer, List<String>> wordsByLength; // Length-based lookup
+  // REMOVED: wordsByLength - never used in predictions (dead code elimination)
   
   // Scoring parameters (from web app)
   private static final float CONFIDENCE_WEIGHT = 0.6f;
@@ -47,8 +47,8 @@ public class OptimizedVocabulary
     this.commonWords = new HashSet<>();
     this.top5000 = new HashSet<>();
     this.wordFrequencies = new HashMap<>();
-    this.wordsByLength = new HashMap<>();
     this.minFrequencyByLength = new HashMap<>();
+    // REMOVED: wordsByLength initialization - dead code
   }
   
   /**
@@ -60,23 +60,20 @@ public class OptimizedVocabulary
     try
     {
       // Log.d(TAG, "Loading optimized vocabulary from assets...");
-      
-      // Load full vocabulary with frequencies from dictionary
+
+      // OPTIMIZATION: Load vocabulary with fast-path sets built during loading
       loadWordFrequencies();
-      
-      // Create fast-path sets for performance
-      createFastPathSets();
-      
+
       // Initialize minimum frequency thresholds by word length
       initializeFrequencyThresholds();
-      
-      // Create length-based word lookup
-      createLengthBasedLookup();
-      
+
+      // REMOVED: createFastPathSets() - now built during loading (O(n) instead of O(n log n))
+      // REMOVED: createLengthBasedLookup() - never used in predictions (dead code)
+
       isLoaded = true;
       // Log.d(TAG, String.format("Vocabulary loaded: %d total words, %d common, %d top5000",
         // wordFrequencies.size(), commonWords.size(), top5000.size()));
-      
+
       return true;
     }
     catch (Exception e)
@@ -103,48 +100,50 @@ public class OptimizedVocabulary
     for (CandidateWord candidate : rawPredictions)
     {
       String word = candidate.word.toLowerCase().trim();
-      
+
       // Skip invalid word formats
       if (!word.matches("^[a-z]+$"))
       {
         continue;
       }
-      
-      // OPTIMIZATION: Fast path for common words (biggest speedup)
+
+      // OPTIMIZATION: Single hash lookup instead of 2-3 lookups
+      Float freq = wordFrequencies.get(word);
+      if (freq == null)
+      {
+        continue; // Word not in vocabulary
+      }
+
+      // OPTIMIZATION: Determine boost tier and apply scoring
+      float boost;
+      String source;
+
       if (commonWords.contains(word))
       {
-        Float freq = wordFrequencies.get(word);
-        if (freq != null)
-        {
-          float score = calculateCombinedScore(candidate.confidence, freq, COMMON_WORDS_BOOST);
-          validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, freq, "common"));
-          continue;
-        }
+        // Fast path for common words (biggest speedup)
+        boost = COMMON_WORDS_BOOST;
+        source = "common";
       }
-      
-      // Check top 5000 words (second fast path)
-      if (top5000.contains(word))
+      else if (top5000.contains(word))
       {
-        Float freq = wordFrequencies.get(word);
-        if (freq != null)
-        {
-          float score = calculateCombinedScore(candidate.confidence, freq, TOP5000_BOOST);
-          validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, freq, "top5000"));
-          continue;
-        }
+        // Second fast path for top 5000
+        boost = TOP5000_BOOST;
+        source = "top5000";
       }
-      
-      // Check full vocabulary with frequency threshold
-      Float freq = wordFrequencies.get(word);
-      if (freq != null)
+      else
       {
+        // Full vocabulary with frequency threshold
         float minFreq = getMinFrequency(word.length());
-        if (freq >= minFreq)
+        if (freq < minFreq)
         {
-          float score = calculateCombinedScore(candidate.confidence, freq, RARE_WORDS_PENALTY);
-          validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, freq, "vocabulary"));
+          continue; // Below threshold
         }
+        boost = RARE_WORDS_PENALTY;
+        source = "vocabulary";
       }
+
+      float score = calculateCombinedScore(candidate.confidence, freq, boost);
+      validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, freq, source));
     }
     
     // Sort by combined score (confidence + frequency)
@@ -175,15 +174,16 @@ public class OptimizedVocabulary
   
   /**
    * Load word frequencies from dictionary files
+   * OPTIMIZATION: Dictionary is pre-sorted, no need to sort again
    */
   private void loadWordFrequencies()
   {
     try
     {
-      // Load English dictionary (most comprehensive)
+      // Load English dictionary (already sorted by frequency)
       InputStream inputStream = context.getAssets().open("dictionaries/en.txt");
       BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-      
+
       String line;
       int wordCount = 0;
       while ((line = reader.readLine()) != null)
@@ -191,11 +191,20 @@ public class OptimizedVocabulary
         line = line.trim().toLowerCase();
         if (!line.isEmpty() && line.matches("^[a-z]+$"))
         {
-          // Assign frequency based on position (higher = more frequent)
+          // OPTIMIZATION: Assign frequency based on position (file is pre-sorted)
           float frequency = 1.0f / (wordCount + 1.0f);
           wordFrequencies.put(line, frequency);
+
+          // OPTIMIZATION: Build fast-path sets during loading (no sorting needed!)
+          if (wordCount < 100) {
+            commonWords.add(line);
+          }
+          if (wordCount < 5000) {
+            top5000.add(line);
+          }
+
           wordCount++;
-          
+
           // Limit to prevent memory issues (150k words max)
           if (wordCount >= 150000)
           {
@@ -203,7 +212,7 @@ public class OptimizedVocabulary
           }
         }
       }
-      
+
       reader.close();
       // Log.d(TAG, "Loaded " + wordCount + " words with frequencies");
     }
@@ -213,28 +222,10 @@ public class OptimizedVocabulary
       throw new RuntimeException("Could not load vocabulary", e);
     }
   }
-  
+
   /**
-   * Create fast-path sets for common words and top 5000
+   * REMOVED: createFastPathSets() - now built during loading (no sort needed)
    */
-  private void createFastPathSets()
-  {
-    // Sort words by frequency (highest first)
-    List<Map.Entry<String, Float>> sortedWords = new ArrayList<>(wordFrequencies.entrySet());
-    sortedWords.sort((a, b) -> Float.compare(b.getValue(), a.getValue()));
-    
-    // Common words: top 100 most frequent
-    for (int i = 0; i < Math.min(100, sortedWords.size()); i++)
-    {
-      commonWords.add(sortedWords.get(i).getKey());
-    }
-    
-    // Top 5000: for quick filtering
-    for (int i = 0; i < Math.min(5000, sortedWords.size()); i++)
-    {
-      top5000.add(sortedWords.get(i).getKey());
-    }
-  }
   
   /**
    * Initialize minimum frequency thresholds by word length
@@ -256,28 +247,12 @@ public class OptimizedVocabulary
       minFrequencyByLength.put(i, 1e-9f);
     }
   }
-  
+
   /**
-   * Create length-based word lookup for similarity matching
+   * REMOVED: createLengthBasedLookup() - dead code (never used in predictions)
+   * Saved O(n) iteration + O(n log n) sorting overhead on startup
    */
-  private void createLengthBasedLookup()
-  {
-    for (String word : wordFrequencies.keySet())
-    {
-      int length = word.length();
-      wordsByLength.computeIfAbsent(length, k -> new ArrayList<>()).add(word);
-    }
-    
-    // Sort each length group by frequency (most frequent first)
-    for (List<String> wordsOfLength : wordsByLength.values())
-    {
-      wordsOfLength.sort((a, b) -> Float.compare(
-        wordFrequencies.getOrDefault(b, 0.0f), 
-        wordFrequencies.getOrDefault(a, 0.0f)
-      ));
-    }
-  }
-  
+
   /**
    * Get minimum frequency threshold for word length
    */
