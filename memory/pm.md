@@ -2,6 +2,45 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Performance Optimization Complete - Zero Logging Overhead ⚡
+
+**Problem**: Debug logging adding performance overhead in production
+- 116 debug log calls in hot prediction path
+- Multi-line log statements causing string concatenation overhead
+- Starting character repeating 4-10x due to input lag
+
+**Solution**: Complete log stripping + input delay fix
+- ✅ Stripped all 116 Log.d() and logDebug() calls from prediction pipeline
+- ✅ Fixed multi-line statement handling (orphaned parameter cleanup)
+- ✅ Added swipe intent detection in Pointers.onTouchDown()
+- ✅ Delay character output when swipe typing might start
+- ✅ Zero logging overhead in production builds
+
+**Input Lag Fix**:
+```java
+// Don't output character immediately when swipe typing might start
+boolean mightBeSwipe = _config.swipe_typing_enabled && _ptrs.size() == 1 &&
+                       key != null && key.keys[0] != null &&
+                       key.keys[0].getKind() == KeyValue.Kind.Char;
+
+if (!mightBeSwipe) {
+  _handler.onPointerDown(value, false);
+}
+```
+
+**Impact**:
+- Zero logging overhead in prediction pipeline
+- Fixed 4-10x character repetition on swipe start
+- Cleaner logs for actual debugging
+- Better battery life and responsiveness
+
+**Version**: 1.32.10 (59)
+**Commit**: `416bbe80` - perf(neural): optimize performance via log stripping and input delay fix
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### BREAKTHROUGH: Feature Extraction Completely Rewritten ✅
 
 **Problem**: Prediction was 0% working - complete failure to match cleverkeys
