@@ -2,6 +2,61 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Swipe Pipeline Debug Activity 🐛
+
+**New Feature**: Comprehensive real-time debugging for swipe typing pipeline
+
+**Created Components**:
+1. **SwipeDebugActivity.java** - Debug activity with live logging
+   - EditText field that triggers actual keyboard for realistic testing
+   - ScrollView with auto-scrolling monospace log output
+   - Copy and Clear buttons for log management
+   - Dark mode UI (#1e1e1e background, green monospace text)
+   - Broadcast receiver for debug logs from keyboard service
+
+2. **Debug Infrastructure** (Keyboard2.java):
+   - `_debugMode` flag - only active when debug activity open
+   - `_debugModeReceiver` - listens for debug state broadcasts
+   - `sendDebugLog()` - conditional logging method
+   - Comprehensive pipeline logging:
+     - Swipe start/end markers
+     - Path points and keys detected
+     - Key sequence extracted
+     - Predictions with scores
+     - Auto-insertion events
+
+3. **Layout** (swipe_debug_activity.xml):
+   - LinearLayout with vertical orientation
+   - Top bar: Title + Copy + Clear buttons
+   - EditText: Single-line input for keyboard testing
+   - ScrollView: Takes remaining vertical space (100% - kb height)
+   - TextView: Monospace log output with selectable text
+
+4. **Settings Integration**:
+   - Added "🐛 Swipe Debug Log" button in Typing category
+   - Appears after ML training options
+   - Only visible when swipe typing enabled
+   - Launches SwipeDebugActivity on click
+
+**Debug Logging Coverage**:
+- Swipe initiation and path tracking
+- Key detection and sequence building
+- Prediction results with confidence scores
+- Auto-insertion decisions
+- Suggestion display events
+
+**Key Benefits**:
+- ✅ Real-time pipeline visibility for debugging
+- ✅ No logs generated outside debug activity
+- ✅ Copy logs for sharing/analysis
+- ✅ Realistic testing with actual keyboard input
+- ✅ Professional dark mode UI
+
+**Version**: 1.32.33 (82) ✅ BUILD SUCCESSFUL
+**Commit**: `77e6d7e2` - feat(debug): add comprehensive swipe pipeline debug activity
+
+---
+
 ### Settings UI Integration for Short Gestures 🎨
 
 **UI Changes**:
