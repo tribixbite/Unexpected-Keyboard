@@ -2,6 +2,27 @@
 
 ## 🔥 LATEST UPDATES (2025-10-14)
 
+### Build Script Enhanced - Auto-Version & ADB ✅
+
+**New Features:**
+- ✅ **Auto-version increment** - versionCode and versionName bumped automatically
+- ✅ **Smart ADB handling** - Attempts wireless connection if not connected
+- ✅ **Uninstall old version** - Removes previous debug build before install
+- ✅ **Better UX** - Clear status messages with progress indicators
+
+**Workflow:**
+```bash
+./build-on-termux.sh  # Builds, increments version, installs via ADB
+```
+
+**Example:**
+- Before: versionCode 50, versionName 1.32.1
+- After: versionCode 51, versionName 1.32.2 (auto-incremented)
+
+**Commits**: `f8649731` - feat(build): enhance build script with auto-version and ADB
+
+---
+
 ### Build System Fixed - Termux ARM64 Now Working ✅
 
 **Problem**: Build suddenly stopped working with AAPT2 errors on Termux ARM64
