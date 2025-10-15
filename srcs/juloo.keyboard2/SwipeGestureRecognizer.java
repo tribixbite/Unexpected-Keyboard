@@ -89,14 +89,17 @@ public class SwipeGestureRecognizer
     
     // Check if this should be considered swipe typing or medium swipe
     // Require minimum time to avoid false triggers on quick taps/swipes
-    if (!_isSwipeTyping && !_isMediumSwipe && timeSinceStart > 150)
+    // CRITICAL FIX: Allow medium swipe to upgrade to full swipe typing
+    if (!_isSwipeTyping && timeSinceStart > 150)
     {
       if (_totalDistance > MIN_SWIPE_DISTANCE)
       {
+        // Promote from medium swipe to full swipe typing if distance threshold crossed
         _isSwipeTyping = shouldConsiderSwipeTyping();
+        _isMediumSwipe = false; // Clear medium swipe flag
         // android.util.Log.d("SwipeGesture", "Swipe typing check: " + _isSwipeTyping);
       }
-      else if (_totalDistance > MIN_MEDIUM_SWIPE_DISTANCE && timeSinceStart > 200)
+      else if (!_isMediumSwipe && _totalDistance > MIN_MEDIUM_SWIPE_DISTANCE && timeSinceStart > 200)
       {
         // Medium swipe needs slightly more time to avoid conflicts with directional swipes
         _isMediumSwipe = shouldConsiderMediumSwipe();

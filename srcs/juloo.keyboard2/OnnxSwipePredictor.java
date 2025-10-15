@@ -41,8 +41,8 @@ public class OnnxSwipePredictor
   // Beam search parameters - standard defaults that respect playground settings
   // MOBILE-OPTIMIZED: Lower defaults for better performance on mobile devices
   // beam_width=8 * max_length=35 = 280 decoder inferences per swipe (too slow!)
-  // beam_width=3 * max_length=20 = 60 decoder inferences per swipe (much faster)
-  private static final int DEFAULT_BEAM_WIDTH = 3; // Mobile-optimized: 3 beams (was 8)
+  // beam_width=2 * max_length=20 = 40 decoder inferences per swipe (faster)
+  private static final int DEFAULT_BEAM_WIDTH = 2; // Mobile-optimized: 2 beams (was 8)
   private static final int DEFAULT_MAX_LENGTH = 20; // Mobile-optimized: max 20 chars (was 35)  
   private static final float DEFAULT_CONFIDENCE_THRESHOLD = 0.1f;
   
