@@ -710,25 +710,7 @@ public class OnnxSwipePredictor
     return result;
   }
   
-  /**
-   * OPTIMIZATION: Update reusable tensors with new beam data
-   * Reuses pre-allocated buffers instead of creating new tensors
-   */
-  private void updateReusableTokens(BeamSearchState beam, int decoderSeqLength)
-  {
-    // Clear and update tokens array
-    Arrays.fill(_reusableTokensArray, PAD_IDX);
-    for (int i = 0; i < Math.min(beam.tokens.size(), decoderSeqLength); i++)
-    {
-      _reusableTokensArray[i] = beam.tokens.get(i);
-    }
-    
-    // Update target mask - true for PADDED positions, false for real tokens
-    for (int i = 0; i < decoderSeqLength; i++)
-    {
-      _reusableTargetMaskArray[0][i] = (i >= beam.tokens.size());
-    }
-  }
+  // NOTE: Removed updateReusableTokens - now creating fresh tensors like CLI test
   
   /**
    * Set configuration parameters
@@ -907,7 +889,7 @@ public class OnnxSwipePredictor
     return OnnxTensor.createTensor(_ortEnvironment, maskData);
   }
   
-  private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult, 
+  private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult,
     OnnxTensor srcMaskTensor, SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
   {
     if (_decoderSession == null)
@@ -915,13 +897,13 @@ public class OnnxSwipePredictor
       Log.e(TAG, "Decoder not loaded, cannot decode");
       return new ArrayList<>();
     }
-    
-    // Beam search parameters matching web demo
+
+    // Beam search parameters matching CLI test exactly
     int beamWidth = _beamWidth;
     int maxLength = _maxLength;
-    int decoderSeqLength = 20; // Fixed decoder sequence length
+    final int DECODER_SEQ_LENGTH = 20; // Fixed decoder sequence length like CLI
     int vocabSize = _tokenizer.getVocabSize();
-    
+
     // Get memory from encoder output using proper ONNX API
     OnnxTensor memory = null;
     try {
@@ -931,39 +913,35 @@ public class OnnxSwipePredictor
       Log.e(TAG, "Failed to get encoder output", e);
       return new ArrayList<>();
     }
-    
+
     if (memory == null)
     {
       Log.e(TAG, "No memory tensor from encoder");
       return new ArrayList<>();
     }
-    
+
     Log.d(TAG, String.format("Decoder memory shape: %s", java.util.Arrays.toString(memory.getInfo().getShape())));
-    
-    // Initialize beams with SOS token
+
+    // Initialize beams with SOS token - matching CLI test (line 158)
     List<BeamSearchState> beams = new ArrayList<>();
     beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
     logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
-    
+
     // PERFORMANCE DEBUG: Log beam search parameters
     Log.w(TAG, "🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
     logDebug("🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
-    
+
     // Performance tracking
     long beamSearchStart = System.nanoTime();
     long totalInferenceTime = 0;
     long totalTensorTime = 0;
-    
-    // Always use proper beam search - greedy search disabled
-    
-    // Beam search loop
+
+    // Beam search loop - matching CLI test structure
     for (int step = 0; step < maxLength; step++)
     {
-      
       List<BeamSearchState> candidates = new ArrayList<>();
       logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
-      logDebug("⚠️  PERFORMANCE WARNING: Using sequential processing - each beam requires separate inference call");
-      
+
       for (BeamSearchState beam : beams)
       {
         if (beam.finished)
@@ -971,114 +949,123 @@ public class OnnxSwipePredictor
           candidates.add(beam);
           continue;
         }
-        
+
         try
         {
-          long stepStart = System.nanoTime();
           logDebug("   🔍 Starting decoder step for beam with " + beam.tokens.size() + " tokens");
-          
-          // OPTIMIZATION: Use pre-allocated reusable tensors instead of creating new ones
-          long updateStart = System.nanoTime();
-          updateReusableTokens(beam, decoderSeqLength);
-          long updateTime = (System.nanoTime() - updateStart) / 1_000_000;
-          
-          // Create tensors using reusable buffers (MUCH faster than creating new ones)
+
+          // CRITICAL: Pad sequence to DECODER_SEQ_LENGTH (matches CLI line 165)
+          long[] tgtTokens = new long[DECODER_SEQ_LENGTH];
+          Arrays.fill(tgtTokens, PAD_IDX);
+          for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LENGTH); i++)
+          {
+            tgtTokens[i] = beam.tokens.get(i);
+          }
+
+          // Create target mask (false = valid, true = padded) - matches CLI line 173
+          boolean[][] tgtMask = new boolean[1][DECODER_SEQ_LENGTH];
+          for (int i = 0; i < DECODER_SEQ_LENGTH; i++)
+          {
+            tgtMask[0][i] = (i >= beam.tokens.size()); // Mark padded positions
+          }
+
+          // Create src_mask (all zeros = all valid) - matches CLI line 179
+          boolean[][] srcMask = new boolean[1][MAX_SEQUENCE_LENGTH];
+          Arrays.fill(srcMask[0], false); // All valid
+
+          // Create tensors - matching CLI lines 180-181
           long tensorStart = System.nanoTime();
-          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
-            java.nio.LongBuffer.wrap(_reusableTokensArray), new long[]{1, decoderSeqLength});
-          OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, _reusableTargetMaskArray);
+          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
+            java.nio.LongBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LENGTH});
+          OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, tgtMask);
+          OnnxTensor srcMaskTensorLocal = OnnxTensor.createTensor(_ortEnvironment, srcMask);
           long tensorTime = (System.nanoTime() - tensorStart) / 1_000_000;
           totalTensorTime += tensorTime;
-          
-          logDebug("   ⏱️ Timing - Update: " + updateTime + "ms, Tensor: " + tensorTime + "ms");
-          // Reuse the original srcMaskTensor from encoder (don't create new one)
-          
+
+          logDebug("   ⏱️ Tensor creation: " + tensorTime + "ms");
+
           // Log decoder tensor shapes
           logDebug("🔧 Decoder input tensor shapes:");
           logDebug("   memory: " + java.util.Arrays.toString(memory.getInfo().getShape()));
           logDebug("   target_tokens: " + java.util.Arrays.toString(targetTokensTensor.getInfo().getShape()));
           logDebug("   target_mask: " + java.util.Arrays.toString(targetMaskTensor.getInfo().getShape()) + " (BOOL)");
-          logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL - reused)");
-          
-          // Run decoder
+          logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensorLocal.getInfo().getShape()) + " (BOOL)");
+
+          // Run decoder - matches CLI lines 184-189
           long inferenceStart = System.nanoTime();
           Map<String, OnnxTensor> decoderInputs = new HashMap<>();
           decoderInputs.put("memory", memory);
           decoderInputs.put("target_tokens", targetTokensTensor);
           decoderInputs.put("target_mask", targetMaskTensor);
-          decoderInputs.put("src_mask", srcMaskTensor);
-          
+          decoderInputs.put("src_mask", srcMaskTensorLocal);
+
           OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
           long inferenceTime = (System.nanoTime() - inferenceStart) / 1_000_000;
           totalInferenceTime += inferenceTime;
           logDebug("   ⏱️ Inference: " + inferenceTime + "ms");
-          OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0); // Get first output
-          
-          // Handle 3D logits tensor [1, seq_len, vocab_size]
-          long[] logitsShape = logitsTensor.getInfo().getShape(); 
-          logDebug("   Logits shape: " + java.util.Arrays.toString(logitsShape));
-          
-          // Get logits tensor data - debug the actual type first
+          OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
+
+          // Handle 3D logits tensor [1, seq_len, vocab_size] - matches CLI line 192
           Object logitsValue = logitsTensor.getValue();
-          logDebug("   Logits value type: " + logitsValue.getClass().getName());
-          
-          // Extract logits for the position after last real token
-          int tokenPosition = Math.min(beam.tokens.size() - 1, decoderSeqLength - 1);
-          float[] relevantLogits = new float[vocabSize];
-          
-          // Java ONNX: tensor with shape [1, 20, 30] returns float[][][] (not flat array like JS)
-          // Log type shows [[[F which confirms it's float[][][]
           float[][][] logits3D = (float[][][]) logitsValue;
-          logDebug("   Logits 3D dimensions: [" + logits3D.length + "][" + logits3D[0].length + "][" + 
+          logDebug("   Logits 3D dimensions: [" + logits3D.length + "][" + logits3D[0].length + "][" +
             (logits3D[0].length > 0 ? logits3D[0][0].length : "N/A") + "]");
-          
-          // Extract logits for batch=0, position=tokenPosition (direct access, no flattening)
-          if (tokenPosition >= 0 && tokenPosition < logits3D[0].length) {
-            float[] positionLogits = logits3D[0][tokenPosition];
-            logDebug("   Accessing position " + tokenPosition + ", vocab length: " + positionLogits.length);
-            
-            if (positionLogits.length >= vocabSize) {
-              System.arraycopy(positionLogits, 0, relevantLogits, 0, vocabSize);
-              logDebug("   ✅ Extracted 3D logits successfully");
-            } else {
-              throw new RuntimeException("Vocab size mismatch: expected " + vocabSize + 
-                ", got " + positionLogits.length);
-            }
-          } else {
-            throw new RuntimeException("Token position " + tokenPosition + 
-              " out of bounds [0, " + logits3D[0].length + "]");
-          }
-          
-          // Apply softmax
-          float[] probs = softmax(relevantLogits);
-          
-          // Get top k tokens
-          int[] topK = getTopKIndices(probs, beamWidth);
-          logDebug("   Top " + beamWidth + " tokens: " + java.util.Arrays.toString(topK));
-          
-          // Show token details
-          StringBuilder tokenDetails = new StringBuilder("   Token details: ");
-          for (int i = 0; i < Math.min(5, topK.length); i++) {
-            int tokenIdx = topK[i];
-            char ch = _tokenizer.indexToChar(tokenIdx);
-            tokenDetails.append(tokenIdx).append("='").append(ch).append("' ");
-          }
-          logDebug(tokenDetails.toString());
-          
-          for (int idx : topK)
+
+          // Get logits for last valid position - matches CLI line 200
+          int currentPos = beam.tokens.size() - 1;
+          if (currentPos >= 0 && currentPos < DECODER_SEQ_LENGTH)
           {
-            BeamSearchState newBeam = new BeamSearchState(beam);
-            newBeam.tokens.add((long)idx);
-            newBeam.score += Math.log(probs[idx]);
-            newBeam.finished = (idx == EOS_IDX);
-            candidates.add(newBeam);
+            float[] vocabLogits = logits3D[0][currentPos];
+            logDebug("   Accessing position " + currentPos + ", vocab length: " + vocabLogits.length);
+
+            // Apply softmax - matches CLI lines 204-215
+            float[] probs = new float[vocabSize];
+            float maxLogit = vocabLogits[0];
+            for (int i = 1; i < Math.min(vocabLogits.length, vocabSize); i++) {
+              if (vocabLogits[i] > maxLogit) maxLogit = vocabLogits[i];
+            }
+
+            float sumExp = 0.0f;
+            for (int i = 0; i < vocabSize; i++) {
+              float exp = (float)Math.exp(vocabLogits[i] - maxLogit);
+              probs[i] = exp;
+              sumExp += exp;
+            }
+            for (int i = 0; i < vocabSize; i++) {
+              probs[i] = probs[i] / sumExp;
+            }
+
+            // Get top k tokens - matches CLI lines 218-221
+            int[] topK = getTopKIndices(probs, beamWidth);
+            logDebug("   Top " + beamWidth + " tokens: " + java.util.Arrays.toString(topK));
+
+            // Show token details
+            StringBuilder tokenDetails = new StringBuilder("   Token details: ");
+            for (int i = 0; i < Math.min(5, topK.length); i++) {
+              int tokenIdx = topK[i];
+              char ch = _tokenizer.indexToChar(tokenIdx);
+              tokenDetails.append(tokenIdx).append("='").append(ch).append("' ");
+            }
+            logDebug(tokenDetails.toString());
+
+            // Create new beams - matches CLI lines 223-226
+            for (int idx : topK)
+            {
+              BeamSearchState newBeam = new BeamSearchState(beam);
+              newBeam.tokens.add((long)idx);
+              // CRITICAL: Subtract log prob (negative log likelihood) - lower score is better
+              newBeam.score -= Math.log(probs[idx] + 1e-10); // Matches CLI line 224
+              newBeam.finished = (idx == EOS_IDX || idx == PAD_IDX);
+              candidates.add(newBeam);
+            }
           }
-          
-          // Clean up local tensors (don't close srcMaskTensor - managed by caller)
+
+          // Clean up tensors
           targetTokensTensor.close();
           targetMaskTensor.close();
+          srcMaskTensorLocal.close();
           decoderOutput.close();
-          
+
         }
         catch (Exception e)
         {
@@ -1087,21 +1074,20 @@ public class OnnxSwipePredictor
           continue;
         }
       }
-      
-      // Select top beams
-      candidates.sort((a, b) -> Float.compare(b.score, a.score));
-      
-      // Select top beams without aggressive optimization that breaks predictions
+
+      // Select top beams - matches CLI line 232
+      candidates.sort((a, b) -> Float.compare(a.score, b.score)); // Lower score is better (negative log prob)
       beams = candidates.subList(0, Math.min(candidates.size(), beamWidth));
-      
-      // Check if all beams finished naturally
+
+      // Check if all beams finished - matches CLI line 235
       boolean allFinished = true;
       for (BeamSearchState beam : beams) {
         if (!beam.finished) allFinished = false;
       }
-      
+
       if (allFinished)
       {
+        logDebug("🏁 All beams finished at step " + step);
         break;
       }
     }
@@ -1145,9 +1131,11 @@ public class OnnxSwipePredictor
       String wordStr = word.toString();
       if (wordStr.length() > 0)
       {
-        float confidence = (float)Math.exp(beam.score);
+        // Convert accumulated negative log likelihood back to probability
+        // Since score is positive (accumulated -log(prob)), use exp(-score)
+        float confidence = (float)Math.exp(-beam.score);
         results.add(new BeamSearchCandidate(wordStr, confidence));
-        logDebug("   ✅ Beam " + b + " -> '" + wordStr + "' (confidence: " + confidence + ")");
+        logDebug("   ✅ Beam " + b + " -> '" + wordStr + "' (score: " + beam.score + ", confidence: " + confidence + ")");
       } else {
         logDebug("   ❌ Beam " + b + " -> empty word (tokens only special)");
       }
