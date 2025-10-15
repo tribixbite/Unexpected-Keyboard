@@ -866,15 +866,19 @@ public class Keyboard2 extends InputMethodService
         try
         {
           CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+          android.util.Log.d("Keyboard2", "SPACING DEBUG: textBefore='" + textBefore + "' length=" + (textBefore != null ? textBefore.length() : "null"));
           if (textBefore != null && textBefore.length() > 0)
           {
             char prevChar = textBefore.charAt(0);
+            android.util.Log.d("Keyboard2", "SPACING DEBUG: prevChar='" + prevChar + "' isWhitespace=" + Character.isWhitespace(prevChar));
             // Add space if previous char is not whitespace and not punctuation start
             needsSpaceBefore = !Character.isWhitespace(prevChar) && prevChar != '(' && prevChar != '[' && prevChar != '{';
           }
+          android.util.Log.d("Keyboard2", "SPACING DEBUG: needsSpaceBefore=" + needsSpaceBefore);
         }
         catch (Exception e)
         {
+          android.util.Log.e("Keyboard2", "SPACING DEBUG: Exception getting text before cursor", e);
           // If getTextBeforeCursor fails, assume we don't need space before
           needsSpaceBefore = false;
         }
@@ -885,14 +889,17 @@ public class Keyboard2 extends InputMethodService
         {
           // Termux mode: Insert word without automatic space for better terminal compatibility
           textToInsert = needsSpaceBefore ? " " + word : word;
+          android.util.Log.d("Keyboard2", "SPACING DEBUG: Termux mode, inserting '" + textToInsert + "'");
         }
         else
         {
           // Normal mode: Insert word with space after (and before if needed)
           textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
+          android.util.Log.d("Keyboard2", "SPACING DEBUG: Normal mode, inserting '" + textToInsert + "'");
         }
 
         ic.commitText(textToInsert, 1);
+        android.util.Log.d("Keyboard2", "SPACING DEBUG: Committed text, cursor should be after inserted text");
       }
       catch (Exception e)
       {
