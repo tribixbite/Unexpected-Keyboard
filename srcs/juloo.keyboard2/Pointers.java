@@ -165,11 +165,14 @@ public final class Pointers implements Handler.Callback
 
     // If we delayed character output (mightBeSwipe), output it now if it wasn't a swipe
     // This handles quick taps that were initially treated as potential swipes
+    // Also reset swipe recognizer if no swipe was detected
     if (_config.swipe_typing_enabled && ptr.gesture == null &&
         !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
         ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char)
     {
       _handler.onPointerDown(ptr_value, false);
+      // CRITICAL: Reset swipe recognizer if it wasn't actually a swipe
+      _swipeRecognizer.reset();
     }
     if (ptr.gesture != null && ptr.gesture.is_in_progress())
     {
@@ -320,28 +323,24 @@ public final class Pointers implements Handler.Callback
       return;
     }
 
-    // CRITICAL: Check if this is a potential swipe typing gesture
-    // If swipe typing enabled + single pointer + character key, suppress normal gestures
-    boolean isPotentialSwipe = _config.swipe_typing_enabled && _ptrs.size() == 1 &&
-                                ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char;
-
-    // Track swipe typing if enabled and single pointer
-    if (isPotentialSwipe)
+    // Track swipe typing if enabled and single pointer on character key
+    if (_config.swipe_typing_enabled && _ptrs.size() == 1 &&
+        ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char &&
+        !ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
     {
       // Let handler track the swipe movement (it has access to key positions)
       _handler.onSwipeMove(x, y, _swipeRecognizer);
 
-      // Check if this has become a swipe typing gesture
+      // Check if this has become a swipe typing gesture (multi-key path detected)
       if (_swipeRecognizer.isSwipeTyping())
       {
         ptr.flags |= FLAG_P_SWIPE_TYPING;
         // Cancel long press timer if swipe typing detected
         stopLongPress(ptr);
+        // CRITICAL: Return here to skip normal gesture processing ONLY after swipe confirmed
+        return;
       }
-
-      // CRITICAL FIX: Skip ALL normal gesture processing for potential swipes
-      // This prevents side-key character output during swipe gestures
-      return;
+      // If not yet confirmed as swipe typing, allow normal gestures to continue
     }
 
     // Skip normal gesture processing if swipe typing confirmed
