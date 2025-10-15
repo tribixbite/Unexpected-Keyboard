@@ -22,11 +22,21 @@ public class OptimizedVocabulary
 {
   private static final String TAG = "OptimizedVocabulary";
   
-  // Fast-path vocabulary sets for performance
-  private Set<String> commonWords;           // ~100 most frequent words
-  private Set<String> top5000;               // Top 5000 words for quick filtering
-  private Map<String, Float> wordFrequencies; // Full vocabulary with frequencies
-  // REMOVED: wordsByLength - never used in predictions (dead code elimination)
+  // OPTIMIZATION: Single unified lookup structure (1 hash lookup instead of 3)
+  private Map<String, WordInfo> vocabulary;  // All words with frequency + tier in one lookup
+
+  // Word information with frequency and tier for single-lookup optimization
+  private static class WordInfo
+  {
+    final float frequency;
+    final byte tier; // 0=regular, 1=top5000, 2=common
+
+    WordInfo(float freq, byte tier)
+    {
+      this.frequency = freq;
+      this.tier = tier;
+    }
+  }
   
   // Scoring parameters (from web app)
   private static final float CONFIDENCE_WEIGHT = 0.6f;
@@ -44,11 +54,8 @@ public class OptimizedVocabulary
   public OptimizedVocabulary(Context context)
   {
     this.context = context;
-    this.commonWords = new HashSet<>();
-    this.top5000 = new HashSet<>();
-    this.wordFrequencies = new HashMap<>();
+    this.vocabulary = new HashMap<>();
     this.minFrequencyByLength = new HashMap<>();
-    // REMOVED: wordsByLength initialization - dead code
   }
   
   /**
@@ -107,43 +114,41 @@ public class OptimizedVocabulary
         continue;
       }
 
-      // OPTIMIZATION: Single hash lookup instead of 2-3 lookups
-      Float freq = wordFrequencies.get(word);
-      if (freq == null)
+      // CRITICAL OPTIMIZATION: SINGLE hash lookup (was 3 lookups!)
+      WordInfo info = vocabulary.get(word);
+      if (info == null)
       {
         continue; // Word not in vocabulary
       }
 
-      // OPTIMIZATION: Determine boost tier and apply scoring
+      // OPTIMIZATION: Tier is embedded in WordInfo (no additional lookups!)
       float boost;
       String source;
 
-      if (commonWords.contains(word))
+      switch (info.tier)
       {
-        // Fast path for common words (biggest speedup)
-        boost = COMMON_WORDS_BOOST;
-        source = "common";
-      }
-      else if (top5000.contains(word))
-      {
-        // Second fast path for top 5000
-        boost = TOP5000_BOOST;
-        source = "top5000";
-      }
-      else
-      {
-        // Full vocabulary with frequency threshold
-        float minFreq = getMinFrequency(word.length());
-        if (freq < minFreq)
-        {
-          continue; // Below threshold
-        }
-        boost = RARE_WORDS_PENALTY;
-        source = "vocabulary";
+        case 2: // common (top 100)
+          boost = COMMON_WORDS_BOOST;
+          source = "common";
+          break;
+        case 1: // top5000
+          boost = TOP5000_BOOST;
+          source = "top5000";
+          break;
+        default: // regular
+          // Check frequency threshold for rare words
+          float minFreq = getMinFrequency(word.length());
+          if (info.frequency < minFreq)
+          {
+            continue; // Below threshold
+          }
+          boost = RARE_WORDS_PENALTY;
+          source = "vocabulary";
+          break;
       }
 
-      float score = calculateCombinedScore(candidate.confidence, freq, boost);
-      validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, freq, source));
+      float score = calculateCombinedScore(candidate.confidence, info.frequency, boost);
+      validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, info.frequency, source));
     }
     
     // Sort by combined score (confidence + frequency)
@@ -174,7 +179,7 @@ public class OptimizedVocabulary
   
   /**
    * Load word frequencies from dictionary files
-   * OPTIMIZATION: Dictionary is pre-sorted, no need to sort again
+   * OPTIMIZATION: Single-lookup structure with tier embedded (1 lookup instead of 3)
    */
   private void loadWordFrequencies()
   {
@@ -193,16 +198,19 @@ public class OptimizedVocabulary
         {
           // OPTIMIZATION: Assign frequency based on position (file is pre-sorted)
           float frequency = 1.0f / (wordCount + 1.0f);
-          wordFrequencies.put(line, frequency);
 
-          // OPTIMIZATION: Build fast-path sets during loading (no sorting needed!)
+          // OPTIMIZATION: Determine tier during loading (no separate sets needed!)
+          byte tier;
           if (wordCount < 100) {
-            commonWords.add(line);
-          }
-          if (wordCount < 5000) {
-            top5000.add(line);
+            tier = 2; // common
+          } else if (wordCount < 5000) {
+            tier = 1; // top5000
+          } else {
+            tier = 0; // regular
           }
 
+          // CRITICAL: Single structure with all info (1 lookup vs 3 lookups!)
+          vocabulary.put(line, new WordInfo(frequency, tier));
           wordCount++;
 
           // Limit to prevent memory issues (150k words max)
@@ -309,10 +317,19 @@ public class OptimizedVocabulary
    */
   public VocabularyStats getStats()
   {
+    // Count by tier from unified structure
+    int common = 0;
+    int top5k = 0;
+    for (WordInfo info : vocabulary.values())
+    {
+      if (info.tier == 2) common++;
+      else if (info.tier == 1) top5k++;
+    }
+
     return new VocabularyStats(
-      wordFrequencies.size(),
-      commonWords.size(), 
-      top5000.size(),
+      vocabulary.size(),
+      common,
+      top5k,
       isLoaded
     );
   }
