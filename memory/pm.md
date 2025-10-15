@@ -2,6 +2,48 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Settings UI Integration for Short Gestures 🎨
+
+**UI Changes**:
+- Replaced old "Swiping distance" dropdown with new short gesture settings
+- Added checkbox: "Enable short gestures"
+- Added slider: "Short gesture sensitivity" (10-95% of key diagonal)
+- Settings appear in Typing category near other gesture controls
+
+**Old vs New**:
+- **Old**: Dropdown with "Very short/Short/Normal/Far/Very far" (unclear what it controlled)
+- **New**: Direct control with clear explanations
+  - Checkbox to enable/disable directional swipes within a key
+  - Slider shows exact percentage threshold
+  - Summary explains it's "% of key diagonal"
+
+**Settings.xml Changes** (res/xml/settings.xml):
+```xml
+<!-- Removed -->
+<ListPreference android:key="swipe_dist" ... />
+
+<!-- Added -->
+<CheckBoxPreference android:key="short_gestures_enabled"
+  android:title="@string/pref_short_gestures_enabled_title"
+  android:defaultValue="true"/>
+
+<IntSlideBarPreference android:key="short_gesture_min_distance"
+  android:title="@string/pref_short_gesture_distance_title"
+  android:defaultValue="30" min="10" max="95"
+  android:dependency="short_gestures_enabled"/>
+```
+
+**User Benefits**:
+- ✅ Intuitive controls replace cryptic dropdown
+- ✅ Clear explanations of what settings do
+- ✅ Precise control over gesture sensitivity
+- ✅ Slider disabled when gestures are off (visual feedback)
+
+**Version**: 1.32.32 (81) ✅ BUILD SUCCESSFUL
+**Commit**: `12b3a9c7` - feat(ui): add short gesture settings to UI and remove old swipe_dist dropdown
+
+---
+
 ### Prediction Tap Replacement + Configurable Short Gestures 🎯
 
 **Major Features Implemented**:
