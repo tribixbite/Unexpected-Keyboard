@@ -2,6 +2,94 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### CRITICAL FIX: Neural Engine Key Detection Failure + Short Gestures 🎯
+
+**Version**: 1.32.40 (89) ✅ BUILD SUCCESSFUL
+
+**Root Cause Discovered**: Neural swipe typing was detecting completely wrong keys because keyboard layout positions were NEVER set!
+
+**The Investigation**:
+```
+User: "thats fantastic and super interesting"
+Detected: "igrsunbg" and "ftasdu"
+Expected: "interesting" (11 keys) → Got "igrsunbg" (8 keys)
+Expected: "fantastic" (9 keys) → Got "ftasdu" (6 keys)
+
+Critical Clue: "calibration page prediction still works flawlessly"
+```
+
+**Root Cause Analysis**:
+1. **SwipeCalibrationActivity works perfectly** ✅:
+   - Calls `_neuralEngine.setRealKeyPositions(keyPositions)` at line 849
+   - Provides exact X,Y coordinates of each letter key
+   - Neural engine knows keyboard layout = perfect key detection
+
+2. **Keyboard2 never calls setRealKeyPositions()** ❌:
+   - OnnxSwipePredictor.java:755: `_trajectoryProcessor.setKeyboardLayout(null, width, height)`
+   - Neural engine has NULL keyboard layout
+   - Only knows dimensions (1080x903) but not where keys are!
+   - Result: Trajectory processor guesses wrong keys from coordinates
+
+**The Solution** (Keyboard2.java):
+```java
+private void setNeuralKeyboardLayout()
+{
+  // Use reflection to access _keyboard field from Keyboard2View
+  Field keyboardField = _keyboardView.getClass().getDeclaredField("_keyboard");
+  keyboardField.setAccessible(true);
+  KeyboardData keyboard = (KeyboardData) keyboardField.get(_keyboardView);
+
+  // Calculate scale factors for coordinate translation
+  float scaleX = keyboardWidth / keyboard.keysWidth;
+  float scaleY = keyboardHeight / keyboard.keysHeight;
+
+  // Extract key positions by iterating rows and keys
+  Map<Character, PointF> keyPositions = new HashMap<>();
+  float currentY = 0;
+  for (KeyboardData.Row row : keyboard.rows) {
+    currentY += row.shift * scaleY;
+    float centerY = currentY + (row.height * scaleY / 2.0f);
+
+    float currentX = 0;
+    for (KeyboardData.Key key : row.keys) {
+      currentX += key.shift * scaleX;
+      if (key.keys[0].getKind() == KeyValue.Kind.Char) {
+        char c = key.keys[0].getChar();
+        float centerX = currentX + (key.width * scaleX / 2.0f);
+        keyPositions.put(c, new PointF(centerX, centerY));
+      }
+      currentX += key.width * scaleX;
+    }
+    currentY += row.height * scaleY;
+  }
+
+  // CRITICAL: Set real key positions on neural engine
+  _neuralEngine.setRealKeyPositions(keyPositions);
+}
+```
+
+**Integration**:
+- Called in `onCreate()` after neural engine initialization (line 215)
+- Called in `handleSwipeTyping()` initialization (line 1246)
+- Logs number of keys extracted for verification
+
+**Short Gesture Fix**:
+- Short gestures stopped working after moving detection to onTouchUp
+- Issue: Called non-existent `getKeyAtDirection()` wrapper function
+- Solution: Use existing `getKeyAtDirection(ptr.key, direction)` directly
+- Fixed direction calculation: `int direction = (int)Math.round(a * 8.0 / Math.PI) & 15`
+- Uses existing `DIRECTION_TO_INDEX` array for 16→8 direction mapping
+
+**Expected Results**:
+- ✅ "interesting" should now detect 11 keys correctly
+- ✅ "fantastic" should now detect 9 keys correctly
+- ✅ Neural predictions should match calibration page quality
+- ✅ Short gestures (swipe-up for @, etc.) should work again
+
+**Commit**: `4ff83175` - fix(swipe): extract real key positions for neural engine + restore short gestures
+
+---
+
 ### Critical Fix: Short Gestures Blocking Swipe Path Collection 🔧
 
 **Version**: 1.32.35 (84) ✅ BUILD SUCCESSFUL
