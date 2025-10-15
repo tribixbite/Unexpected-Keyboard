@@ -2,6 +2,44 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Consecutive Swipe Auto-Insertion - Rapid Multi-Word Input 🚀
+
+**Problem**: Cannot swipe multiple words consecutively
+- Swiping 3 words in a row required manual taps between each swipe
+- Workflow: swipe → tap → swipe → tap → swipe (slow)
+- Predictions displayed but not auto-inserted on new swipe
+
+**Solution**: Auto-insert middle prediction on new swipe start
+- ✅ Check for existing predictions at start of handleSwipeTyping()
+- ✅ Auto-insert middle suggestion (index 2 of 5) before processing new swipe
+- ✅ Uses existing onSuggestionSelected() for proper spacing
+- ✅ Removed all debug logging for clean production code
+
+**Implementation**:
+```java
+// At start of handleSwipeTyping():
+if (_suggestionBar != null && _suggestionBar.hasSuggestions())
+{
+  String middlePrediction = _suggestionBar.getMiddleSuggestion();
+  if (middlePrediction != null && !middlePrediction.isEmpty())
+  {
+    onSuggestionSelected(middlePrediction);  // Auto-insert with spacing
+  }
+}
+```
+
+**Impact**:
+- **Rapid consecutive swiping** - swipe 3+ words without manual taps
+- **Better UX** for multi-word input workflow
+- **Clean code** with debug logging removed
+
+**Version**: 1.32.15 (64)
+**Commit**: `ff94c4be` - feat(swipe): auto-insert middle prediction on consecutive swipes
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### Single-Lookup Vocabulary Optimization - 66% Fewer Hash Ops ⚡
 
 **Problem**: Multiple hash lookups per word in hot path
