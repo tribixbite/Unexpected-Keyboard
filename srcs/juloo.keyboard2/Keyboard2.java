@@ -803,8 +803,17 @@ public class Keyboard2 extends InputMethodService
   @Override
   public void onSuggestionSelected(String word)
   {
+    android.util.Log.d("Keyboard2", "===== onSuggestionSelected called with: '" + word + "' =====");
+
+    // Null/empty check
+    if (word == null || word.trim().isEmpty())
+    {
+      android.util.Log.w("Keyboard2", "Ignoring null/empty word selection");
+      return;
+    }
+
     // Record user selection for adaptation learning
-    if (_adaptationManager != null && word != null && !word.trim().isEmpty())
+    if (_adaptationManager != null)
     {
       _adaptationManager.recordSelection(word.trim());
       android.util.Log.d("Keyboard2", "Recorded user selection for adaptation: " + word.trim());
@@ -851,39 +860,58 @@ public class Keyboard2 extends InputMethodService
     InputConnection ic = getCurrentInputConnection();
     if (ic != null)
     {
-      // If we have a current word being typed, delete it first
-      if (_currentWord.length() > 0)
+      try
       {
-        // Delete the partial word
-        for (int i = 0; i < _currentWord.length(); i++)
+        // If we have a current word being typed, delete it first
+        if (_currentWord.length() > 0)
         {
-          ic.deleteSurroundingText(1, 0);
+          // Delete the partial word
+          for (int i = 0; i < _currentWord.length(); i++)
+          {
+            ic.deleteSurroundingText(1, 0);
+          }
         }
-      }
 
-      // CRITICAL FIX: Add space before word if previous character isn't whitespace
-      // This prevents "helloworld" when user swipes "hello" then swipes "world"
-      boolean needsSpaceBefore = false;
-      CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
-      if (textBefore != null && textBefore.length() > 0)
-      {
-        char prevChar = textBefore.charAt(0);
-        // Add space if previous char is not whitespace and not punctuation start
-        needsSpaceBefore = !Character.isWhitespace(prevChar) && prevChar != '(' && prevChar != '[' && prevChar != '{';
-      }
+        // CRITICAL FIX: Add space before word if previous character isn't whitespace
+        // This prevents "helloworld" when user swipes "hello" then swipes "world"
+        boolean needsSpaceBefore = false;
+        try
+        {
+          CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+          if (textBefore != null && textBefore.length() > 0)
+          {
+            char prevChar = textBefore.charAt(0);
+            // Add space if previous char is not whitespace and not punctuation start
+            needsSpaceBefore = !Character.isWhitespace(prevChar) && prevChar != '(' && prevChar != '[' && prevChar != '{';
+          }
+        }
+        catch (Exception e)
+        {
+          // If getTextBeforeCursor fails, assume we don't need space before
+          android.util.Log.w("Keyboard2", "Failed to get text before cursor: " + e.getMessage());
+          needsSpaceBefore = false;
+        }
 
-      // Commit the selected word - use Termux mode if enabled
-      if (_config.termux_mode_enabled)
-      {
-        // Termux mode: Insert word without automatic space for better terminal compatibility
-        String textToInsert = needsSpaceBefore ? " " + word : word;
+        // Commit the selected word - use Termux mode if enabled
+        String textToInsert;
+        if (_config.termux_mode_enabled)
+        {
+          // Termux mode: Insert word without automatic space for better terminal compatibility
+          textToInsert = needsSpaceBefore ? " " + word : word;
+        }
+        else
+        {
+          // Normal mode: Insert word with space after (and before if needed)
+          textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
+        }
+
+        android.util.Log.d("Keyboard2", "Inserting prediction: '" + textToInsert + "' (length: " + textToInsert.length() + ")");
         ic.commitText(textToInsert, 1);
+        android.util.Log.d("Keyboard2", "Commit complete");
       }
-      else
+      catch (Exception e)
       {
-        // Normal mode: Insert word with space after (and before if needed)
-        String textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
-        ic.commitText(textToInsert, 1);
+        android.util.Log.e("Keyboard2", "Failed to insert prediction: " + e.getMessage(), e);
       }
       
       // Update context with the selected word
