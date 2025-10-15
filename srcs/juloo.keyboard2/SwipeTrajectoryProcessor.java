@@ -7,230 +7,314 @@ import java.util.List;
 
 /**
  * Processes swipe trajectories for neural network input
- * Extracts features: position, velocity, acceleration, nearest keys
- * Matches the feature extraction pipeline from the web demo
+ * CRITICAL FIX: Matches working cleverkeys implementation exactly
+ * - Pads both coordinates AND nearestKeys to 150
+ * - Uses integer token indices (not characters)
+ * - Repeats last key for padding (not PAD tokens)
+ * - Filters duplicate starting points
  */
 public class SwipeTrajectoryProcessor
 {
   private static final String TAG = "SwipeTrajectoryProcessor";
-  
+  private static final int MAX_TRAJECTORY_POINTS = 150;
+
   // Keyboard layout for nearest key detection
   private java.util.Map<Character, PointF> _keyPositions;
   public float _keyboardWidth = 1.0f;
   public float _keyboardHeight = 1.0f;
-  
+
   public SwipeTrajectoryProcessor()
   {
     Log.d(TAG, "SwipeTrajectoryProcessor initialized");
   }
-  
+
   /**
    * Set keyboard dimensions and key positions
    */
-  public void setKeyboardLayout(java.util.Map<Character, PointF> keyPositions, 
+  public void setKeyboardLayout(java.util.Map<Character, PointF> keyPositions,
     float width, float height)
   {
     _keyPositions = keyPositions;
     _keyboardWidth = width;
     _keyboardHeight = height;
-    
-    Log.d(TAG, String.format("Keyboard layout set: %dx%.0f with %d keys", 
-      (int)width, height, keyPositions != null ? keyPositions.size() : 0));
+
+    Log.d(TAG, String.format("Keyboard layout set: %.0fx%.0f with %d keys",
+      width, height, keyPositions != null ? keyPositions.size() : 0));
   }
-  
+
   /**
-   * Extract trajectory features from swipe input
+   * Extract trajectory features - MATCHES WORKING CLEVERKEYS
+   * Takes SwipeInput for compatibility but processes like cleverkeys
    */
   public TrajectoryFeatures extractFeatures(SwipeInput input, int maxSequenceLength)
   {
-    List<PointF> rawPath = input.coordinates;
-    if (rawPath == null || rawPath.isEmpty())
+    List<PointF> coordinates = input.coordinates;
+    List<Long> timestamps = input.timestamps;
+
+    if (coordinates == null || coordinates.isEmpty())
     {
       return new TrajectoryFeatures();
     }
-    
-    Log.d(TAG, String.format("Extracting features from %d raw points", rawPath.size()));
-    
-    // Extract features inline like web demo (more efficient, exact match)
-    List<TrajectoryPoint> normalizedPoints = extractFeaturesInline(rawPath, maxSequenceLength);
-    
-    // Find nearest keys for each point
-    List<Character> nearestKeys = findNearestKeys(rawPath);
-    
-    TrajectoryFeatures features = new TrajectoryFeatures();
-    features.normalizedPoints = normalizedPoints;
-    features.nearestKeys = nearestKeys;
-    features.actualLength = Math.min(rawPath.size(), maxSequenceLength);
-    
-    Log.d(TAG, String.format("Extracted features: %d points, %d keys", 
-      normalizedPoints.size(), nearestKeys.size()));
-    
-    return features;
-  }
-  
-  private List<TrajectoryPoint> normalizeTrajectory(List<PointF> rawPath, int maxLength)
-  {
-    List<TrajectoryPoint> normalized = new ArrayList<>();
-    
-    // Sample or interpolate to target length
-    List<PointF> resampled = resamplePath(rawPath, Math.min(rawPath.size(), maxLength));
-    
-    // Normalize coordinates to [0,1]
-    for (PointF point : resampled)
-    {
-      TrajectoryPoint normPoint = new TrajectoryPoint();
-      normPoint.x = point.x / _keyboardWidth;
-      normPoint.y = point.y / _keyboardHeight;
-      
-      // Clamp to [0,1] range
-      normPoint.x = Math.max(0.0f, Math.min(1.0f, normPoint.x));
-      normPoint.y = Math.max(0.0f, Math.min(1.0f, normPoint.y));
-      
-      normalized.add(normPoint);
+
+    Log.d(TAG, String.format("🔬 Extracting features from %d raw points", coordinates.size()));
+
+    // 1. Filter duplicate starting points (FIX #34 from cleverkeys)
+    List<PointF> filteredCoords = filterDuplicateStartingPoints(coordinates);
+    if (filteredCoords.size() < coordinates.size()) {
+      Log.d(TAG, String.format("🔧 Filtered %d duplicate starting points (%d → %d)",
+        coordinates.size() - filteredCoords.size(), coordinates.size(), filteredCoords.size()));
     }
-    
-    // Pad to maxLength if necessary
-    while (normalized.size() < maxLength)
-    {
-      // Pad with last point (or zeros if empty)
-      TrajectoryPoint lastPoint = normalized.isEmpty() ? 
-        new TrajectoryPoint() : normalized.get(normalized.size() - 1);
-      normalized.add(new TrajectoryPoint(lastPoint));
-    }
-    
-    return normalized;
-  }
-  
-  /**
-   * Extract features inline exactly matching web demo approach for efficiency
-   */
-  private List<TrajectoryPoint> extractFeaturesInline(List<PointF> rawPath, int maxLength)
-  {
-    List<TrajectoryPoint> points = new ArrayList<>();
-    
-    // Resample to exact length first
-    List<PointF> resampled = resamplePath(rawPath, Math.min(rawPath.size(), maxLength));
-    
-    // Pad to maxLength if necessary
-    while (resampled.size() < maxLength)
-    {
-      PointF lastPoint = resampled.isEmpty() ? new PointF(0, 0) : resampled.get(resampled.size() - 1);
-      resampled.add(new PointF(lastPoint.x, lastPoint.y));
-    }
-    
-    // Calculate features inline like web demo (single pass, more efficient)
-    for (int i = 0; i < maxLength; i++)
-    {
-      PointF rawPoint = resampled.get(i);
-      TrajectoryPoint point = new TrajectoryPoint();
-      
-      // Position (normalized 0-1) - exactly like web demo
-      point.x = rawPoint.x / _keyboardWidth;
-      point.y = rawPoint.y / _keyboardHeight;
-      
-      // Clamp to [0,1] range
-      point.x = Math.max(0.0f, Math.min(1.0f, point.x));
-      point.y = Math.max(0.0f, Math.min(1.0f, point.y));
-      
-      // Velocity (difference from previous point) - exactly like web demo
-      if (i > 0)
-      {
-        TrajectoryPoint prevPoint = points.get(i - 1);
-        point.vx = point.x - prevPoint.x; // vx
-        point.vy = point.y - prevPoint.y; // vy
+
+    // 2. Normalize coordinates FIRST (0-1 range) - matches cleverkeys
+    List<PointF> normalizedCoords = normalizeCoordinates(filteredCoords);
+
+    // 3. Detect nearest keys from filtered, un-normalized coordinates
+    // CRITICAL: Returns integer token indices, not characters!
+    List<Integer> nearestKeys = detectNearestKeys(filteredCoords);
+
+    // 4. Pad or truncate to MAX_TRAJECTORY_POINTS
+    List<PointF> finalCoords = padOrTruncate(normalizedCoords, MAX_TRAJECTORY_POINTS);
+
+    // 5. FIX #36 (from cleverkeys): Pad nearest_keys by repeating last key
+    // Model was trained expecting last key to repeat, NOT PAD tokens
+    List<Integer> finalNearestKeys;
+    if (nearestKeys.size() >= MAX_TRAJECTORY_POINTS) {
+      finalNearestKeys = nearestKeys.subList(0, MAX_TRAJECTORY_POINTS);
+    } else {
+      finalNearestKeys = new ArrayList<>(nearestKeys);
+      int lastKey = nearestKeys.isEmpty() ? 0 : nearestKeys.get(nearestKeys.size() - 1);
+      while (finalNearestKeys.size() < MAX_TRAJECTORY_POINTS) {
+        finalNearestKeys.add(lastKey);
       }
-      else
-      {
+    }
+
+    // 6. Calculate velocities and accelerations on normalized coords (simple deltas)
+    List<TrajectoryPoint> points = new ArrayList<>();
+    for (int i = 0; i < MAX_TRAJECTORY_POINTS; i++)
+    {
+      TrajectoryPoint point = new TrajectoryPoint();
+      point.x = finalCoords.get(i).x;
+      point.y = finalCoords.get(i).y;
+
+      if (i == 0) {
         point.vx = 0.0f;
         point.vy = 0.0f;
-      }
-      
-      // Acceleration (difference of velocities) - exactly like web demo
-      if (i > 1)
-      {
-        TrajectoryPoint prevPoint = points.get(i - 1);
-        point.ax = point.vx - prevPoint.vx; // ax
-        point.ay = point.vy - prevPoint.vy; // ay
-      }
-      else
-      {
         point.ax = 0.0f;
         point.ay = 0.0f;
+      } else {
+        TrajectoryPoint prev = points.get(i - 1);
+        point.vx = point.x - prev.x;
+        point.vy = point.y - prev.y;
+
+        if (i == 1) {
+          point.ax = 0.0f;
+          point.ay = 0.0f;
+        } else {
+          point.ax = point.vx - prev.vx;
+          point.ay = point.vy - prev.vy;
+        }
       }
-      
+
       points.add(point);
     }
-    
-    return points;
-  }
-  
-  private List<PointF> resamplePath(List<PointF> originalPath, int targetLength)
-  {
-    if (originalPath.size() <= targetLength)
-    {
-      return new ArrayList<>(originalPath);
-    }
-    
-    // Simple downsampling by taking evenly spaced points
-    List<PointF> resampled = new ArrayList<>();
-    float step = (float)(originalPath.size() - 1) / (targetLength - 1);
-    
-    for (int i = 0; i < targetLength; i++)
-    {
-      int idx = Math.round(i * step);
-      idx = Math.min(idx, originalPath.size() - 1);
-      resampled.add(originalPath.get(idx));
-    }
-    
-    return resampled;
-  }
-  
-  private List<Character> findNearestKeys(List<PointF> path)
-  {
-    List<Character> nearestKeys = new ArrayList<>();
-    
-    if (_keyPositions == null || _keyPositions.isEmpty())
-    {
-      // Fallback: return 'a' for all points
-      for (int i = 0; i < path.size(); i++)
-      {
-        nearestKeys.add('a');
+
+    // Verification logging (first 3 points)
+    if (!points.isEmpty()) {
+      Log.d(TAG, "🔬 Feature calculation (first 3 points):");
+      for (int i = 0; i < Math.min(3, points.size()); i++) {
+        TrajectoryPoint p = points.get(i);
+        int key = finalNearestKeys.get(i);
+        Log.d(TAG, String.format("   Point[%d]: x=%.4f, y=%.4f, vx=%.4f, vy=%.4f, ax=%.4f, ay=%.4f, nearest_key=%d",
+          i, p.x, p.y, p.vx, p.vy, p.ax, p.ay, key));
       }
-      return nearestKeys;
     }
-    
-    // Find nearest key for each point
-    for (PointF point : path)
+
+    TrajectoryFeatures features = new TrajectoryFeatures();
+    features.normalizedPoints = points;
+    features.nearestKeys = finalNearestKeys;  // Now integer token indices!
+    features.actualLength = Math.min(filteredCoords.size(), MAX_TRAJECTORY_POINTS);
+
+    Log.d(TAG, String.format("✅ Extracted features: %d points, %d keys (both padded to 150)",
+      points.size(), finalNearestKeys.size()));
+
+    return features;
+  }
+
+  /**
+   * Filter duplicate starting points to prevent zero velocity (FIX #34 from cleverkeys)
+   * Android may report same coordinates multiple times before finger movement detected
+   */
+  private List<PointF> filterDuplicateStartingPoints(List<PointF> coordinates)
+  {
+    if (coordinates.isEmpty()) return coordinates;
+
+    float threshold = 1f; // 1 pixel tolerance
+    List<PointF> filtered = new ArrayList<>();
+    filtered.add(coordinates.get(0));
+
+    // Skip consecutive duplicates at the start
+    int i = 1;
+    while (i < coordinates.size()) {
+      PointF prev = filtered.get(filtered.size() - 1);
+      PointF curr = coordinates.get(i);
+
+      float dx = Math.abs(curr.x - prev.x);
+      float dy = Math.abs(curr.y - prev.y);
+
+      // If this point is different, keep it and all remaining points
+      if (dx > threshold || dy > threshold) {
+        filtered.addAll(coordinates.subList(i, coordinates.size()));
+        break;
+      }
+      i++;
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Normalize coordinates to [0, 1] range
+   */
+  private List<PointF> normalizeCoordinates(List<PointF> coordinates)
+  {
+    List<PointF> normalized = new ArrayList<>();
+    for (PointF point : coordinates) {
+      float x = (point.x / _keyboardWidth);
+      float y = (point.y / _keyboardHeight);
+      // Clamp to [0,1]
+      x = Math.max(0f, Math.min(1f, x));
+      y = Math.max(0f, Math.min(1f, y));
+      normalized.add(new PointF(x, y));
+    }
+    return normalized;
+  }
+
+  /**
+   * Pad or truncate coordinates to exact length
+   */
+  private List<PointF> padOrTruncate(List<PointF> coordinates, int targetLength)
+  {
+    List<PointF> result = new ArrayList<>();
+
+    // Add existing coordinates (up to targetLength)
+    for (int i = 0; i < Math.min(coordinates.size(), targetLength); i++) {
+      result.add(new PointF(coordinates.get(i).x, coordinates.get(i).y));
+    }
+
+    // Pad with last coordinate if needed
+    if (result.size() < targetLength) {
+      PointF lastPoint = result.isEmpty() ? new PointF(0, 0) : result.get(result.size() - 1);
+      while (result.size() < targetLength) {
+        result.add(new PointF(lastPoint.x, lastPoint.y));
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Detect nearest key for each coordinate using real keyboard layout
+   * CRITICAL: Returns integer token indices (4-29 for a-z), NOT characters!
+   */
+  private List<Integer> detectNearestKeys(List<PointF> coordinates)
+  {
+    List<Integer> nearestKeys = new ArrayList<>();
+
+    for (PointF point : coordinates)
     {
-      char nearestKey = findNearestKey(point);
-      nearestKeys.add(nearestKey);
+      if (_keyPositions != null && !_keyPositions.isEmpty()) {
+        // Use actual keyboard layout positions - find nearest key
+        char closestChar = findNearestKey(point);
+        // Convert character to token index (a-z mapping to tokens 4-29)
+        int tokenIndex = charToTokenIndex(closestChar);
+        nearestKeys.add(tokenIndex);
+      } else {
+        // Fallback: use grid detection
+        int tokenIndex = detectKeyFromQwertyGrid(point);
+        nearestKeys.add(tokenIndex);
+      }
     }
-    
+
     return nearestKeys;
   }
-  
+
+  /**
+   * Find nearest key using real key positions
+   */
   private char findNearestKey(PointF point)
   {
     char nearestKey = 'a';
     float minDistance = Float.MAX_VALUE;
-    
+
     for (java.util.Map.Entry<Character, PointF> entry : _keyPositions.entrySet())
     {
       PointF keyPos = entry.getValue();
       float dx = point.x - keyPos.x;
       float dy = point.y - keyPos.y;
       float distance = dx * dx + dy * dy;
-      
+
       if (distance < minDistance)
       {
         minDistance = distance;
         nearestKey = entry.getKey();
       }
     }
-    
+
     return nearestKey;
   }
-  
+
+  /**
+   * Detect nearest key using grid-based approach with QWERTY layout
+   * Matches CLI test logic that achieves 50% accuracy
+   */
+  private int detectKeyFromQwertyGrid(PointF point)
+  {
+    // QWERTY layout (same as CLI test)
+    String row1 = "qwertyuiop";
+    String row2 = "asdfghjkl";
+    String row3 = "zxcvbnm";
+
+    float keyWidth = _keyboardWidth / 10f;
+    float keyHeight = _keyboardHeight / 4f;
+
+    // Determine row (with staggered offset matching real keyboards)
+    int row = (int)(point.y / keyHeight);
+    if (row < 0) row = 0;
+    if (row > 2) row = 2;
+
+    // Determine column with row-specific offsets
+    float xOffset = 0;
+    if (row == 1) xOffset = keyWidth * 0.25f; // ASDF row offset
+    if (row == 2) xOffset = keyWidth * 0.75f; // ZXCV row offset
+
+    int col = (int)((point.x - xOffset) / keyWidth);
+
+    // Get character from appropriate row
+    char ch;
+    if (row == 0 && col >= 0 && col < row1.length()) {
+      ch = row1.charAt(col);
+    } else if (row == 1 && col >= 0 && col < row2.length()) {
+      ch = row2.charAt(col);
+    } else if (row == 2 && col >= 0 && col < row3.length()) {
+      ch = row3.charAt(col);
+    } else {
+      ch = 'a'; // Default fallback
+    }
+
+    return charToTokenIndex(ch);
+  }
+
+  /**
+   * Convert character to token index (a-z → 4-29, others → 0)
+   */
+  private int charToTokenIndex(char c)
+  {
+    if (c >= 'a' && c <= 'z') {
+      return (c - 'a') + 4; // a=4, b=5, ..., z=29
+    }
+    return 0; // PAD_IDX for unknown characters
+  }
+
   /**
    * Trajectory point with position, velocity, and acceleration
    */
@@ -242,9 +326,9 @@ public class SwipeTrajectoryProcessor
     public float vy = 0.0f;
     public float ax = 0.0f;
     public float ay = 0.0f;
-    
+
     public TrajectoryPoint() {}
-    
+
     public TrajectoryPoint(TrajectoryPoint other)
     {
       this.x = other.x;
@@ -255,14 +339,15 @@ public class SwipeTrajectoryProcessor
       this.ay = other.ay;
     }
   }
-  
+
   /**
    * Complete feature set for neural network input
+   * CRITICAL FIX: nearestKeys is now List<Integer> (token indices)
    */
   public static class TrajectoryFeatures
   {
     public List<TrajectoryPoint> normalizedPoints = new ArrayList<>();
-    public List<Character> nearestKeys = new ArrayList<>();
+    public List<Integer> nearestKeys = new ArrayList<>();  // Changed from List<Character>!
     public int actualLength = 0;
   }
 }

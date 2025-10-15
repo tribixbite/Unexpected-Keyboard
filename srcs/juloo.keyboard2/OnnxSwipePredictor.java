@@ -867,20 +867,21 @@ public class OnnxSwipePredictor
     java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH * 8); // 8 bytes per long
     byteBuffer.order(java.nio.ByteOrder.nativeOrder());
     java.nio.LongBuffer buffer = byteBuffer.asLongBuffer();
-    
+
+    // CRITICAL FIX: nearestKeys is now List<Integer> (token indices), not List<Character>!
     for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
     {
       if (i < features.nearestKeys.size())
       {
-        char key = features.nearestKeys.get(i);
-        buffer.put(_tokenizer.charToIndex(key));
+        int tokenIndex = features.nearestKeys.get(i);  // Already a token index!
+        buffer.put(tokenIndex);
       }
       else
       {
-        buffer.put(PAD_IDX); // Padding
+        buffer.put(PAD_IDX); // Padding (should never hit this - features are pre-padded)
       }
     }
-    
+
     buffer.rewind();
     long[] shape = {1, MAX_SEQUENCE_LENGTH};
     return OnnxTensor.createTensor(_ortEnvironment, buffer, shape);
