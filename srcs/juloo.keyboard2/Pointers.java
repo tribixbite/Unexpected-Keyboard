@@ -330,24 +330,56 @@ public final class Pointers implements Handler.Callback
       return;
     }
 
-    // CRITICAL: For potential swipe typing (single pointer on char key), skip ALL normal gesture
-    // processing to prevent false positive symbol swipes (e.g., h→i triggering "=")
-    // Only track swipe movement, don't process as normal gesture
+    // Track if pointer has left the starting key (for short gesture detection)
+    if (ptr.key != null && !ptr.hasLeftStartingKey)
+    {
+      if (!_handler.isPointWithinKey(x, y, ptr.key))
+      {
+        ptr.hasLeftStartingKey = true;
+      }
+    }
+
+    // CRITICAL: For potential swipe typing (single pointer on char key), check if this might be
+    // a short gesture vs swipe typing
     if (_config.swipe_typing_enabled && _ptrs.size() == 1 &&
         ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char)
     {
-      // Track swipe movement for visual trail and detection
-      _handler.onSwipeMove(x, y, _swipeRecognizer);
-
-      // Check if this has become a confirmed swipe typing gesture
-      if (_swipeRecognizer.isSwipeTyping())
+      // Check if this qualifies as a short gesture:
+      // 1. Short gestures must be enabled
+      // 2. Pointer must never have left the starting key
+      // 3. Distance must be < configured percentage of key hypotenuse
+      boolean isShortGesture = false;
+      if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey && ptr.key != null)
       {
-        ptr.flags |= FLAG_P_SWIPE_TYPING;
-        stopLongPress(ptr);
+        float dx = x - ptr.downX;
+        float dy = y - ptr.downY;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        float keyHypotenuse = _handler.getKeyHypotenuse(ptr.key);
+        float minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f);
+
+        isShortGesture = distance >= minDistance;
       }
 
-      // Skip ALL normal gesture processing for potential swipes
-      return;
+      if (isShortGesture)
+      {
+        // Allow normal gesture processing for short gestures
+        // Fall through to normal gesture code below
+      }
+      else
+      {
+        // Treat as potential swipe typing - track movement and skip normal gestures
+        _handler.onSwipeMove(x, y, _swipeRecognizer);
+
+        // Check if this has become a confirmed swipe typing gesture
+        if (_swipeRecognizer.isSwipeTyping())
+        {
+          ptr.flags |= FLAG_P_SWIPE_TYPING;
+          stopLongPress(ptr);
+        }
+
+        // Skip normal gesture processing for potential swipe typing
+        return;
+      }
     }
 
     // The position in a IME windows is clampled to view.
@@ -635,6 +667,8 @@ public final class Pointers implements Handler.Callback
     public int timeoutWhat;
     /** [null] when not in sliding mode. */
     public Sliding sliding;
+    /** Track if swipe has ever left the starting key's bounds (for short gesture detection). */
+    public boolean hasLeftStartingKey;
 
     public Pointer(int p, KeyboardData.Key k, KeyValue v, float x, float y, Modifiers m, int f)
     {
@@ -648,6 +682,7 @@ public final class Pointers implements Handler.Callback
       flags = f;
       timeoutWhat = -1;
       sliding = null;
+      hasLeftStartingKey = false;
     }
 
     public boolean hasFlagsAny(int has)
@@ -891,11 +926,17 @@ public final class Pointers implements Handler.Callback
 
     /** Key is repeating. */
     public void onPointerHold(KeyValue k, Modifiers mods);
-    
+
     /** Track swipe movement for swipe typing. */
     public void onSwipeMove(float x, float y, ImprovedSwipeGestureRecognizer recognizer);
-    
+
     /** Swipe typing gesture completed. */
     public void onSwipeEnd(ImprovedSwipeGestureRecognizer recognizer);
+
+    /** Check if a point is within a key's bounding box. */
+    public boolean isPointWithinKey(float x, float y, KeyboardData.Key key);
+
+    /** Get the hypotenuse (diagonal length) of a key in pixels. */
+    public float getKeyHypotenuse(KeyboardData.Key key);
   }
 }

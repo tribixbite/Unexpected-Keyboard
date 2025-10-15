@@ -73,7 +73,10 @@ public class Keyboard2 extends InputMethodService
   private SwipeMLDataStore _mlDataStore;
   private SwipeMLData _currentSwipeData;
   private boolean _wasLastInputSwipe = false;
-  
+
+  // Track auto-inserted word for replacement
+  private String _lastAutoInsertedWord = null;
+
   // User adaptation
   private UserAdaptationManager _adaptationManager;
 
@@ -782,6 +785,9 @@ public class Keyboard2 extends InputMethodService
       String middlePrediction = _suggestionBar.getMiddleSuggestion();
       if (middlePrediction != null && !middlePrediction.isEmpty())
       {
+        // Track this as auto-inserted so tapping another suggestion will replace it
+        _lastAutoInsertedWord = middlePrediction;
+
         // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
         onSuggestionSelected(middlePrediction);
 
@@ -858,6 +864,32 @@ public class Keyboard2 extends InputMethodService
           {
             ic.deleteSurroundingText(1, 0);
           }
+        }
+
+        // CRITICAL: If we just auto-inserted a word, delete it for replacement
+        // This allows user to tap a different prediction instead of appending
+        if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty())
+        {
+          // Calculate how many characters to delete (word + space after it)
+          int deleteCount = _lastAutoInsertedWord.length();
+          if (!_config.termux_mode_enabled)
+          {
+            deleteCount += 1; // Delete trailing space in normal mode
+          }
+
+          // Delete the auto-inserted word and its space
+          ic.deleteSurroundingText(deleteCount, 0);
+
+          // Also need to check if there was a space added before it
+          CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+          if (textBefore != null && textBefore.length() > 0 && textBefore.charAt(0) == ' ')
+          {
+            // Delete the leading space too
+            ic.deleteSurroundingText(1, 0);
+          }
+
+          // Clear the tracking variable
+          _lastAutoInsertedWord = null;
         }
 
         // CRITICAL FIX: Add space before word if previous character isn't whitespace
@@ -1081,6 +1113,9 @@ public class Keyboard2 extends InputMethodService
                                 List<android.graphics.PointF> swipePath,
                                 List<Long> timestamps)
   {
+    // Clear auto-inserted word tracking when new swipe starts
+    _lastAutoInsertedWord = null;
+
     // COORDINATE DEBUGGING: Log detailed coordinate information
     if (swipePath.size() > 0) {
       android.graphics.PointF first = swipePath.get(0);

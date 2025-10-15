@@ -310,7 +310,80 @@ public class Keyboard2View extends View
     recognizer.reset();
     invalidate(); // Clear the trail
   }
-  
+
+  public boolean isPointWithinKey(float x, float y, KeyboardData.Key key)
+  {
+    if (key == null || _keyboard == null) return false;
+
+    // Find the row containing this key
+    KeyboardData.Row targetRow = null;
+    for (KeyboardData.Row row : _keyboard.rows)
+    {
+      for (KeyboardData.Key k : row.keys)
+      {
+        if (k == key)
+        {
+          targetRow = row;
+          break;
+        }
+      }
+      if (targetRow != null) break;
+    }
+
+    if (targetRow == null) return false;
+
+    // Calculate key bounds
+    float keyX = _marginLeft;
+    for (KeyboardData.Key k : targetRow.keys)
+    {
+      if (k == key)
+      {
+        float xLeft = keyX + key.shift * _keyWidth;
+        float xRight = xLeft + key.width * _keyWidth;
+
+        // Calculate row bounds (simplified, assuming standard row height)
+        float rowTop = _config.marginTop;
+        for (KeyboardData.Row row : _keyboard.rows)
+        {
+          if (row == targetRow) break;
+          rowTop += row.height + row.shift;
+        }
+        float rowBottom = rowTop + targetRow.height;
+
+        return x >= xLeft && x < xRight && y >= rowTop && y < rowBottom;
+      }
+      keyX += k.width * _keyWidth;
+    }
+
+    return false;
+  }
+
+  public float getKeyHypotenuse(KeyboardData.Key key)
+  {
+    if (key == null || _keyboard == null) return 0f;
+
+    // Find the row containing this key to get height
+    float keyHeight = 0f;
+    for (KeyboardData.Row row : _keyboard.rows)
+    {
+      for (KeyboardData.Key k : row.keys)
+      {
+        if (k == key)
+        {
+          keyHeight = row.height;
+          break;
+        }
+      }
+      if (keyHeight > 0) break;
+    }
+
+    if (keyHeight == 0) return 0f;
+
+    // Calculate hypotenuse: sqrt(width^2 + height^2)
+    float keyWidth = key.width * _keyWidth;
+    return (float) Math.sqrt(keyWidth * keyWidth + keyHeight * keyHeight);
+  }
+
   public void setSwipeTypingComponents(WordPredictor predictor, Keyboard2 keyboard2)
   {
     _wordPredictor = predictor;

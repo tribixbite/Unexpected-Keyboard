@@ -84,7 +84,11 @@ public final class Config
   public boolean swipe_show_debug_scores;
   public boolean word_prediction_enabled;
   public int suggestion_bar_opacity; // 0 - 100
-  
+
+  // Short gesture configuration
+  public boolean short_gestures_enabled; // Enable/disable short swipe gestures (e.g., swipe-up for @)
+  public int short_gesture_min_distance; // Minimum swipe distance as % of key hypotenuse (10-95)
+
   // Neural swipe prediction configuration
   public boolean neural_prediction_enabled;
   public int neural_beam_width; // 1 - 16
@@ -223,7 +227,11 @@ public final class Config
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
     suggestion_bar_opacity = safeGetInt(_prefs, "suggestion_bar_opacity", 90);
-    
+
+    // Short gesture configuration
+    short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true);
+    short_gesture_min_distance = safeGetInt(_prefs, "short_gesture_min_distance", 30); // Default 30% of key hypotenuse
+
     // Neural swipe prediction configuration
     neural_prediction_enabled = _prefs.getBoolean("neural_prediction_enabled", true);
     // Mobile-optimized defaults: 2 beams, max 20 chars (was 8 beams, 35 chars)
