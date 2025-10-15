@@ -776,6 +776,15 @@ public class Keyboard2 extends InputMethodService
     {
       _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
       _suggestionBar.setSuggestionsWithScores(predictions, scores);
+
+      // Auto-insert middle prediction immediately after swipe completes
+      // This enables rapid consecutive swiping without manual taps
+      String middlePrediction = _suggestionBar.getMiddleSuggestion();
+      if (middlePrediction != null && !middlePrediction.isEmpty())
+      {
+        // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
+        onSuggestionSelected(middlePrediction);
+      }
     }
   }
   
@@ -1064,18 +1073,6 @@ public class Keyboard2 extends InputMethodService
                                 List<android.graphics.PointF> swipePath,
                                 List<Long> timestamps)
   {
-    // CRITICAL FIX: Auto-insert middle prediction from previous swipe before starting new swipe
-    // This enables rapid consecutive swiping without manual taps
-    if (_suggestionBar != null && _suggestionBar.hasSuggestions())
-    {
-      String middlePrediction = _suggestionBar.getMiddleSuggestion();
-      if (middlePrediction != null && !middlePrediction.isEmpty())
-      {
-        // Auto-insert the middle prediction
-        onSuggestionSelected(middlePrediction);
-      }
-    }
-    
     // COORDINATE DEBUGGING: Log detailed coordinate information
     if (swipePath.size() > 0) {
       android.graphics.PointF first = swipePath.get(0);
