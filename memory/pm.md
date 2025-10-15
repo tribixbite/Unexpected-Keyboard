@@ -1,6 +1,38 @@
 # Project Management - Unexpected Keyboard
 
-## 🔥 LATEST UPDATES (2025-10-14)
+## 🔥 LATEST UPDATES (2025-10-15)
+
+### Critical Swipe Detection Fix + Beam Optimization ✅
+
+**Problem**: Short swipe detection was blocking long swipe predictions
+- Medium swipe check (35px) prevented promotion to full swipe typing (50px+)
+- Example: "i to s" would output "*" instead of predictions
+- Condition `!_isMediumSwipe` on line 92 blocked re-evaluation after 35px threshold
+- Once classified as medium swipe, could never upgrade even as distance increased
+
+**Solution**: Allow promotion from medium swipe to full swipe typing
+- ✅ Removed `_isMediumSwipe` from outer condition (line 93)
+- ✅ Added flag clearing when promoted to full swipe (line 99)
+- ✅ Now checks full swipe first, allows upgrade at any time
+- ✅ Medium swipe only set if NOT already full swipe
+
+**Additional Optimization**:
+- ✅ beam_width: 3 → 2 (33% faster)
+- ✅ Decoder inferences: 60 → 40 per swipe
+- ✅ **Total: 7x speedup from original** (280 → 40 inferences)
+- ✅ Dictionary verified: 9999 words in en_enhanced.txt (NOT a stub)
+
+**Impact**:
+- Long swipes (like "i to s") now work correctly
+- Even faster predictions with 2 beams
+- Better responsiveness and battery life
+
+**Version**: 1.32.5 (54)
+**Commit**: `c5c8559b` - fix(swipe): critical fixes for swipe detection and performance
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-14)
 
 ### ONNX Performance Optimized - 5x Speedup ⚡
 
