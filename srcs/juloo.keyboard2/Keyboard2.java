@@ -784,6 +784,10 @@ public class Keyboard2 extends InputMethodService
       {
         // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
         onSuggestionSelected(middlePrediction);
+
+        // CRITICAL: Re-display suggestions after auto-insertion
+        // User can still tap a different prediction if the auto-inserted one was wrong
+        _suggestionBar.setSuggestionsWithScores(predictions, scores);
       }
     }
   }

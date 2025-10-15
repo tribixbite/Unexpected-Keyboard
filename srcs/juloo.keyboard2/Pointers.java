@@ -313,13 +313,24 @@ public final class Pointers implements Handler.Callback
     Pointer ptr = getPtr(pointerId);
     if (ptr == null)
       return;
-    
+
+    if (ptr.hasFlagsAny(FLAG_P_SLIDING))
+    {
+      ptr.sliding.onTouchMove(ptr, x, y);
+      return;
+    }
+
+    // CRITICAL: Check if this is a potential swipe typing gesture
+    // If swipe typing enabled + single pointer + character key, suppress normal gestures
+    boolean isPotentialSwipe = _config.swipe_typing_enabled && _ptrs.size() == 1 &&
+                                ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char;
+
     // Track swipe typing if enabled and single pointer
-    if (_config.swipe_typing_enabled && _ptrs.size() == 1 && !ptr.hasFlagsAny(FLAG_P_SLIDING))
+    if (isPotentialSwipe)
     {
       // Let handler track the swipe movement (it has access to key positions)
       _handler.onSwipeMove(x, y, _swipeRecognizer);
-      
+
       // Check if this has become a swipe typing gesture
       if (_swipeRecognizer.isSwipeTyping())
       {
@@ -327,15 +338,13 @@ public final class Pointers implements Handler.Callback
         // Cancel long press timer if swipe typing detected
         stopLongPress(ptr);
       }
-    }
-    
-    if (ptr.hasFlagsAny(FLAG_P_SLIDING))
-    {
-      ptr.sliding.onTouchMove(ptr, x, y);
+
+      // CRITICAL FIX: Skip ALL normal gesture processing for potential swipes
+      // This prevents side-key character output during swipe gestures
       return;
     }
 
-    // Skip normal gesture processing if swipe typing
+    // Skip normal gesture processing if swipe typing confirmed
     if (ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
       return;
 
