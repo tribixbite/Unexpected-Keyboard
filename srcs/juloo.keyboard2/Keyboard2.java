@@ -901,12 +901,9 @@ public class Keyboard2 extends InputMethodService
       // Update context with the selected word
       updateContext(word);
       
-      // Clear current word and suggestions
+      // Clear current word
+      // NOTE: Don't clear suggestions here - they're re-displayed after auto-insertion
       _currentWord.setLength(0);
-      if (_suggestionBar != null)
-      {
-        _suggestionBar.clearSuggestions();
-      }
     }
   }
   
