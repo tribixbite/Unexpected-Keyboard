@@ -21,7 +21,7 @@ fi
 # 1. Set up environment
 export ANDROID_HOME="$HOME/android-sdk"
 export ANDROID_SDK_ROOT="$ANDROID_HOME"
-export JAVA_HOME="/data/data/com.termux/files/usr/lib/jvm/java-17-openjdk"
+export JAVA_HOME="/data/data/com.termux/files/usr/lib/jvm/java-21-openjdk"
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH"
 
 echo "Step 1: Checking prerequisites..."
@@ -32,9 +32,9 @@ if ! java -version &>/dev/null; then
     exit 1
 fi
 
-# Check Gradle
-if ! gradle -v &>/dev/null; then
-    echo "Error: Gradle not found. Install with: pkg install gradle"
+# Check gradlew exists
+if [ ! -f "./gradlew" ]; then
+    echo "Error: gradlew not found in current directory"
     exit 1
 fi
 
@@ -51,7 +51,39 @@ if ! command -v qemu-x86_64 &>/dev/null; then
     exit 1
 fi
 
-echo "Step 2: Preparing layout resources..."
+echo "Step 2: Auto-incrementing version..."
+
+# Increment versionCode and versionName automatically
+if [ -f "build.gradle" ]; then
+    # Extract current version
+    CURRENT_CODE=$(grep -m 1 "versionCode" build.gradle | grep -o '[0-9]\+')
+    CURRENT_NAME=$(grep -m 1 'versionName "' build.gradle | sed 's/.*versionName "\(.*\)".*/\1/')
+
+    # Increment versionCode
+    NEW_CODE=$((CURRENT_CODE + 1))
+
+    # Increment versionName (patch version)
+    IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_NAME"
+    MAJOR="${VERSION_PARTS[0]}"
+    MINOR="${VERSION_PARTS[1]}"
+    PATCH="${VERSION_PARTS[2]}"
+    NEW_PATCH=$((PATCH + 1))
+    NEW_NAME="$MAJOR.$MINOR.$NEW_PATCH"
+
+    echo "  Current: versionCode $CURRENT_CODE, versionName $CURRENT_NAME"
+    echo "  New:     versionCode $NEW_CODE, versionName $NEW_NAME"
+
+    # Update build.gradle
+    sed -i "s/versionCode $CURRENT_CODE/versionCode $NEW_CODE/" build.gradle
+    sed -i "s/versionName \"$CURRENT_NAME\"/versionName \"$NEW_NAME\"/" build.gradle
+
+    echo "  ✅ Version updated in build.gradle"
+else
+    echo "  ⚠️ build.gradle not found, skipping version increment"
+fi
+
+echo
+echo "Step 3: Preparing layout resources..."
 
 # Ensure layout files are copied (gradle task sometimes doesn't run)
 if [ ! -d "build/generated-resources/xml" ] || [ -z "$(ls -A build/generated-resources/xml 2>/dev/null)" ]; then
@@ -60,7 +92,7 @@ if [ ! -d "build/generated-resources/xml" ] || [ -z "$(ls -A build/generated-res
     cp srcs/layouts/*.xml build/generated-resources/xml/ 2>/dev/null || true
 fi
 
-echo "Step 3: Cleaning previous builds..."
+echo "Step 4: Cleaning previous builds..."
 ./gradlew clean || {
     echo "Warning: Clean failed, continuing anyway..."
 }
@@ -71,7 +103,7 @@ cp srcs/layouts/*.xml build/generated-resources/xml/ 2>/dev/null || true
 
 # Determine gradle task and output path
 if [ "$BUILD_TYPE_LOWER" = "release" ]; then
-    echo "Step 4: Building Release APK..."
+    echo "Step 5: Building Release APK..."
     echo "Note: Release builds require signing configuration."
     echo "Creating a test signing key for release build..."
     
@@ -96,7 +128,7 @@ if [ "$BUILD_TYPE_LOWER" = "release" ]; then
 else
     GRADLE_TASK="assembleDebug"
     APK_PATH="build/outputs/apk/debug/juloo.keyboard2.debug.apk"
-    echo "Step 4: Building Debug APK..."
+    echo "Step 5: Building Debug APK..."
 fi
 
 echo "This may take a few minutes on first run..."
@@ -134,9 +166,9 @@ if [ -f "$APK_PATH" ]; then
         fi
     fi
     
-    # Try ADB wireless connection
+    # Try ADB connection and installation
     echo
-    echo "Step 5: Attempting ADB wireless connection..."
+    echo "Step 6: Attempting ADB connection and installation..."
     
     # Function to find and connect to ADB wireless
     connect_adb_wireless() {
@@ -217,26 +249,33 @@ if [ -f "$APK_PATH" ]; then
     # Try to connect and install via ADB
     ADB_PATH="/data/data/com.termux/files/usr/bin/adb"
     if [ -f "$ADB_PATH" ]; then
+        ADB_CONNECTED=false
+
         # Check if ADB device is already connected
         if "$ADB_PATH" devices | grep -q "device$"; then
-            echo "ADB device detected, installing directly..."
-            if "$ADB_PATH" install "$APK_PATH"; then
-                echo
-                echo "=== APK INSTALLED SUCCESSFULLY! ==="
-                echo "Direct ADB install worked!"
-                exit 0
+            echo "✅ ADB device already connected"
+            ADB_CONNECTED=true
+        else
+            echo "No ADB device connected, attempting wireless connection..."
+            if connect_adb_wireless; then
+                echo "✅ ADB wireless connection established"
+                ADB_CONNECTED=true
+            else
+                echo "❌ Could not establish ADB connection"
             fi
         fi
-        echo "No ADB device connected, scanning for wireless connections..."
-        if connect_adb_wireless; then
-            echo "Installing APK via ADB..."
-            
+
+        # If we have ADB connection, uninstall old and install new
+        if [ "$ADB_CONNECTED" = true ]; then
             # Uninstall old version if it's a debug build
             if [ "$BUILD_TYPE_LOWER" = "debug" ]; then
+                echo
                 echo "Uninstalling previous debug version..."
-                adb uninstall juloo.keyboard2.debug 2>/dev/null || true
+                adb uninstall juloo.keyboard2.debug 2>/dev/null && echo "  ✅ Old version uninstalled" || echo "  ℹ️  No previous version found"
             fi
-            
+
+            echo
+            echo "Installing new APK via ADB..."
             # Install the new APK
             if adb install -r "$APK_PATH"; then
                 echo
@@ -248,10 +287,8 @@ if [ -f "$APK_PATH" ]; then
                 echo "  2. Enable 'Unexpected Keyboard'"
                 echo "  3. Switch to it using the keyboard selector"
             else
-                echo "ADB install failed, falling back to manual installation"
+                echo "❌ ADB install failed, falling back to manual installation"
             fi
-        else
-            echo "Could not establish ADB connection"
         fi
     else
         echo "ADB not found. Install with: pkg install android-tools"
