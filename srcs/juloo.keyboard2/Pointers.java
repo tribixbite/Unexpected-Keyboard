@@ -163,6 +163,44 @@ public final class Pointers implements Handler.Callback
     stopLongPress(ptr);
     KeyValue ptr_value = ptr.value;
 
+    // Check for short gesture ONLY on touch up (not during movement)
+    // Short gesture: swipe within a single key to get directional character
+    if (_config.swipe_typing_enabled && _config.short_gestures_enabled &&
+        ptr.gesture == null && !ptr.hasLeftStartingKey &&
+        !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
+        ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char &&
+        ptr.key != null)
+    {
+      // Get the swipe path to find last position
+      java.util.List<android.graphics.PointF> swipePath = _swipeRecognizer.getSwipePath();
+      if (swipePath != null && swipePath.size() > 1)
+      {
+        // Get last point in path
+        android.graphics.PointF lastPoint = swipePath.get(swipePath.size() - 1);
+        float dx = lastPoint.x - ptr.downX;
+        float dy = lastPoint.y - ptr.downY;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        float keyHypotenuse = _handler.getKeyHypotenuse(ptr.key);
+        float minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f);
+
+        if (distance >= minDistance)
+        {
+          // Trigger short gesture - calculate direction
+          double a = Math.atan2(dy, dx) + Math.PI;
+          int direction = ((int)(a * 8 / Math.PI) + 12) % 16;
+          KeyValue gestureValue = getKeyAtDirection(ptr.key, direction);
+          if (gestureValue != null)
+          {
+            _handler.onPointerDown(gestureValue, false);
+            _handler.onPointerUp(gestureValue, ptr.modifiers);
+            _swipeRecognizer.reset();
+            removePtr(ptr);
+            return;
+          }
+        }
+      }
+    }
+
     // If we delayed character output (mightBeSwipe), output it now if it wasn't a swipe
     // This handles quick taps that were initially treated as potential swipes
     // Also reset swipe recognizer if no swipe was detected
@@ -330,7 +368,7 @@ public final class Pointers implements Handler.Callback
       return;
     }
 
-    // Track if pointer has left the starting key (for short gesture detection)
+    // Track if pointer has left the starting key (for short gesture detection on UP)
     if (ptr.key != null && !ptr.hasLeftStartingKey)
     {
       if (!_handler.isPointWithinKey(x, y, ptr.key))
@@ -339,47 +377,23 @@ public final class Pointers implements Handler.Callback
       }
     }
 
-    // CRITICAL: For potential swipe typing (single pointer on char key), check if this might be
-    // a short gesture vs swipe typing
+    // CRITICAL: For potential swipe typing, ALWAYS track path during movement
+    // Short gesture detection should only happen on touch UP, not during MOVE
     if (_config.swipe_typing_enabled && _ptrs.size() == 1 &&
         ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char)
     {
-      // Check if this qualifies as a short gesture:
-      // 1. Short gestures must be enabled
-      // 2. Pointer must never have left the starting key
-      // 3. Distance must be < configured percentage of key hypotenuse
-      boolean isShortGesture = false;
-      if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey && ptr.key != null)
-      {
-        float dx = x - ptr.downX;
-        float dy = y - ptr.downY;
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        float keyHypotenuse = _handler.getKeyHypotenuse(ptr.key);
-        float minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f);
+      // Track swipe movement for path collection
+      _handler.onSwipeMove(x, y, _swipeRecognizer);
 
-        isShortGesture = distance >= minDistance;
+      // Check if this has become a confirmed multi-key swipe typing gesture
+      if (_swipeRecognizer.isSwipeTyping())
+      {
+        ptr.flags |= FLAG_P_SWIPE_TYPING;
+        stopLongPress(ptr);
       }
 
-      if (isShortGesture)
-      {
-        // Allow normal gesture processing for short gestures
-        // Fall through to normal gesture code below
-      }
-      else
-      {
-        // Treat as potential swipe typing - track movement and skip normal gestures
-        _handler.onSwipeMove(x, y, _swipeRecognizer);
-
-        // Check if this has become a confirmed swipe typing gesture
-        if (_swipeRecognizer.isSwipeTyping())
-        {
-          ptr.flags |= FLAG_P_SWIPE_TYPING;
-          stopLongPress(ptr);
-        }
-
-        // Skip normal gesture processing for potential swipe typing
-        return;
-      }
+      // Skip normal gesture processing while tracking potential swipe
+      return;
     }
 
     // The position in a IME windows is clampled to view.
