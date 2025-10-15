@@ -2,11 +2,67 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Critical Gesture Fixes: Symbol Swipes + Swipe Reset 🎯
+
+**Issues Fixed**:
+1. Symbol swipes (short directional gestures) completely broken
+2. Swipe system not resetting - required space/backspace to detect next swipe
+
+**Root Cause #1: Overly Aggressive Gesture Suppression**
+- Previous fix suppressed ALL gestures for POTENTIAL swipes
+- Broke symbol swipes (e.g., swipe-up for @, swipe-right for numbers)
+- Problem: Returned early before swipe confirmed as multi-key path
+
+**Root Cause #2: Recognizer Not Resetting**
+- After one swipe, recognizer stayed in "active" state
+- Next potential swipe couldn't start fresh
+- Required manual intervention (space/backspace) to reset
+
+**Solutions** (Pointers.java):
+
+1. **Symbol Swipes Fixed** (onTouchMove:323-341):
+   - Only suppress gestures AFTER swipe typing confirmed (`isSwipeTyping()`)
+   - Allow normal gesture processing for potential swipes
+   - Check if recognizer confirms multi-key path before suppressing
+   ```java
+   if (_swipeRecognizer.isSwipeTyping())
+   {
+     ptr.flags |= FLAG_P_SWIPE_TYPING;
+     stopLongPress(ptr);
+     return;  // Only skip gestures AFTER confirmed
+   }
+   // Allow normal gestures if not yet confirmed as swipe
+   ```
+
+2. **Swipe Reset Fixed** (onTouchUp:169-176):
+   - Reset recognizer for non-swipes
+   - Ensures clean state for next potential swipe
+   ```java
+   if (_config.swipe_typing_enabled && ptr.gesture == null &&
+       !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
+       ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char)
+   {
+     _handler.onPointerDown(ptr_value, false);
+     _swipeRecognizer.reset();  // Clean state for next swipe
+   }
+   ```
+
+**Impact**:
+- ✅ Symbol swipes (short directional) work again
+- ✅ Consecutive swipes work immediately (no manual reset needed)
+- ✅ Swipe typing (multi-key paths) still works correctly
+
+**Version**: 1.32.24 (73) ✅ BUILD SUCCESSFUL
+**Commit**: `809c3a72` - fix(gestures): restore symbol swipes and fix swipe reset
+
+---
+
 ### Debug Build: Spacing Detection Investigation 🔍
 
 **Issue**: Auto-inserted swipe predictions not adding space between words
 - User reports: swipe "hello" + swipe "world" = "helloworld" instead of "hello world"
 - Spacing logic exists but may not be working correctly
+- **STATUS**: ⏳ AWAITING USER TESTING + LOG OUTPUT
 
 **Debug Logging Added** (Keyboard2.java:869-902):
 - Log textBefore content and length
@@ -38,10 +94,6 @@ Result: "hello world "
 2. Is trailing space preserved after first insertion?
 3. Is Termux mode enabled (different spacing rules)?
 4. Is cursor position incorrect after auto-insertion?
-
-**Recent fixes**:
-- ✅ Removed clearSuggestions() interference (commit `95a2df6f`)
-- ✅ Re-display predictions after auto-insertion
 
 **Version**: 1.32.23 (72) ✅ BUILD SUCCESSFUL (DEBUG)
 **Commits**:
