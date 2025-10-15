@@ -2,58 +2,82 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
-### Critical Gesture Fixes: Symbol Swipes + Swipe Reset 🎯
+### Complete Gesture System Overhaul: False Positives + Visual Feedback 🎯
 
 **Issues Fixed**:
-1. Symbol swipes (short directional gestures) completely broken
-2. Swipe system not resetting - required space/backspace to detect next swipe
+1. False positive gestures during swipe typing (h→i triggers "=")
+2. Swipe trail and visual feedback broken
+3. Swipe system still not resetting properly for consecutive swipes
 
-**Root Cause #1: Overly Aggressive Gesture Suppression**
-- Previous fix suppressed ALL gestures for POTENTIAL swipes
-- Broke symbol swipes (e.g., swipe-up for @, swipe-right for numbers)
-- Problem: Returned early before swipe confirmed as multi-key path
+**Root Causes**:
+1. **False Positives**: Normal gesture processing ran DURING swipe detection phase
+   - Before `isSwipeTyping()` confirmed multi-key path, gesture code executed
+   - Calculated direction, called `getNearestKeyAtDirection()`, output wrong character
+   - Example: Swiping h→i triggered "=" before swipe typing confirmed
 
-**Root Cause #2: Recognizer Not Resetting**
-- After one swipe, recognizer stayed in "active" state
-- Next potential swipe couldn't start fresh
-- Required manual intervention (space/backspace) to reset
+2. **Visual Feedback Broken**: `invalidate()` only called after swipe confirmed
+   - Keyboard2View.java line 291: `if (recognizer.isSwipeTyping()) { invalidate(); }`
+   - During initial swipe detection, trail wasn't drawn
+   - User saw no visual feedback until after gesture completed
 
-**Solutions** (Pointers.java):
+3. **Reset Issues**: Complex interaction between gesture state and swipe state
 
-1. **Symbol Swipes Fixed** (onTouchMove:323-341):
-   - Only suppress gestures AFTER swipe typing confirmed (`isSwipeTyping()`)
-   - Allow normal gesture processing for potential swipes
-   - Check if recognizer confirms multi-key path before suppressing
-   ```java
-   if (_swipeRecognizer.isSwipeTyping())
-   {
-     ptr.flags |= FLAG_P_SWIPE_TYPING;
-     stopLongPress(ptr);
-     return;  // Only skip gestures AFTER confirmed
-   }
-   // Allow normal gestures if not yet confirmed as swipe
-   ```
+**Complete Solution** (Pointers.java + Keyboard2View.java):
 
-2. **Swipe Reset Fixed** (onTouchUp:169-176):
-   - Reset recognizer for non-swipes
-   - Ensures clean state for next potential swipe
-   ```java
-   if (_config.swipe_typing_enabled && ptr.gesture == null &&
-       !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
-       ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char)
-   {
-     _handler.onPointerDown(ptr_value, false);
-     _swipeRecognizer.reset();  // Clean state for next swipe
-   }
-   ```
+**1. Comprehensive Gesture Suppression** (Pointers.java:326-351):
+```java
+// Skip normal gesture processing if already confirmed
+if (ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING))
+{
+  _handler.onSwipeMove(x, y, _swipeRecognizer);
+  return;
+}
+
+// CRITICAL: For potential swipe typing (single pointer on char key),
+// skip ALL normal gesture processing to prevent false positive symbol swipes
+if (_config.swipe_typing_enabled && _ptrs.size() == 1 &&
+    ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char)
+{
+  // Track swipe movement for visual trail and detection
+  _handler.onSwipeMove(x, y, _swipeRecognizer);
+
+  // Check if this has become a confirmed swipe typing gesture
+  if (_swipeRecognizer.isSwipeTyping())
+  {
+    ptr.flags |= FLAG_P_SWIPE_TYPING;
+    stopLongPress(ptr);
+  }
+
+  // Skip ALL normal gesture processing for potential swipes
+  return;
+}
+```
+
+**2. Always Draw Visual Trail** (Keyboard2View.java:287-293):
+```java
+public void onSwipeMove(float x, float y, ImprovedSwipeGestureRecognizer recognizer)
+{
+  KeyboardData.Key key = getKeyAtPosition(x, y);
+  recognizer.addPoint(x, y, key);
+  // Always invalidate to show visual trail, even before swipe typing confirmed
+  invalidate();
+}
+```
+
+**Key Design Decision**: Skip ALL gesture processing for ANY potential swipe typing gesture
+- Don't wait for `isSwipeTyping()` confirmation
+- Only process as normal gesture if NOT on char key OR swipe_typing disabled
+- Symbol swipes on non-char keys continue to work
 
 **Impact**:
-- ✅ Symbol swipes (short directional) work again
-- ✅ Consecutive swipes work immediately (no manual reset needed)
-- ✅ Swipe typing (multi-key paths) still works correctly
+- ✅ No more false positive gesture characters during swipe typing
+- ✅ Visual trail shows immediately as user swipes
+- ✅ Clean separation between swipe typing and normal gestures
+- ✅ Symbol swipes on special keys still work
+- ✅ Consecutive swipes work properly
 
-**Version**: 1.32.24 (73) ✅ BUILD SUCCESSFUL
-**Commit**: `809c3a72` - fix(gestures): restore symbol swipes and fix swipe reset
+**Version**: 1.32.26 (75) ✅ BUILD SUCCESSFUL
+**Commit**: `6bbfdb31` - fix(swipe): prevent false positive gestures and restore visual feedback
 
 ---
 
