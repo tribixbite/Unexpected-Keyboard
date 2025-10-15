@@ -2,6 +2,57 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### BREAKTHROUGH: Feature Extraction Completely Rewritten ✅
+
+**Problem**: Prediction was 0% working - complete failure to match cleverkeys
+- normalizedPoints padded to 150, nearestKeys NOT padded → SIZE MISMATCH
+- nearestKeys was List<Character> instead of List<Integer> (token indices)
+- No duplicate starting point filtering (Android reports same coords multiple times)
+- Wrong padding strategy (should repeat last key, not PAD tokens)
+
+**Root Cause Analysis**: Line-by-line comparison with working cleverkeys revealed:
+```kotlin
+// WORKING cleverkeys:
+val nearestKeys: List<Int>  // Token indices 4-29 for a-z
+// Pad by repeating last key
+nearestKeys + List(150 - size) { lastKey }
+
+// BROKEN Android:
+List<Character> nearestKeys  // Wrong type!
+// No padding at all → size mismatch with coordinates
+```
+
+**Solution**: Complete SwipeTrajectoryProcessor rewrite (354 lines)
+- ✅ Changed nearestKeys from List<Character> to List<Integer>
+- ✅ Both coordinates AND nearestKeys now padded to exactly 150
+- ✅ Padding repeats last key (not PAD tokens) - matches training data
+- ✅ Added filterDuplicateStartingPoints() from cleverkeys FIX #34
+- ✅ Added charToTokenIndex() for a-z → 4-29 mapping
+- ✅ Added detectKeyFromQwertyGrid() with proper staggered offsets
+- ✅ Fixed OnnxSwipePredictor.createNearestKeysTensor() to use integers
+
+**Processing Pipeline** (now matches cleverkeys exactly):
+```
+1. Filter duplicate starting points → prevents zero velocity
+2. Normalize coordinates to [0,1] → keyboard-agnostic
+3. Detect nearest keys from raw coords → integer token indices
+4. Pad both to 150 (coords with last point, keys with last key)
+5. Calculate velocities/accelerations on normalized coords → derivatives
+```
+
+**Impact**:
+- Predictions should now work (was 0% broken)
+- Feature tensors properly shaped [1, 150, 6] and [1, 150]
+- Nearest keys properly mapped to model vocabulary
+- Ready for on-device testing
+
+**Version**: 1.32.7 (56)
+**Commit**: Feature extraction rewrite
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### Critical Swipe Detection Fix + Beam Optimization ✅
 
 **Problem**: Short swipe detection was blocking long swipe predictions
