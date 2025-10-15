@@ -387,8 +387,6 @@ public class Keyboard2 extends InputMethodService
     // Re-initialize word prediction components if settings have changed
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
-                         " swipe_typing=" + _config.swipe_typing_enabled);
-      
       // Initialize predictors if not already initialized
       if (_wordPredictor == null)
       {
@@ -458,9 +456,7 @@ public class Keyboard2 extends InputMethodService
                 // CRITICAL: Also set real key positions for 100% accurate coordinate mapping
                 java.util.Map<Character, android.graphics.PointF> realKeyPositions = _keyboardView.getRealKeyPositions();
                 _neuralEngine.setRealKeyPositions(realKeyPositions);
-                
-                  keyboardWidth + "x" + keyboardHeight + " (user: " + getUserKeyboardHeightPercent() + "%)");
-                
+
                 // Remove the listener to avoid repeated calls
                 _keyboardView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
               }
@@ -773,8 +769,6 @@ public class Keyboard2 extends InputMethodService
     // Log predictions for debugging
     for (int i = 0; i < Math.min(5, predictions.size()); i++)
     {
-                                                     i + 1, predictions.get(i), 
-                                                     i < scores.size() ? scores.get(i) : 0));
     }
     
     // Update suggestion bar (scores are already integers from neural system)
@@ -1031,9 +1025,7 @@ public class Keyboard2 extends InputMethodService
       // Calculate dynamic height
       float keyboardHeightPercent = keyboardHeightPref / 100.0f;
       float calculatedHeight = metrics.heightPixels * keyboardHeightPercent;
-      
-        metrics.heightPixels + " = " + calculatedHeight + " (landscape=" + isLandscape + ", foldable=" + foldableUnfolded + ")");
-      
+
       return calculatedHeight;
       
     } catch (Exception e) {
@@ -1199,8 +1191,7 @@ public class Keyboard2 extends InputMethodService
       
       // UNIFIED PREDICTION STRATEGY: All predictions wait for gesture completion
       // This matches SwipeCalibrationActivity behavior and eliminates premature predictions
-        (swipePath != null ? swipePath.size() : 0) + " points, requesting final prediction");
-      
+
       // Cancel any pending predictions first
       if (_asyncPredictionHandler != null)
       {
@@ -1324,7 +1315,6 @@ public class Keyboard2 extends InputMethodService
       if (!cgrPredictions.isEmpty())
       {
         _suggestionBar.setSuggestions(cgrPredictions);
-          " words (final: " + areFinal + ")");
       }
       else
       {
