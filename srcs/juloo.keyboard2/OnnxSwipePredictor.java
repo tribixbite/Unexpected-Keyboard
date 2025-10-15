@@ -621,17 +621,27 @@ public class OnnxSwipePredictor
       // Simple greedy: always pick top token
       try
       {
-        // Create temporary beam state for reusable tensor update
-        BeamSearchState tempBeam = new BeamSearchState(SOS_IDX, 0.0f, false);
-        tempBeam.tokens = new ArrayList<>();
-        for (int token : tokens) {
-          tempBeam.tokens.add((long)token);
+        // Create fresh tensors like CLI test (no reusable buffers)
+        final int DECODER_SEQ_LENGTH = 20;
+
+        // Pad sequence to DECODER_SEQ_LENGTH
+        long[] tgtTokens = new long[DECODER_SEQ_LENGTH];
+        Arrays.fill(tgtTokens, PAD_IDX);
+        for (int i = 0; i < Math.min(tokens.size(), DECODER_SEQ_LENGTH); i++)
+        {
+          tgtTokens[i] = tokens.get(i);
         }
-        updateReusableTokens(tempBeam, 20);
-        
-        OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
-          java.nio.LongBuffer.wrap(_reusableTokensArray), new long[]{1, 20});
-        OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, _reusableTargetMaskArray);
+
+        // Create target mask (false = valid, true = padded)
+        boolean[][] tgtMask = new boolean[1][DECODER_SEQ_LENGTH];
+        for (int i = 0; i < DECODER_SEQ_LENGTH; i++)
+        {
+          tgtMask[0][i] = (i >= tokens.size()); // Mark padded positions
+        }
+
+        OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
+          java.nio.LongBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LENGTH});
+        OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, tgtMask);
         
         Map<String, OnnxTensor> decoderInputs = new HashMap<>();
         decoderInputs.put("memory", memory);
