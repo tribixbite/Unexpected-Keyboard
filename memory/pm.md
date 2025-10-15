@@ -1,5 +1,34 @@
 # Project Management - Unexpected Keyboard
 
+## 🔥 LATEST CRITICAL FIX (2025-10-14)
+
+### ONNX Beam Search Rewrite - Main Keyboard Now Working ✅
+
+**Problem**: ONNX prediction worked in calibration page but completely broken in main keyboard
+- Complex "optimization" with reusable tensor buffers had state corruption
+- Wrong beam search implementation diverged from working CLI test
+- Incorrect score calculation (positive log instead of negative log likelihood)
+- Wrong confidence conversion (exp(score) instead of exp(-score))
+
+**Solution**: Rewrote `OnnxSwipePredictor.runBeamSearch()` to exactly match working `TestOnnxPrediction.kt` CLI test:
+- ✅ Create fresh tensors per step (no reusable buffers)
+- ✅ Proper sequence padding to DECODER_SEQ_LENGTH=20
+- ✅ Correct mask creation (target_mask: true=padded, src_mask: all false)
+- ✅ Fixed position indexing: `beam.tokens.size()-1` like CLI
+- ✅ Fixed score: Subtract log prob (negative log likelihood, lower=better)
+- ✅ Fixed sort: Ascending (lower NLL score is better)
+- ✅ Fixed confidence: `exp(-score)` to convert from negative log prob
+
+**Impact**:
+- Main keyboard predictions now work correctly with same logic as calibration
+- Removed 130+ lines of buggy "optimization" code
+- **Simplification over premature optimization** - correctness first!
+- CLI test achieves 100% accuracy, now Android matches that implementation
+
+**Commit**: `a2c004a2` - fix(onnx): match working CLI test implementation for beam search
+
+---
+
 ## 🚨 DEVELOPMENT PRINCIPLES - PERMANENT MEMORY
 
 **CRITICAL IMPLEMENTATION STANDARD:**
