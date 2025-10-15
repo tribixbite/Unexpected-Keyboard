@@ -174,7 +174,6 @@ public class Keyboard2 extends InputMethodService
     }
     catch (IOException e)
     {
-      android.util.Log.e("Keyboard2", "Failed to open log file: " + e.getMessage());
     }
     
     // Initialize word prediction components (for both swipe and regular typing)
@@ -388,24 +387,20 @@ public class Keyboard2 extends InputMethodService
     // Re-initialize word prediction components if settings have changed
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
-      android.util.Log.d("Keyboard2", "onStartInputView: word_prediction=" + _config.word_prediction_enabled + 
                          " swipe_typing=" + _config.swipe_typing_enabled);
       
       // Initialize predictors if not already initialized
       if (_wordPredictor == null)
       {
-        android.util.Log.d("Keyboard2", "Initializing word predictor in onStartInputView");
         _dictionaryManager = new DictionaryManager(this);
         _dictionaryManager.setLanguage("en");
         _wordPredictor = new WordPredictor();
         _wordPredictor.setConfig(_config);
         _wordPredictor.loadDictionary(this, "en");
-        android.util.Log.d("Keyboard2", "Word predictor initialized with " + _wordPredictor.getDictionarySize() + " words");
       }
       
       if (_config.swipe_typing_enabled && _neuralEngine == null)
       {
-        android.util.Log.d("Keyboard2", "Initializing neural engine in onStartInputView");
         _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
         
         // Initialize async prediction handler
@@ -425,7 +420,6 @@ public class Keyboard2 extends InputMethodService
       // Create suggestion bar if needed
       if (_suggestionBar == null)
       {
-        android.util.Log.d("Keyboard2", "Creating suggestion bar in onStartInputView");
         _inputViewContainer = new LinearLayout(this);
         _inputViewContainer.setOrientation(LinearLayout.VERTICAL);
         
@@ -465,9 +459,7 @@ public class Keyboard2 extends InputMethodService
                 java.util.Map<Character, android.graphics.PointF> realKeyPositions = _keyboardView.getRealKeyPositions();
                 _neuralEngine.setRealKeyPositions(realKeyPositions);
                 
-                android.util.Log.e("Keyboard2", "✅ SET DYNAMIC KEYBOARD DIMENSIONS: " + 
                   keyboardWidth + "x" + keyboardHeight + " (user: " + getUserKeyboardHeightPercent() + "%)");
-                android.util.Log.e("Keyboard2", "✅ SET REAL KEY POSITIONS: " + realKeyPositions.size() + " keys");
                 
                 // Remove the listener to avoid repeated calls
                 _keyboardView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
@@ -479,7 +471,6 @@ public class Keyboard2 extends InputMethodService
     }
     else
     {
-      android.util.Log.d("Keyboard2", "Predictions disabled in settings");
       // Clean up if predictions are disabled
       _wordPredictor = null;
       // CGR recognizer cleanup handled by SwipeTypingEngine
@@ -762,7 +753,6 @@ public class Keyboard2 extends InputMethodService
       _wordPredictor.addWordToContext(word);
     }
     
-    android.util.Log.d("Keyboard2", "Context updated: " + _contextWords);
   }
   
   /**
@@ -770,11 +760,9 @@ public class Keyboard2 extends InputMethodService
    */
   private void handlePredictionResults(List<String> predictions, List<Integer> scores)
   {
-    android.util.Log.d("Keyboard2", "Got " + predictions.size() + " async predictions");
     
     if (predictions.isEmpty())
     {
-      android.util.Log.d("Keyboard2", "No predictions to show");
       if (_suggestionBar != null)
       {
         _suggestionBar.clearSuggestions();
@@ -785,7 +773,6 @@ public class Keyboard2 extends InputMethodService
     // Log predictions for debugging
     for (int i = 0; i < Math.min(5, predictions.size()); i++)
     {
-      android.util.Log.d("Keyboard2", String.format("Neural Prediction %d: %s (score: %d)", 
                                                      i + 1, predictions.get(i), 
                                                      i < scores.size() ? scores.get(i) : 0));
     }
@@ -793,22 +780,18 @@ public class Keyboard2 extends InputMethodService
     // Update suggestion bar (scores are already integers from neural system)
     if (_suggestionBar != null)
     {
-      android.util.Log.d("Keyboard2", "Setting neural suggestions in bar: " + predictions);
       _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
       _suggestionBar.setSuggestionsWithScores(predictions, scores);
-      android.util.Log.d("Keyboard2", "===== ASYNC SWIPE PREDICTION END =====");
     }
   }
   
   @Override
   public void onSuggestionSelected(String word)
   {
-    android.util.Log.d("Keyboard2", "===== onSuggestionSelected called with: '" + word + "' =====");
 
     // Null/empty check
     if (word == null || word.trim().isEmpty())
     {
-      android.util.Log.w("Keyboard2", "Ignoring null/empty word selection");
       return;
     }
 
@@ -816,7 +799,6 @@ public class Keyboard2 extends InputMethodService
     if (_adaptationManager != null)
     {
       _adaptationManager.recordSelection(word.trim());
-      android.util.Log.d("Keyboard2", "Recorded user selection for adaptation: " + word.trim());
     }
     
     // Store ML data if this was a swipe prediction selection
@@ -850,7 +832,6 @@ public class Keyboard2 extends InputMethodService
       // Store the ML data
       _mlDataStore.storeSwipeData(mlData);
       
-      android.util.Log.d("Keyboard2", "Stored ML data for swipe selection: " + word);
     }
     
     // Reset swipe tracking
@@ -888,7 +869,6 @@ public class Keyboard2 extends InputMethodService
         catch (Exception e)
         {
           // If getTextBeforeCursor fails, assume we don't need space before
-          android.util.Log.w("Keyboard2", "Failed to get text before cursor: " + e.getMessage());
           needsSpaceBefore = false;
         }
 
@@ -905,13 +885,10 @@ public class Keyboard2 extends InputMethodService
           textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
         }
 
-        android.util.Log.d("Keyboard2", "Inserting prediction: '" + textToInsert + "' (length: " + textToInsert.length() + ")");
         ic.commitText(textToInsert, 1);
-        android.util.Log.d("Keyboard2", "Commit complete");
       }
       catch (Exception e)
       {
-        android.util.Log.e("Keyboard2", "Failed to insert prediction: " + e.getMessage(), e);
       }
       
       // Update context with the selected word
@@ -933,30 +910,25 @@ public class Keyboard2 extends InputMethodService
   {
     if (!_config.word_prediction_enabled || _wordPredictor == null || _suggestionBar == null)
     {
-      android.util.Log.d("Keyboard2", "Regular typing predictions disabled or not initialized");
       return;
     }
       
-    android.util.Log.d("Keyboard2", "handleRegularTyping: '" + text + "'");
     
     // Track current word being typed
     if (text.length() == 1 && Character.isLetter(text.charAt(0)))
     {
       _currentWord.append(text);
-      android.util.Log.d("Keyboard2", "Current word: " + _currentWord.toString());
       updatePredictionsForCurrentWord();
     }
     else if (text.length() == 1 && !Character.isLetter(text.charAt(0)))
     {
       // Any non-letter character - update context and reset current word
-      android.util.Log.d("Keyboard2", "Non-letter character '" + text + "' detected");
       
       // If we had a word being typed, add it to context before clearing
       if (_currentWord.length() > 0)
       {
         String completedWord = _currentWord.toString();
         updateContext(completedWord);
-        android.util.Log.d("Keyboard2", "Added word to context: " + completedWord);
       }
       
       // Reset current word
@@ -973,7 +945,6 @@ public class Keyboard2 extends InputMethodService
     else if (text.length() > 1)
     {
       // Multi-character input (paste, etc) - reset
-      android.util.Log.d("Keyboard2", "Multi-character input, resetting predictor");
       _currentWord.setLength(0);
       if (_wordPredictor != null)
       {
@@ -1013,7 +984,6 @@ public class Keyboard2 extends InputMethodService
     if (_currentWord.length() > 0)
     {
       String partial = _currentWord.toString();
-      android.util.Log.d("Keyboard2", "Updating predictions for: " + partial + " with context: " + _contextWords);
       
       // Use contextual prediction
       WordPredictor.PredictionResult result = _wordPredictor.predictWordsWithContext(partial, _contextWords);
@@ -1062,13 +1032,11 @@ public class Keyboard2 extends InputMethodService
       float keyboardHeightPercent = keyboardHeightPref / 100.0f;
       float calculatedHeight = metrics.heightPixels * keyboardHeightPercent;
       
-      android.util.Log.e("Keyboard2", "📏 DYNAMIC HEIGHT CALC: " + keyboardHeightPref + "% of " + 
         metrics.heightPixels + " = " + calculatedHeight + " (landscape=" + isLandscape + ", foldable=" + foldableUnfolded + ")");
       
       return calculatedHeight;
       
     } catch (Exception e) {
-      android.util.Log.e("Keyboard2", "Failed to calculate dynamic height: " + e.getMessage());
       // Fallback to view height
       return _keyboardView.getHeight();
     }
@@ -1100,31 +1068,34 @@ public class Keyboard2 extends InputMethodService
   }
   
   // Called by Keyboard2View when swipe typing completes
-  public void handleSwipeTyping(List<KeyboardData.Key> swipedKeys, 
+  public void handleSwipeTyping(List<KeyboardData.Key> swipedKeys,
                                 List<android.graphics.PointF> swipePath,
                                 List<Long> timestamps)
   {
-    android.util.Log.e("Keyboard2", "🚨 ===== SWIPE PREDICTION START ===== 🚨");
-    android.util.Log.e("Keyboard2", "handleSwipeTyping called with " + swipedKeys.size() + " keys and " + swipePath.size() + " path points");
+    // CRITICAL FIX: Auto-insert middle prediction from previous swipe before starting new swipe
+    // This enables rapid consecutive swiping without manual taps
+    if (_suggestionBar != null && _suggestionBar.hasSuggestions())
+    {
+      String middlePrediction = _suggestionBar.getMiddleSuggestion();
+      if (middlePrediction != null && !middlePrediction.isEmpty())
+      {
+        // Auto-insert the middle prediction
+        onSuggestionSelected(middlePrediction);
+      }
+    }
     
     // COORDINATE DEBUGGING: Log detailed coordinate information
     if (swipePath.size() > 0) {
       android.graphics.PointF first = swipePath.get(0);
       android.graphics.PointF last = swipePath.get(swipePath.size() - 1);
-      android.util.Log.e("Keyboard2", "📍 RAW SWIPE COORDINATES:");
-      android.util.Log.e("Keyboard2", "- Swipe path: (" + first.x + "," + first.y + ") → (" + last.x + "," + last.y + ")");
-      android.util.Log.e("Keyboard2", "- Keyboard dimensions: " + (_keyboardView != null ? _keyboardView.getWidth() + "x" + _keyboardView.getHeight() : "unknown"));
-      android.util.Log.e("Keyboard2", "- Screen metrics: " + getResources().getDisplayMetrics().widthPixels + "x" + getResources().getDisplayMetrics().heightPixels);
       
       // Log first few points for analysis
       for (int i = 0; i < Math.min(5, swipePath.size()); i++) {
         android.graphics.PointF p = swipePath.get(i);
-        android.util.Log.e("Keyboard2", "  Point " + i + ": (" + p.x + "," + p.y + ")");
       }
     }
     
     // CRITICAL: Log detected keys to compare with calibration
-    android.util.Log.e("Keyboard2", "🔤 DETECTED KEYS:");
     StringBuilder detectedKeySeq = new StringBuilder();
     for (int i = 0; i < swipedKeys.size(); i++) {
       KeyboardData.Key key = swipedKeys.get(i);
@@ -1132,19 +1103,14 @@ public class Keyboard2 extends InputMethodService
         // Use key's string representation for debugging
         String keyStr = key.toString();
         detectedKeySeq.append(keyStr).append(" ");
-        android.util.Log.e("Keyboard2", "  Key " + i + ": " + keyStr);
       } else {
-        android.util.Log.e("Keyboard2", "  Key " + i + ": NULL");
       }
     }
-    android.util.Log.e("Keyboard2", "🔤 KEY SEQUENCE: " + detectedKeySeq.toString());
     
     if (!_config.swipe_typing_enabled)
     {
-      android.util.Log.e("Keyboard2", "❌ SWIPE TYPING DISABLED IN CONFIG");
       return;
     } else {
-      android.util.Log.e("Keyboard2", "✅ Swipe typing enabled, proceeding...");
     }
     
     if (_neuralEngine == null)
@@ -1152,7 +1118,6 @@ public class Keyboard2 extends InputMethodService
       // Fallback to word predictor if engine not initialized
       if (_wordPredictor == null)
       {
-        android.util.Log.d("Keyboard2", "No prediction engine available");
         return;
       }
       // Initialize engine on the fly
@@ -1210,8 +1175,6 @@ public class Keyboard2 extends InputMethodService
       }
     }
     
-    android.util.Log.d("Keyboard2", "Key sequence: " + keySequence.toString());
-    android.util.Log.d("Keyboard2", "Dictionary size: " + (_wordPredictor != null ? _wordPredictor.getDictionarySize() : 0));
     
     // Log to file for analysis
     if (_logWriter != null)
@@ -1223,7 +1186,6 @@ public class Keyboard2 extends InputMethodService
       }
       catch (IOException e)
       {
-        android.util.Log.e("Keyboard2", "Failed to write to log: " + e.getMessage());
       }
     }
     
@@ -1237,7 +1199,6 @@ public class Keyboard2 extends InputMethodService
       
       // UNIFIED PREDICTION STRATEGY: All predictions wait for gesture completion
       // This matches SwipeCalibrationActivity behavior and eliminates premature predictions
-      android.util.Log.d("Keyboard2", "🎯 Gesture completion: " + 
         (swipePath != null ? swipePath.size() : 0) + " points, requesting final prediction");
       
       // Cancel any pending predictions first
@@ -1262,7 +1223,6 @@ public class Keyboard2 extends InputMethodService
           @Override
           public void onPredictionError(String error)
           {
-            android.util.Log.e("Keyboard2", "Prediction error: " + error);
             // Clear suggestions on error
             if (_suggestionBar != null)
             {
@@ -1279,15 +1239,11 @@ public class Keyboard2 extends InputMethodService
       long predictionTime = System.currentTimeMillis() - startTime;
       List<String> predictions = result.words;
       
-      android.util.Log.d("Keyboard2", "Got " + predictions.size() + " predictions in " + predictionTime + "ms");
       if (predictions.size() > 0)
       {
-        android.util.Log.d("Keyboard2", "Predictions: " + predictions.toString());
-        android.util.Log.d("Keyboard2", "Scores: " + result.scores.toString());
       }
       else
       {
-        android.util.Log.d("Keyboard2", "NO PREDICTIONS FOUND for sequence: " + keySequence.toString());
       }
       
       // Log predictions to file
@@ -1301,17 +1257,14 @@ public class Keyboard2 extends InputMethodService
         }
         catch (IOException e)
         {
-          android.util.Log.e("Keyboard2", "Failed to write predictions to log: " + e.getMessage());
         }
       }
       
       // Show suggestions in the bar
       if (_suggestionBar != null && !predictions.isEmpty())
       {
-        android.util.Log.d("Keyboard2", "Setting suggestions in bar: " + predictions);
         _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
         _suggestionBar.setSuggestionsWithScores(predictions, result.scores);
-        android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION END =====");
         
         // Auto-commit the first suggestion if confidence is high
         if (predictions.size() > 0)
@@ -1322,15 +1275,11 @@ public class Keyboard2 extends InputMethodService
       }
       else
       {
-        android.util.Log.d("Keyboard2", "_suggestionBar is " + (_suggestionBar == null ? "null" : "not null"));
-        android.util.Log.d("Keyboard2", "predictions.isEmpty() = " + predictions.isEmpty());
-        android.util.Log.d("Keyboard2", "===== SWIPE PREDICTION END (no display) =====");
       }
       } // Close fallback else block
     }
     else
     {
-      android.util.Log.d("Keyboard2", "Empty key sequence");
     }
   }
 
@@ -1355,7 +1304,6 @@ public class Keyboard2 extends InputMethodService
       if (!cgrPredictions.isEmpty())
       {
         _suggestionBar.setSuggestions(cgrPredictions);
-        android.util.Log.d("Keyboard2", "Displaying CGR predictions: " + cgrPredictions.size() + " words - " + cgrPredictions);
       }
     }
   }
@@ -1376,14 +1324,12 @@ public class Keyboard2 extends InputMethodService
       if (!cgrPredictions.isEmpty())
       {
         _suggestionBar.setSuggestions(cgrPredictions);
-        android.util.Log.d("Keyboard2", "Updated CGR predictions: " + cgrPredictions.size() + 
           " words (final: " + areFinal + ")");
       }
       else
       {
         // Show empty suggestions but keep bar visible
         _suggestionBar.setSuggestions(new ArrayList<>());
-        android.util.Log.d("Keyboard2", "No CGR predictions - showing empty bar");
       }
     }
   }
@@ -1396,7 +1342,6 @@ public class Keyboard2 extends InputMethodService
     if (_suggestionBar != null && predictions != null && !predictions.isEmpty())
     {
       _suggestionBar.setSuggestions(predictions);
-      android.util.Log.d("Keyboard2", "CGR real-time predictions updated: " + predictions.size() + " words");
     }
   }
   
@@ -1408,11 +1353,9 @@ public class Keyboard2 extends InputMethodService
     if (_suggestionBar != null && finalPredictions != null && !finalPredictions.isEmpty())
     {
       _suggestionBar.setSuggestions(finalPredictions);
-      android.util.Log.d("Keyboard2", "CGR final predictions completed: " + finalPredictions.size() + " words");
     }
     else
     {
-      android.util.Log.d("Keyboard2", "No CGR predictions to display");
     }
   }
   
@@ -1425,7 +1368,6 @@ public class Keyboard2 extends InputMethodService
     {
       // Don't actually clear - just show empty suggestions to keep bar visible
       _suggestionBar.setSuggestions(new ArrayList<>());
-      android.util.Log.d("Keyboard2", "CGR predictions cleared (bar kept visible)");
     }
   }
   

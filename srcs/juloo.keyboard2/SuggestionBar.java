@@ -295,6 +295,31 @@ public class SuggestionBar extends LinearLayout
   }
   
   /**
+   * Check if there are any suggestions currently displayed
+   */
+  public boolean hasSuggestions()
+  {
+    return _currentSuggestions != null && !_currentSuggestions.isEmpty();
+  }
+
+  /**
+   * Get the middle suggestion (index 2 for 5 suggestions, or first if fewer)
+   * Used for auto-insertion on consecutive swipes
+   */
+  public String getMiddleSuggestion()
+  {
+    if (_currentSuggestions == null || _currentSuggestions.isEmpty())
+    {
+      return null;
+    }
+
+    // Return middle suggestion (index 2 for 5 suggestions)
+    // Or first suggestion if we have fewer than 3
+    int middleIndex = Math.min(2, _currentSuggestions.size() / 2);
+    return _currentSuggestions.get(middleIndex);
+  }
+
+  /**
    * Convert dp to pixels
    */
   private int dpToPx(Context context, int dp)
