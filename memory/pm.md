@@ -2,6 +2,42 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Critical UX Fix: Auto-Insert Space Before Predictions 🔧
+
+**Problem**: Predictions appending without spaces
+- Swipe "hello" then swipe "world" → "helloworld"
+- No space detection before inserting prediction
+- Bad UX when typing consecutive words
+
+**Solution**: Intelligent space insertion
+- ✅ Check previous character with getTextBeforeCursor()
+- ✅ Auto-insert space if prev char is not whitespace
+- ✅ Respect punctuation context (brackets, parens, etc)
+- ✅ Works in both normal and Termux modes
+
+**Code Logic**:
+```java
+CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+if (textBefore != null && textBefore.length() > 0) {
+  char prevChar = textBefore.charAt(0);
+  needsSpaceBefore = !Character.isWhitespace(prevChar) &&
+                     prevChar != '(' && prevChar != '[' && prevChar != '{';
+}
+String textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
+```
+
+**Impact**:
+- Natural spacing between consecutive predictions
+- No more "helloworld" concatenations
+- Better UX for swipe typing workflow
+
+**Version**: 1.32.13 (62)
+**Commit**: `8c8fa85f` - fix(ux): auto-insert space before prediction if needed
+
+---
+
+## 🔥 PREVIOUS UPDATES (2025-10-15)
+
 ### Vocabulary Loading & Filtering Optimized - Critical Performance Wins ⚡
 
 **Problem**: Inefficient vocabulary loading and hot-path lookups
