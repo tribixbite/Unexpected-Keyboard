@@ -2,7 +2,81 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
-### CRITICAL FIX: Neural Engine Key Detection Failure + Short Gestures 🎯
+### CRITICAL FIX #2: Lifecycle Timing - setNeuralKeyboardLayout Running Too Early 🎯
+
+**Version**: 1.32.42 (91) ✅ BUILD SUCCESSFUL
+
+**Root Cause Discovered** (with Gemini's help): The `setNeuralKeyboardLayout()` method was being called at the wrong lifecycle point!
+
+**The Problem**:
+```
+User typed "feathers" (8 letters)
+Detected: "fh" (2 keys)
+No debug logs from setNeuralKeyboardLayout() appeared
+```
+
+**Investigation**:
+1. Added comprehensive debug logging to `setNeuralKeyboardLayout()`
+2. None of the logs appeared in debug output
+3. Gemini analysis revealed: **timing issue**
+
+**Root Cause**:
+- `onCreate()` called `setNeuralKeyboardLayout()` at line 215
+- At that point, `_keyboardView` inflated but **NOT YET LAID OUT**
+- `_keyboardView.getWidth()` and `getHeight()` returned **0**
+- Neural engine received **0x0 keyboard layout**
+- All key positions calculated as (0, 0) → completely useless!
+
+**Why Debug Logs Missing**:
+- `setNeuralKeyboardLayout()` ran in `onCreate()` before `_debugMode` enabled
+- `_debugModeReceiver` registered later (line 243)
+- `sendDebugLog()` returned early because `_debugMode == false`
+- System logcat had the logs, but debug activity didn't
+
+**The Solution**:
+
+1. **Removed premature call from onCreate()** (line 215):
+   ```java
+   // OLD:
+   _neuralEngine.setKeyboardDimensions(width, height);
+   setNeuralKeyboardLayout();  // ❌ width/height are 0!
+
+   // NEW:
+   android.util.Log.d("Keyboard2", "Neural engine initialized - dimensions and key positions will be set after layout");
+   ```
+
+2. **Moved to OnGlobalLayoutListener in onStartInputView** (line 515):
+   ```java
+   public void onGlobalLayout() {
+     if (_keyboardView.getWidth() > 0 && _keyboardView.getHeight() > 0) {
+       float keyboardWidth = _keyboardView.getWidth();  // ✅ Real dimensions!
+       float keyboardHeight = calculateDynamicKeyboardHeight();
+
+       _neuralEngine.setKeyboardDimensions(keyboardWidth, keyboardHeight);
+
+       // CRITICAL: Set real key positions for 100% accurate coordinate mapping
+       setNeuralKeyboardLayout();  // ✅ Runs AFTER layout with valid dimensions!
+
+       _keyboardView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+     }
+   }
+   ```
+
+3. **Removed fallback from handleSwipeTyping** (line 1246):
+   - No longer needed - properly initialized in onStartInputView
+
+**Expected Results**:
+- ✅ `setNeuralKeyboardLayout()` runs with dimensions 1080x903 (not 0x0)
+- ✅ Debug logs will appear: ">>> setNeuralKeyboardLayout() CALLED"
+- ✅ ~26 letter keys extracted with correct pixel positions
+- ✅ "feathers" should detect all 8 keys: f-e-a-t-h-e-r-s (not just "fh")
+- ✅ Neural predictions should finally work at calibration quality!
+
+**Commit**: `ddccf69f` - fix(swipe): move setNeuralKeyboardLayout to correct lifecycle point
+
+---
+
+### CRITICAL FIX #1: Neural Engine Key Detection Failure + Short Gestures 🎯
 
 **Version**: 1.32.40 (89) ✅ BUILD SUCCESSFUL
 
