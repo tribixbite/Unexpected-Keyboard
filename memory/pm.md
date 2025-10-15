@@ -4,6 +4,13 @@
 
 ### Swipe Pipeline Debug Activity 🐛
 
+**Update (v1.32.34 - 83)**: Fixed broadcast communication issues
+- ✅ Added explicit package names to broadcasts (required for Android inter-component communication)
+- ✅ Removed useless empty code blocks and loops
+- ✅ Cleaned up handleSwipeTyping and handlePredictionResults
+- **Issue**: Broadcasts weren't reaching between keyboard service and debug activity
+- **Solution**: Added `intent.setPackage(getPackageName())` to both broadcast directions
+
 **New Feature**: Comprehensive real-time debugging for swipe typing pipeline
 
 **Created Components**:
@@ -52,8 +59,10 @@
 - ✅ Realistic testing with actual keyboard input
 - ✅ Professional dark mode UI
 
-**Version**: 1.32.33 (82) ✅ BUILD SUCCESSFUL
-**Commit**: `77e6d7e2` - feat(debug): add comprehensive swipe pipeline debug activity
+**Version**: 1.32.34 (83) ✅ BUILD SUCCESSFUL
+**Commits**:
+- `77e6d7e2` - feat(debug): add comprehensive swipe pipeline debug activity
+- `1368040a` - fix(debug): fix broadcast communication and clean up useless code
 
 ---
 
