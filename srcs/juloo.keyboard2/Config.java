@@ -226,8 +226,10 @@ public final class Config
     
     // Neural swipe prediction configuration
     neural_prediction_enabled = _prefs.getBoolean("neural_prediction_enabled", true);
-    neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 8);
-    neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);
+    // Mobile-optimized defaults: 3 beams, max 20 chars (was 8 beams, 35 chars)
+    // This reduces decoder inferences from 280 to 60 per swipe for 5x speedup
+    neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 3);
+    neural_max_length = safeGetInt(_prefs, "neural_max_length", 20);
     neural_confidence_threshold = _prefs.getFloat("neural_confidence_threshold", 0.1f);
     termux_mode_enabled = _prefs.getBoolean("termux_mode_enabled", false);
 

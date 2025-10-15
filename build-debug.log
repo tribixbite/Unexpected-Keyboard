@@ -14,33 +14,34 @@ Generated version info:  ()
 > Task :preBuild
 > Task :preDebugBuild
 > Task :mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :javaPreCompileDebug
+> Task :javaPreCompileDebug FROM-CACHE
+> Task :generateDebugResValues FROM-CACHE
 > Task :checkDebugAarMetadata
-> Task :generateDebugResValues
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
-> Task :extractDeepLinksDebug
-> Task :parseDebugLocalResources
+> Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest
 > Task :mergeDebugResources
+> Task :parseDebugLocalResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
+> Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
-> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
-> Task :compressDebugAssets
-> Task :mergeDebugJavaResource
-> Task :desugarDebugFileDependencies
+> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :mergeLibDexDebug
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
+> Task :mergeDebugJavaResource
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -63,7 +64,6 @@ Generated version info:  ()
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
-> Task :mergeExtDexDebug
 
 > Task :compileDebugJavaWithJavac
 Java compiler version 21 has deprecated support for compiling with source/target version 8.
@@ -78,3 +78,15 @@ warning: [options] target value 8 is obsolete and will be removed in a future re
 warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+3 warnings
+
+> Task :dexBuilderDebug
+> Task :mergeProjectDexDebug
+> Task :packageDebug
+> Task :createDebugApkListingFileRedirect
+> Task :assembleDebug
+
+BUILD SUCCESSFUL in 24s
+34 actionable tasks: 27 executed, 7 from cache

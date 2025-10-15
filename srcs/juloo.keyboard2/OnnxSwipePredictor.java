@@ -39,8 +39,11 @@ public class OnnxSwipePredictor
   private static final float NORMALIZED_HEIGHT = 1.0f;
   
   // Beam search parameters - standard defaults that respect playground settings
-  private static final int DEFAULT_BEAM_WIDTH = 8; // Standard beam width
-  private static final int DEFAULT_MAX_LENGTH = 35; // Standard max length  
+  // MOBILE-OPTIMIZED: Lower defaults for better performance on mobile devices
+  // beam_width=8 * max_length=35 = 280 decoder inferences per swipe (too slow!)
+  // beam_width=3 * max_length=20 = 60 decoder inferences per swipe (much faster)
+  private static final int DEFAULT_BEAM_WIDTH = 3; // Mobile-optimized: 3 beams (was 8)
+  private static final int DEFAULT_MAX_LENGTH = 20; // Mobile-optimized: max 20 chars (was 35)  
   private static final float DEFAULT_CONFIDENCE_THRESHOLD = 0.1f;
   
   // Proper beam search parameters - no aggressive optimizations that break quality
@@ -950,7 +953,10 @@ public class OnnxSwipePredictor
     for (int step = 0; step < maxLength; step++)
     {
       List<BeamSearchState> candidates = new ArrayList<>();
-      logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
+      // PERFORMANCE: Only log every 5th step to reduce overhead
+      if (step % 5 == 0) {
+        logDebug("🔄 Beam search step " + step + " with " + beams.size() + " beams");
+      }
 
       for (BeamSearchState beam : beams)
       {
@@ -962,7 +968,8 @@ public class OnnxSwipePredictor
 
         try
         {
-          logDebug("   🔍 Starting decoder step for beam with " + beam.tokens.size() + " tokens");
+          // PERFORMANCE: Skip per-beam logging (too verbose for mobile)
+          // logDebug("   🔍 Starting decoder step for beam with " + beam.tokens.size() + " tokens");
 
           // CRITICAL: Pad sequence to DECODER_SEQ_LENGTH (matches CLI line 165)
           long[] tgtTokens = new long[DECODER_SEQ_LENGTH];
@@ -992,14 +999,10 @@ public class OnnxSwipePredictor
           long tensorTime = (System.nanoTime() - tensorStart) / 1_000_000;
           totalTensorTime += tensorTime;
 
-          logDebug("   ⏱️ Tensor creation: " + tensorTime + "ms");
-
-          // Log decoder tensor shapes
-          logDebug("🔧 Decoder input tensor shapes:");
-          logDebug("   memory: " + java.util.Arrays.toString(memory.getInfo().getShape()));
-          logDebug("   target_tokens: " + java.util.Arrays.toString(targetTokensTensor.getInfo().getShape()));
-          logDebug("   target_mask: " + java.util.Arrays.toString(targetMaskTensor.getInfo().getShape()) + " (BOOL)");
-          logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensorLocal.getInfo().getShape()) + " (BOOL)");
+          // PERFORMANCE: Skip detailed per-beam logging
+          // logDebug("   ⏱️ Tensor creation: " + tensorTime + "ms");
+          // logDebug("🔧 Decoder input tensor shapes:");
+          // ...
 
           // Run decoder - matches CLI lines 184-189
           long inferenceStart = System.nanoTime();
@@ -1012,21 +1015,24 @@ public class OnnxSwipePredictor
           OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
           long inferenceTime = (System.nanoTime() - inferenceStart) / 1_000_000;
           totalInferenceTime += inferenceTime;
-          logDebug("   ⏱️ Inference: " + inferenceTime + "ms");
+          // PERFORMANCE: Skip per-inference timing logs
+          // logDebug("   ⏱️ Inference: " + inferenceTime + "ms");
           OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
 
           // Handle 3D logits tensor [1, seq_len, vocab_size] - matches CLI line 192
           Object logitsValue = logitsTensor.getValue();
           float[][][] logits3D = (float[][][]) logitsValue;
-          logDebug("   Logits 3D dimensions: [" + logits3D.length + "][" + logits3D[0].length + "][" +
-            (logits3D[0].length > 0 ? logits3D[0][0].length : "N/A") + "]");
+          // PERFORMANCE: Skip shape logging
+          // logDebug("   Logits 3D dimensions: [" + logits3D.length + "][" + logits3D[0].length + "][" +
+          //   (logits3D[0].length > 0 ? logits3D[0][0].length : "N/A") + "]");
 
           // Get logits for last valid position - matches CLI line 200
           int currentPos = beam.tokens.size() - 1;
           if (currentPos >= 0 && currentPos < DECODER_SEQ_LENGTH)
           {
             float[] vocabLogits = logits3D[0][currentPos];
-            logDebug("   Accessing position " + currentPos + ", vocab length: " + vocabLogits.length);
+            // PERFORMANCE: Skip position logging
+            // logDebug("   Accessing position " + currentPos + ", vocab length: " + vocabLogits.length);
 
             // Apply softmax - matches CLI lines 204-215
             float[] probs = new float[vocabSize];
@@ -1047,16 +1053,9 @@ public class OnnxSwipePredictor
 
             // Get top k tokens - matches CLI lines 218-221
             int[] topK = getTopKIndices(probs, beamWidth);
-            logDebug("   Top " + beamWidth + " tokens: " + java.util.Arrays.toString(topK));
-
-            // Show token details
-            StringBuilder tokenDetails = new StringBuilder("   Token details: ");
-            for (int i = 0; i < Math.min(5, topK.length); i++) {
-              int tokenIdx = topK[i];
-              char ch = _tokenizer.indexToChar(tokenIdx);
-              tokenDetails.append(tokenIdx).append("='").append(ch).append("' ");
-            }
-            logDebug(tokenDetails.toString());
+            // PERFORMANCE: Skip token details logging (very verbose)
+            // logDebug("   Top " + beamWidth + " tokens: " + java.util.Arrays.toString(topK));
+            // ...token details...
 
             // Create new beams - matches CLI lines 223-226
             for (int idx : topK)
