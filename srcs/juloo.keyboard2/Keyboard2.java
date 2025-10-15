@@ -210,6 +210,9 @@ public class Keyboard2 extends InputMethodService
           int height = _keyboardView.getHeight();
           android.util.Log.d("Keyboard2", String.format("Setting neural engine dimensions: %dx%d", width, height));
           _neuralEngine.setKeyboardDimensions(width, height);
+
+          // CRITICAL: Set real key positions for neural key detection
+          setNeuralKeyboardLayout();
         }
         else
         {
@@ -1238,6 +1241,9 @@ public class Keyboard2 extends InputMethodService
         int height = _keyboardView.getHeight();
         android.util.Log.d("Keyboard2", String.format("Setting neural engine dimensions (handleSwipeTyping): %dx%d", width, height));
         _neuralEngine.setKeyboardDimensions(width, height);
+
+        // CRITICAL: Set real key positions for neural key detection
+        setNeuralKeyboardLayout();
       }
       else
       {
@@ -1480,6 +1486,94 @@ public class Keyboard2 extends InputMethodService
       _suggestionBar.setSuggestions(new ArrayList<>());
     }
   }
-  
+
+  /**
+   * Extract key positions from keyboard layout and set them on neural engine.
+   * CRITICAL for neural swipe typing - without this, key detection fails completely!
+   */
+  private void setNeuralKeyboardLayout()
+  {
+    if (_neuralEngine == null || _keyboardView == null)
+    {
+      return;
+    }
+
+    try
+    {
+      // Use reflection to access _keyboard field from Keyboard2View
+      java.lang.reflect.Field keyboardField = _keyboardView.getClass().getDeclaredField("_keyboard");
+      keyboardField.setAccessible(true);
+      KeyboardData keyboard = (KeyboardData) keyboardField.get(_keyboardView);
+
+      if (keyboard == null)
+      {
+        android.util.Log.w("Keyboard2", "Cannot extract key positions - keyboard data is null");
+        return;
+      }
+
+      // Extract key positions
+      java.util.Map<Character, android.graphics.PointF> keyPositions = new java.util.HashMap<>();
+
+      float keyboardWidth = _keyboardView.getWidth();
+      float keyboardHeight = _keyboardView.getHeight();
+
+      // Calculate scale factors
+      float scaleX = keyboardWidth / keyboard.keysWidth;
+      float scaleY = keyboardHeight / keyboard.keysHeight;
+
+      // Track Y position as we iterate through rows
+      float currentY = 0;
+
+      for (KeyboardData.Row row : keyboard.rows)
+      {
+        // Add top shift/margin for this row
+        currentY += row.shift * scaleY;
+
+        // Center Y of this row
+        float centerY = currentY + (row.height * scaleY / 2.0f);
+
+        // Track X position as we iterate through keys in row
+        float currentX = 0;
+
+        for (KeyboardData.Key key : row.keys)
+        {
+          // Add left shift/margin for this key
+          currentX += key.shift * scaleX;
+
+          // Only process single character keys
+          if (key.keys != null && key.keys.length > 0 && key.keys[0] != null)
+          {
+            KeyValue kv = key.keys[0];
+            if (kv.getKind() == KeyValue.Kind.Char)
+            {
+              char c = kv.getChar();
+              // Calculate center X position
+              float centerX = currentX + (key.width * scaleX / 2.0f);
+              keyPositions.put(c, new android.graphics.PointF(centerX, centerY));
+            }
+          }
+
+          // Move to next key position
+          currentX += key.width * scaleX;
+        }
+
+        // Move to next row position
+        currentY += row.height * scaleY;
+      }
+
+      android.util.Log.d("Keyboard2", "Extracted " + keyPositions.size() + " key positions for neural engine");
+
+      // DEBUG: Log sample of key positions
+      sendDebugLog(String.format("Set %d key positions on neural engine\n", keyPositions.size()));
+
+      // Set the real key positions on the neural engine
+      _neuralEngine.setRealKeyPositions(keyPositions);
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("Keyboard2", "Failed to extract key positions", e);
+    }
+  }
+
   // Removed reloadCGRParameters method - causing crashes
 }

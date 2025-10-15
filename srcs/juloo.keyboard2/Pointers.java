@@ -186,8 +186,8 @@ public final class Pointers implements Handler.Callback
         if (distance >= minDistance)
         {
           // Trigger short gesture - calculate direction
-          double a = Math.atan2(dy, dx) + Math.PI;
-          int direction = ((int)(a * 8 / Math.PI) + 12) % 16;
+          double a = Math.atan2(dy, dx);
+          int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
           KeyValue gestureValue = getKeyAtDirection(ptr.key, direction);
           if (gestureValue != null)
           {
