@@ -2,6 +2,59 @@
 
 ## 🔥 LATEST UPDATES (2025-10-15)
 
+### Prediction Tap Replacement + Configurable Short Gestures 🎯
+
+**Major Features Implemented**:
+1. Tapping prediction now REPLACES auto-inserted word (not append)
+2. Configurable short gesture detection with precise boundary checking
+3. Settings to enable/disable and adjust gesture sensitivity
+
+**Issue 1: Predictions Appending Instead of Replacing**
+- User swipes → "hello" auto-inserted → taps different prediction → "helloworld"
+- Expected: Replace "hello" with new selection
+- Solution: Track last auto-inserted word, delete it before inserting new selection
+
+**Issue 2: Short Gestures Need Configuration**
+- User wants control over short gestures (swipe-up for @, etc.)
+- Need distance threshold as percentage of key diagonal (10-95%)
+- Must only trigger if swipe stays within same key boundary
+
+**Implementation**:
+
+**1. Prediction Replacement Logic** (Keyboard2.java):
+- Track auto-inserted word: `private String _lastAutoInsertedWord = null;`
+- Mark for replacement when auto-inserting (line 789)
+- Delete before inserting new selection (lines 869-893)
+- Calculate delete count including trailing/leading spaces
+- Clear tracking on new swipe (line 1117)
+
+**2. Config Settings** (Config.java:89-90, 232-233):
+- `short_gestures_enabled`: Enable/disable short gestures (default: true)
+- `short_gesture_min_distance`: 10-95% of key hypotenuse (default: 30%)
+
+**3. Boundary Checking** (Keyboard2View.java:314-385):
+- `isPointWithinKey()`: Check if point within key's bounding box
+- `getKeyHypotenuse()`: Calculate key diagonal length
+- Find key in layout, calculate bounds, check coordinates
+
+**4. Smart Detection** (Pointers.java:333-383):
+- Track `hasLeftStartingKey` flag in Pointer class
+- Check boundary during every move event
+- Calculate distance vs configured percentage of hypotenuse
+- Allow short gesture if: enabled + stayed in bounds + met distance threshold
+
+**Impact**:
+- ✅ Tap any prediction to replace auto-inserted word
+- ✅ Configurable short gesture sensitivity (10-95%)
+- ✅ Option to fully disable short gestures
+- ✅ Precise boundary checking prevents false triggers
+- ✅ Clean UX for correcting auto-insertions
+
+**Version**: 1.32.29 (78) ✅ BUILD SUCCESSFUL
+**Commit**: `aa77bc36` - feat(swipe): tap prediction replaces auto-insert + configurable short gestures
+
+---
+
 ### Complete Gesture System Overhaul: False Positives + Visual Feedback 🎯
 
 **Issues Fixed**:
