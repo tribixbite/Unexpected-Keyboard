@@ -303,6 +303,18 @@ public class SuggestionBar extends LinearLayout
   }
 
   /**
+   * Get the top (highest scoring) suggestion for auto-insertion
+   */
+  public String getTopSuggestion()
+  {
+    if (_currentSuggestions == null || _currentSuggestions.isEmpty())
+    {
+      return null;
+    }
+    return _currentSuggestions.get(0);
+  }
+
+  /**
    * Get the middle suggestion (index 2 for 5 suggestions, or first if fewer)
    * Used for auto-insertion on consecutive swipes
    */

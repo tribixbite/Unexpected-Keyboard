@@ -840,13 +840,13 @@ public class Keyboard2 extends InputMethodService
       _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
       _suggestionBar.setSuggestionsWithScores(predictions, scores);
 
-      // Auto-insert middle prediction immediately after swipe completes
+      // Auto-insert top (highest scoring) prediction immediately after swipe completes
       // This enables rapid consecutive swiping without manual taps
-      String middlePrediction = _suggestionBar.getMiddleSuggestion();
-      if (middlePrediction != null && !middlePrediction.isEmpty())
+      String topPrediction = _suggestionBar.getTopSuggestion();
+      if (topPrediction != null && !topPrediction.isEmpty())
       {
         // DEBUG: Log auto-insertion
-        sendDebugLog(String.format("Auto-inserting: \"%s\"\n", middlePrediction));
+        sendDebugLog(String.format("Auto-inserting top prediction: \"%s\"\n", topPrediction));
 
         // CRITICAL: Clear auto-inserted tracking BEFORE calling onSuggestionSelected
         // This prevents the deletion logic from removing the previous auto-inserted word
@@ -854,10 +854,10 @@ public class Keyboard2 extends InputMethodService
         _lastAutoInsertedWord = null;
 
         // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
-        onSuggestionSelected(middlePrediction);
+        onSuggestionSelected(topPrediction);
 
         // NOW track this as auto-inserted so tapping another suggestion will replace ONLY this word
-        _lastAutoInsertedWord = middlePrediction;
+        _lastAutoInsertedWord = topPrediction;
 
         // CRITICAL: Re-display suggestions after auto-insertion
         // User can still tap a different prediction if the auto-inserted one was wrong
