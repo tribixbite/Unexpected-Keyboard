@@ -845,14 +845,19 @@ public class Keyboard2 extends InputMethodService
       String middlePrediction = _suggestionBar.getMiddleSuggestion();
       if (middlePrediction != null && !middlePrediction.isEmpty())
       {
-        // Track this as auto-inserted so tapping another suggestion will replace it
-        _lastAutoInsertedWord = middlePrediction;
-
         // DEBUG: Log auto-insertion
         sendDebugLog(String.format("Auto-inserting: \"%s\"\n", middlePrediction));
 
+        // CRITICAL: Clear auto-inserted tracking BEFORE calling onSuggestionSelected
+        // This prevents the deletion logic from removing the previous auto-inserted word
+        // For consecutive swipes, we want to APPEND words, not replace them
+        _lastAutoInsertedWord = null;
+
         // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
         onSuggestionSelected(middlePrediction);
+
+        // NOW track this as auto-inserted so tapping another suggestion will replace ONLY this word
+        _lastAutoInsertedWord = middlePrediction;
 
         // CRITICAL: Re-display suggestions after auto-insertion
         // User can still tap a different prediction if the auto-inserted one was wrong

@@ -165,14 +165,32 @@ public final class Pointers implements Handler.Callback
 
     // Check for short gesture ONLY on touch up (not during movement)
     // Short gesture: swipe within a single key to get directional character
+
+    // DEBUG: Log short gesture check
+    android.util.Log.d("Pointers", ">>> SHORT GESTURE CHECK onTouchUp <<<");
+    android.util.Log.d("Pointers", "swipe_typing_enabled: " + _config.swipe_typing_enabled);
+    android.util.Log.d("Pointers", "short_gestures_enabled: " + _config.short_gestures_enabled);
+    android.util.Log.d("Pointers", "ptr.gesture: " + ptr.gesture);
+    android.util.Log.d("Pointers", "hasLeftStartingKey: " + ptr.hasLeftStartingKey);
+    android.util.Log.d("Pointers", "FLAGS: SLIDING=" + ptr.hasFlagsAny(FLAG_P_SLIDING) +
+                       " SWIPE_TYPING=" + ptr.hasFlagsAny(FLAG_P_SWIPE_TYPING) +
+                       " LATCHED=" + ptr.hasFlagsAny(FLAG_P_LATCHED));
+    android.util.Log.d("Pointers", "ptr_value: " + ptr_value + " (kind: " +
+                       (ptr_value != null ? ptr_value.getKind() : "null") + ")");
+    android.util.Log.d("Pointers", "ptr.key: " + ptr.key);
+
     if (_config.swipe_typing_enabled && _config.short_gestures_enabled &&
         ptr.gesture == null && !ptr.hasLeftStartingKey &&
         !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
         ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char &&
         ptr.key != null)
     {
+      android.util.Log.d("Pointers", ">>> Short gesture conditions PASSED, checking distance");
+
       // Get the swipe path to find last position
       java.util.List<android.graphics.PointF> swipePath = _swipeRecognizer.getSwipePath();
+      android.util.Log.d("Pointers", "swipePath: " + (swipePath != null ? swipePath.size() + " points" : "null"));
+
       if (swipePath != null && swipePath.size() > 1)
       {
         // Get last point in path
@@ -183,22 +201,46 @@ public final class Pointers implements Handler.Callback
         float keyHypotenuse = _handler.getKeyHypotenuse(ptr.key);
         float minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f);
 
+        android.util.Log.d("Pointers", String.format("Distance: %.1f, Min: %.1f (hyp=%.1f * %.0f%%)",
+                           distance, minDistance, keyHypotenuse, _config.short_gesture_min_distance));
+
         if (distance >= minDistance)
         {
           // Trigger short gesture - calculate direction
           double a = Math.atan2(dy, dx);
           int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
+          android.util.Log.d("Pointers", String.format("Direction: %d (angle=%.2f°)", direction, Math.toDegrees(a)));
+
           KeyValue gestureValue = getKeyAtDirection(ptr.key, direction);
+          android.util.Log.d("Pointers", "gestureValue: " + gestureValue);
+
           if (gestureValue != null)
           {
+            android.util.Log.d("Pointers", ">>> SHORT GESTURE TRIGGERED: " + gestureValue);
             _handler.onPointerDown(gestureValue, false);
             _handler.onPointerUp(gestureValue, ptr.modifiers);
             _swipeRecognizer.reset();
             removePtr(ptr);
             return;
           }
+          else
+          {
+            android.util.Log.d("Pointers", ">>> SHORT GESTURE BLOCKED: gestureValue is null");
+          }
+        }
+        else
+        {
+          android.util.Log.d("Pointers", ">>> SHORT GESTURE BLOCKED: distance too short");
         }
       }
+      else
+      {
+        android.util.Log.d("Pointers", ">>> SHORT GESTURE BLOCKED: swipePath invalid");
+      }
+    }
+    else
+    {
+      android.util.Log.d("Pointers", ">>> SHORT GESTURE BLOCKED: conditions failed");
     }
 
     // If we delayed character output (mightBeSwipe), output it now if it wasn't a swipe

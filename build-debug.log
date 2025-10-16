@@ -27,7 +27,6 @@ Generated version info:  ()
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :mergeDebugShaders
-> Task :processDebugManifestForPackage
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
@@ -37,6 +36,7 @@ Generated version info:  ()
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
@@ -96,5 +96,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 34s
+BUILD SUCCESSFUL in 37s
 34 actionable tasks: 27 executed, 7 from cache
