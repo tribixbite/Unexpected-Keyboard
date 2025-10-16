@@ -15,16 +15,16 @@ Generated version info:  ()
 > Task :preDebugBuild
 > Task :mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :javaPreCompileDebug FROM-CACHE
-> Task :generateDebugResValues FROM-CACHE
 > Task :checkDebugAarMetadata
+> Task :generateDebugResValues FROM-CACHE
 > Task :mapDebugSourceSetPaths
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :mergeDebugResources
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -32,16 +32,16 @@ Generated version info:  ()
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :processDebugManifestForPackage
 > Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
-> Task :mergeDebugJavaResource
 > Task :writeDebugSigningConfigVersions
+> Task :mergeDebugJavaResource
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -96,5 +96,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 37s
+BUILD SUCCESSFUL in 29s
 34 actionable tasks: 27 executed, 7 from cache

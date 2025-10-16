@@ -1471,136 +1471,112 @@ public class Keyboard2 extends InputMethodService
    */
   private void setNeuralKeyboardLayout()
   {
-    android.util.Log.d("Keyboard2", ">>> setNeuralKeyboardLayout() CALLED <<<");
-    sendDebugLog(">>> setNeuralKeyboardLayout() CALLED\n");
-
-    if (_neuralEngine == null)
+    if (_neuralEngine == null || _keyboardView == null)
     {
-      android.util.Log.w("Keyboard2", ">>> ERROR: neural engine is null");
-      sendDebugLog(">>> ERROR: neural engine is null\n");
+      android.util.Log.w("Keyboard2", "Cannot set neural layout - engine or view is null");
       return;
     }
 
-    if (_keyboardView == null)
-    {
-      android.util.Log.w("Keyboard2", ">>> ERROR: keyboard view is null");
-      sendDebugLog(">>> ERROR: keyboard view is null\n");
-      return;
-    }
+    java.util.Map<Character, android.graphics.PointF> keyPositions = extractKeyPositionsFromLayout();
 
+    if (keyPositions != null && !keyPositions.isEmpty())
+    {
+      _neuralEngine.setRealKeyPositions(keyPositions);
+      android.util.Log.d("Keyboard2", "Set " + keyPositions.size() + " key positions on neural engine");
+
+      // Debug output only when debug mode is active
+      if (_debugMode)
+      {
+        sendDebugLog(String.format(">>> Neural engine: %d key positions set\n", keyPositions.size()));
+
+        // Log sample positions
+        if (keyPositions.containsKey('q') && keyPositions.containsKey('a') && keyPositions.containsKey('z'))
+        {
+          android.graphics.PointF qPos = keyPositions.get('q');
+          android.graphics.PointF aPos = keyPositions.get('a');
+          android.graphics.PointF zPos = keyPositions.get('z');
+          sendDebugLog(String.format(">>> Samples: q=(%.0f,%.0f) a=(%.0f,%.0f) z=(%.0f,%.0f)\n",
+            qPos.x, qPos.y, aPos.x, aPos.y, zPos.x, zPos.y));
+        }
+      }
+    }
+    else
+    {
+      android.util.Log.e("Keyboard2", "Failed to extract key positions from layout");
+    }
+  }
+
+  /**
+   * Extract character key positions from the keyboard layout using reflection.
+   * Returns a map of character -> center point (in pixels), or null on error.
+   */
+  private java.util.Map<Character, android.graphics.PointF> extractKeyPositionsFromLayout()
+  {
     try
     {
-      // Use reflection to access _keyboard field from Keyboard2View
-      android.util.Log.d("Keyboard2", ">>> Attempting reflection...");
-      sendDebugLog(">>> Attempting reflection to get keyboard data...\n");
-
+      // Use reflection to access keyboard data from view
       java.lang.reflect.Field keyboardField = _keyboardView.getClass().getDeclaredField("_keyboard");
       keyboardField.setAccessible(true);
       KeyboardData keyboard = (KeyboardData) keyboardField.get(_keyboardView);
 
       if (keyboard == null)
       {
-        android.util.Log.w("Keyboard2", ">>> ERROR: keyboard data is null after reflection");
-        sendDebugLog(">>> ERROR: keyboard data is null after reflection\n");
-        return;
+        android.util.Log.w("Keyboard2", "Keyboard data is null after reflection");
+        return null;
       }
 
-      android.util.Log.d("Keyboard2", ">>> Reflection successful!");
-      sendDebugLog(">>> Reflection successful!\n");
-
-      // Extract key positions
-      java.util.Map<Character, android.graphics.PointF> keyPositions = new java.util.HashMap<>();
-
+      // Get view dimensions
       float keyboardWidth = _keyboardView.getWidth();
       float keyboardHeight = _keyboardView.getHeight();
 
-      android.util.Log.d("Keyboard2", String.format(">>> Keyboard dimensions: %.0fx%.0f", keyboardWidth, keyboardHeight));
-      sendDebugLog(String.format(">>> Keyboard dimensions: %.0fx%.0f\n", keyboardWidth, keyboardHeight));
+      if (keyboardWidth == 0 || keyboardHeight == 0)
+      {
+        android.util.Log.w("Keyboard2", "Keyboard dimensions are zero");
+        return null;
+      }
 
-      // Calculate scale factors
+      // Calculate scale factors (layout units -> pixels)
       float scaleX = keyboardWidth / keyboard.keysWidth;
       float scaleY = keyboardHeight / keyboard.keysHeight;
 
-      android.util.Log.d("Keyboard2", String.format(">>> Scale factors: %.3f x %.3f", scaleX, scaleY));
-      sendDebugLog(String.format(">>> Scale: %.3fx%.3f, Layout: %.1fx%.1f\n",
-        scaleX, scaleY, keyboard.keysWidth, keyboard.keysHeight));
-
-      // Track Y position as we iterate through rows
+      // Extract center positions of all character keys
+      java.util.Map<Character, android.graphics.PointF> keyPositions = new java.util.HashMap<>();
       float currentY = 0;
-      int rowNum = 0;
 
       for (KeyboardData.Row row : keyboard.rows)
       {
-        // Add top shift/margin for this row
         currentY += row.shift * scaleY;
-
-        // Center Y of this row
         float centerY = currentY + (row.height * scaleY / 2.0f);
-
-        // Track X position as we iterate through keys in row
         float currentX = 0;
-        int keyNum = 0;
 
         for (KeyboardData.Key key : row.keys)
         {
-          // Add left shift/margin for this key
           currentX += key.shift * scaleX;
 
-          // Only process single character keys
+          // Only process character keys
           if (key.keys != null && key.keys.length > 0 && key.keys[0] != null)
           {
             KeyValue kv = key.keys[0];
             if (kv.getKind() == KeyValue.Kind.Char)
             {
               char c = kv.getChar();
-              // Calculate center X position
               float centerX = currentX + (key.width * scaleX / 2.0f);
               keyPositions.put(c, new android.graphics.PointF(centerX, centerY));
-
-              // Log first key of each row for debugging
-              if (keyNum == 0)
-              {
-                android.util.Log.d("Keyboard2", String.format(">>> Row %d first key '%c' at (%.1f, %.1f)",
-                  rowNum, c, centerX, centerY));
-              }
-              keyNum++;
             }
           }
 
-          // Move to next key position
           currentX += key.width * scaleX;
         }
 
-        // Move to next row position
         currentY += row.height * scaleY;
-        rowNum++;
       }
 
-      android.util.Log.d("Keyboard2", ">>> Extracted " + keyPositions.size() + " key positions");
-      sendDebugLog(String.format(">>> Extracted %d key positions\n", keyPositions.size()));
-
-      // Log sample positions for verification
-      if (keyPositions.containsKey('q') && keyPositions.containsKey('a') && keyPositions.containsKey('z'))
-      {
-        android.graphics.PointF qPos = keyPositions.get('q');
-        android.graphics.PointF aPos = keyPositions.get('a');
-        android.graphics.PointF zPos = keyPositions.get('z');
-        sendDebugLog(String.format(">>> Sample positions: q=(%.0f,%.0f) a=(%.0f,%.0f) z=(%.0f,%.0f)\n",
-          qPos.x, qPos.y, aPos.x, aPos.y, zPos.x, zPos.y));
-      }
-
-      // Set the real key positions on the neural engine
-      android.util.Log.d("Keyboard2", ">>> Calling _neuralEngine.setRealKeyPositions()");
-      sendDebugLog(">>> Calling setRealKeyPositions() on neural engine...\n");
-      _neuralEngine.setRealKeyPositions(keyPositions);
-
-      android.util.Log.d("Keyboard2", ">>> setRealKeyPositions() completed successfully");
-      sendDebugLog(">>> setRealKeyPositions() COMPLETED ✓\n");
+      return keyPositions;
     }
     catch (Exception e)
     {
-      android.util.Log.e("Keyboard2", ">>> EXCEPTION in setNeuralKeyboardLayout", e);
-      sendDebugLog(String.format(">>> EXCEPTION: %s: %s\n", e.getClass().getSimpleName(), e.getMessage()));
+      android.util.Log.e("Keyboard2", "Failed to extract key positions", e);
+      return null;
     }
   }
 
