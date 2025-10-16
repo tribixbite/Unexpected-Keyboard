@@ -2,6 +2,58 @@
 
 ## 🔥 LATEST UPDATES (2025-10-16)
 
+### Termux Mode Spacing Fix 🔧
+
+**Version**: 1.32.53 (102) ✅ BUILD SUCCESSFUL
+
+**User Report**: "newly swiped words are getting added correctly except they should be inserted with a space after the word" ... "oh i am using termux maybe thats why"
+
+**Issue**: Consecutive swipes in Termux mode were not separated by spaces because Termux mode disables trailing spaces for terminal compatibility.
+
+**Root Cause Analysis**:
+
+Termux mode (lines 989-992) was designed to omit trailing spaces for better terminal compatibility:
+```java
+if (_config.termux_mode_enabled) {
+  // No trailing space - terminals handle this better
+  textToInsert = needsSpaceBefore ? " " + word : word;
+}
+```
+
+This makes sense for **regular typing** in terminals, but for **swipe predictions**, users expect automatic spacing like in normal mode.
+
+**The Solution**:
+
+Added `isSwipeAutoInsert` flag to distinguish swipe auto-insertion from regular typing:
+
+```java
+// Keyboard2.java:889 - Capture flag before it gets reset
+boolean isSwipeAutoInsert = _wasLastInputSwipe;
+
+// Lines 989-1001 - Modified spacing logic
+if (_config.termux_mode_enabled && !isSwipeAutoInsert)
+{
+  // Termux mode (non-swipe): Insert word without automatic space
+  textToInsert = needsSpaceBefore ? " " + word : word;
+}
+else
+{
+  // Normal mode OR swipe in Termux: Insert word with space after
+  textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
+}
+```
+
+**Now**:
+- Regular typing in Termux mode: No trailing spaces (terminal-friendly)
+- Swipe typing in Termux mode: Trailing spaces added (better UX)
+- All other modes: Unchanged behavior
+
+**Also Added**: Debug logging to show which spacing mode is active
+
+**Commit**: `e03c2c2b` - fix(swipe): add trailing spaces for swipe predictions in Termux mode
+
+---
+
 ### Code Cleanup & Refactoring 🧹
 
 **Version**: 1.32.45 (94) ✅ BUILD SUCCESSFUL
