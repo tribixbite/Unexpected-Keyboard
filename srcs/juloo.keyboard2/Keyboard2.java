@@ -884,9 +884,12 @@ public class Keyboard2 extends InputMethodService
     {
       _adaptationManager.recordSelection(word.trim());
     }
-    
+
+    // CRITICAL: Save swipe flag before resetting for use in spacing logic below
+    boolean isSwipeAutoInsert = _wasLastInputSwipe;
+
     // Store ML data if this was a swipe prediction selection
-    if (_wasLastInputSwipe && _currentSwipeData != null && _mlDataStore != null)
+    if (isSwipeAutoInsert && _currentSwipeData != null && _mlDataStore != null)
     {
       // Create a new ML data object with the selected word
       android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -983,17 +986,21 @@ public class Keyboard2 extends InputMethodService
 
         // Commit the selected word - use Termux mode if enabled
         String textToInsert;
-        if (_config.termux_mode_enabled)
+        if (_config.termux_mode_enabled && !isSwipeAutoInsert)
         {
-          // Termux mode: Insert word without automatic space for better terminal compatibility
+          // Termux mode (non-swipe): Insert word without automatic space for better terminal compatibility
           textToInsert = needsSpaceBefore ? " " + word : word;
+          android.util.Log.d("Keyboard2", "TERMUX MODE (non-swipe): textToInsert = '" + textToInsert + "'");
         }
         else
         {
-          // Normal mode: Insert word with space after (and before if needed)
+          // Normal mode OR swipe in Termux: Insert word with space after (and before if needed)
+          // For swipe typing, we always add trailing spaces even in Termux mode for better UX
           textToInsert = needsSpaceBefore ? " " + word + " " : word + " ";
+          android.util.Log.d("Keyboard2", "NORMAL/SWIPE MODE: textToInsert = '" + textToInsert + "' (needsSpaceBefore=" + needsSpaceBefore + ", isSwipe=" + isSwipeAutoInsert + ")");
         }
 
+        android.util.Log.d("Keyboard2", "Committing text: '" + textToInsert + "' (length=" + textToInsert.length() + ")");
         ic.commitText(textToInsert, 1);
       }
       catch (Exception e)
