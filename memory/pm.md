@@ -2,6 +2,35 @@
 
 ## 🔥 LATEST UPDATES (2025-10-16)
 
+### Code Cleanup & Refactoring 🧹
+
+**Version**: 1.32.45 (94) ✅ BUILD SUCCESSFUL
+
+**User Request**: "any code cleanup or modularization you want to do"
+
+**Changes**:
+
+1. **Refactored `setNeuralKeyboardLayout()`** (Keyboard2.java:1472-1581):
+   - Split 130+ line method into two focused methods
+   - Created `extractKeyPositionsFromLayout()` helper (separation of concerns)
+   - Conditionalized debug output on `_debugMode` flag
+   - Reduced from ~150 lines to ~110 lines total
+
+2. **Cleaned up short gesture logging** (Pointers.java:166-205):
+   - Reduced from 75 lines of verbose debug output to single success log
+   - Removed condition-checking logs that fired on every touch up
+   - Kept only meaningful log when gesture actually triggers
+
+**Benefits**:
+- Better code organization and maintainability
+- Easier to test extraction logic independently
+- Reduced logcat noise from excessive debug output
+- Preserved all functionality while improving clarity
+
+**Commit**: `328c90b3` - refactor(swipe): modularize neural layout and reduce debug logging
+
+---
+
 ### CRITICAL FIX #3: Consecutive Swipes Replacing Previous Words 🔧
 
 **Version**: 1.32.44 (93) ✅ BUILD SUCCESSFUL
