@@ -1,5 +1,6 @@
 package juloo.keyboard2;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import java.util.ArrayList;
@@ -30,13 +31,15 @@ public final class Pointers implements Handler.Callback
   private ArrayList<Pointer> _ptrs = new ArrayList<Pointer>();
   private IPointerEventHandler _handler;
   private Config _config;
+  private GestureClassifier _gestureClassifier;
   public final EnhancedSwipeGestureRecognizer _swipeRecognizer;
 
-  public Pointers(IPointerEventHandler h, Config c)
+  public Pointers(IPointerEventHandler h, Config c, Context context)
   {
     _longpress_handler = new Handler(this);
     _handler = h;
     _config = c;
+    _gestureClassifier = new GestureClassifier(context);
     _swipeRecognizer = new EnhancedSwipeGestureRecognizer();
   }
 
@@ -163,57 +166,84 @@ public final class Pointers implements Handler.Callback
     stopLongPress(ptr);
     KeyValue ptr_value = ptr.value;
 
-    // Check for short gesture ONLY on touch up (not during movement)
-    // Short gesture: swipe within a single key to get directional character
-    if (_config.swipe_typing_enabled && _config.short_gestures_enabled &&
-        ptr.gesture == null && !ptr.hasLeftStartingKey &&
+    // UNIFIED GESTURE CLASSIFICATION: Use GestureClassifier to decide TAP vs SWIPE
+    // This eliminates race conditions between multiple prediction systems
+    if (_config.swipe_typing_enabled && ptr.gesture == null &&
         !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
         ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char &&
         ptr.key != null)
     {
-      // Get the swipe path to find last position
+      // Collect gesture data for classification
       java.util.List<android.graphics.PointF> swipePath = _swipeRecognizer.getSwipePath();
+      float totalDistance = 0.0f;
 
       if (swipePath != null && swipePath.size() > 1)
       {
-        // Get last point in path
-        android.graphics.PointF lastPoint = swipePath.get(swipePath.size() - 1);
-        float dx = lastPoint.x - ptr.downX;
-        float dy = lastPoint.y - ptr.downY;
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        float keyHypotenuse = _handler.getKeyHypotenuse(ptr.key);
-        float minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f);
-
-        if (distance >= minDistance)
+        // Calculate total path distance
+        for (int i = 1; i < swipePath.size(); i++)
         {
-          // Trigger short gesture - calculate direction
-          double a = Math.atan2(dy, dx);
-          int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
-          KeyValue gestureValue = getKeyAtDirection(ptr.key, direction);
-
-          if (gestureValue != null)
-          {
-            android.util.Log.d("Pointers", "Short gesture: " + gestureValue + " (dir=" + direction + ")");
-            _handler.onPointerDown(gestureValue, false);
-            _handler.onPointerUp(gestureValue, ptr.modifiers);
-            _swipeRecognizer.reset();
-            removePtr(ptr);
-            return;
-          }
+          android.graphics.PointF p1 = swipePath.get(i - 1);
+          android.graphics.PointF p2 = swipePath.get(i);
+          float dx = p2.x - p1.x;
+          float dy = p2.y - p1.y;
+          totalDistance += (float) Math.sqrt(dx * dx + dy * dy);
         }
       }
-    }
 
-    // If we delayed character output (mightBeSwipe), output it now if it wasn't a swipe
-    // This handles quick taps that were initially treated as potential swipes
-    // Also reset swipe recognizer if no swipe was detected
-    if (_config.swipe_typing_enabled && ptr.gesture == null &&
-        !ptr.hasFlagsAny(FLAG_P_SLIDING | FLAG_P_SWIPE_TYPING | FLAG_P_LATCHED) &&
-        ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char)
-    {
-      _handler.onPointerDown(ptr_value, false);
-      // CRITICAL: Reset swipe recognizer if it wasn't actually a swipe
-      _swipeRecognizer.reset();
+      long timeElapsed = System.currentTimeMillis() - ptr.downTime;
+      float keyWidth = _handler.getKeyWidth(ptr.key);
+
+      GestureClassifier.GestureData gestureData = new GestureClassifier.GestureData(
+        ptr.hasLeftStartingKey,
+        totalDistance,
+        timeElapsed,
+        keyWidth
+      );
+
+      GestureClassifier.GestureType gestureType = _gestureClassifier.classify(gestureData);
+
+      if (gestureType == GestureClassifier.GestureType.SWIPE)
+      {
+        // This is a swipe gesture - send to neural predictor
+        _handler.onSwipeEnd(_swipeRecognizer);
+        _swipeRecognizer.reset();
+        removePtr(ptr);
+        return;
+      }
+      else
+      {
+        // This is a TAP - check for short gesture (within-key directional swipe)
+        if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey && swipePath != null && swipePath.size() > 1)
+        {
+          android.graphics.PointF lastPoint = swipePath.get(swipePath.size() - 1);
+          float dx = lastPoint.x - ptr.downX;
+          float dy = lastPoint.y - ptr.downY;
+          float distance = (float) Math.sqrt(dx * dx + dy * dy);
+          float keyHypotenuse = _handler.getKeyHypotenuse(ptr.key);
+          float minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f);
+
+          if (distance >= minDistance)
+          {
+            // Trigger short gesture - calculate direction
+            double a = Math.atan2(dy, dx);
+            int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
+            KeyValue gestureValue = getKeyAtDirection(ptr.key, direction);
+
+            if (gestureValue != null)
+            {
+              _handler.onPointerDown(gestureValue, false);
+              _handler.onPointerUp(gestureValue, ptr.modifiers);
+              _swipeRecognizer.reset();
+              removePtr(ptr);
+              return;
+            }
+          }
+        }
+
+        // Regular TAP - output the key character
+        _handler.onPointerDown(ptr_value, false);
+        _swipeRecognizer.reset();
+      }
     }
     if (ptr.gesture != null && ptr.gesture.is_in_progress())
     {
@@ -676,6 +706,8 @@ public final class Pointers implements Handler.Callback
     public KeyValue value;
     public float downX;
     public float downY;
+    /** Time when touch began (for gesture classification). */
+    public long downTime;
     /** Modifier flags at the time the key was pressed. */
     public Modifiers modifiers;
     /** See [FLAG_P_*] flags. */
@@ -695,6 +727,7 @@ public final class Pointers implements Handler.Callback
       value = v;
       downX = x;
       downY = y;
+      downTime = System.currentTimeMillis();
       modifiers = m;
       flags = f;
       timeoutWhat = -1;
@@ -955,5 +988,8 @@ public final class Pointers implements Handler.Callback
 
     /** Get the hypotenuse (diagonal length) of a key in pixels. */
     public float getKeyHypotenuse(KeyboardData.Key key);
+
+    /** Get the width of a key in pixels. */
+    public float getKeyWidth(KeyboardData.Key key);
   }
 }

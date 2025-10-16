@@ -77,6 +77,9 @@ public class Keyboard2 extends InputMethodService
   // Track auto-inserted word for replacement
   private String _lastAutoInsertedWord = null;
 
+  // Track source of last committed text for context-aware deletion
+  private PredictionSource _lastCommitSource = PredictionSource.UNKNOWN;
+
   // User adaptation
   private UserAdaptationManager _adaptationManager;
 
@@ -852,12 +855,14 @@ public class Keyboard2 extends InputMethodService
         // This prevents the deletion logic from removing the previous auto-inserted word
         // For consecutive swipes, we want to APPEND words, not replace them
         _lastAutoInsertedWord = null;
+        _lastCommitSource = PredictionSource.UNKNOWN; // Temporarily clear
 
         // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
         onSuggestionSelected(topPrediction);
 
         // NOW track this as auto-inserted so tapping another suggestion will replace ONLY this word
         _lastAutoInsertedWord = topPrediction;
+        _lastCommitSource = PredictionSource.NEURAL_SWIPE;
 
         // CRITICAL: Re-display suggestions after auto-insertion
         // User can still tap a different prediction if the auto-inserted one was wrong
@@ -940,9 +945,11 @@ public class Keyboard2 extends InputMethodService
           }
         }
 
-        // CRITICAL: If we just auto-inserted a word, delete it for replacement
+        // CRITICAL: If we just auto-inserted a word from neural swipe, delete it for replacement
         // This allows user to tap a different prediction instead of appending
-        if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty())
+        // Only delete if the last commit was from neural swipe (not from other sources)
+        if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty() &&
+            _lastCommitSource == PredictionSource.NEURAL_SWIPE)
         {
           // Calculate how many characters to delete (word + space after it)
           int deleteCount = _lastAutoInsertedWord.length();
@@ -962,8 +969,9 @@ public class Keyboard2 extends InputMethodService
             ic.deleteSurroundingText(1, 0);
           }
 
-          // Clear the tracking variable
+          // Clear the tracking variables
           _lastAutoInsertedWord = null;
+          _lastCommitSource = PredictionSource.UNKNOWN;
         }
 
         // Add space before word if previous character isn't whitespace
@@ -1002,14 +1010,21 @@ public class Keyboard2 extends InputMethodService
 
         android.util.Log.d("Keyboard2", "Committing text: '" + textToInsert + "' (length=" + textToInsert.length() + ")");
         ic.commitText(textToInsert, 1);
+
+        // Track that this commit was from candidate selection (manual tap)
+        // Note: Auto-insertions set this separately to NEURAL_SWIPE
+        if (_lastCommitSource != PredictionSource.NEURAL_SWIPE)
+        {
+          _lastCommitSource = PredictionSource.CANDIDATE_SELECTION;
+        }
       }
       catch (Exception e)
       {
       }
-      
+
       // Update context with the selected word
       updateContext(word);
-      
+
       // Clear current word
       // NOTE: Don't clear suggestions here - they're re-displayed after auto-insertion
       _currentWord.setLength(0);

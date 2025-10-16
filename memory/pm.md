@@ -2,6 +2,116 @@
 
 ## 🔥 LATEST UPDATES (2025-10-16)
 
+### Architectural Refactor: Unified Gesture Classification 🏗️
+
+**Version**: 1.32.56 (105) ✅ BUILD SUCCESSFUL
+
+**User Reports**:
+1. "selecting a prediction from the non nn non onnx prediction list deletes recently swiped input"
+2. Conflicting prediction logic between multiple systems
+3. Short swipes like 'me' incorrectly insert 'm' while showing 'me' in predictions
+
+**Root Cause Analysis** (validated by Gemini 2.5 Pro via zen mcp thinkdeep):
+
+Three critical architectural issues were identified:
+
+1. **Dead Code System**: RealTimeSwipePredictor (CGR-based) was initialized but NEVER used for predictions - pure dead code consuming resources and causing confusion
+
+2. **Threshold Race Condition**: Parallel gesture classification in Pointers.java created threshold gap:
+   - Neural system: 100px fixed threshold
+   - Short gesture: Dynamic threshold based on key size
+   - Result: Short swipes like "me" fell between systems, triggering both
+
+3. **No Prediction Source Tracking**: Deletion logic couldn't distinguish between:
+   - Auto-inserted swipe predictions (should delete entire word)
+   - Manual tap typing (should delete single char)
+   - User-selected predictions (should never delete previous text)
+
+**Expert Recommendation**: Architectural refactor over tactical patches
+
+**The Solution - Full Architectural Cleanup**:
+
+**1. Deleted Dead Code**:
+- ❌ `RealTimeSwipePredictor.java` (200+ lines, never actually used)
+- ❌ `CGRSettingsActivity.java` (280 lines of dead tuning UI)
+- ✅ Cleaned up `EnhancedSwipeGestureRecognizer.java` (234 lines → 14 lines, simple wrapper)
+
+**2. Created Unified GestureClassifier** (`GestureClassifier.java`):
+```java
+public class GestureClassifier {
+  public enum GestureType { TAP, SWIPE }
+
+  public GestureType classify(GestureData gesture) {
+    float minSwipeDistance = dpToPx(gesture.keyWidth / 2.0f);
+
+    // Single source of truth: SWIPE if left starting key AND
+    // (distance threshold OR time threshold met)
+    if (gesture.hasLeftStartingKey &&
+        (gesture.totalDistance >= minSwipeDistance ||
+         gesture.timeElapsed > MAX_TAP_DURATION_MS)) {
+      return GestureType.SWIPE;
+    }
+    return GestureType.TAP;
+  }
+}
+```
+
+**3. Created PredictionSource Enum** (`PredictionSource.java`):
+```java
+public enum PredictionSource {
+  UNKNOWN,
+  USER_TYPED_TAP,
+  NEURAL_SWIPE,
+  CANDIDATE_SELECTION,
+  AUTOCORRECT
+}
+```
+
+**4. Refactored Pointers.java** (event handler):
+- Added `Context` parameter for GestureClassifier
+- Added `downTime` tracking to Pointer class
+- Replaced parallel prediction logic (lines 166-217) with unified classification
+- Added `getKeyWidth()` to IPointerEventHandler interface
+
+**5. Updated Keyboard2.java** (source tracking):
+- Added `_lastCommitSource` field to track text commit sources
+- Modified auto-insertion to set `PredictionSource.NEURAL_SWIPE`
+- Modified deletion logic to only delete if source is `NEURAL_SWIPE`
+- Set `PredictionSource.CANDIDATE_SELECTION` when user taps predictions
+
+**6. Updated Keyboard2View.java**:
+- Pass Context to Pointers constructor
+- Removed CGR prediction listener code
+- Implemented `getKeyWidth()` method for unified classifier
+
+**Fixed Issues**:
+- ✅ Short swipes like "me" now correctly insert "me" (not "m")
+- ✅ Tapping prediction after swipe replaces (doesn't delete unexpected text)
+- ✅ Manual typing then prediction selection preserves previous text
+- ✅ No more race conditions between parallel prediction systems
+- ✅ Single source of truth for gesture classification
+- ✅ Context-aware deletion based on input source
+
+**Performance Impact**:
+- Removed ~500 lines of dead code
+- Eliminated parallel threshold checking
+- Reduced cognitive complexity with unified classification
+- Better maintainability with clear source tracking
+
+**Files Changed**:
+- ➕ `GestureClassifier.java` (82 lines)
+- ➕ `PredictionSource.java` (36 lines)
+- 🔧 `Pointers.java` (refactored gesture classification)
+- 🔧 `Keyboard2.java` (added source tracking)
+- 🔧 `Keyboard2View.java` (integrated GestureClassifier)
+- ✂️ `EnhancedSwipeGestureRecognizer.java` (234 → 14 lines)
+- ❌ `RealTimeSwipePredictor.java` (deleted)
+- ❌ `CGRSettingsActivity.java` (deleted)
+
+**Commit**: Coming next - comprehensive architectural refactor
+
+---
+
 ### Auto-Insert Top Prediction Fix 🎯
 
 **Version**: 1.32.54 (103) ✅ BUILD SUCCESSFUL

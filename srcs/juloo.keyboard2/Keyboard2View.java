@@ -83,45 +83,9 @@ public class Keyboard2View extends View
     super(context, attrs);
     _theme = new Theme(getContext(), attrs);
     _config = Config.globalConfig();
-    _pointers = new Pointers(this, _config);
+    _pointers = new Pointers(this, _config, getContext());
     _swipeRecognizer = _pointers._swipeRecognizer; // Share the recognizer
-    
-    // Initialize CGR prediction system now that we have context
-    if (_swipeRecognizer != null)
-    {
-      _swipeRecognizer.initializePredictionSystem(getContext());
-      
-      // Connect CGR predictions to UI (note: suggestion bar will be available via parent service)
-      _swipeRecognizer.setOnSwipePredictionListener(new EnhancedSwipeGestureRecognizer.OnSwipePredictionListener()
-      {
-        @Override
-        public void onSwipePredictionUpdate(List<String> predictions)
-        {
-          // DISABLED: No real-time predictions during swipe
-          // All predictions now wait for gesture completion like SwipeCalibrationActivity
-          android.util.Log.d("Keyboard2View", "CGR real-time predictions DISABLED - waiting for completion");
-        }
-        
-        @Override
-        public void onSwipePredictionComplete(List<String> finalPredictions)
-        {
-          android.util.Log.d("Keyboard2View", "CGR final predictions: " + finalPredictions.size() + " words");
-          // Store final predictions
-          storeCGRPredictions(finalPredictions, true);
-        }
-        
-        @Override
-        public void onSwipePredictionCleared()
-        {
-          android.util.Log.d("Keyboard2View", "CGR predictions cleared");
-          // Clear stored predictions
-          clearCGRPredictions();
-        }
-      });
-      
-      android.util.Log.d("Keyboard2View", "CGR prediction system initialized with UI integration");
-    }
-    
+
     initSwipeTrailPaint();
     refresh_navigation_bar(context);
     setOnTouchListener(this);
@@ -180,11 +144,10 @@ public class Keyboard2View extends View
     _compose_key = _keyboard.findKeyWithValue(_compose_kv);
     KeyModifier.set_modmap(_keyboard.modmap);
     
-    // Initialize CGR swipe recognizer if not already created
+    // Initialize swipe recognizer if not already created
     if (_swipeRecognizer == null)
     {
       _swipeRecognizer = new EnhancedSwipeGestureRecognizer();
-      _swipeRecognizer.initializePredictionSystem(getContext());
     }
     
     // Set keyboard for swipe recognizer's probabilistic detection  
@@ -382,6 +345,13 @@ public class Keyboard2View extends View
     // Calculate hypotenuse: sqrt(width^2 + height^2)
     float keyWidth = key.width * _keyWidth;
     return (float) Math.sqrt(keyWidth * keyWidth + keyHeight * keyHeight);
+  }
+
+  @Override
+  public float getKeyWidth(KeyboardData.Key key)
+  {
+    if (key == null) return 0f;
+    return key.width * _keyWidth;
   }
 
   public void setSwipeTypingComponents(WordPredictor predictor, Keyboard2 keyboard2)
