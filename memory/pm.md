@@ -2,6 +2,56 @@
 
 ## 🔥 LATEST UPDATES (2025-10-16)
 
+### Auto-Insert Top Prediction Fix 🎯
+
+**Version**: 1.32.54 (103) ✅ BUILD SUCCESSFUL
+
+**User Report**: "it doesnt seem to be auto inserting the highest scoring prediction"
+
+**Issue**: Auto-insertion was using the MIDDLE suggestion (index 2) instead of the TOP (highest scoring) prediction (index 0).
+
+**Root Cause**:
+
+The auto-insertion logic used `getMiddleSuggestion()` which returned index 2:
+```java
+// OLD:
+String middlePrediction = _suggestionBar.getMiddleSuggestion();
+// Returns index 2 (middle of 5 suggestions)
+```
+
+But the UI highlights index 0 as the PRIMARY prediction (bold + cyan color):
+```java
+// SuggestionBar.java:242-246
+if (i == 0) {
+  textView.setTypeface(Typeface.DEFAULT_BOLD);
+  textView.setTextColor(CYAN);  // Highest scoring
+}
+```
+
+**The Solution**:
+
+1. Added `getTopSuggestion()` method to SuggestionBar:
+```java
+public String getTopSuggestion() {
+  if (_currentSuggestions == null || _currentSuggestions.isEmpty())
+    return null;
+  return _currentSuggestions.get(0);  // Highest scoring
+}
+```
+
+2. Changed auto-insertion to use top prediction:
+```java
+// NEW:
+String topPrediction = _suggestionBar.getTopSuggestion();
+// Returns index 0 (highest scoring)
+```
+
+**Now**: Auto-insertion uses the highest scoring prediction, matching user expectations
+
+**Commit**: `3fd45405` - fix(swipe): auto-insert highest scoring prediction instead of middle
+
+---
+
 ### Termux Mode Spacing Fix 🔧
 
 **Version**: 1.32.53 (102) ✅ BUILD SUCCESSFUL
