@@ -1,6 +1,60 @@
 # Project Management - Unexpected Keyboard
 
-## 🔥 LATEST UPDATES (2025-10-15)
+## 🔥 LATEST UPDATES (2025-10-16)
+
+### CRITICAL FIX #3: Consecutive Swipes Replacing Previous Words 🔧
+
+**Version**: 1.32.44 (93) ✅ BUILD SUCCESSFUL
+
+**Bug**: Each new swipe deleted the previously auto-inserted word instead of appending!
+
+**User Report**: "swiping multiple words in a row is resulting in the inserted prediction replacing the previously inserted prediction"
+
+**Example**:
+- Swipe "hello" → inserted "hello "
+- Swipe "world" → **deleted "hello "**, inserted "world "
+- Result: "world " instead of "hello world "
+
+**Root Cause Analysis**:
+
+The auto-insertion code had a logic error in the order of operations:
+
+```java
+// OLD (BROKEN):
+_lastAutoInsertedWord = middlePrediction;  // Line 849: Set BEFORE
+onSuggestionSelected(middlePrediction);     // Line 855: Call
+
+// Inside onSuggestionSelected:
+if (_lastAutoInsertedWord != null) {        // Line 937: TRUE!
+  ic.deleteSurroundingText(deleteCount, 0); // Delete previous word!
+}
+```
+
+The deletion logic at lines 937-959 was designed to replace the auto-inserted word when the user **manually taps a different suggestion**. But it also triggered during **consecutive auto-inserts** because `_lastAutoInsertedWord` was set before calling `onSuggestionSelected`!
+
+**The Solution**:
+
+Reorder the operations - clear BEFORE calling, set AFTER:
+
+```java
+// NEW (FIXED):
+_lastAutoInsertedWord = null;              // Clear BEFORE insertion
+onSuggestionSelected(middlePrediction);     // Insert without deletion
+_lastAutoInsertedWord = middlePrediction;   // Track AFTER insertion
+```
+
+Now consecutive swipes work correctly:
+- First swipe: Clear → Insert "hello " → Track
+- Second swipe: Clear → Insert "world " → Track
+- Result: "hello world " ✅
+
+**Still Supported**: Manual suggestion tap after auto-insert properly replaces the last word
+
+**Also Added**: Comprehensive debug logging for short gesture detection (Pointers.java lines 169-244)
+
+**Commit**: `c715d72c` - fix(swipe): prevent consecutive swipes from replacing previous words
+
+---
 
 ### CRITICAL FIX #2: Lifecycle Timing - setNeuralKeyboardLayout Running Too Early 🎯
 
