@@ -1236,11 +1236,11 @@ public class OnnxSwipePredictor
     {
       return createOptimizedPredictionResult(candidates);
     }
-    
+
     // Fallback: Basic filtering for testing
     List<String> words = new ArrayList<>();
     List<Integer> scores = new ArrayList<>();
-    
+
     for (BeamSearchCandidate candidate : candidates)
     {
       if (candidate.confidence >= _confidenceThreshold)
@@ -1249,7 +1249,21 @@ public class OnnxSwipePredictor
         scores.add((int)(candidate.confidence * 1000)); // Convert to 0-1000 range
       }
     }
-    
+
+    // DEBUG MODE: Always show at least 2 predictions to help debugging
+    // If filtering eliminated all predictions but we have candidates, show top 2 raw outputs
+    if (words.isEmpty() && !candidates.isEmpty() && _config != null && _config.swipe_debug_show_raw_output)
+    {
+      int numToShow = Math.min(2, candidates.size());
+      for (int i = 0; i < numToShow; i++)
+      {
+        BeamSearchCandidate candidate = candidates.get(i);
+        words.add(candidate.word + " [raw:" + String.format("%.2f", candidate.confidence) + "]");
+        scores.add((int)(candidate.confidence * 1000));
+      }
+      logDebug("⚠️ No predictions above threshold - showing " + numToShow + " raw outputs for debugging");
+    }
+
     // logDebug("📊 Raw predictions: " + candidates.size() + " total, " + words.size() + " above threshold");
     return new PredictionResult(words, scores);
   }
@@ -1266,26 +1280,40 @@ public class OnnxSwipePredictor
     {
       vocabCandidates.add(new OptimizedVocabulary.CandidateWord(candidate.word, candidate.confidence));
     }
-    
-    // Apply vocabulary filtering with fast-path optimization  
+
+    // Apply vocabulary filtering with fast-path optimization
     OptimizedVocabulary.SwipeStats swipeStats = null; // TODO: Extract from SwipeInput if needed
     List<OptimizedVocabulary.FilteredPrediction> filtered = _vocabulary.filterPredictions(vocabCandidates, swipeStats);
-    
+
     // Convert back to PredictionResult format
     List<String> words = new ArrayList<>();
     List<Integer> scores = new ArrayList<>();
-    
+
     for (OptimizedVocabulary.FilteredPrediction pred : filtered)
     {
       words.add(pred.word);
       scores.add((int)(pred.score * 1000)); // Convert combined score to 0-1000 range
     }
-    
+
+    // DEBUG MODE: Always show at least 2 predictions to help debugging
+    // If filtering eliminated all predictions but we have candidates, show top 2 raw outputs
+    if (words.isEmpty() && !candidates.isEmpty() && _config != null && _config.swipe_debug_show_raw_output)
+    {
+      int numToShow = Math.min(2, candidates.size());
+      for (int i = 0; i < numToShow; i++)
+      {
+        BeamSearchCandidate candidate = candidates.get(i);
+        words.add(candidate.word + " [raw:" + String.format("%.2f", candidate.confidence) + "]");
+        scores.add((int)(candidate.confidence * 1000));
+      }
+      logDebug("⚠️ No predictions after vocabulary filtering - showing " + numToShow + " raw outputs for debugging");
+    }
+
     // logDebug("📊 Optimized predictions: " + candidates.size() + " raw → " + filtered.size() + " filtered");
     // logDebug("   Fast-path breakdown: " +
       // filtered.stream().mapToLong(p -> p.source.equals("common") ? 1 : 0).sum() + " common, " +
       // filtered.stream().mapToLong(p -> p.source.equals("top5000") ? 1 : 0).sum() + " top5000");
-    
+
     return new PredictionResult(words, scores);
   }
   

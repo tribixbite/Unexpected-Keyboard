@@ -95,6 +95,8 @@ public final class Config
   public int neural_beam_width; // 1 - 16
   public int neural_max_length; // 10 - 50
   public float neural_confidence_threshold; // 0.0 - 1.0
+  public boolean swipe_debug_detailed_logging; // Enable detailed trajectory/NN logging
+  public boolean swipe_debug_show_raw_output; // Always show at least 2 raw NN outputs
   public boolean termux_mode_enabled; // Termux-compatible prediction insertion
 
   // Dynamically set
@@ -242,6 +244,8 @@ public final class Config
     neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);
     neural_confidence_threshold = _prefs.getFloat("neural_confidence_threshold", 0.1f);
     termux_mode_enabled = _prefs.getBoolean("termux_mode_enabled", false);
+    swipe_debug_detailed_logging = _prefs.getBoolean("swipe_debug_detailed_logging", false);
+    swipe_debug_show_raw_output = _prefs.getBoolean("swipe_debug_show_raw_output", true);
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;

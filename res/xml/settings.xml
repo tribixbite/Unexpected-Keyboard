@@ -42,7 +42,11 @@
     </PreferenceScreen>
     <PreferenceScreen android:key="export_swipe_ml_data" android:title="@string/pref_export_swipe_ml_data_title" android:summary="@string/pref_export_swipe_ml_data_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="train_swipe_ml_model" android:title="@string/pref_train_swipe_ml_title" android:summary="@string/pref_train_swipe_ml_summary" android:dependency="swipe_typing_enabled"/>
-    <PreferenceScreen android:key="swipe_debug" android:title="🐛 Swipe Debug Log" android:summary="Real-time swipe typing pipeline analysis and debugging" android:dependency="swipe_typing_enabled"/>
+    <PreferenceScreen android:key="swipe_debug" android:title="🐛 Swipe Debug Log" android:summary="Real-time swipe typing pipeline analysis and debugging" android:dependency="swipe_typing_enabled">
+      <CheckBoxPreference android:key="swipe_debug_detailed_logging" android:title="Detailed Pipeline Logging" android:summary="Log trajectory processing, key detection, and neural network internals" android:defaultValue="false"/>
+      <CheckBoxPreference android:key="swipe_debug_show_raw_output" android:title="Show Raw NN Output" android:summary="Always display at least 2 raw predictions before pruning" android:defaultValue="true"/>
+      <Preference android:key="swipe_debug_info" android:title="📖 Debug Output" android:summary="Enable detailed logging to see:\n\n• Trajectory path and key detection\n• Neural network processing steps\n• Beam search decoding progress\n• Confidence scores and filtering\n\nLogs appear in the debug screen when enabled"/>
+    </PreferenceScreen>
     <CheckBoxPreference android:key="short_gestures_enabled" android:title="@string/pref_short_gestures_enabled_title" android:summary="@string/pref_short_gestures_enabled_summary" android:defaultValue="true"/>
     <juloo.keyboard2.prefs.IntSlideBarPreference android:key="short_gesture_min_distance" android:title="@string/pref_short_gesture_distance_title" android:summary="@string/pref_short_gesture_distance_summary" android:defaultValue="30" min="10" max="95" android:dependency="short_gestures_enabled"/>
     <ListPreference android:key="circle_sensitivity" android:title="@string/pref_circle_sensitivity_title" android:summary="%s" android:defaultValue="2" android:entries="@array/pref_circle_sensitivity_entries" android:entryValues="@array/pref_circle_sensitivity_values"/>
