@@ -39,6 +39,7 @@ public class SwipeMLData
   private final List<TracePoint> tracePoints;
   private final List<String> registeredKeys;
   private int keyboardOffsetY = 0; // Y offset of keyboard from top of screen
+  private long lastAbsoluteTimestamp; // Track last point's absolute timestamp for delta calculation
   
   // Constructor for new swipe data
   public SwipeMLData(String targetWord, String collectionSource,
@@ -53,6 +54,7 @@ public class SwipeMLData
     this.collectionSource = collectionSource;
     this.tracePoints = new ArrayList<>();
     this.registeredKeys = new ArrayList<>();
+    this.lastAbsoluteTimestamp = timestampUtc; // Initialize to start time
   }
   
   // Constructor from JSON (for loading stored data)
@@ -88,6 +90,13 @@ public class SwipeMLData
     {
       registeredKeys.add(keysArray.getString(i));
     }
+
+    // Reconstruct last absolute timestamp from deltas
+    this.lastAbsoluteTimestamp = timestampUtc;
+    for (TracePoint point : tracePoints)
+    {
+      lastAbsoluteTimestamp += point.tDeltaMs;
+    }
   }
   
   /**
@@ -98,21 +107,13 @@ public class SwipeMLData
     // Normalize coordinates to [0, 1] range
     float normalizedX = rawX / screenWidthPx;
     float normalizedY = rawY / screenHeightPx;
-    
-    // Calculate time delta from previous point (0 for first point)
-    long deltaMs = 0;
-    if (!tracePoints.isEmpty())
-    {
-      TracePoint lastPoint = tracePoints.get(tracePoints.size() - 1);
-      // Sum up previous deltas to get absolute time, then calculate new delta
-      long lastAbsoluteTime = 0;
-      for (int i = 0; i < tracePoints.size() - 1; i++)
-      {
-        lastAbsoluteTime += tracePoints.get(i).tDeltaMs;
-      }
-      deltaMs = timestamp - (timestampUtc + lastAbsoluteTime);
-    }
-    
+
+    // Calculate time delta from last absolute timestamp
+    long deltaMs = timestamp - lastAbsoluteTimestamp;
+
+    // Update last absolute timestamp for next point
+    lastAbsoluteTimestamp = timestamp;
+
     tracePoints.add(new TracePoint(normalizedX, normalizedY, deltaMs));
   }
   
