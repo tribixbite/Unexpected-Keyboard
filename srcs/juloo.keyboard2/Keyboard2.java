@@ -1287,8 +1287,9 @@ public class Keyboard2 extends InputMethodService
       }
     }
       
-    // Build key sequence from swiped keys and add to ML data
-    StringBuilder keySequence = new StringBuilder();
+    // Build key sequence from swiped keys for ML data ONLY
+    // NOTE: This is gesture tracker's detection - neural network will recalculate independently
+    StringBuilder gestureTrackerKeys = new StringBuilder();
     for (KeyboardData.Key key : swipedKeys)
     {
       if (key != null && key.keys[0] != null)
@@ -1297,7 +1298,7 @@ public class Keyboard2 extends InputMethodService
         if (kv.getKind() == KeyValue.Kind.Char)
         {
           char c = kv.getChar();
-          keySequence.append(c);
+          gestureTrackerKeys.append(c);
           // Add to ML data
           if (_currentSwipeData != null)
           {
@@ -1307,29 +1308,31 @@ public class Keyboard2 extends InputMethodService
       }
     }
 
-    // DEBUG: Log detected key sequence
-    sendDebugLog(String.format("Key sequence: \"%s\"\n", keySequence.toString()));
+    // DEBUG: Log gesture tracker's detection (for comparison)
+    sendDebugLog(String.format("Gesture tracker keys: \"%s\" (%d keys filtered from %d path points)\n",
+        gestureTrackerKeys.toString(), swipedKeys.size(), swipePath != null ? swipePath.size() : 0));
 
     // Log to file for analysis
-    if (_logWriter != null)
+    if (_logWriter != null && gestureTrackerKeys.length() > 0)
     {
       try
       {
-        _logWriter.write("[" + new java.util.Date() + "] Swipe: " + keySequence.toString() + "\n");
+        _logWriter.write("[" + new java.util.Date() + "] Swipe: " + gestureTrackerKeys.toString() + "\n");
         _logWriter.flush();
       }
       catch (IOException e)
       {
       }
     }
-    
-    if (keySequence.length() > 0)
+
+    if (swipePath != null && !swipePath.isEmpty())
     {
       // Create SwipeInput exactly like SwipeCalibrationActivity (empty swipedKeys)
       // This ensures neural system handles key detection internally for consistency
+      // The neural network will recalculate keys from the full path without filtering
       SwipeInput swipeInput = new SwipeInput(swipePath != null ? swipePath : new ArrayList<>(),
                                             timestamps != null ? timestamps : new ArrayList<>(),
-                                            new ArrayList<>()); // Empty like calibration
+                                            new ArrayList<>()); // Empty - neural recalculates keys
       
       // UNIFIED PREDICTION STRATEGY: All predictions wait for gesture completion
       // This matches SwipeCalibrationActivity behavior and eliminates premature predictions

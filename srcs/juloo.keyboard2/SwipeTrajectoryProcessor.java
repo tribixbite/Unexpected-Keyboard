@@ -219,6 +219,8 @@ public class SwipeTrajectoryProcessor
   private List<Integer> detectNearestKeys(List<PointF> coordinates)
   {
     List<Integer> nearestKeys = new ArrayList<>();
+    StringBuilder debugKeySeq = new StringBuilder();
+    char lastDebugChar = '\0';
 
     for (PointF point : coordinates)
     {
@@ -228,12 +230,28 @@ public class SwipeTrajectoryProcessor
         // Convert character to token index (a-z mapping to tokens 4-29)
         int tokenIndex = charToTokenIndex(closestChar);
         nearestKeys.add(tokenIndex);
+
+        // Build debug sequence (deduplicate consecutive chars for readability)
+        if (closestChar != lastDebugChar) {
+          debugKeySeq.append(closestChar);
+          lastDebugChar = closestChar;
+        }
       } else {
         // Fallback: use grid detection
         int tokenIndex = detectKeyFromQwertyGrid(point);
         nearestKeys.add(tokenIndex);
+        // Convert back to char for debug display
+        char debugChar = tokenIndex >= 4 && tokenIndex <= 29 ? (char)('a' + (tokenIndex - 4)) : '?';
+        if (debugChar != lastDebugChar) {
+          debugKeySeq.append(debugChar);
+          lastDebugChar = debugChar;
+        }
       }
     }
+
+    // Log the deduplicated key sequence detected from trajectory
+    Log.d(TAG, String.format("Neural key detection: \"%s\" (deduplicated from %d trajectory points)",
+        debugKeySeq.toString(), coordinates.size()));
 
     return nearestKeys;
   }
