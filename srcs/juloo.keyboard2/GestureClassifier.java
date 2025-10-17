@@ -53,9 +53,10 @@ public class GestureClassifier
    */
   public GestureType classify(GestureData gesture)
   {
-    // Calculate dynamic threshold based on key size (in dp for consistency)
+    // Calculate dynamic threshold based on key size
     // Use half the key width as minimum swipe distance
-    float minSwipeDistance = dpToPx(gesture.keyWidth / 2.0f);
+    // Note: gesture.keyWidth is already in pixels (from key.width * _keyWidth)
+    float minSwipeDistance = gesture.keyWidth / 2.0f;
 
     // Clear criteria: SWIPE if left starting key AND (distance OR time threshold met)
     if (gesture.hasLeftStartingKey &&

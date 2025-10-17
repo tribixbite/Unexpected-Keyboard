@@ -202,9 +202,15 @@ public final class Pointers implements Handler.Callback
 
       GestureClassifier.GestureType gestureType = _gestureClassifier.classify(gestureData);
 
+      android.util.Log.d("Pointers", "Gesture classified as: " + gestureType +
+                        " (hasLeftKey=" + ptr.hasLeftStartingKey +
+                        " distance=" + totalDistance +
+                        " time=" + timeElapsed + "ms)");
+
       if (gestureType == GestureClassifier.GestureType.SWIPE)
       {
         // This is a swipe gesture - send to neural predictor
+        android.util.Log.d("Pointers", "Sending to neural predictor");
         _handler.onSwipeEnd(_swipeRecognizer);
         _swipeRecognizer.reset();
         removePtr(ptr);
@@ -213,6 +219,10 @@ public final class Pointers implements Handler.Callback
       else
       {
         // This is a TAP - check for short gesture (within-key directional swipe)
+        android.util.Log.d("Pointers", "TAP path: short_gestures=" + _config.short_gestures_enabled +
+                          " hasLeftKey=" + ptr.hasLeftStartingKey +
+                          " pathSize=" + (swipePath != null ? swipePath.size() : 0));
+
         if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey && swipePath != null && swipePath.size() > 1)
         {
           android.graphics.PointF lastPoint = swipePath.get(swipePath.size() - 1);
@@ -222,12 +232,17 @@ public final class Pointers implements Handler.Callback
           float keyHypotenuse = _handler.getKeyHypotenuse(ptr.key);
           float minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f);
 
+          android.util.Log.d("Pointers", "Short gesture check: distance=" + distance +
+                            " minDistance=" + minDistance + " (" + _config.short_gesture_min_distance + "% of " + keyHypotenuse + ")");
+
           if (distance >= minDistance)
           {
             // Trigger short gesture - calculate direction
             double a = Math.atan2(dy, dx);
             int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
             KeyValue gestureValue = getKeyAtDirection(ptr.key, direction);
+
+            android.util.Log.d("Pointers", "Short gesture triggered: dir=" + direction + " value=" + gestureValue);
 
             if (gestureValue != null)
             {
