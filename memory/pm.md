@@ -2,6 +2,30 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Build Completed - v1.32.91 ✅
+
+**Version**: 1.32.91 (140)
+
+**Status**: BUILD SUCCESSFUL in 36s
+
+**Changes in this build**:
+- All previous fixes from v1.32.86-90 consolidated
+- CI/CD auto-release now active
+- Debug controls operational
+- Swipe recognition improvements deployed
+
+**APK Output**:
+- `build/outputs/apk/debug/juloo.keyboard2.debug.apk` (43MB)
+- Copied to `/sdcard/unexpected/debug-kb.apk`
+
+**Build timestamp**: 2025-10-17 14:04
+
+**Ready for**: Testing on device via manual installation or automatic GitHub Actions release on next push
+
+**Commit**: `23f56219` - chore(version): bump to v1.32.91 (140) after CI/CD auto-release implementation
+
+---
+
 ### CI/CD Auto-Release Enabled 🚀
 
 **Change**: GitHub Actions now creates release on EVERY push to `feature/swipe-typing`
