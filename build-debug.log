@@ -39,9 +39,9 @@ Generated version info:  ()
 > Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
-> Task :processDebugManifestForPackage
 > Task :mergeDebugJavaResource
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -96,5 +96,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 25s
+BUILD SUCCESSFUL in 36s
 34 actionable tasks: 27 executed, 7 from cache

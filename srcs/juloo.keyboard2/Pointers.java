@@ -237,9 +237,11 @@ public final class Pointers implements Handler.Callback
 
           if (distance >= minDistance)
           {
-            // Trigger short gesture - calculate direction
-            double a = Math.atan2(dy, dx);
-            int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
+            // Trigger short gesture - calculate direction (same as original repo)
+            double a = Math.atan2(dy, dx) + Math.PI;
+            // a is between 0 and 2pi, 0 is pointing to the left
+            // add 12 to align 0 to the top
+            int direction = ((int)(a * 8 / Math.PI) + 12) % 16;
             // Use getNearestKeyAtDirection to search nearby if exact direction not defined
             KeyValue gestureValue = getNearestKeyAtDirection(ptr, direction);
 
