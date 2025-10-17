@@ -131,12 +131,29 @@ User tested short symbol swipes across v1.32.58-v1.32.63. Discovered three criti
    - Increased tolerance: 25% → 40% of key size
    - Reduced distance: 30% → 20% of key hypotenuse
 
+4. **Direction calculation bug** (v1.32.65): **CRITICAL**
+   - User: "swiping down-left on v gave >" (wrong symbol!)
+   - My refactored calculation was completely wrong:
+     ```java
+     // BROKEN:
+     double a = Math.atan2(dy, dx);
+     int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
+
+     // ORIGINAL (correct):
+     double a = Math.atan2(dy, dx) + Math.PI;
+     int direction = ((int)(a * 8 / Math.PI) + 12) % 16;
+     ```
+   - Original adds Math.PI to shift range [−π,π]→[0,2π]
+   - Original adds +12 to rotate alignment so 0=top (not left)
+   - Restored original calculation verbatim
+
 **Progressive Fixes**:
 - v1.32.58: Fixed GestureClassifier dpToPx bug
 - v1.32.59: Added tolerance method (25%, insufficient)
 - v1.32.62: Fixed row height scaling (critical)
 - v1.32.63: Added direction fallback search
 - v1.32.64: Increased tolerance to 40%, reduced distance to 20%
+- v1.32.65: **Fixed direction calculation** (critical - was giving wrong symbols!)
 
 ---
 
