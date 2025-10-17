@@ -2,9 +2,101 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Settings UI Crash & CI Pipeline Fixed 🛠️
+
+**Version**: 1.32.85 (134) ✅ BUILD SUCCESSFUL
+
+**Issues Fixed**:
+
+#### 1. Keyboard Won't Load (v1.32.84)
+**Root Cause**: XML parsing errors in settings.xml from v1.32.83 changes:
+- Emoji characters ("⚙️", "📖", "⚠️") in PreferenceScreen titles caused Android XML parser issues
+- Nested PreferenceCategory elements inside PreferenceScreen (unusual nesting)
+- Info Preference without android:key attribute
+
+**Fix**: Simplified XML structure (res/xml/settings.xml:18-27):
+- Removed all emoji characters from titles and summaries
+- Flattened structure by removing PreferenceCategory nesting
+- Removed info Preference without key
+- All 8 advanced settings now directly under PreferenceScreen
+
+#### 2. GitHub Actions CI Pipeline (v1.32.85)
+**Root Cause**: Hardcoded Termux aapt2 path in gradle.properties broke CI builds:
+```
+android.aapt2FromMavenOverride=/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/tools/aapt2-arm64/aapt2
+```
+This path doesn't exist in GitHub Actions Ubuntu runners.
+
+**Fix**: Commented out gradle.properties line - build-on-termux.sh already passes it explicitly:
+- Line 139 in build-on-termux.sh: `-Pandroid.aapt2FromMavenOverride="..."`
+- CI builds now use standard aapt2
+- Local Termux builds still work with explicit override
+
+**Commits**:
+- `03999a36` - fix(settings): remove emojis and flatten XML structure to resolve crash
+- `d027442b` - fix(build): comment out aapt2 override in gradle.properties for CI compatibility
+
+---
+
+### Legacy Config Restoration & Text Insertion Fix 🎛️
+
+**Version**: 1.32.83 (132) ⚠️ CRASHED - Fixed in v1.32.84
+
+**Changes**:
+- Restored 8 legacy WordPredictor config values to settings UI
+- Added "Advanced Word Prediction" PreferenceScreen
+- Changed Config.java to load from SharedPreferences instead of hardcoded values
+
+**Settings Restored**:
+1. Shape Similarity Weight (90%)
+2. Location Accuracy Weight (130%)
+3. Word Frequency Weight (80%)
+4. Typing Velocity Weight (60%)
+5. First Letter Bonus (150%)
+6. Last Letter Bonus (150%)
+7. Both Endpoints Bonus (200%)
+8. Require Endpoint Matching (checkbox)
+
+**Note**: Initial implementation had XML issues causing crash, fixed in v1.32.84.
+
+**Commit**: `0f8ad6eb` - feat(settings): restore 8 legacy WordPredictor config values with organized UI
+
+---
+
+### Swipe Insertion After Manual Typing Fixed 🔧
+
+**Version**: 1.32.82 (131) ✅ BUILD SUCCESSFUL
+
+**User Report**: "now swiped words dont get inserted at all after manual typing"
+
+**Issue**: v1.32.80 fix was too restrictive - prevented ALL swipe insertion when manual text present.
+
+**Fix**: Changed approach - commit manual text with space first, then auto-insert swipe (Keyboard2.java:854-865):
+```java
+if (_currentWord.length() > 0 && ic != null)
+{
+  // Commit the manually typed word with a space
+  ic.commitText(_currentWord + " ", 1);
+  _currentWord = new StringBuilder();
+  _lastAutoInsertedWord = null;
+  _lastCommitSource = PredictionSource.USER_TYPED_TAP;
+}
+// Then proceed with auto-insertion
+onSuggestionSelected(topPrediction);
+```
+
+**New behavior**:
+- Type "hello" → swipe "world" = "hello world" ✓
+- Manual text committed with space before swipe insertion
+- Natural word sequencing maintained
+
+**Commit**: `3045af79` - fix(swipe): commit manual text before auto-inserting swipe prediction
+
+---
+
 ### Bug Fixes: Prediction Length & Text Overwriting 🐛
 
-**Version**: 1.32.80 (129) ✅ BUILD SUCCESSFUL
+**Version**: 1.32.80 (129) ⚠️ REGRESSED - Fixed in v1.32.82
 
 **User Reports**:
 1. "predictions dont work for long words are we hardcoding a limiter in length"
