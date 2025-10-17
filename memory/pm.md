@@ -108,7 +108,19 @@ public enum PredictionSource {
 - ❌ `RealTimeSwipePredictor.java` (deleted)
 - ❌ `CGRSettingsActivity.java` (deleted)
 
-**Commit**: Coming next - comprehensive architectural refactor
+**Commits**:
+- `4d1820b0` - refactor(swipe): unify gesture classification and add prediction source tracking
+- `773a268d` - fix(swipe): correct GestureClassifier threshold and add debug logging
+- Coming: fix(swipe): add tolerance to short gesture boundary detection
+
+**Debug Analysis** (v1.32.58):
+User tested short symbol swipes - all showed `hasLeftKey=true`, preventing short gesture detection.
+Root cause: `isPointWithinKey()` was too strict - directional swipes naturally cross key boundaries slightly.
+
+**Fix** (v1.32.59):
+- Added `isPointWithinKeyWithTolerance()` method with 25% boundary tolerance
+- Short gestures now allow finger to go 25% outside key bounds
+- This permits natural directional swipe movements while still distinguishing from multi-key swipes
 
 ---
 

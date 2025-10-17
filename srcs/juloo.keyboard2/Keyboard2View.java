@@ -276,6 +276,11 @@ public class Keyboard2View extends View
 
   public boolean isPointWithinKey(float x, float y, KeyboardData.Key key)
   {
+    return isPointWithinKeyWithTolerance(x, y, key, 0.0f);
+  }
+
+  public boolean isPointWithinKeyWithTolerance(float x, float y, KeyboardData.Key key, float tolerance)
+  {
     if (key == null || _keyboard == null) return false;
 
     // Find the row containing this key
@@ -313,7 +318,14 @@ public class Keyboard2View extends View
         }
         float rowBottom = rowTop + targetRow.height;
 
-        return x >= xLeft && x < xRight && y >= rowTop && y < rowBottom;
+        // Apply tolerance margin (as fraction of key dimensions)
+        float keyWidth = key.width * _keyWidth;
+        float keyHeight = targetRow.height;
+        float marginX = keyWidth * tolerance;
+        float marginY = keyHeight * tolerance;
+
+        return x >= (xLeft - marginX) && x < (xRight + marginX) &&
+               y >= (rowTop - marginY) && y < (rowBottom + marginY);
       }
       keyX += k.width * _keyWidth;
     }

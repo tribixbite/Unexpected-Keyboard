@@ -417,9 +417,10 @@ public final class Pointers implements Handler.Callback
     }
 
     // Track if pointer has left the starting key (for short gesture detection on UP)
+    // Use tolerance margin to allow small boundary crossings for directional swipes
     if (ptr.key != null && !ptr.hasLeftStartingKey)
     {
-      if (!_handler.isPointWithinKey(x, y, ptr.key))
+      if (!_handler.isPointWithinKeyWithTolerance(x, y, ptr.key, 0.25f))
       {
         ptr.hasLeftStartingKey = true;
       }
@@ -1000,6 +1001,8 @@ public final class Pointers implements Handler.Callback
 
     /** Check if a point is within a key's bounding box. */
     public boolean isPointWithinKey(float x, float y, KeyboardData.Key key);
+    /** Check if point is within key bounds with tolerance (as fraction of key size) */
+    public boolean isPointWithinKeyWithTolerance(float x, float y, KeyboardData.Key key, float tolerance);
 
     /** Get the hypotenuse (diagonal length) of a key in pixels. */
     public float getKeyHypotenuse(KeyboardData.Key key);
