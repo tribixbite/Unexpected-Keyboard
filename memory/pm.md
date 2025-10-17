@@ -2,27 +2,34 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
-### Build Completed - v1.32.91 ✅
+### CI/CD Auto-Release Working - v1.32.91 Released! 🎉
 
 **Version**: 1.32.91 (140)
 
-**Status**: BUILD SUCCESSFUL in 36s
+**GitHub Release**: https://github.com/tribixbite/Unexpected-Keyboard/releases/tag/v1.32.91-build140-20251017-192036
 
-**Changes in this build**:
-- All previous fixes from v1.32.86-90 consolidated
-- CI/CD auto-release now active
+**Status**: ✅ CI/CD pipeline successful
+- Build APK: ✅ 2m48s
+- Create Release: ✅ 11s
+- APK uploaded to GitHub
+
+**Fixed CI Build Issues**:
+1. **Python cache pollution**: `__pycache__` directory was being passed to `compile.py`
+2. **Missing compose trie**: Script requires `srcs/compose/compose/` subdirectory
+3. **Solution**: Exclude `__pycache__` and `src` dirs specifically, keep `compose/` subdir
+
+**Commits**:
+- `23f56219` - chore(version): bump to v1.32.91 (140)
+- `20d8aa72` - fix(build): exclude Python cache files from compose sequence compilation
+- `6c0f979d` - fix(build): exclude __pycache__ and src dirs, but keep compose dir for Python script
+- Added `__pycache__/` to `.gitignore`
+
+**Build Includes**:
+- All previous fixes from v1.32.86-90
 - Debug controls operational
-- Swipe recognition improvements deployed
-
-**APK Output**:
-- `build/outputs/apk/debug/juloo.keyboard2.debug.apk` (43MB)
-- Copied to `/sdcard/unexpected/debug-kb.apk`
-
-**Build timestamp**: 2025-10-17 14:04
-
-**Ready for**: Testing on device via manual installation or automatic GitHub Actions release on next push
-
-**Commit**: `23f56219` - chore(version): bump to v1.32.91 (140) after CI/CD auto-release implementation
+- Swipe recognition improvements
+- Neural network zero predictions fix
+- Debug text stripping fix
 
 ---
 
