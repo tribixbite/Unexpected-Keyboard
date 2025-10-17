@@ -2,6 +2,29 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### CI/CD Auto-Release Enabled 🚀
+
+**Change**: GitHub Actions now creates release on EVERY push to `feature/swipe-typing`
+
+**Previous behavior**:
+- Required `#RELEASE` tag in commit message
+- Manual opt-in for release creation
+
+**New behavior**:
+- Every push automatically triggers:
+  1. APK build
+  2. GitHub release creation
+  3. APK upload as release asset
+- No tag required
+
+**Workflow file**: `.github/workflows/build.yml:64`
+
+**Impact**: Faster iteration - every commit pushed to remote becomes a downloadable release
+
+**Commit**: `bf362bf3` - ci: auto-release on every push to feature/swipe-typing
+
+---
+
 ### Debug Text Insertion Bug Fixed 🔧
 
 **Version**: 1.32.89 (138) ✅ BUILD SUCCESSFUL
