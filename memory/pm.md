@@ -2,6 +2,41 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Debug Text Insertion Bug Fixed 🔧
+
+**Version**: 1.32.89 (138) ✅ BUILD SUCCESSFUL
+
+**User Report**: "it shouldnt actually insert the [raw] text in normal op, right now it is though.."
+
+**Symptom**: Selecting predictions with debug annotations inserted literal text including brackets:
+- Suggestion bar shows: `hello [raw:0.08]`
+- User taps to select
+- Text field receives: `hello [raw:0.08]` ❌
+
+**Root Cause**:
+- v1.32.88 added debug annotations to word strings in `OnnxSwipePredictor` (lines 1261, 1307)
+- Annotations were display-only, but `onSuggestionSelected()` inserted strings as-is
+- No stripping logic existed between display and insertion
+
+**Fix** (Keyboard2.java:904):
+```java
+// Strip debug annotations before processing (e.g., "hello [raw:0.08]" → "hello")
+word = word.replaceAll(" \\[raw:[0-9.]+\\]$", "");
+```
+
+**Regex breakdown**:
+- ` ` - Match space before annotation
+- `\\[raw:` - Literal `[raw:` text
+- `[0-9.]+` - One or more digits/dots (confidence score)
+- `\\]` - Literal `]` closing bracket
+- `$` - End of string anchor
+
+**Result**: Tapping `hello [raw:0.08]` now correctly inserts `hello` ✅
+
+**Commit**: `f719209a` - fix(swipe): strip debug annotations before text insertion
+
+---
+
 ### Swipe Debug Controls & Recognition Fixes 🎛️ #RELEASE
 
 **Version**: 1.32.88 (137) ✅ BUILD SUCCESSFUL
