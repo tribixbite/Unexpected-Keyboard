@@ -240,7 +240,8 @@ public final class Pointers implements Handler.Callback
             // Trigger short gesture - calculate direction
             double a = Math.atan2(dy, dx);
             int direction = (int)Math.round(a * 8.0 / Math.PI) & 15;
-            KeyValue gestureValue = getKeyAtDirection(ptr.key, direction);
+            // Use getNearestKeyAtDirection to search nearby if exact direction not defined
+            KeyValue gestureValue = getNearestKeyAtDirection(ptr, direction);
 
             android.util.Log.d("Pointers", "Short gesture triggered: dir=" + direction + " value=" + gestureValue);
 
@@ -403,6 +404,11 @@ public final class Pointers implements Handler.Callback
     if (ptr == null)
       return;
 
+    android.util.Log.d("Pointers", "onTouchMove: id=" + pointerId + " pos=(" + x + "," + y + ") " +
+                      "value=" + ptr.value + " " +
+                      "hasLeftKey=" + ptr.hasLeftStartingKey + " " +
+                      "flags=" + ptr.flags);
+
     if (ptr.hasFlagsAny(FLAG_P_SLIDING))
     {
       ptr.sliding.onTouchMove(ptr, x, y);
@@ -417,10 +423,10 @@ public final class Pointers implements Handler.Callback
     }
 
     // Track if pointer has left the starting key (for short gesture detection on UP)
-    // Use tolerance margin to allow small boundary crossings for directional swipes
+    // Use 40% tolerance margin to allow directional swipes that naturally go toward corners
     if (ptr.key != null && !ptr.hasLeftStartingKey)
     {
-      if (!_handler.isPointWithinKeyWithTolerance(x, y, ptr.key, 0.25f))
+      if (!_handler.isPointWithinKeyWithTolerance(x, y, ptr.key, 0.40f))
       {
         ptr.hasLeftStartingKey = true;
       }
@@ -428,10 +434,20 @@ public final class Pointers implements Handler.Callback
 
     // CRITICAL: For potential swipe typing, ALWAYS track path during movement
     // Short gesture detection should only happen on touch UP, not during MOVE
-    if (_config.swipe_typing_enabled && _ptrs.size() == 1 &&
-        ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char)
+    boolean shouldCollectPath = _config.swipe_typing_enabled && _ptrs.size() == 1 &&
+        ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char;
+
+    android.util.Log.d("Pointers", "Path collection check: " +
+                      "swipeEnabled=" + _config.swipe_typing_enabled + " " +
+                      "ptrsSize=" + _ptrs.size() + " " +
+                      "hasValue=" + (ptr.value != null) + " " +
+                      "isChar=" + (ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char) + " " +
+                      "shouldCollect=" + shouldCollectPath);
+
+    if (shouldCollectPath)
     {
       // Track swipe movement for path collection
+      android.util.Log.d("Pointers", "onTouchMove: collecting point (" + x + ", " + y + ") for potential swipe");
       _handler.onSwipeMove(x, y, _swipeRecognizer);
 
       // Check if this has become a confirmed multi-key swipe typing gesture

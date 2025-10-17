@@ -230,7 +230,7 @@ public final class Config
 
     // Short gesture configuration
     short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true);
-    short_gesture_min_distance = safeGetInt(_prefs, "short_gesture_min_distance", 30); // Default 30% of key hypotenuse
+    short_gesture_min_distance = safeGetInt(_prefs, "short_gesture_min_distance", 20); // Default 20% of key hypotenuse (easier to trigger)
 
     // Neural swipe prediction configuration
     neural_prediction_enabled = _prefs.getBoolean("neural_prediction_enabled", true);

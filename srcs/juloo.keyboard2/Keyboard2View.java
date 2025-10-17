@@ -281,7 +281,11 @@ public class Keyboard2View extends View
 
   public boolean isPointWithinKeyWithTolerance(float x, float y, KeyboardData.Key key, float tolerance)
   {
-    if (key == null || _keyboard == null) return false;
+    if (key == null || _keyboard == null)
+    {
+      android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: key or keyboard is null");
+      return false;
+    }
 
     // Find the row containing this key
     KeyboardData.Row targetRow = null;
@@ -298,7 +302,11 @@ public class Keyboard2View extends View
       if (targetRow != null) break;
     }
 
-    if (targetRow == null) return false;
+    if (targetRow == null)
+    {
+      android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: targetRow not found");
+      return false;
+    }
 
     // Calculate key bounds
     float keyX = _marginLeft;
@@ -309,27 +317,42 @@ public class Keyboard2View extends View
         float xLeft = keyX + key.shift * _keyWidth;
         float xRight = xLeft + key.width * _keyWidth;
 
-        // Calculate row bounds (simplified, assuming standard row height)
+        // Calculate row bounds - MUST use _tc.row_height to scale like rendering does
+        if (_tc == null)
+        {
+          android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: _tc is null");
+          return false;
+        }
+
         float rowTop = _config.marginTop;
         for (KeyboardData.Row row : _keyboard.rows)
         {
           if (row == targetRow) break;
-          rowTop += row.height + row.shift;
+          rowTop += (row.height + row.shift) * _tc.row_height;
         }
-        float rowBottom = rowTop + targetRow.height;
+        float rowBottom = rowTop + targetRow.height * _tc.row_height;
 
         // Apply tolerance margin (as fraction of key dimensions)
         float keyWidth = key.width * _keyWidth;
-        float keyHeight = targetRow.height;
+        float keyHeight = targetRow.height * _tc.row_height;
         float marginX = keyWidth * tolerance;
         float marginY = keyHeight * tolerance;
 
-        return x >= (xLeft - marginX) && x < (xRight + marginX) &&
-               y >= (rowTop - marginY) && y < (rowBottom + marginY);
+        boolean result = x >= (xLeft - marginX) && x < (xRight + marginX) &&
+                        y >= (rowTop - marginY) && y < (rowBottom + marginY);
+
+        android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: " +
+                          "point=(" + x + "," + y + ") " +
+                          "bounds=[" + (xLeft - marginX) + "," + (xRight + marginX) + "]x[" + (rowTop - marginY) + "," + (rowBottom + marginY) + "] " +
+                          "tolerance=" + tolerance + " " +
+                          "result=" + result);
+
+        return result;
       }
       keyX += k.width * _keyWidth;
     }
 
+    android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: key not found in targetRow");
     return false;
   }
 

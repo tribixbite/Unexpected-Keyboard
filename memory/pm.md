@@ -113,14 +113,30 @@ public enum PredictionSource {
 - `773a268d` - fix(swipe): correct GestureClassifier threshold and add debug logging
 - Coming: fix(swipe): add tolerance to short gesture boundary detection
 
-**Debug Analysis** (v1.32.58):
-User tested short symbol swipes - all showed `hasLeftKey=true`, preventing short gesture detection.
-Root cause: `isPointWithinKey()` was too strict - directional swipes naturally cross key boundaries slightly.
+**Debug Analysis**:
+User tested short symbol swipes across v1.32.58-v1.32.63. Discovered three critical bugs:
 
-**Fix** (v1.32.59):
-- Added `isPointWithinKeyWithTolerance()` method with 25% boundary tolerance
-- Short gestures now allow finger to go 25% outside key bounds
-- This permits natural directional swipe movements while still distinguishing from multi-key swipes
+1. **Row height scaling bug** (v1.32.62): Y bounds were 1.5px instead of ~150px
+   - `isPointWithinKeyWithTolerance()` used raw `row.height` (1.0) instead of `row.height * _tc.row_height`
+   - Touch at y=343 checked against bounds y=[9.625, 11.125] → always failed
+   - Fixed by properly scaling row heights to match rendering
+
+2. **Direction fallback bug** (v1.32.63): `dir=5 value=null`
+   - Used `getKeyAtDirection()` which only checks exact direction
+   - Fixed by using `getNearestKeyAtDirection()` which searches nearby directions
+
+3. **Reliability issues** (v1.32.64): Short gestures were unreliable
+   - Tolerance too low (25%) for diagonal swipes toward corners
+   - Minimum distance too high (30% of key hypotenuse)
+   - Increased tolerance: 25% → 40% of key size
+   - Reduced distance: 30% → 20% of key hypotenuse
+
+**Progressive Fixes**:
+- v1.32.58: Fixed GestureClassifier dpToPx bug
+- v1.32.59: Added tolerance method (25%, insufficient)
+- v1.32.62: Fixed row height scaling (critical)
+- v1.32.63: Added direction fallback search
+- v1.32.64: Increased tolerance to 40%, reduced distance to 20%
 
 ---
 
