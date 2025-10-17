@@ -15,20 +15,15 @@
   <PreferenceCategory android:title="@string/pref_category_typing">
     <CheckBoxPreference android:key="word_prediction_enabled" android:title="@string/pref_word_prediction_title" android:summary="@string/pref_word_prediction_summary" android:defaultValue="false"/>
     <juloo.keyboard2.prefs.IntSlideBarPreference android:key="suggestion_bar_opacity" android:title="@string/pref_suggestion_bar_opacity_title" android:summary="%s%%" android:defaultValue="90" min="0" max="100" android:dependency="word_prediction_enabled"/>
-    <PreferenceScreen android:key="word_prediction_advanced" android:title="⚙️ Advanced Word Prediction" android:summary="Fine-tune suggestion engine scoring weights" android:dependency="word_prediction_enabled">
-      <Preference android:title="📖 About These Settings" android:summary="These settings control the WordPredictor engine used for non-swipe typing suggestions. They do NOT affect neural swipe predictions.\n\nWeights are percentages (100% = neutral). Higher values increase importance.\n\n⚠️ Changes take effect immediately but may require restart for full effect."/>
-      <PreferenceCategory android:title="Matching Quality Weights">
-        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_shape_weight" android:title="Shape Similarity" android:summary="Key press pattern similarity (%s%%)" android:defaultValue="90" min="10" max="300"/>
-        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_location_weight" android:title="Location Accuracy" android:summary="Spatial key position matching (%s%%)" android:defaultValue="130" min="10" max="300"/>
-        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_frequency_weight" android:title="Word Frequency" android:summary="How common the word is (%s%%)" android:defaultValue="80" min="10" max="300"/>
-        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_velocity_weight" android:title="Typing Velocity" android:summary="Typing rhythm patterns (%s%%)" android:defaultValue="60" min="10" max="300"/>
-      </PreferenceCategory>
-      <PreferenceCategory android:title="Endpoint Matching Bonuses">
-        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_first_letter_weight" android:title="First Letter Bonus" android:summary="Boost if first letter matches (%s%%)" android:defaultValue="150" min="100" max="300"/>
-        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_last_letter_weight" android:title="Last Letter Bonus" android:summary="Boost if last letter matches (%s%%)" android:defaultValue="150" min="100" max="300"/>
-        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_endpoint_bonus_weight" android:title="Both Endpoints Bonus" android:summary="Boost if BOTH first and last match (%s%%)" android:defaultValue="200" min="100" max="500"/>
-        <CheckBoxPreference android:key="swipe_require_endpoints" android:title="Require Endpoint Matching" android:summary="Strict mode: only show words matching first AND last letters" android:defaultValue="false"/>
-      </PreferenceCategory>
+    <PreferenceScreen android:key="word_prediction_advanced" android:title="Advanced Word Prediction" android:summary="Fine-tune suggestion engine scoring weights" android:dependency="word_prediction_enabled">
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_shape_weight" android:title="Shape Similarity Weight" android:summary="Key press pattern similarity (%s%%)" android:defaultValue="90" min="10" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_location_weight" android:title="Location Accuracy Weight" android:summary="Spatial key position matching (%s%%)" android:defaultValue="130" min="10" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_frequency_weight" android:title="Word Frequency Weight" android:summary="How common the word is (%s%%)" android:defaultValue="80" min="10" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_confidence_velocity_weight" android:title="Typing Velocity Weight" android:summary="Typing rhythm patterns (%s%%)" android:defaultValue="60" min="10" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_first_letter_weight" android:title="First Letter Bonus" android:summary="Boost if first letter matches (%s%%)" android:defaultValue="150" min="100" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_last_letter_weight" android:title="Last Letter Bonus" android:summary="Boost if last letter matches (%s%%)" android:defaultValue="150" min="100" max="300"/>
+      <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_endpoint_bonus_weight" android:title="Both Endpoints Bonus" android:summary="Boost if BOTH first and last match (%s%%)" android:defaultValue="200" min="100" max="500"/>
+      <CheckBoxPreference android:key="swipe_require_endpoints" android:title="Require Endpoint Matching" android:summary="Strict mode: only show words matching first AND last letters" android:defaultValue="false"/>
     </PreferenceScreen>
     <CheckBoxPreference android:key="swipe_typing_enabled" android:title="@string/pref_swipe_typing_title" android:summary="@string/pref_swipe_typing_summary" android:defaultValue="false"/>
     <PreferenceScreen android:key="swipe_calibration" android:title="@string/pref_swipe_calibration_title" android:summary="@string/pref_swipe_calibration_summary" android:dependency="swipe_typing_enabled"/>
