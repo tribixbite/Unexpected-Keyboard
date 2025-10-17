@@ -2,6 +2,81 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Swipe Debug Controls & Recognition Fixes 🎛️ #RELEASE
+
+**Version**: 1.32.88 (137) ✅ BUILD SUCCESSFUL
+
+**User Reports**:
+1. "entire sum of what?" - Clarification on O(n²) timestamp bug
+2. "add toggle for tracer/path logging" - Request for debug controls
+3. "nearly half the time swipes not properly identified" - Major recognition failure
+4. "NN should never output 0 predictions" - Empty suggestion bar issue
+
+**Issues Fixed**:
+
+#### 1. Debug Settings Added
+**New Settings** (Settings → Swipe Typing → Swipe Debug Log):
+- **Detailed Pipeline Logging**: Toggle for trajectory processing, key detection, neural network internals
+- **Show Raw NN Output** (default ON): Always display at least 2 raw predictions before filtering
+
+**Config additions**:
+- `swipe_debug_detailed_logging` - Enable comprehensive logging
+- `swipe_debug_show_raw_output` - Show raw beam search outputs
+
+#### 2. NN Zero Predictions Fixed
+**Root Cause**: Confidence threshold and vocabulary filtering sometimes eliminated ALL predictions
+
+**Fix** (OnnxSwipePredictor.java lines 1253-1265, 1298-1310):
+```java
+// DEBUG MODE: Always show at least 2 predictions to help debugging
+if (words.isEmpty() && !candidates.isEmpty() && _config.swipe_debug_show_raw_output)
+{
+  int numToShow = Math.min(2, candidates.size());
+  for (int i = 0; i < numToShow; i++)
+  {
+    BeamSearchCandidate candidate = candidates.get(i);
+    words.add(candidate.word + " [raw:" + String.format("%.2f", candidate.confidence) + "]");
+  }
+}
+```
+
+**Result**: Users now see top 2 raw outputs with confidence scores like "hello [raw:0.08]" when filtering would have shown nothing
+
+#### 3. Swipe Recognition Failures Fixed
+**Root Cause**: Aggressive filtering in `ImprovedSwipeGestureRecognizer` prevented fast swipes from registering enough keys:
+- MIN_DWELL_TIME_MS = 20ms (too long for fast swipes)
+- MIN_KEY_DISTANCE = 40px (keys needed to be far apart)
+- HIGH_VELOCITY_THRESHOLD = 500px/s (rejected fast swipes)
+
+**Result**: If gesture tracker registered < 2 keys, swipe typing never triggered → no visual trail, no predictions
+
+**Fix** (ImprovedSwipeGestureRecognizer.java lines 31-32, 40):
+```java
+private static final long MIN_DWELL_TIME_MS = 10; // Reduced from 20ms
+private static final float MIN_KEY_DISTANCE = 30.0f; // Reduced from 40px
+private static final float HIGH_VELOCITY_THRESHOLD = 1000.0f; // Increased from 500px/s
+```
+
+**Impact**:
+- Visual trail now appears reliably for fast swipes
+- Swipe typing mode triggers consistently
+- Users see predictions even when low confidence (for debugging)
+
+#### 4. Clarified Timestamp O(n²) Bug
+**User question**: "entire sum of what? the swipe path?"
+
+**Answer**: The old code summed all previous timestamp deltas for every new point:
+- Point #51 loops through 50 previous deltas
+- Point #52 loops through 51 deltas
+- Result: 150 points = 11,250 unnecessary operations per swipe
+
+Fixed in v1.32.87 by tracking `lastAbsoluteTimestamp` directly
+
+**Commits**:
+- `c71f8baf` - feat(swipe): add debug controls and fix recognition issues #RELEASE
+
+---
+
 ### Calibration Timestamp Bug Fixed ⏱️
 
 **Version**: 1.32.87 (136) ✅ BUILD SUCCESSFUL
