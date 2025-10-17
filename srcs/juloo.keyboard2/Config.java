@@ -72,15 +72,16 @@ public final class Config
   public boolean clipboard_history_enabled;
   public int clipboard_history_limit;
   public boolean swipe_typing_enabled;
-  // Legacy swipe parameters (kept for compatibility with existing WordPredictor)
-  public float swipe_confidence_shape_weight;
-  public float swipe_confidence_location_weight;
-  public float swipe_confidence_frequency_weight;
-  public float swipe_confidence_velocity_weight;
-  public float swipe_first_letter_weight;
-  public float swipe_last_letter_weight;
-  public float swipe_endpoint_bonus_weight;
-  public boolean swipe_require_endpoints;
+  // Legacy swipe parameters (used by WordPredictor for non-swipe suggestions only)
+  // Hardcoded since neural system doesn't use these - no UI settings needed
+  public float swipe_confidence_shape_weight = 0.9f;
+  public float swipe_confidence_location_weight = 1.3f;
+  public float swipe_confidence_frequency_weight = 0.8f;
+  public float swipe_confidence_velocity_weight = 0.6f;
+  public float swipe_first_letter_weight = 1.5f;
+  public float swipe_last_letter_weight = 1.5f;
+  public float swipe_endpoint_bonus_weight = 2.0f;
+  public boolean swipe_require_endpoints = false;
   public boolean swipe_show_debug_scores;
   public boolean word_prediction_enabled;
   public int suggestion_bar_opacity; // 0 - 100
@@ -215,15 +216,6 @@ public final class Config
       android.util.Log.w("Config", "Fixed clipboard_history_limit type mismatch: " + stringValue);
     }
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
-    // Legacy swipe parameters (kept for compatibility)
-    swipe_confidence_shape_weight = safeGetInt(_prefs, "swipe_confidence_shape_weight", 90) / 100.f;
-    swipe_confidence_location_weight = safeGetInt(_prefs, "swipe_confidence_location_weight", 130) / 100.f;
-    swipe_confidence_frequency_weight = safeGetInt(_prefs, "swipe_confidence_frequency_weight", 80) / 100.f;
-    swipe_confidence_velocity_weight = safeGetInt(_prefs, "swipe_confidence_velocity_weight", 60) / 100.f;
-    swipe_first_letter_weight = safeGetInt(_prefs, "swipe_first_letter_weight", 150) / 100.f;
-    swipe_last_letter_weight = safeGetInt(_prefs, "swipe_last_letter_weight", 150) / 100.f;
-    swipe_endpoint_bonus_weight = safeGetInt(_prefs, "swipe_endpoint_bonus_weight", 200) / 100.f;
-    swipe_require_endpoints = _prefs.getBoolean("swipe_require_endpoints", false);
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
     suggestion_bar_opacity = safeGetInt(_prefs, "suggestion_bar_opacity", 90);
