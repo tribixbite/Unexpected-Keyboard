@@ -2,6 +2,42 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Calibration Timestamp Bug Fixed ⏱️
+
+**Version**: 1.32.87 (136) ✅ BUILD SUCCESSFUL
+
+**User Report**: Calibration export for "freezing" showed broken timestamps: `[0, -1381, -1371, 17, 1396, 1392, 5, -1381, -1380, 9, 1397...]`
+
+**Root Cause**: Off-by-one error in `SwipeMLData.addRawPoint()` (lines 107-113):
+
+```java
+for (int i = 0; i < tracePoints.size() - 1; i++)
+{
+  lastAbsoluteTime += tracePoints.get(i).tDeltaMs;
+}
+deltaMs = timestamp - (timestampUtc + lastAbsoluteTime);
+```
+
+**Problem**: Loop condition `i < tracePoints.size() - 1` excluded the LAST point when calculating absolute time:
+- If tracePoints has 3 items (indices 0,1,2), loop only sums indices 0,1 - missing index 2!
+- Each new point calculated delta from WRONG base time
+- Also O(n²) performance - recalculated entire sum for every point
+
+**Result**: Random timestamp jumps between huge positive values (1396ms), negative values (-1381ms), and near-zero (5ms)
+
+**Fix**:
+- Added `lastAbsoluteTimestamp` field (line 42) to track last point's absolute time
+- Initialize to `timestampUtc` in constructor (line 57)
+- Simple delta calculation: `timestamp - lastAbsoluteTimestamp` (line 112)
+- Update field for next point (line 115)
+- Reconstruct from deltas in JSON constructor (lines 95-99)
+
+**Impact**: Neural training data now has correct monotonically increasing timestamp deltas
+
+**Commit**: `ce3176ed` - fix(calibration): correct timestamp delta calculation in ML data export
+
+---
+
 ### Inconsistent Key Detection Fixed 🔍
 
 **Version**: 1.32.86 (135) ✅ BUILD SUCCESSFUL
