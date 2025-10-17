@@ -2,6 +2,49 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Inconsistent Key Detection Fixed 🔍
+
+**Version**: 1.32.86 (135) ✅ BUILD SUCCESSFUL
+
+**User Report**: "typing fuck over and over yields inconsistent key detection logic"
+
+**Symptom**: Same physical swipe gesture detected wildly different key sequences:
+- First swipe: "fguvk" (5 keys)
+- Second swipe: "fj" (2 keys)
+- Third swipe: "fv" (2 keys)
+- Fourth swipe: "fg" (2 keys)
+
+All swipes had same path (x=430-450 → x=843-930), duration (497-606ms), and sampling rate (75-87 Hz).
+
+**Root Cause**: Two separate key detection systems with no consistency:
+
+1. **Gesture Tracker** (`ImprovedSwipeGestureRecognizer.registerKeyWithFiltering()` lines 175-205):
+   - Filters keys based on velocity, dwell time, minimum distance thresholds
+   - Skips keys if moving too fast (HIGH_VELOCITY_THRESHOLD)
+   - Skips recent duplicates
+   - **Non-deterministic** - varies with touch sampling timing
+   - Results logged to debug but NOT sent to neural network
+
+2. **Neural Network** (`SwipeTrajectoryProcessor.detectNearestKeys()` lines 219-257):
+   - Recalculates keys from complete trajectory path after gesture finishes
+   - Uses nearest-key matching on all 150 trajectory points
+   - More deterministic since it processes complete gesture
+   - But was NOT logged, causing confusion
+
+**Problem**: Debug logs showed gesture tracker's filtered keys, but neural network never saw them! Line 1332 in Keyboard2.java passed empty ArrayList for touchedKeys, forcing neural network to recalculate independently.
+
+**Fix**:
+- **Keyboard2.java:1311**: Renamed to "Gesture tracker keys" with context about filtering
+- **Keyboard2.java:1332**: Added comment explaining neural recalculation
+- **SwipeTrajectoryProcessor.java:244**: Added logging of deduplicated neural key detection
+- Debug logs now show BOTH systems for comparison
+
+**Impact**: Users can now see actual input to neural predictions, helping debug why predictions fail.
+
+**Commit**: `570fa64d` - fix(swipe): expose neural network's actual key detection in debug logs
+
+---
+
 ### Settings UI Crash & CI Pipeline Fixed 🛠️
 
 **Version**: 1.32.85 (134) ✅ BUILD SUCCESSFUL
