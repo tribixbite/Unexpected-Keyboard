@@ -1,6 +1,73 @@
 # Project Management - Unexpected Keyboard
 
-## 🔥 LATEST UPDATES (2025-10-16)
+## 🔥 LATEST UPDATES (2025-10-17)
+
+### Bug Fixes: Prediction Length & Text Overwriting 🐛
+
+**Version**: 1.32.80 (129) ✅ BUILD SUCCESSFUL
+
+**User Reports**:
+1. "predictions dont work for long words are we hardcoding a limiter in length"
+2. "if i manually type a word then swipe the prediction overwrites the manually entered characters"
+3. "after pasting the kb just disappears"
+
+**Fixes Implemented**:
+
+#### 1. Long Word Predictions Not Working
+**Root Cause**: neural_max_length default was reduced to 20 chars in v1.32.79 (mobile optimization), preventing long word predictions like "unfortunately", "characteristic", etc.
+
+**Fix**: Increased neural_max_length default from 20 → 35 characters:
+- Config.java line 232: `neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);`
+- settings.xml line 25: `android:defaultValue="35"`
+- OnnxSwipePredictor.java line 46: `DEFAULT_MAX_LENGTH = 35`
+- Still maintains speed: 2 beams × 35 chars = 70 inferences (vs 280 with 8 beams)
+- Balances long word support with mobile performance
+
+#### 2. Swipe Overwrites Manual Text
+**Root Cause**: Auto-insertion in Keyboard2.java:846-872 always triggered after swipe, deleting `_currentWord` (manually typed text) before inserting prediction.
+
+**Previous behavior**:
+- User types "hello" (no space)
+- User does swipe gesture
+- onSwipePredictionComplete() auto-inserts top prediction
+- onSuggestionSelected() deletes "hello" at lines 939-946
+- Result: "hello" replaced by swipe prediction ❌
+
+**Fix**: Added auto-insert guard (Keyboard2.java:848-860):
+```java
+boolean canAutoInsert = _currentWord.length() == 0;
+if (!canAutoInsert) {
+  // Check if cursor is after whitespace (new word context)
+  InputConnection ic = getCurrentInputConnection();
+  if (ic != null) {
+    CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+    canAutoInsert = (textBefore != null && textBefore.length() > 0 &&
+                    Character.isWhitespace(textBefore.charAt(0)));
+  }
+}
+```
+
+**New behavior**:
+- Type "hello" → swipe: keeps "hello", shows suggestions (no auto-insert) ✓
+- Type "hello " → swipe: auto-inserts prediction after space ✓
+- Swipe → swipe → swipe: rapid consecutive swiping still works ✓
+
+#### 3. Keyboard Disappearing After Paste
+**Investigation**: Paste handled by KeyEventHandler.java:244:
+```java
+case PASTE: send_context_menu_action(android.R.id.paste);
+```
+
+Standard Android InputConnection.performContextMenuAction() is used - keyboard visibility is controlled by the receiving app, not the keyboard IME.
+
+**Status**: **App-specific behavior** - some apps (like Termux) may dismiss keyboard after paste. Not a keyboard bug.
+
+**Workaround**: User can tap input field to reshow keyboard if app dismisses it.
+
+**Commits**:
+- `f3349387` - fix(swipe): improve long word predictions and prevent text overwriting
+
+## 🔥 PREVIOUS UPDATES (2025-10-16)
 
 ### Architectural Refactor: Unified Gesture Classification 🏗️
 
