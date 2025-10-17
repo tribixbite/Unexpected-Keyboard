@@ -900,6 +900,9 @@ public class Keyboard2 extends InputMethodService
       return;
     }
 
+    // Strip debug annotations before processing (e.g., "hello [raw:0.08]" → "hello")
+    word = word.replaceAll(" \\[raw:[0-9.]+\\]$", "");
+
     // Record user selection for adaptation learning
     if (_adaptationManager != null)
     {
