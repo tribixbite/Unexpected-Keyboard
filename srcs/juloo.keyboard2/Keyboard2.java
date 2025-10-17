@@ -845,23 +845,25 @@ public class Keyboard2 extends InputMethodService
 
       // Auto-insert top (highest scoring) prediction immediately after swipe completes
       // This enables rapid consecutive swiping without manual taps
-      // CRITICAL: Only auto-insert if no manual typing in progress (empty input or ends with space)
-      boolean canAutoInsert = _currentWord.length() == 0;
-      if (!canAutoInsert)
-      {
-        // Check if cursor is after a space (new word context)
-        InputConnection ic = getCurrentInputConnection();
-        if (ic != null)
-        {
-          CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
-          canAutoInsert = (textBefore != null && textBefore.length() > 0 &&
-                          Character.isWhitespace(textBefore.charAt(0)));
-        }
-      }
-
       String topPrediction = _suggestionBar.getTopSuggestion();
-      if (topPrediction != null && !topPrediction.isEmpty() && canAutoInsert)
+      if (topPrediction != null && !topPrediction.isEmpty())
       {
+        InputConnection ic = getCurrentInputConnection();
+
+        // If manual typing in progress, commit it first with a space
+        if (_currentWord.length() > 0 && ic != null)
+        {
+          sendDebugLog(String.format("Committing manual text before swipe: \"%s\"\n", _currentWord));
+
+          // Commit the manually typed word with a space
+          ic.commitText(_currentWord + " ", 1);
+          _currentWord = new StringBuilder();
+
+          // Clear any previous auto-inserted word tracking since we just committed manual text
+          _lastAutoInsertedWord = null;
+          _lastCommitSource = PredictionSource.USER_TYPED_TAP;
+        }
+
         // DEBUG: Log auto-insertion
         sendDebugLog(String.format("Auto-inserting top prediction: \"%s\"\n", topPrediction));
 
@@ -883,10 +885,6 @@ public class Keyboard2 extends InputMethodService
         _suggestionBar.setSuggestionsWithScores(predictions, scores);
 
         sendDebugLog("Suggestions re-displayed for correction\n");
-      }
-      else if (!canAutoInsert)
-      {
-        sendDebugLog(String.format("Skipped auto-insert: manual typing in progress (_currentWord=\"%s\")\n", _currentWord));
       }
     }
     sendDebugLog("========== SWIPE COMPLETE ==========\n\n");

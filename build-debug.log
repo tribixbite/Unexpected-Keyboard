@@ -21,10 +21,10 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
-> Task :mergeDebugResources
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :processDebugMainManifest
 > Task :parseDebugLocalResources
+> Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -35,10 +35,10 @@ Generated version info:  ()
 > Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeDebugJavaResource
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :mergeDebugJavaResource
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -82,24 +82,6 @@ Try one of the following options:
 For more details on how to configure these settings, see https://developer.android.com/build/jdks.
 To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
 warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target va
-> Task :compileDebugJavaWithJavac
-Java compiler version 21 has deprecated support for compiling with source/target version 8.
-Try one of the fNote: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-3 warnings
-
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
-
-BUILD SUCCESSFUL in 42s
-34 actionable tasks: 27 executed, 7 from cache
-ing: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
 warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
 Note: Some input files use or override a deprecated API.
@@ -114,23 +96,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 42s
+BUILD SUCCESSFUL in 35s
 34 actionable tasks: 27 executed, 7 from cache
-
-=== BUILD SUCCESSFUL! ===
-APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
--rw-------. 1 u0_a364 u0_a364 43M Oct 17 10:27 build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
-Copying APK to /sdcard/unexpected/ for updates...
-APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 43M Oct 17 10:27 /sdcard/unexpected/debug-kb.apk
-
-Step 6: Attempting ADB connection and installation...
-No ADB device connected, attempting wireless connection...
-Scanning for ADB on host: 100.70.153.102
-Scanning ports 30000-50000 for ADB...
-Trying 100.70.153.102:5555... no response
-No working ADB port found on 100.70.153.102
-❌ Could not establish ADB connection
-Opening APK for installation...
