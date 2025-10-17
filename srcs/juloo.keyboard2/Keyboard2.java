@@ -845,8 +845,22 @@ public class Keyboard2 extends InputMethodService
 
       // Auto-insert top (highest scoring) prediction immediately after swipe completes
       // This enables rapid consecutive swiping without manual taps
+      // CRITICAL: Only auto-insert if no manual typing in progress (empty input or ends with space)
+      boolean canAutoInsert = _currentWord.length() == 0;
+      if (!canAutoInsert)
+      {
+        // Check if cursor is after a space (new word context)
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null)
+        {
+          CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+          canAutoInsert = (textBefore != null && textBefore.length() > 0 &&
+                          Character.isWhitespace(textBefore.charAt(0)));
+        }
+      }
+
       String topPrediction = _suggestionBar.getTopSuggestion();
-      if (topPrediction != null && !topPrediction.isEmpty())
+      if (topPrediction != null && !topPrediction.isEmpty() && canAutoInsert)
       {
         // DEBUG: Log auto-insertion
         sendDebugLog(String.format("Auto-inserting top prediction: \"%s\"\n", topPrediction));
@@ -869,6 +883,10 @@ public class Keyboard2 extends InputMethodService
         _suggestionBar.setSuggestionsWithScores(predictions, scores);
 
         sendDebugLog("Suggestions re-displayed for correction\n");
+      }
+      else if (!canAutoInsert)
+      {
+        sendDebugLog(String.format("Skipped auto-insert: manual typing in progress (_currentWord=\"%s\")\n", _currentWord));
       }
     }
     sendDebugLog("========== SWIPE COMPLETE ==========\n\n");
