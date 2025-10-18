@@ -168,15 +168,24 @@ public final class ClipboardHistoryService
   /** Add what is currently in the system clipboard into the history. */
   void add_current_clip()
   {
-    ClipData clip = _cm.getPrimaryClip();
-    if (clip == null)
-      return;
-    int count = clip.getItemCount();
-    for (int i = 0; i < count; i++)
+    try
     {
-      CharSequence text = clip.getItemAt(i).getText();
-      if (text != null)
-        add_clip(text.toString());
+      ClipData clip = _cm.getPrimaryClip();
+      if (clip == null)
+        return;
+      int count = clip.getItemCount();
+      for (int i = 0; i < count; i++)
+      {
+        CharSequence text = clip.getItemAt(i).getText();
+        if (text != null)
+          add_clip(text.toString());
+      }
+    }
+    catch (SecurityException e)
+    {
+      // Android 10+ denies clipboard access when app is not in focus
+      // This is expected behavior - we can only access clipboard when keyboard is visible
+      android.util.Log.d("ClipboardHistoryService", "Clipboard access denied (app not in focus): " + e.getMessage());
     }
   }
 
