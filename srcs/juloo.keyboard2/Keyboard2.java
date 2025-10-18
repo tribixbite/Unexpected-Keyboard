@@ -954,15 +954,22 @@ public class Keyboard2 extends InputMethodService
     {
       try
       {
-        // If we have a current word being typed, delete it first
-        if (_currentWord.length() > 0)
-        {
-          // Delete the partial word
-          for (int i = 0; i < _currentWord.length(); i++)
-          {
-            ic.deleteSurroundingText(1, 0);
-          }
-        }
+        // IMPORTANT: _currentWord tracks typed characters, but they're already committed to input!
+        // When typing normally (not swipe), each character is committed immediately via KeyEventHandler
+        // So _currentWord is just for tracking - the text is already in the editor
+        // We should NOT delete _currentWord characters here because:
+        // 1. They're already committed and visible
+        // 2. Swipe gesture detection happens AFTER typing completes
+        // 3. User expects swipe to ADD a word, not delete what they typed
+        //
+        // Example bug scenario:
+        // - User types "i" (committed to editor, _currentWord="i")
+        // - User swipes "think" (without space after "i")
+        // - Old code: deletes "i", adds " think " → result: " think " (lost the "i"!)
+        // - New code: keeps "i", adds " think " → result: "i think " (correct!)
+        //
+        // The ONLY time we should delete is when replacing an auto-inserted prediction
+        // (handled below via _lastAutoInsertedWord tracking)
 
         // CRITICAL: If we just auto-inserted a word from neural swipe, delete it for replacement
         // This allows user to tap a different prediction instead of appending
