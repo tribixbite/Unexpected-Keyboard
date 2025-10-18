@@ -2,6 +2,57 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Three Major Improvements - v1.32.96-97 🚀
+
+**Version**: 1.32.97 (146)
+
+**Status**: ✅ BUILD SUCCESSFUL in 33s
+
+**1. Fixed Double Character Bug in Swipe After Typing** (v1.32.96)
+- **Problem**: Typing "i" then swiping without space resulted in "i i <swipe_word>"
+- **Root Cause**: `_currentWord` buffer was being deleted from input connection, but text was already committed
+- **Understanding**: When typing normally, characters are committed immediately via `KeyEventHandler.send_text()`
+  - `_currentWord` is just a tracking buffer
+  - The actual text is already in the editor
+  - Deleting _currentWord was causing loss of typed characters
+- **Solution**: Only delete when replacing auto-inserted predictions, not typed text
+- **Examples Now Working**:
+  - Type "i" → swipe "think" → result: "i think " ✅ (was: " think " ❌)
+  - Type "hello" → swipe "world" → result: "hello world " ✅ (was: " world " ❌)
+
+**2. Comprehensive Advanced Prediction Settings Documentation** (v1.32.97)
+- Created `ADVANCED_PREDICTION_SETTINGS.md` with full technical details
+- **Key Finding**: The 8 "Advanced Word Prediction" settings are **LEGACY** and **NO LONGER USED**
+- Original settings (for old swipe classifier):
+  1. **Shape Weight** (90): Geometric path similarity
+  2. **Location Weight** (130): Spatial proximity to keys
+  3. **Frequency Weight** (80): Word popularity boost
+  4. **Velocity Weight** (60): Swipe speed consistency
+  5. **First Letter Weight** (150): Starting key match bonus
+  6. **Last Letter Weight** (150): Ending key match bonus
+  7. **Endpoint Bonus** (200): Combined endpoint multiplier
+  8. **Require Endpoints** (false): Hard filter for matches
+- **Current System**: ONNX neural network (LSTM + beam search) doesn't use these weights
+- **Active Settings**: Beam width (2), max length (35), confidence threshold (0.1)
+
+**3. Default IME Selection Prompt** (v1.32.97)
+- Added non-intrusive toast notification if keyboard isn't set as default
+- Shows once per app launch: "Set Unexpected Keyboard as default in Settings → System → Languages & input → On-screen keyboard"
+- Delayed 2 seconds to avoid startup interference
+- Tracked via `ime_prompt_shown_this_session` preference
+
+**Files Modified**:
+- `Keyboard2.java:957-972` - Removed _currentWord deletion logic with detailed comments
+- `Keyboard2.java:164` - Added checkAndPromptDefaultIME() call
+- `Keyboard2.java:1644-1695` - Implemented IME check method
+- `ADVANCED_PREDICTION_SETTINGS.md` - Complete 300+ line documentation
+
+**Commits**:
+- `e7cde568` - fix(swipe): prevent double character insertion when typing then swiping without space
+- `fc2b4d42` - feat(ime): add default keyboard prompt and comprehensive prediction settings documentation
+
+---
+
 ### Android 10+ Clipboard Security Exception Fixed - v1.32.95 🔐
 
 **Version**: 1.32.95 (144)
