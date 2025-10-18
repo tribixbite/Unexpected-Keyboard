@@ -2,6 +2,50 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Clipboard Storage Architecture Fixed - v1.32.93 🗄️
+
+**Version**: 1.32.93 (142)
+
+**Status**: ✅ BUILD SUCCESSFUL in 21s
+
+**Critical Clipboard Bugs Fixed**:
+
+1. **Dual Storage System Causing Data Loss**
+   - **Problem**: ClipboardPinView used SharedPreferences while ClipboardHistoryView used SQLite database
+   - **Symptom**: Pinned items disappeared on app restart, clipboard history not persisting
+   - **Root Cause**: When pinning an item, it was removed from database and stored in SharedPreferences
+   - **Fix**: Unified storage - all clipboard data (pinned and unpinned) now stored in database with `is_pinned` flag
+
+2. **Keyboard Breaking After Pin Toggle**
+   - **Problem**: Toggling pin then tapping ABC caused keyboard to disappear
+   - **Root Cause**: View refresh lifecycle issue when moving data between two storage systems
+   - **Fix**: Single database source eliminates cross-system data movement
+
+3. **Clipboard Entries Not Persisting**
+   - **Problem**: Items unreliably saved to clipboard history
+   - **Root Cause**: SharedPreferences write was racing with database reads
+   - **Fix**: Database-only persistence with proper transactions
+
+**Architecture Changes**:
+- `ClipboardPinView` now reads from `ClipboardDatabase.getPinnedEntries()`
+- `ClipboardHistoryView` calls `set_pinned_status()` instead of `remove_history_entry()`
+- Added `getPinnedEntries()` query: `WHERE is_pinned = 1`
+- Modified `getActiveClipboardEntries()` query: `WHERE is_pinned = 0 AND expiry_timestamp > ?`
+- Removed SharedPreferences storage methods from ClipboardPinView
+- Added `refresh_pinned_items()` and `onWindowVisibilityChanged()` lifecycle hooks
+
+**Files Modified**:
+- `ClipboardPinView.java` - Removed SharedPreferences, added database integration
+- `ClipboardHistoryView.java` - Changed pin_entry() to set flag instead of remove
+- `ClipboardDatabase.java` - Added getPinnedEntries() method, separated queries
+- `ClipboardHistoryService.java` - Added get_pinned_entries() wrapper
+
+**Commit**: `af7e72dd` - fix(clipboard): unify pin/history storage using database instead of SharedPreferences
+
+**Testing**: Clipboard now persists across app restarts, pin toggle works reliably, keyboard lifecycle stable
+
+---
+
 ### CI/CD Auto-Release Working - v1.32.91 Released! 🎉
 
 **Version**: 1.32.91 (140)
