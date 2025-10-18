@@ -17,44 +17,46 @@ import org.json.JSONException;
 
 public final class ClipboardPinView extends NonScrollListView
 {
-  /** Preference file name that store pinned clipboards. */
-  static final String PERSIST_FILE_NAME = "clipboards";
-  /** Preference name for pinned clipboards. */
-  static final String PERSIST_PREF = "pinned";
-
   List<String> _entries;
   ClipboardPinEntriesAdapter _adapter;
-  SharedPreferences _persist_store;
+  ClipboardHistoryService _service;
 
   public ClipboardPinView(Context ctx, AttributeSet attrs)
   {
     super(ctx, attrs);
     _entries = new ArrayList<String>();
-    _persist_store =
-      ctx.getSharedPreferences("pinned_clipboards", Context.MODE_PRIVATE);
-    load_from_prefs(_persist_store, _entries);
+    _service = ClipboardHistoryService.get_service(ctx);
     _adapter = this.new ClipboardPinEntriesAdapter();
     setAdapter(_adapter);
+    refresh_pinned_items();
   }
 
-  /** Pin a clipboard and persist the change. */
-  public void add_entry(String text)
+  /** Refresh pinned items from database */
+  public void refresh_pinned_items()
   {
-    _entries.add(text);
-    _adapter.notifyDataSetChanged();
-    persist();
-    invalidate();
+    if (_service != null)
+    {
+      _entries = _service.get_pinned_entries();
+      _adapter.notifyDataSetChanged();
+      invalidate();
+    }
   }
 
-  /** Remove the entry at index [pos] and persist the change. */
+  /** Remove the entry at index [pos] and unpin in database. */
   public void remove_entry(int pos)
   {
     if (pos < 0 || pos >= _entries.size())
       return;
-    _entries.remove(pos);
-    _adapter.notifyDataSetChanged();
-    persist();
-    invalidate();
+
+    String clip = _entries.get(pos);
+
+    // Unpin in database
+    if (_service != null)
+    {
+      _service.set_pinned_status(clip, false);
+    }
+
+    refresh_pinned_items();
   }
 
   /** Send the specified entry to the editor. */
@@ -63,30 +65,11 @@ public final class ClipboardPinView extends NonScrollListView
     ClipboardHistoryService.paste(_entries.get(pos));
   }
 
-  void persist() { save_to_prefs(_persist_store, _entries); }
-
-  static void load_from_prefs(SharedPreferences store, List<String> dst)
+  @Override
+  protected void onWindowVisibilityChanged(int visibility)
   {
-    String arr_s = store.getString(PERSIST_PREF, null);
-    if (arr_s == null)
-      return;
-    try
-    {
-      JSONArray arr = new JSONArray(arr_s);
-      for (int i = 0; i < arr.length(); i++)
-        dst.add(arr.getString(i));
-    }
-    catch (JSONException _e) {}
-  }
-
-  static void save_to_prefs(SharedPreferences store, List<String> entries)
-  {
-    JSONArray arr = new JSONArray();
-    for (int i = 0; i < entries.size(); i++)
-      arr.put(entries.get(i));
-    store.edit()
-      .putString(PERSIST_PREF, arr.toString())
-      .commit();
+    if (visibility == View.VISIBLE)
+      refresh_pinned_items();
   }
 
   class ClipboardPinEntriesAdapter extends BaseAdapter

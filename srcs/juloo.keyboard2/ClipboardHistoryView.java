@@ -37,10 +37,17 @@ public final class ClipboardHistoryView extends NonScrollListView
       the list of pinned clipboards. */
   public void pin_entry(int pos)
   {
-    ClipboardPinView v = (ClipboardPinView)((ViewGroup)getParent().getParent()).findViewById(R.id.clipboard_pin_view);
     String clip = _history.get(pos);
-    v.add_entry(clip);
-    _service.remove_history_entry(clip);
+
+    // Set pinned status in database instead of removing
+    _service.set_pinned_status(clip, true);
+
+    // Notify pin view to refresh
+    ClipboardPinView v = (ClipboardPinView)((ViewGroup)getParent().getParent()).findViewById(R.id.clipboard_pin_view);
+    if (v != null)
+    {
+      v.refresh_pinned_items();
+    }
   }
 
   /** Send the specified entry to the editor. */

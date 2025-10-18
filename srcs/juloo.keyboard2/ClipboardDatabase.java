@@ -133,21 +133,22 @@ public class ClipboardDatabase extends SQLiteOpenHelper
     }
     
     /**
-     * Get all active clipboard entries (non-expired)
+     * Get all active clipboard entries (non-expired, non-pinned)
      */
     public List<String> getActiveClipboardEntries()
     {
         List<String> entries = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
-        
+
         SQLiteDatabase db = this.getReadableDatabase();
-        
-        String query = "SELECT " + COLUMN_CONTENT + " FROM " + TABLE_CLIPBOARD + 
-            " WHERE " + COLUMN_EXPIRY_TIMESTAMP + " > ? OR " + COLUMN_IS_PINNED + " = 1" +
-            " ORDER BY " + COLUMN_IS_PINNED + " DESC, " + COLUMN_TIMESTAMP + " DESC";
-            
+
+        // Get only non-pinned entries (pinned entries shown separately)
+        String query = "SELECT " + COLUMN_CONTENT + " FROM " + TABLE_CLIPBOARD +
+            " WHERE " + COLUMN_IS_PINNED + " = 0 AND " + COLUMN_EXPIRY_TIMESTAMP + " > ?" +
+            " ORDER BY " + COLUMN_TIMESTAMP + " DESC";
+
         Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(currentTime)});
-        
+
         try
         {
             if (cursor.moveToFirst())
@@ -167,8 +168,47 @@ public class ClipboardDatabase extends SQLiteOpenHelper
         {
             cursor.close();
         }
-        
+
         android.util.Log.d("ClipboardDatabase", "Retrieved " + entries.size() + " active clipboard entries");
+        return entries;
+    }
+
+    /**
+     * Get all pinned clipboard entries
+     */
+    public List<String> getPinnedEntries()
+    {
+        List<String> entries = new ArrayList<>();
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String query = "SELECT " + COLUMN_CONTENT + " FROM " + TABLE_CLIPBOARD +
+            " WHERE " + COLUMN_IS_PINNED + " = 1" +
+            " ORDER BY " + COLUMN_TIMESTAMP + " DESC";
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        try
+        {
+            if (cursor.moveToFirst())
+            {
+                do
+                {
+                    String content = cursor.getString(0);
+                    entries.add(content);
+                } while (cursor.moveToNext());
+            }
+        }
+        catch (Exception e)
+        {
+            android.util.Log.e("ClipboardDatabase", "Error retrieving pinned entries: " + e.getMessage());
+        }
+        finally
+        {
+            cursor.close();
+        }
+
+        android.util.Log.d("ClipboardDatabase", "Retrieved " + entries.size() + " pinned entries");
         return entries;
     }
     

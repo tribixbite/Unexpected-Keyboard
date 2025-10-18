@@ -145,7 +145,13 @@ public final class ClipboardHistoryService
     if (updated && _listener != null)
       _listener.on_clipboard_history_change();
   }
-  
+
+  /** Get all pinned clipboard entries */
+  public List<String> get_pinned_entries()
+  {
+    return _database.getPinnedEntries();
+  }
+
   /** Get statistics about clipboard storage */
   public String getStorageStats()
   {
