@@ -2,6 +2,54 @@
 
 ## 🔥 LATEST UPDATES (2025-10-17)
 
+### Android 10+ Clipboard Security Exception Fixed - v1.32.95 🔐
+
+**Version**: 1.32.95 (144)
+
+**Status**: ✅ BUILD SUCCESSFUL in 23s
+
+**Problem Identified**:
+- **Error**: `ClipboardService: Denying clipboard access to juloo.keyboard2.debug, application is not in focus nor is it a system service for user 0`
+- **Root Cause**: Android 10+ (API 29+) introduced clipboard access restrictions for privacy/security
+- **Trigger**: Apps can only access clipboard when they are in the foreground
+- **Impact**: Unhandled SecurityException caused keyboard to freeze/disappear
+
+**The Fix**:
+- Wrapped `ClipboardManager.getPrimaryClip()` in try-catch block in `ClipboardHistoryService.java`
+- Gracefully handles SecurityException when app is not in focus
+- Logs debug message instead of crashing: "Clipboard access denied (app not in focus)"
+- This is expected Android behavior - keyboard can only read clipboard when visible
+
+**Technical Details**:
+```java
+void add_current_clip()
+{
+  try
+  {
+    ClipData clip = _cm.getPrimaryClip();
+    // ... process clipboard data
+  }
+  catch (SecurityException e)
+  {
+    // Android 10+ denies clipboard access when app is not in focus
+    android.util.Log.d("ClipboardHistoryService", "Clipboard access denied (app not in focus): " + e.getMessage());
+  }
+}
+```
+
+**Android Security Documentation**:
+- https://developer.android.com/about/versions/10/privacy/changes#clipboard-data
+- Starting in Android 10, apps must be the default IME or have focus to access clipboard
+
+**Files Modified**:
+- `ClipboardHistoryService.java:169-190` - Added SecurityException handling
+
+**Commit**: `4c0f89bd` - fix(clipboard): handle Android 10+ security exception when app not in focus
+
+**Impact**: Keyboard no longer breaks when clipboard is accessed while app is in background
+
+---
+
 ### Clipboard Storage Architecture Fixed - v1.32.93 🗄️
 
 **Version**: 1.32.93 (142)
