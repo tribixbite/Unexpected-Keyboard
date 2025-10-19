@@ -1136,8 +1136,20 @@ public class Keyboard2 extends InputMethodService
               // Delete the typed word + space (already committed)
               conn.deleteSurroundingText(completedWord.length() + 1, 0);
 
-              // Insert the corrected word WITH trailing space
-              conn.commitText(correctedWord + " ", 1);
+              // Insert the corrected word - respect Termux mode for spacing
+              String replacementText;
+              if (_config.termux_mode_enabled)
+              {
+                // Termux mode: No automatic trailing space (user already pressed space, we deleted it)
+                // User can press space again if needed, or continue typing commands
+                replacementText = correctedWord;
+              }
+              else
+              {
+                // Normal mode: Add trailing space for better typing flow
+                replacementText = correctedWord + " ";
+              }
+              conn.commitText(replacementText, 1);
 
               // Update context with corrected word
               updateContext(correctedWord);
