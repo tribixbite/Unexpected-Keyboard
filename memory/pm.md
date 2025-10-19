@@ -3987,3 +3987,105 @@ score = prefixScore × adaptation × (1 + boosted_context × 2.0) × log(frequen
 - Version: v1.32.101
 - Commits: 4452162e, 69b85256, e496ab75, 98ca1ca6
 
+
+## v1.32.102 (2025-10-19) - Settings Refactor: Configurable Prediction Weights
+
+### Replace Deprecated Settings with Functional Controls
+
+**Problem**: 8 "Advanced Word Prediction" settings existed in UI but had no effect on predictions.
+
+**Solution**: Complete removal and replacement with functional, user-configurable weights.
+
+#### Removed (Deprecated, Unused)
+All 8 legacy settings deleted from:
+- `res/xml/settings.xml` (UI)
+- `Config.java` (already removed in v1.32.100)
+
+Settings removed:
+1. `swipe_confidence_shape_weight` - Never used
+2. `swipe_confidence_location_weight` - Never used
+3. `swipe_confidence_frequency_weight` - Never used
+4. `swipe_confidence_velocity_weight` - Never used
+5. `swipe_first_letter_weight` - Removed with swipe fallback
+6. `swipe_last_letter_weight` - Removed with swipe fallback
+7. `swipe_endpoint_bonus_weight` - Removed with swipe fallback
+8. `swipe_require_endpoints` - Removed with swipe fallback
+
+#### Added (New, Functional)
+
+**1. Context Boost Multiplier** (`prediction_context_boost`)
+- Type: Float slider
+- Default: 2.0
+- Range: 0.5 - 5.0
+- Effect: Controls how strongly previous words influence predictions
+- Higher value = better contextual predictions
+- Formula usage: `(1 + (contextMultiplier - 1) × context_boost)`
+
+**2. Frequency Scale Factor** (`prediction_frequency_scale`)
+- Type: Float slider
+- Default: 1000.0
+- Range: 100.0 - 5000.0
+- Effect: Balances common vs uncommon words
+- Lower value = more variety in suggestions
+- Higher value = favors common words
+- Formula usage: `log1p(frequency / frequency_scale)`
+
+#### Implementation Details
+
+**Config.java** (lines 79-81, 220-221):
+```java
+// Field declarations
+public float prediction_context_boost;     // Default: 2.0
+public float prediction_frequency_scale;   // Default: 1000.0
+
+// Loading in refresh()
+prediction_context_boost = _prefs.getFloat("prediction_context_boost", 2.0f);
+prediction_frequency_scale = _prefs.getFloat("prediction_frequency_scale", 1000.0f);
+```
+
+**WordPredictor.java** (lines 335-346):
+```java
+// Use configurable weights in unified scoring
+float frequencyScale = (_config != null) ? _config.prediction_frequency_scale : 1000.0f;
+float frequencyFactor = 1.0f + (float)Math.log1p(frequency / frequencyScale);
+
+float contextBoost = (_config != null) ? _config.prediction_context_boost : 2.0f;
+float finalScore = prefixScore
+    * adaptationMultiplier
+    * (1.0f + (contextMultiplier - 1.0f) * contextBoost)
+    * frequencyFactor;
+```
+
+**settings.xml** (lines 18-22):
+- Added info preference explaining weights
+- Two SlideBarPreference controls with descriptive summaries
+- Dependency on `word_prediction_enabled`
+
+#### User Experience
+
+**Settings path**: Settings → Typing → Word Prediction → Advanced Word Prediction
+
+**UI shows**:
+- 📖 Info preference explaining what each weight does
+- Context Boost slider (shows current value)
+- Frequency Scale slider (shows current value)
+
+**Behavior**:
+- ✅ Changes applied immediately when slider moved
+- ✅ Values persisted to SharedPreferences
+- ✅ Config.refresh() loads on keyboard restart
+- ✅ WordPredictor uses live config values
+
+#### Testing
+- Build: ✅ Successful
+- Settings visible: ✅ (depends on word_prediction_enabled)
+- Values persist: ✅ (SharedPreferences)
+- Version: v1.32.102
+- Commit: 33a043d8
+
+#### Benefits
+1. **Functional**: Settings actually affect predictions (unlike old ones)
+2. **Tunable**: Users can customize prediction behavior
+3. **Clean**: Removed 60+ lines of dead UI code
+4. **Educational**: Info preference explains what settings do
+
