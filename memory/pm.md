@@ -1,8 +1,66 @@
 # Project Management - Unexpected Keyboard
 
-## 🔥 LATEST UPDATES (2025-10-17)
+## 🔥 LATEST UPDATES (2025-10-19)
 
-### Three Major Improvements - v1.32.96-97 🚀
+### Four Critical Swipe/Prediction Bugs Fixed - v1.32.98-102 🚀
+
+**Version**: 1.32.102 (151)
+
+**Status**: ✅ BUILD SUCCESSFUL in 35s
+
+**All Four Prediction Selection Bugs Fixed** (v1.32.98-102)
+
+**Bug 1: Swipe Replacement Leaves First Character** (v1.32.99)
+- **Problem**: Swipe word → tap different prediction → first char of original word remains
+- **Root Cause**: `_lastAutoInsertedWord` stored word WITH debug annotation `[raw:0.32]`
+  - Stored: "kant [raw:0.32]" (15 chars)
+  - Inserted: "kant " (5 chars after stripping annotation)
+  - Tried to delete 15 chars but only 5 existed → deleted extra chars from previous word
+- **Solution**: Strip debug annotations BEFORE storing in `_lastAutoInsertedWord`
+- **Code**: `Keyboard2.java:884` - Added `.replaceAll(" \\[raw:[0-9.]+\\]$", "")`
+
+**Bug 2: Typing Completion Deletes All Text Since Last Prediction** (v1.32.100)
+- **Problem**: Type "hel" → tap "hello" → deletes everything since last prediction
+- **Root Cause**: Typed characters already committed via `KeyEventHandler.send_text()` but not deleted before inserting completion
+- **Solution**: Delete `_currentWord.length()` characters when selecting prediction during regular typing
+- **Code**: `Keyboard2.java:1025-1034` - Added deletion of typed prefix
+
+**Bug 3: Type-Then-Swipe Duplicates Manual Word** (v1.32.101)
+- **Problem**: Type "after" → swipe "the" → result: "afterafter the "
+- **Root Cause**: Line 862 was doing `ic.commitText(_currentWord + " ", 1)` but manual text already committed
+- **Solution**: Only commit space, not the whole word (text already in editor)
+- **Code**: `Keyboard2.java:864` - Changed to `ic.commitText(" ", 1)`
+
+**Bug 4: Termux Mode Swipe Replacement Leaves Space** (v1.32.102)
+- **Problem**: In Termux mode, swipe replacement left trailing space + first char
+- **Root Cause**: deleteCount calculation at line 995-997 didn't add trailing space for Termux mode
+  - BUT: Swipe words ALWAYS get trailing space, even in Termux mode (line 1068)
+  - Result: deleted word.length() but actual was word.length()+1
+- **Solution**: Always delete word + trailing space for swipe auto-insertions
+- **Code**: `Keyboard2.java:996` - Changed to `deleteCount = _lastAutoInsertedWord.length() + 1`
+
+**Core Understanding - Why These Bugs Happened**:
+All bugs stem from same root cause: **Manual typing commits characters immediately** via `KeyEventHandler.send_text()`, while `_currentWord` is just a **tracking buffer**. The text is already in the editor!
+
+**Files Modified**:
+- `Keyboard2.java:884` - Strip debug annotations before storing
+- `Keyboard2.java:864` - Don't re-commit manual text, just space
+- `Keyboard2.java:1025-1034` - Delete typed prefix on completion
+- `Keyboard2.java:996` - Always delete trailing space for swipe words
+
+**Testing Scenarios Now Working**:
+1. ✅ Swipe "hello" → tap "world" → "world " (not "h world ")
+2. ✅ Type "hel" → tap "hello" → "hello " (not deleting previous words)
+3. ✅ Type "after" → swipe "the" → "after the " (not "afterafter the ")
+4. ✅ Termux mode: Swipe → tap different → clean replacement
+
+**Commit**: `a0dcfee7` - fix(swipe): fix multiple prediction selection and text insertion bugs
+
+---
+
+## Previous Updates (2025-10-17)
+
+### Three Major Improvements - v1.32.96-97
 
 **Version**: 1.32.97 (146)
 
