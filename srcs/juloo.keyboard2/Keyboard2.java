@@ -1137,16 +1137,31 @@ public class Keyboard2 extends InputMethodService
               conn.deleteSurroundingText(completedWord.length() + 1, 0);
 
               // Insert the corrected word - respect Termux mode for spacing
-              String replacementText;
-              if (_config.termux_mode_enabled)
+              // Check if we're actually in Termux app, not just if Termux mode is enabled
+              boolean inTermuxApp = false;
+              try
               {
-                // Termux mode: No automatic trailing space (user already pressed space, we deleted it)
-                // User can press space again if needed, or continue typing commands
+                EditorInfo editorInfo = getCurrentInputEditorInfo();
+                if (editorInfo != null && editorInfo.packageName != null)
+                {
+                  inTermuxApp = editorInfo.packageName.equals("com.termux");
+                }
+              }
+              catch (Exception e)
+              {
+                // Fallback to config setting if detection fails
+              }
+
+              String replacementText;
+              if (inTermuxApp)
+              {
+                // In Termux app: No trailing space for terminal compatibility
                 replacementText = correctedWord;
               }
               else
               {
-                // Normal mode: Add trailing space for better typing flow
+                // Normal app: Add trailing space for better typing flow
+                // (Ignore global termux_mode setting - only respect actual Termux app)
                 replacementText = correctedWord + " ";
               }
               conn.commitText(replacementText, 1);
