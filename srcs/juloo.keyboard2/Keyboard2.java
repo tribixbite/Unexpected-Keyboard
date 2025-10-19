@@ -853,16 +853,18 @@ public class Keyboard2 extends InputMethodService
       {
         InputConnection ic = getCurrentInputConnection();
 
-        // If manual typing in progress, commit it first with a space
+        // If manual typing in progress, add space after it (don't re-commit the text!)
         if (_currentWord.length() > 0 && ic != null)
         {
-          sendDebugLog(String.format("Committing manual text before swipe: \"%s\"\n", _currentWord));
+          sendDebugLog(String.format("Manual typing in progress before swipe: \"%s\"\n", _currentWord));
 
-          // Commit the manually typed word with a space
-          ic.commitText(_currentWord + " ", 1);
+          // IMPORTANT: Characters from manual typing are already committed via KeyEventHandler.send_text()
+          // _currentWord is just a tracking buffer - the text is already in the editor!
+          // We only need to add a space after the manually typed word and clear the tracking buffer
+          ic.commitText(" ", 1);
           _currentWord = new StringBuilder();
 
-          // Clear any previous auto-inserted word tracking since we just committed manual text
+          // Clear any previous auto-inserted word tracking since user was manually typing
           _lastAutoInsertedWord = null;
           _lastCommitSource = PredictionSource.USER_TYPED_TAP;
         }
@@ -880,7 +882,9 @@ public class Keyboard2 extends InputMethodService
         onSuggestionSelected(topPrediction);
 
         // NOW track this as auto-inserted so tapping another suggestion will replace ONLY this word
-        _lastAutoInsertedWord = topPrediction;
+        // CRITICAL: Strip debug annotations BEFORE storing (they're stripped before commit but we need clean text for deletion count)
+        String cleanPrediction = topPrediction.replaceAll(" \\[raw:[0-9.]+\\]$", "");
+        _lastAutoInsertedWord = cleanPrediction;
         _lastCommitSource = PredictionSource.NEURAL_SWIPE;
 
         // CRITICAL: Re-display suggestions after auto-insertion
@@ -980,27 +984,53 @@ public class Keyboard2 extends InputMethodService
         if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty() &&
             _lastCommitSource == PredictionSource.NEURAL_SWIPE)
         {
+          android.util.Log.d("Keyboard2", "REPLACE: Deleting auto-inserted word: '" + _lastAutoInsertedWord + "'");
+
+          // Get text before cursor to understand what we're deleting
+          CharSequence debugBefore = ic.getTextBeforeCursor(50, 0);
+          android.util.Log.d("Keyboard2", "REPLACE: Text before cursor (50 chars): '" + debugBefore + "'");
+
           // Calculate how many characters to delete (word + space after it)
-          int deleteCount = _lastAutoInsertedWord.length();
-          if (!_config.termux_mode_enabled)
-          {
-            deleteCount += 1; // Delete trailing space in normal mode
-          }
+          // CRITICAL: Swipe words ALWAYS get a trailing space, even in Termux mode!
+          // See line 1068: "For swipe typing, we always add trailing spaces even in Termux mode"
+          int deleteCount = _lastAutoInsertedWord.length() + 1; // Word + trailing space
+
+          android.util.Log.d("Keyboard2", "REPLACE: Delete count = " + deleteCount);
 
           // Delete the auto-inserted word and its space
           ic.deleteSurroundingText(deleteCount, 0);
 
+          CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
+          android.util.Log.d("Keyboard2", "REPLACE: After deleting word, text before cursor: '" + debugAfter + "'");
+
           // Also need to check if there was a space added before it
           CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+          android.util.Log.d("Keyboard2", "REPLACE: Checking for leading space, got: '" + textBefore + "'");
           if (textBefore != null && textBefore.length() > 0 && textBefore.charAt(0) == ' ')
           {
+            android.util.Log.d("Keyboard2", "REPLACE: Deleting leading space");
             // Delete the leading space too
             ic.deleteSurroundingText(1, 0);
+
+            CharSequence debugFinal = ic.getTextBeforeCursor(50, 0);
+            android.util.Log.d("Keyboard2", "REPLACE: After deleting leading space: '" + debugFinal + "'");
           }
 
           // Clear the tracking variables
           _lastAutoInsertedWord = null;
           _lastCommitSource = PredictionSource.UNKNOWN;
+        }
+        // ALSO: If user is selecting a prediction during regular typing, delete the partial word
+        // This handles typing "hel" then selecting "hello" - we need to delete "hel" first
+        else if (_currentWord.length() > 0 && !isSwipeAutoInsert)
+        {
+          android.util.Log.d("Keyboard2", "TYPING PREDICTION: Deleting partial word: '" + _currentWord + "'");
+
+          // Delete the characters that were typed (they're already in the editor)
+          ic.deleteSurroundingText(_currentWord.length(), 0);
+
+          CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
+          android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '" + debugAfter + "'");
         }
 
         // Add space before word if previous character isn't whitespace

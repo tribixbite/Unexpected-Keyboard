@@ -2,135 +2,239 @@
 
 ## Overview
 
-The Advanced Word Prediction settings control **legacy word prediction parameters** that were designed for the original swipe gesture classifier. These settings are **NO LONGER USED** by the neural swipe typing system (ONNX model) introduced in v1.32+.
+There are **TWO prediction systems** in Unexpected Keyboard:
 
-⚠️ **IMPORTANT**: These settings are retained for backwards compatibility but do not affect the current neural network-based swipe predictions. The neural network uses its own internal confidence calculations.
+1. **Neural Network (ONNX)** - Primary system for swipe typing (v1.32+)
+2. **WordPredictor** - Fallback for swipes + primary for regular typing predictions
 
-## The 8 Settings (Legacy - Not Currently Used)
+The "Advanced Word Prediction" settings control the **WordPredictor fallback system only**. The neural network has its own settings.
 
-### 1. **Shape Weight** (`swipe_confidence_shape_weight`)
+## System Architecture
+
+### When Each System is Used
+
+**Neural Network (ONNX)**:
+- ✅ Primary for swipe typing
+- ✅ Uses LSTM + beam search
+- ✅ Trained on millions of real swipe gestures
+- ❌ Does NOT use the 8 advanced settings below
+
+**WordPredictor** (uses the 8 settings):
+- ✅ Fallback when neural network fails or is disabled
+- ✅ Primary for regular typing predictions (prefix matching)
+- ✅ Dictionary-based with heuristic scoring
+- ✅ Uses some of the 8 advanced settings for endpoint bonuses
+
+## The 8 Settings - Actual Current Usage
+
+### ⚠️ NOT USED (Removed from Code)
+
+These 4 settings are loaded from Config but **NEVER ACTUALLY USED** anywhere in WordPredictor:
+
+#### 1. **Shape Weight** (`swipe_confidence_shape_weight`)
 - **Default**: 90 (0.90)
-- **Range**: 0-200 (stored as percentage, divided by 100)
-- **Purpose**: Weight given to how well the swipe path matches the expected shape between keys
-- **Calculation**: Measures geometric similarity between user's swipe curve and ideal path
-- **When Used**: During word candidate scoring in legacy WordPredictor
-- **Current Status**: ❌ Not used by neural network
+- **Range**: 0-200
+- **Original Purpose**: Weight for geometric path similarity
+- **Current Status**: ❌ **NOT USED** - No shape matching algorithm exists in current code
+- **Why Removed**: Neural network handles shape intrinsically
 
-### 2. **Location Weight** (`swipe_confidence_location_weight`)
+#### 2. **Location Weight** (`swipe_confidence_location_weight`)
 - **Default**: 130 (1.30)
 - **Range**: 0-200
-- **Purpose**: Weight given to spatial proximity - how close swipe points are to target keys
-- **Calculation**: Distance-based scoring using Euclidean distance from swipe points to key centers
-- **When Used**: Penalizes candidates where swipe path is far from expected keys
-- **Current Status**: ❌ Not used by neural network
+- **Original Purpose**: Weight for spatial proximity to keys
+- **Current Status**: ❌ **NOT USED** - No location-based scoring in current code
+- **Why Removed**: Neural network handles spatial relationships
 
-### 3. **Frequency Weight** (`swipe_confidence_frequency_weight`)
+#### 3. **Frequency Weight** (`swipe_confidence_frequency_weight`)
 - **Default**: 80 (0.80)
 - **Range**: 0-200
-- **Purpose**: Weight given to word frequency/popularity in English language
-- **Calculation**: Uses frequency data from word dictionary
-- **When Used**: Boosts common words like "the", "and", "you" over rare words
-- **Current Status**: ❌ Not used by neural network (NN has frequency embedded in training)
+- **Original Purpose**: Boost common words
+- **Current Status**: ❌ **NOT USED** - Frequency applied directly without weighting
+- **Why Removed**: Dictionary frequency used as simple multiplier instead
 
-### 4. **Velocity Weight** (`swipe_confidence_velocity_weight`)
+#### 4. **Velocity Weight** (`swipe_confidence_velocity_weight`)
 - **Default**: 60 (0.60)
 - **Range**: 0-200
-- **Purpose**: Weight given to swipe speed consistency
-- **Calculation**: Analyzes velocity changes during swipe gesture
-- **When Used**: Penalizes erratic/jerky swipes, rewards smooth gestures
-- **Current Status**: ❌ Not used by neural network
+- **Original Purpose**: Reward smooth swipes
+- **Current Status**: ❌ **NOT USED** - No velocity analysis in current code
+- **Why Removed**: Neural network handles temporal patterns
 
-### 5. **First Letter Weight** (`swipe_first_letter_weight`)
+### ✅ ACTIVELY USED (WordPredictor Endpoint Bonuses)
+
+These 4 settings ARE used when WordPredictor is matching swipe patterns:
+
+#### 5. **First Letter Weight** (`swipe_first_letter_weight`)
 - **Default**: 150 (1.50)
 - **Range**: 0-300
-- **Purpose**: Extra weight/bonus for correctly matching the first letter of the word
-- **Calculation**: Strong boost if swipe starts on the correct key for first letter
-- **When Used**: Critical for disambiguating words with similar swipe paths
-- **Current Status**: ❌ Not used by neural network (NN detects endpoints automatically)
+- **Purpose**: Multiplier when swipe starts on correct letter
+- **Current Usage**: ✅ **WordPredictor.java:387, 422** - Applied to endpoint matches
+- **How it Works**:
+  ```java
+  if (firstChar == seqFirst) {
+    baseScore = (int)(baseScore * _config.swipe_first_letter_weight);
+  }
+  ```
+- **Effect**: Boosts predictions that start with the right letter (1.5x by default)
+- **When to Adjust**:
+  - Increase (2.0-3.0): If first letters are always accurate in your swipes
+  - Decrease (1.0-1.2): If you want more flexibility in starting position
 
-### 6. **Last Letter Weight** (`swipe_last_letter_weight`)
+#### 6. **Last Letter Weight** (`swipe_last_letter_weight`)
 - **Default**: 150 (1.50)
 - **Range**: 0-300
-- **Purpose**: Extra weight/bonus for correctly matching the last letter
-- **Calculation**: Strong boost if swipe ends on the correct key for last letter
-- **When Used**: Helps distinguish words with same beginning but different endings
-- **Current Status**: ❌ Not used by neural network (NN detects endpoints automatically)
+- **Purpose**: Multiplier when swipe ends on correct letter
+- **Current Usage**: ✅ **WordPredictor.java:389, 424** - Applied to endpoint matches
+- **How it Works**:
+  ```java
+  if (lastChar == seqLast) {
+    baseScore = (int)(baseScore * _config.swipe_last_letter_weight);
+  }
+  ```
+- **Effect**: Boosts predictions that end with the right letter (1.5x by default)
+- **When to Adjust**:
+  - Increase (2.0-3.0): If last letters are always accurate
+  - Decrease (1.0-1.2): If you tend to not finish swipes precisely
 
-### 7. **Endpoint Bonus Weight** (`swipe_endpoint_bonus_weight`)
+#### 7. **Endpoint Bonus Weight** (`swipe_endpoint_bonus_weight`)
 - **Default**: 200 (2.00)
 - **Range**: 0-400
-- **Purpose**: Multiplier applied when BOTH first and last letters match correctly
-- **Calculation**: Applied on top of first_letter_weight + last_letter_weight
-- **When Used**: Maximum confidence boost for words where endpoints are certain
-- **Current Status**: ❌ Not used by neural network
+- **Purpose**: Extra multiplier when BOTH endpoints match
+- **Current Usage**: ✅ **WordPredictor.java:391** - Applied to priority matches
+- **How it Works**:
+  ```java
+  if (firstChar == seqFirst && lastChar == seqLast) {
+    baseScore = (int)(baseScore * _config.swipe_endpoint_bonus_weight);
+  }
+  ```
+- **Effect**: Massive boost (2.0x on top of first/last weights) for perfect endpoint matches
+- **Combined Power**: With defaults, perfect endpoints get **4.5x boost** (1.5 × 1.5 × 2.0)
+- **When to Adjust**:
+  - Increase (3.0-4.0): If your endpoints are extremely accurate
+  - Decrease (1.0-1.5): If endpoints often don't match but middle is correct
 
-### 8. **Require Endpoints** (`swipe_require_endpoints`)
+#### 8. **Require Endpoints** (`swipe_require_endpoints`)
 - **Default**: false
-- **Type**: Boolean checkbox
-- **Purpose**: If enabled, ONLY show predictions where first/last letters match swipe endpoints
-- **Calculation**: Hard filter - removes candidates that don't match endpoints
-- **When Used**: Strict mode for users who want only precise endpoint matches
-- **Current Status**: ❌ Not used by neural network
+- **Type**: Boolean
+- **Purpose**: Filter out words where endpoints don't match
+- **Current Usage**: ✅ **WordPredictor.java:408, 439** - Hard filter
+- **How it Works**:
+  ```java
+  if (_config != null && _config.swipe_require_endpoints) {
+    continue; // Skip words without matching endpoints
+  }
+  ```
+- **Effect**: When enabled, ONLY shows words where first AND last letters match
+- **When to Enable**:
+  - ✅ Enable: If you want strictest, most precise predictions
+  - ❌ Disable: If you want flexibility (e.g., swiping close but not exactly on endpoints)
 
-## Legacy Scoring Formula
+## WordPredictor Scoring Algorithm (Actually Used)
 
-The original WordPredictor calculated confidence scores using:
+For swipe pattern matching in WordPredictor:
 
-```
-total_score =
-  (shape_similarity * shape_weight) +
-  (location_proximity * location_weight) +
-  (word_frequency * frequency_weight) +
-  (velocity_consistency * velocity_weight) +
-  (first_letter_match ? first_letter_weight : 0) +
-  (last_letter_match ? last_letter_weight : 0) +
-  (both_endpoints_match ? endpoint_bonus_weight : 0)
+```java
+// Step 1: Priority matches (both endpoints correct)
+if (firstChar == seqFirst && lastChar == seqLast) {
+  baseScore = 10000 + (innerMatches * 100);
+  baseScore *= swipe_first_letter_weight;     // 1.5x
+  baseScore *= swipe_last_letter_weight;      // 1.5x
+  baseScore *= swipe_endpoint_bonus_weight;   // 2.0x
+  // Total multiplier: 4.5x for perfect endpoints
+}
 
-if (require_endpoints && !both_endpoints_match) {
-  reject_candidate()
+// Step 2: Partial matches (one endpoint correct)
+else if (firstChar == seqFirst || lastChar == seqLast) {
+  if (swipe_require_endpoints) {
+    skip; // Reject if strict mode enabled
+  }
+  baseScore = 1000 + (innerMatches * 50);
+  if (firstChar == seqFirst) baseScore *= swipe_first_letter_weight;
+  if (lastChar == seqLast) baseScore *= swipe_last_letter_weight;
+  baseScore *= frequency; // Dictionary frequency applied here
+}
+
+// Step 3: Other matches (no endpoint match)
+else {
+  if (swipe_require_endpoints) {
+    skip; // Reject if strict mode enabled
+  }
+  // Simple match ratio * gap penalty scoring
+  matchRatio = matchedChars / wordLength;
+  gapPenalty = 1.0 / (1.0 + totalGaps/10.0);
+  score = matchRatio * gapPenalty * 1000;
 }
 ```
 
-## Current Neural Network Approach
+**Key Insight**: The shape/location/frequency/velocity weights were REMOVED. Only endpoint weights remain.
 
-The ONNX neural network (v1.32+) uses:
+## Neural Network Settings (Actually Control Swipe Typing)
 
-1. **Character-level LSTM** trained on millions of swipe gestures
-2. **Beam search** with configurable width (default: 2 beams for mobile performance)
-3. **Internal confidence scores** based on model training, not manual weights
-4. **Automatic endpoint detection** without requiring explicit configuration
-5. **Contextual predictions** using previous words in sentence
+These settings in **Settings → Advanced** control the **primary swipe typing system**:
 
-The neural approach is **significantly more accurate** because it learned patterns from real data rather than using hand-tuned weights.
+### Active Neural Settings
 
-## Neural Settings (Currently Active)
+1. **Neural Prediction Enabled** (`neural_prediction_enabled`)
+   - Default: true
+   - Controls: Enable/disable ONNX model
+   - Effect: When disabled, falls back to WordPredictor
 
-These settings in **Settings → Advanced** control the **actual neural network** behavior:
+2. **Beam Width** (`neural_beam_width`)
+   - Default: 2
+   - Range: 1-16
+   - Controls: Number of parallel prediction paths
+   - Effect: Higher = more accurate but slower (2 beams = 4x faster than 8)
 
-- **Neural Prediction Enabled**: Enable/disable ONNX model (default: true)
-- **Beam Width**: Number of parallel prediction paths (default: 2, range: 1-16)
-  - Higher = more accurate but slower
-  - 2 beams = 4x faster than 8 beams with minimal accuracy loss
-- **Max Word Length**: Maximum characters to predict (default: 35, range: 10-50)
-- **Confidence Threshold**: Minimum NN confidence to show prediction (default: 0.1, range: 0.0-1.0)
-- **Detailed Logging**: Enable verbose swipe trajectory/NN logging for debugging
-- **Show Raw Output**: Always show at least 2 raw NN outputs with confidence scores
+3. **Max Word Length** (`neural_max_length`)
+   - Default: 35
+   - Range: 10-50
+   - Controls: Maximum characters to predict
+   - Effect: Allows prediction of long words
 
-## Why Keep Legacy Settings?
+4. **Confidence Threshold** (`neural_confidence_threshold`)
+   - Default: 0.1
+   - Range: 0.0-1.0
+   - Controls: Minimum NN confidence to show prediction
+   - Effect: Higher = fewer but more confident predictions
 
-1. **Backwards Compatibility**: Old code still references them in Config.java
-2. **Future Hybrid System**: May combine neural predictions with heuristic scoring
-3. **Debugging**: Useful for comparing neural vs. heuristic approaches
-4. **User Expectations**: Existing users may have customized these settings
+5. **Detailed Logging** (`swipe_debug_detailed_logging`)
+   - Default: false
+   - Controls: Verbose swipe trajectory/NN logging
+   - Effect: Debugging only
+
+6. **Show Raw Output** (`swipe_debug_show_raw_output`)
+   - Default: true
+   - Controls: Show at least 2 raw NN outputs with scores
+   - Effect: Helps see what neural network is thinking
 
 ## Recommendation
 
-**For best swipe typing experience**, use default neural settings and ignore the legacy weight parameters. The neural network handles all aspects of prediction quality automatically.
+### For Best Swipe Typing (Neural Network)
+- **Use defaults** - Neural network handles everything automatically
+- **Ignore** the 8 "Advanced Word Prediction" settings (they don't affect neural predictions)
+- **Adjust only neural settings** if needed (beam width, confidence threshold)
+
+### For Word Predictions (Regular Typing via WordPredictor)
+- **Endpoint weights don't matter** - Regular typing uses prefix matching, not swipe scoring
+- WordPredictor for typing only cares about dictionary frequency and prefix match length
+
+### For Fallback Swipe Mode (WordPredictor when NN disabled)
+- **Increase endpoint weights (2.0-3.0)** if your swipe endpoints are very accurate
+- **Enable Require Endpoints** if you want strict, precise matching only
+- **Decrease endpoint weights (1.0-1.2)** if you want more flexibility
+
+## Why Keep Unused Settings?
+
+1. **Backwards Compatibility**: Old Config code still loads them
+2. **Future Hybrid System**: May combine neural + heuristic approaches
+3. **Debugging**: Useful for comparing approaches
+4. **User Expectations**: Some users may have customized these historically
 
 ## Technical Details
 
-- **Location in Code**: `Config.java:77-84` (fields), `Config.java:223-231` (loading)
-- **Storage**: SharedPreferences, loaded via `safeGetInt()` helper
-- **Format**: Stored as integers (0-400), divided by 100 to get float weights
-- **Used By**: Legacy `WordPredictor.java` (not actively used for swipe typing)
-- **Neural Code**: `OnnxSwipePredictor.java`, `NeuralSwipeTypingEngine.java`
+- **Location in Code**:
+  - Config.java:77-84 (field declarations)
+  - Config.java:223-231 (loading from preferences)
+  - WordPredictor.java:387-391, 408, 422-424, 439 (actual usage - endpoints only)
+- **Storage**: SharedPreferences as integers (0-400), divided by 100 for float weights
+- **Neural Code**: OnnxSwipePredictor.java, NeuralSwipeTypingEngine.java
+- **Fallback Code**: WordPredictor.java (uses only endpoint weights, not shape/location/frequency/velocity)
