@@ -76,6 +76,10 @@ public final class Config
   public boolean word_prediction_enabled;
   public int suggestion_bar_opacity; // 0 - 100
 
+  // Word prediction scoring weights (for regular typing)
+  public float prediction_context_boost;     // How strongly context influences predictions (default: 2.0)
+  public float prediction_frequency_scale;   // Balance common vs uncommon words (default: 1000.0)
+
   // Short gesture configuration
   public boolean short_gestures_enabled; // Enable/disable short swipe gestures (e.g., swipe-up for @)
   public int short_gesture_min_distance; // Minimum swipe distance as % of key hypotenuse (10-95)
@@ -211,6 +215,10 @@ public final class Config
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
     suggestion_bar_opacity = safeGetInt(_prefs, "suggestion_bar_opacity", 90);
+
+    // Word prediction scoring weights
+    prediction_context_boost = _prefs.getFloat("prediction_context_boost", 2.0f);
+    prediction_frequency_scale = _prefs.getFloat("prediction_frequency_scale", 1000.0f);
 
     // Short gesture configuration
     short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true);

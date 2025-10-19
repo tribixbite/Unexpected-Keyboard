@@ -331,15 +331,18 @@ public class WordPredictor
     // 4. Frequency scaling (log to prevent common words from dominating)
     // Using log1p helps balance: "the" (freq ~10000) vs "think" (freq ~100)
     // Without log: "the" would always win. With log: context can override frequency
-    float frequencyFactor = 1.0f + (float)Math.log1p(frequency / 1000.0f);
+    // Scale factor is configurable (default: 1000.0)
+    float frequencyScale = (_config != null) ? _config.prediction_frequency_scale : 1000.0f;
+    float frequencyFactor = 1.0f + (float)Math.log1p(frequency / frequencyScale);
 
     // COMBINE ALL SIGNALS
     // Formula: prefixScore × adaptation × (1 + boosted_context) × freq_factor
-    // Context boost multiplied by 2.0 to give it significant influence
-    // A high context score can now override a slightly lower frequency
+    // Context boost is configurable (default: 2.0)
+    // Higher boost = context has more influence on predictions
+    float contextBoost = (_config != null) ? _config.prediction_context_boost : 2.0f;
     float finalScore = prefixScore
         * adaptationMultiplier
-        * (1.0f + (contextMultiplier - 1.0f) * 2.0f)  // Boost context effect
+        * (1.0f + (contextMultiplier - 1.0f) * contextBoost)  // Configurable context boost
         * frequencyFactor;
 
     return (int)finalScore;
