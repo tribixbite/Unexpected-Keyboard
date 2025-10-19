@@ -9,17 +9,19 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.132 (181)
+**Latest Version**: v1.32.133 (182)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.132)
+### Recent Work (v1.32.133)
 
-**16 Two-Letter Word Shortcuts** - Added "is", reorganized i key
-- Added: is (i→SW)
-- Reorganized: * moved from i→SW to i→NW
-- Complete list (16): to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by, is
+**17 Two-Letter Word Shortcuts** - Added "be", reorganized layout
+- Added: be (b→NW)
+- Reorganized: me (m→NW from NE), as (a→E from S), quote (m→NE)
+- Complete list (17): to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by, is, be
 - All include auto-space for faster typing
+
+**Previous (v1.32.132)**: Added "is" (i→SW), moved * to i→NW
 
 **Previous (v1.32.131)**: Auto-spacing for all 2-letter words
 - All 15 words insert with trailing space ("to " instead of "to")
