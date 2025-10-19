@@ -1127,11 +1127,11 @@ public class Keyboard2 extends InputMethodService
             InputConnection conn = getCurrentInputConnection();
             if (conn != null)
             {
-              // Delete the typed word
+              // Delete the typed word (already committed via KeyEventHandler.send_text)
               conn.deleteSurroundingText(completedWord.length(), 0);
 
-              // Insert the corrected word
-              conn.commitText(correctedWord, 1);
+              // Insert the corrected word WITH trailing space
+              conn.commitText(correctedWord + " ", 1);
 
               // Update context with corrected word
               updateContext(correctedWord);
@@ -1151,7 +1151,13 @@ public class Keyboard2 extends InputMethodService
                 _suggestionBar.setSuggestionsWithScores(undoSuggestions, undoScores);
               }
 
-              return; // Skip normal word completion
+              // Reset prediction state
+              if (_wordPredictor != null)
+              {
+                _wordPredictor.reset();
+              }
+
+              return; // Skip normal text processing - we've handled everything
             }
           }
         }
