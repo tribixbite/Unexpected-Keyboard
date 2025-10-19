@@ -55,7 +55,7 @@ Useful links.
     <key c="s" ne="so" sw="loc ß"/>
     <key c="d" ne="do"/>
     <key c="f"/>
-    <key c="g" ne="-" sw="_"/>
+    <key c="g" ne="-" sw="_" e="go"/>
     <key c="h" ne="=" sw="+" e="hi"/>
     <key c="j" se="}" sw="{"/>
     <key c="k" sw="[" se="]"/>
@@ -67,9 +67,9 @@ Useful links.
     <key c="x" ne="loc †"/>
     <key c="c" ne="&lt;" sw="."/>
     <key c="v" ne="&gt;" sw=","/>
-    <key c="b" ne="\?" sw="/"/>
+    <key c="b" ne="\?" sw="/" n="by"/>
     <key c="n" ne=":" sw=";" n="no"/>
-    <key c="m" ne="&quot;" sw="'" w="me"/>
+    <key c="m" ne="me" sw="'"/>
     <key width="1.5" c="backspace" ne="delete"/>
   </row>
 </keyboard>

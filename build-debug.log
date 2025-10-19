@@ -22,9 +22,9 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :mergeDebugResources
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -32,6 +32,7 @@ Generated version info:  ()
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -40,7 +41,6 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugJavaResource
 > Task :mergeDebugNativeLibs
 
@@ -55,23 +55,20 @@ Generated version info:  ()
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-/data/data/com.termux/files/home/android-sdk/ndk/26.1.10
-
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-/data/data/com.termux/files/home/android-sdk/ndk/26.1.1warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_default without required default value.
+Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
+warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_default without required default value.
 warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_far without required default value.
 warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_short without required default value.
 warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_very_far without required default value.
-warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_very_short without required default value.
-warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_summary without required default value.
-warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_title without required default value.
-
-
+warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_default without required default value.
+warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_far without required default value.
+warn: removing resource juloo.keyboard2.debu
 > Task :processDebugResources
 > Task :compileDebugJavaWithJavac FROM-CACHE
 > Task :dexBuilderDebug FROM-CACHE
@@ -80,7 +77,7 @@ warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_title witho
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 22s
+BUILD SUCCESSFUL in 14s
 34 actionable tasks: 24 executed, 10 from cache
 ource juloo.keyboard2.debug:string/pref_swipe_dist_summary without required default value.
 warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_title without required default value.
@@ -94,17 +91,17 @@ warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_title witho
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 22s
+BUILD SUCCESSFUL in 14s
 34 actionable tasks: 24 executed, 10 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 43M Oct 19 14:55 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 43M Oct 19 14:58 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /sdcard/unexpected/ for updates...
 APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 43M Oct 19 14:55 /sdcard/unexpected/debug-kb.apk
+-rw-rw----. 1 u0_a315 media_rw 43M Oct 19 14:58 /sdcard/unexpected/debug-kb.apk
 
 Step 6: Attempting ADB connection and installation...
 ✅ ADB device already connected
