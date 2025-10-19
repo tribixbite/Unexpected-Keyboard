@@ -9,17 +9,21 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.128 (177)
+**Latest Version**: v1.32.129 (178)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.128)
+### Recent Work (v1.32.129)
 
-**SE Hit Zone Expansion & 2-Letter Word Shortcuts** - Fixed `}` and `]` accessibility
-- Expanded SE position from 22.5° to 45° hit zone (now same as N/S)
+**2-Letter Word Shortcuts Expansion** - 13 common words via short swipes
+- Fixed `do` and `so` directions (ne instead of e)
+- Added 6 more words: we, in, of, on, hi, no
+- Complete list: to, it, as, so, do, up, me, we, in, of, on, hi, no
+- Example: `t`→E:"to", `i`→W:"it", `o`→W:"of", `o`→S:"on"
+
+**Previous (v1.32.128)**: SE Hit Zone Expansion
+- Expanded SE position from 22.5° to 45° hit zone (makes `}` and `]` easier)
 - Changed DIRECTION_TO_INDEX: dirs 4-6 → SE (was 5-6)
-- Added 7 common 2-letter word swipes: to, it, as, so, do, up, me
-- Example: swipe east on `t` → "to", west on `i` → "it"
 
 **Previous (v1.32.122-127)**: Swipe Symbols Documentation & Debug Logging
 - Created comprehensive spec: `docs/specs/SWIPE_SYMBOLS.md`
