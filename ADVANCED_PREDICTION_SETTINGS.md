@@ -1,29 +1,42 @@
 # Advanced Word Prediction Settings
 
-## Overview
+## ⚠️ DEPRECATED - ALL SETTINGS NO LONGER USED (v1.32.99+)
 
-There are **TWO prediction systems** in Unexpected Keyboard:
+**As of v1.32.99**, all 8 "Advanced Word Prediction" settings are **deprecated and no longer affect keyboard behavior**:
+
+- **Swipe fallback removed**: Neural Network (ONNX) handles ALL swipe typing (no WordPredictor fallback)
+- **Regular typing simplified**: WordPredictor uses only prefix matching + frequency + user adaptation
+- **Endpoint weights removed**: No longer needed without swipe fallback
+- **Shape/location/frequency/velocity**: Never were actually used in code
+
+**This document is kept for historical reference only.**
+
+---
+
+## Previous System (v1.32.96-v1.32.98)
+
+There were **TWO prediction systems** in Unexpected Keyboard:
 
 1. **Neural Network (ONNX)** - Primary system for swipe typing (v1.32+)
-2. **WordPredictor** - Fallback for swipes + primary for regular typing predictions
+2. **WordPredictor** - ~~Fallback for swipes when NN failed~~ + primary for regular typing predictions
 
-The "Advanced Word Prediction" settings control the **WordPredictor fallback system only**. The neural network has its own settings.
+The "Advanced Word Prediction" settings controlled the **WordPredictor swipe fallback** (now removed).
 
-## System Architecture
+## Previous Architecture
 
-### When Each System is Used
+### When Each System Was Used
 
 **Neural Network (ONNX)**:
 - ✅ Primary for swipe typing
 - ✅ Uses LSTM + beam search
 - ✅ Trained on millions of real swipe gestures
-- ❌ Does NOT use the 8 advanced settings below
+- ❌ Did NOT use the 8 advanced settings
 
-**WordPredictor** (uses the 8 settings):
-- ✅ Fallback when neural network fails or is disabled
-- ✅ Primary for regular typing predictions (prefix matching)
+**WordPredictor** (previously used 4 of the 8 settings):
+- ~~Fallback when neural network failed or was disabled~~ **REMOVED**
+- ✅ Primary for regular typing predictions (prefix matching) - **STILL USED**
 - ✅ Dictionary-based with heuristic scoring
-- ✅ Uses some of the 8 advanced settings for endpoint bonuses
+- ~~Used 4 of the 8 advanced settings for endpoint bonuses~~ **NO LONGER USED**
 
 ## The 8 Settings - Actual Current Usage
 
