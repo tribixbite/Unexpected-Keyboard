@@ -9,17 +9,21 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.131 (180)
+**Latest Version**: v1.32.132 (181)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.131)
+### Recent Work (v1.32.132)
 
-**2-Letter Word Auto-Spacing & Layout Optimization** - Enhanced UX
-- **Auto-space**: All 15 two-letter words now insert with trailing space ("to " instead of "to")
-- **Reorganized**: `of`(o→NW), `we`(w→SE), `-`(g→NW), `go`(g→NE)
-- Complete list with auto-space: to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by
-- Example: Swipe t→E inserts "to " ready for next word
+**16 Two-Letter Word Shortcuts** - Added "is", reorganized i key
+- Added: is (i→SW)
+- Reorganized: * moved from i→SW to i→NW
+- Complete list (16): to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by, is
+- All include auto-space for faster typing
+
+**Previous (v1.32.131)**: Auto-spacing for all 2-letter words
+- All 15 words insert with trailing space ("to " instead of "to")
+- Reorganized: `of`(o→NW), `we`(w→SE), `-`(g→NW), `go`(g→NE)
 
 **Previous (v1.32.130)**: Added go, by; reorganized me position
 
