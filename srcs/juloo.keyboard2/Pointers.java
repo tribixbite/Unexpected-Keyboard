@@ -370,8 +370,10 @@ public final class Pointers implements Handler.Callback
     }
   }
 
+  // Maps 16 directions (0-15) to 9 key positions (c=0, nw=1, ne=2, sw=3, se=4, w=5, e=6, n=7, s=8)
+  // Expanded SE (index 4) from dirs 5-6 to 4-6 for 45° hit zone (makes ] and } easier)
   static final int[] DIRECTION_TO_INDEX = new int[]{
-    7, 2, 2, 6, 6, 4, 4, 8, 8, 3, 3, 5, 5, 1, 1, 7
+    7, 2, 2, 6, 4, 4, 4, 8, 8, 3, 3, 5, 5, 1, 1, 7
   };
 
   /**
