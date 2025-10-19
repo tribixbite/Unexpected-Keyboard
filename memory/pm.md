@@ -3912,3 +3912,78 @@ android.util.Log.d(TAG, "Score: " + scoreText);
 5. **Comprehensive Evaluation**: Tools for measuring and improving prediction accuracy
 6. **Production Ready**: All systems optimized and documented for deployment
 
+
+## v1.32.99-101 (2025-10-19) - WordPredictor Refactor
+
+### Major Refactor: Remove Swipe Fallback + Implement Unified Scoring
+
+**Problem**: WordPredictor had vestigial swipe fallback code that was never used (neural network handles ALL swipes). Regular typing predictions used "late fusion" where context was only applied to top 5 results.
+
+**Solution**: Complete refactor following Gemini zen-mcp strategy
+
+#### Changes Made
+
+1. **Removed Swipe Fallback** (v1.32.99)
+   - Deleted `isSwipeSequence` detection logic
+   - Removed endpoint matching (priority/partial/other tiers)
+   - ~120 lines of dead code removed
+
+2. **Removed Vestigial Methods** (v1.32.99)
+   - Deleted 8 unused swipe-matching methods (~200 lines):
+     * `calculateSwipeScore` - Gap penalty scoring
+     * `calculateEditDistance` - Levenshtein distance
+     * `couldBeFormedFrom` - Subsequence matching
+     * `countInnerMatches` - Middle character matching
+     * `countCommonCharacters` - Fuzzy matching
+     * `isAdjacent` - QWERTY adjacency check
+     * `buildAdjacentKeysMap` - Adjacency map
+     * `calculateMatchScore` - Legacy fuzzy matching
+   - Removed `_adjacentKeys` map data structure
+
+3. **Simplified Architecture** (v1.32.99)
+   - Before: Two-list system (priorityMatches + otherMatches)
+   - After: Single candidates list with one sort
+   - Cleaner, faster, more maintainable
+
+4. **Removed Config Settings** (v1.32.100)
+   - Deleted ALL 8 "Advanced Word Prediction" settings:
+     * 4 never-used: shape/location/frequency/velocity weights
+     * 4 removed with fallback: first_letter/last_letter/endpoint_bonus/require_endpoints
+   - No backwards compatibility needed - settings had no effect
+
+5. **Implemented Unified Scoring with Early Fusion** (v1.32.101)
+   - **MAJOR IMPROVEMENT**: Context-aware predictions
+   - Before (late fusion): Top 5 by prefix+frequency, THEN apply context
+   - After (early fusion): Apply context to ALL candidates, THEN select top 5
+
+**Unified Scoring Formula**:
+```
+score = prefixScore × adaptation × (1 + boosted_context × 2.0) × log(frequency)
+```
+
+**Key Benefits**:
+- Context evaluated for ALL prefix matches (not just top 5)
+- Log frequency scaling prevents "the" from always winning
+- Context boost (2x) gives bigrams significant influence
+- Contextually relevant but less common words can now win
+
+**Example**:
+- Type "th" after "to"
+- Old: "the" always wins (highest frequency)
+- New: "think", "this", "that" can win (context boost from "to think", "to this")
+
+#### Performance
+- Same O(n) dictionary iteration
+- Better scoring = better predictions
+- No performance regression
+
+#### Files Modified
+- `WordPredictor.java`: -400 lines, +118 lines (net: -282 lines)
+- `Config.java`: -8 settings, simplified loading
+- `ADVANCED_PREDICTION_SETTINGS.md`: Updated to mark all settings as deprecated
+
+#### Testing
+- Build: ✅ Successful
+- Version: v1.32.101
+- Commits: 4452162e, 69b85256, e496ab75, 98ca1ca6
+
