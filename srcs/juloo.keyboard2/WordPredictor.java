@@ -379,6 +379,143 @@ public class WordPredictor
   }
   
   /**
+   * Auto-correct a typed word after user presses space/punctuation.
+   *
+   * Finds dictionary words with:
+   * - Same length
+   * - Same first 2 letters
+   * - High positional character match (default: 2/3 chars)
+   *
+   * Example: "teh" → "the", "Teh" → "The", "TEH" → "THE"
+   *
+   * @param typedWord The word user just finished typing
+   * @return Corrected word, or original if no suitable correction found
+   */
+  public String autoCorrect(String typedWord)
+  {
+    if (_config == null || !_config.autocorrect_enabled || typedWord == null || typedWord.isEmpty())
+    {
+      return typedWord;
+    }
+
+    String lowerTypedWord = typedWord.toLowerCase();
+
+    // 1. Do not correct words already in dictionary or user's vocabulary
+    if (_dictionary.containsKey(lowerTypedWord) ||
+        (_adaptationManager != null && _adaptationManager.getAdaptationMultiplier(lowerTypedWord) > 1.0f))
+    {
+      return typedWord;
+    }
+
+    // 2. Enforce minimum word length for correction
+    if (lowerTypedWord.length() < _config.autocorrect_min_word_length)
+    {
+      return typedWord;
+    }
+
+    // 3. "Same first 2 letters" rule requires at least 2 characters
+    if (lowerTypedWord.length() < 2)
+    {
+      return typedWord;
+    }
+
+    String prefix = lowerTypedWord.substring(0, 2);
+    int wordLength = lowerTypedWord.length();
+    WordCandidate bestCandidate = null;
+
+    // 4. Iterate through dictionary to find candidates
+    for (Map.Entry<String, Integer> entry : _dictionary.entrySet())
+    {
+      String dictWord = entry.getKey();
+
+      // Heuristic 1: Must have same length
+      if (dictWord.length() != wordLength)
+      {
+        continue;
+      }
+
+      // Heuristic 2: Must start with same first two letters
+      if (!dictWord.startsWith(prefix))
+      {
+        continue;
+      }
+
+      // Heuristic 3: Calculate positional character match ratio
+      int matchCount = 0;
+      for (int i = 0; i < wordLength; i++)
+      {
+        if (lowerTypedWord.charAt(i) == dictWord.charAt(i))
+        {
+          matchCount++;
+        }
+      }
+
+      float matchRatio = (float)matchCount / wordLength;
+      if (matchRatio >= _config.autocorrect_char_match_threshold)
+      {
+        // Valid candidate - select if better than current best
+        // "Better" = higher dictionary frequency
+        int candidateFrequency = entry.getValue();
+        if (bestCandidate == null || candidateFrequency > bestCandidate.score)
+        {
+          bestCandidate = new WordCandidate(dictWord, candidateFrequency);
+        }
+      }
+    }
+
+    // 5. Apply correction only if confident candidate found
+    if (bestCandidate != null && bestCandidate.score >= _config.autocorrect_confidence_min_frequency)
+    {
+      // Preserve original capitalization (e.g., "Teh" → "The")
+      String corrected = preserveCapitalization(typedWord, bestCandidate.word);
+      android.util.Log.d("WordPredictor", "AUTO-CORRECT: '" + typedWord + "' → '" + corrected + "' (freq=" + bestCandidate.score + ")");
+      return corrected;
+    }
+
+    return typedWord; // No suitable correction found
+  }
+
+  /**
+   * Preserve capitalization of original word when applying correction.
+   *
+   * Examples:
+   * - "teh" + "the" → "the"
+   * - "Teh" + "the" → "The"
+   * - "TEH" + "the" → "THE"
+   */
+  private String preserveCapitalization(String originalWord, String correctedWord)
+  {
+    if (originalWord.length() == 0 || correctedWord.length() == 0)
+    {
+      return correctedWord;
+    }
+
+    // Check if ALL uppercase
+    boolean isAllUpper = true;
+    for (int i = 0; i < originalWord.length(); i++)
+    {
+      if (Character.isLowerCase(originalWord.charAt(i)))
+      {
+        isAllUpper = false;
+        break;
+      }
+    }
+
+    if (isAllUpper)
+    {
+      return correctedWord.toUpperCase();
+    }
+
+    // Check if first letter uppercase (Title Case)
+    if (Character.isUpperCase(originalWord.charAt(0)))
+    {
+      return Character.toUpperCase(correctedWord.charAt(0)) + correctedWord.substring(1);
+    }
+
+    return correctedWord;
+  }
+
+  /**
    * Get dictionary size
    */
   public int getDictionarySize()

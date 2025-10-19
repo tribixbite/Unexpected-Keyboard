@@ -80,6 +80,12 @@ public final class Config
   public float prediction_context_boost;     // How strongly context influences predictions (default: 2.0)
   public float prediction_frequency_scale;   // Balance common vs uncommon words (default: 1000.0)
 
+  // Auto-correction settings
+  public boolean autocorrect_enabled;               // Master switch (default: true)
+  public int autocorrect_min_word_length;           // Min length for correction (default: 3)
+  public float autocorrect_char_match_threshold;    // Required char match ratio (default: 0.67 = 2/3)
+  public int autocorrect_confidence_min_frequency;  // Min dictionary frequency (default: 500)
+
   // Short gesture configuration
   public boolean short_gestures_enabled; // Enable/disable short swipe gestures (e.g., swipe-up for @)
   public int short_gesture_min_distance; // Minimum swipe distance as % of key hypotenuse (10-95)
@@ -219,6 +225,12 @@ public final class Config
     // Word prediction scoring weights
     prediction_context_boost = _prefs.getFloat("prediction_context_boost", 2.0f);
     prediction_frequency_scale = _prefs.getFloat("prediction_frequency_scale", 1000.0f);
+
+    // Auto-correction settings
+    autocorrect_enabled = _prefs.getBoolean("autocorrect_enabled", true);
+    autocorrect_min_word_length = safeGetInt(_prefs, "autocorrect_min_word_length", 3);
+    autocorrect_char_match_threshold = _prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
+    autocorrect_confidence_min_frequency = safeGetInt(_prefs, "autocorrect_confidence_min_frequency", 500);
 
     // Short gesture configuration
     short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true);

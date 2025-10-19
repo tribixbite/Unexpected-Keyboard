@@ -1110,14 +1110,55 @@ public class Keyboard2 extends InputMethodService
     else if (text.length() == 1 && !Character.isLetter(text.charAt(0)))
     {
       // Any non-letter character - update context and reset current word
-      
+
       // If we had a word being typed, add it to context before clearing
       if (_currentWord.length() > 0)
       {
         String completedWord = _currentWord.toString();
+
+        // Auto-correct the typed word if feature is enabled
+        if (_config.autocorrect_enabled && _wordPredictor != null && text.equals(" "))
+        {
+          String correctedWord = _wordPredictor.autoCorrect(completedWord);
+
+          // If correction was made, replace the typed word
+          if (!correctedWord.equals(completedWord))
+          {
+            InputConnection conn = getCurrentInputConnection();
+            if (conn != null)
+            {
+              // Delete the typed word
+              conn.deleteSurroundingText(completedWord.length(), 0);
+
+              // Insert the corrected word
+              conn.commitText(correctedWord, 1);
+
+              // Update context with corrected word
+              updateContext(correctedWord);
+
+              // Clear current word
+              _currentWord.setLength(0);
+
+              // Show corrected word as first suggestion for easy undo
+              if (_suggestionBar != null)
+              {
+                List<String> undoSuggestions = new ArrayList<>();
+                undoSuggestions.add(completedWord); // Original word first for undo
+                undoSuggestions.add(correctedWord); // Corrected word second
+                List<Integer> undoScores = new ArrayList<>();
+                undoScores.add(0);
+                undoScores.add(0);
+                _suggestionBar.setSuggestionsWithScores(undoSuggestions, undoScores);
+              }
+
+              return; // Skip normal word completion
+            }
+          }
+        }
+
         updateContext(completedWord);
       }
-      
+
       // Reset current word
       _currentWord.setLength(0);
       if (_wordPredictor != null)

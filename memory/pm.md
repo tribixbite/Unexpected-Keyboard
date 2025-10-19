@@ -2,7 +2,93 @@
 
 ## 🔥 LATEST UPDATES (2025-10-19)
 
-### Four Critical Swipe/Prediction Bugs Fixed - v1.32.98-102 🚀
+### Auto-Correction Feature + WordPredictor Refactor - v1.32.99-114 🚀
+
+**Version**: 1.32.114 (163)
+
+**Status**: ✅ BUILD SUCCESSFUL in 28s
+
+**Three Major Changes:**
+
+**1. WordPredictor Swipe Fallback Removal** (v1.32.99)
+- **Removed**: All swipe pattern matching from WordPredictor (8 methods, ~200 lines)
+- **Rationale**: Neural Network (ONNX) handles ALL swipe typing - no fallback needed
+- **Deleted Methods**:
+  - `calculateSwipeScore()` - Swipe sequence scoring
+  - `calculateEditDistance()` - String similarity
+  - `couldBeFormedFrom()` - Path validation
+  - `countInnerMatches()` / `countCommonCharacters()` - Matching algorithms
+  - `isAdjacent()` / `buildAdjacentKeysMap()` - Spatial proximity
+  - `calculateMatchScore()` - Match quality
+- **Architecture Change**: Two-list system (priorityMatches + otherMatches) → Single unified list
+- **Code**: `WordPredictor.java:217-349` - Simplified to single `predictInternal()` with unified scoring
+
+**2. Unified Prediction Scoring with Early Fusion** (v1.32.101)
+- **Problem**: Context only applied to top 5 (late fusion) → contextually relevant low-frequency words never selected
+- **Solution**: Early fusion - apply context to ALL candidates before selecting top N
+- **Formula**: `score = prefixScore × adaptation × (1 + (contextMult - 1) × contextBoost) × log(freq / freqScale)`
+- **Settings Removed** (8 deprecated weights):
+  - `swipe_confidence_shape_weight` (never used - neural handles shape)
+  - `swipe_confidence_location_weight` (never used - neural handles spatial)
+  - `swipe_confidence_frequency_weight` (never used - frequency applied directly)
+  - `swipe_confidence_velocity_weight` (never used - neural handles temporal)
+  - `swipe_first_letter_weight` (only for swipe fallback, now removed)
+  - `swipe_last_letter_weight` (only for swipe fallback, now removed)
+  - `swipe_endpoint_bonus_weight` (only for swipe fallback, now removed)
+  - `swipe_require_endpoints` (only for swipe fallback, now removed)
+- **Settings Added** (2 functional weights):
+  - `prediction_context_boost` (default: 2.0, range: 0.5-5.0) - How strongly context influences predictions
+  - `prediction_frequency_scale` (default: 1000.0, range: 100.0-5000.0) - Balance common vs uncommon words
+- **Code**:
+  - `WordPredictor.java:311-349` - `calculateUnifiedScore()` with early fusion
+  - `Config.java:79-81` - New weight fields
+  - `settings.xml:18-22` - UI controls
+
+**3. Auto-Correction Feature** (v1.32.103-114)
+- **Functionality**: Automatically corrects typos when user presses space
+- **Algorithm**:
+  - Same total letter count (preserves word length)
+  - Same first 2 letters (fast prefix filter)
+  - Positional character match ≥ threshold (default: 2/3 = 0.67)
+  - Dictionary frequency ≥ minimum (default: 500)
+  - Preserves capitalization ("teh" → "the", "Teh" → "The", "TEH" → "THE")
+- **Settings** (4 configurable options):
+  - `autocorrect_enabled` (default: true) - Master switch
+  - `autocorrect_min_word_length` (default: 3, range: 2-5) - Don't correct short words
+  - `autocorrect_char_match_threshold` (default: 0.67, range: 0.5-0.9) - How many chars must match
+  - `autocorrect_confidence_min_frequency` (default: 500, range: 100-5000) - Only correct to common words
+- **UX**: Shows original word as first suggestion for easy undo after auto-correction
+- **Code**:
+  - `WordPredictor.java:382-476` - `autoCorrect()` method with fuzzy matching
+  - `WordPredictor.java:478-516` - `preserveCapitalization()` helper
+  - `Keyboard2.java:1119-1157` - Integration on space key press
+  - `Config.java:83-87, 229-233` - Settings storage
+  - `settings.xml:23-29` - UI controls
+- **Examples**:
+  - "teh" + space → "the " (auto-corrected)
+  - "recieve" + space → "receive " (common spelling mistake)
+  - "hte" + space → "the " (transposition error)
+
+**Files Modified**:
+- `WordPredictor.java` - Removed swipe fallback, unified scoring, auto-correction
+- `Config.java` - Removed 8 deprecated weights, added 2 prediction + 4 autocorrect settings
+- `Keyboard2.java` - Auto-correction integration on space key
+- `settings.xml` - Removed 8 deprecated settings, added 2 prediction + 4 autocorrect settings
+- `ADVANCED_PREDICTION_SETTINGS.md` - Marked all 8 settings as deprecated (v1.32.99+)
+
+**Commits**:
+- 4452162e - refactor(predict): remove WordPredictor swipe fallback system
+- 69b85256 - refactor(predict): simplify to single-list architecture with unified scoring
+- e496ab75 - refactor(config): remove deprecated endpoint weight fields
+- 98ca1ca6 - refactor(config): completely remove deprecated settings (no backwards compat)
+- c81cc537 - feat(predict): implement unified scoring with early fusion context
+- 33a043d8 - refactor(settings): remove 8 deprecated settings, add 2 functional prediction weights
+- 31c6fefd - feat(settings): add UI controls for prediction weights with persistence
+- [pending] - feat(autocorrect): implement auto-correction with fuzzy matching
+
+---
+
+### Four Critical Swipe/Prediction Bugs Fixed - v1.32.98-102
 
 **Version**: 1.32.102 (151)
 
