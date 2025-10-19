@@ -1127,8 +1127,14 @@ public class Keyboard2 extends InputMethodService
             InputConnection conn = getCurrentInputConnection();
             if (conn != null)
             {
-              // Delete the typed word (already committed via KeyEventHandler.send_text)
-              conn.deleteSurroundingText(completedWord.length(), 0);
+              // At this point:
+              // - The typed word "thid" has been committed via KeyEventHandler.send_text()
+              // - The space " " has ALSO been committed via handle_text_typed(" ")
+              // - Editor contains "thid "
+              // - We need to delete both the word AND the space, then insert corrected word + space
+
+              // Delete the typed word + space (already committed)
+              conn.deleteSurroundingText(completedWord.length() + 1, 0);
 
               // Insert the corrected word WITH trailing space
               conn.commitText(correctedWord + " ", 1);
