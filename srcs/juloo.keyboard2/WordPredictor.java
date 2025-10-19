@@ -215,89 +215,39 @@ public class WordPredictor
   }
   
   /**
-   * Predict words with context
+   * Predict words with context (PUBLIC API - delegates to internal unified method)
    */
   public PredictionResult predictWordsWithContext(String keySequence, List<String> context)
   {
-    if (keySequence == null || keySequence.isEmpty())
-      return new PredictionResult(new ArrayList<>(), new ArrayList<>());
-    
-    PerformanceProfiler.start("Type.predictWithContext");
-    
-    // Get base predictions
-    PredictionResult baseResult = predictWordsWithScoresInternal(keySequence);
-    
-    // Apply contextual reranking if context is available
-    if (context != null && !context.isEmpty() && _bigramModel != null)
-    {
-      List<WordCandidate> candidates = new ArrayList<>();
-      for (int i = 0; i < baseResult.words.size(); i++)
-      {
-        String word = baseResult.words.get(i);
-        int baseScore = baseResult.scores.get(i);
-        
-        // Get context multiplier from bigram model
-        float contextMultiplier = _bigramModel.getContextMultiplier(word, context);
-        
-        // Apply context boost/penalty
-        int adjustedScore = (int)(baseScore * contextMultiplier);
-        candidates.add(new WordCandidate(word, adjustedScore));
-      }
-      
-      // Re-sort by adjusted scores
-      Collections.sort(candidates, new Comparator<WordCandidate>()
-      {
-        @Override
-        public int compare(WordCandidate a, WordCandidate b)
-        {
-          return Integer.compare(b.score, a.score); // Descending order
-        }
-      });
-      
-      // Extract top predictions
-      List<String> contextualWords = new ArrayList<>();
-      List<Integer> contextualScores = new ArrayList<>();
-      int limit = Math.min(candidates.size(), MAX_PREDICTIONS_TYPING);
-      
-      for (int i = 0; i < limit; i++)
-      {
-        contextualWords.add(candidates.get(i).word);
-        contextualScores.add(candidates.get(i).score);
-      }
-      
-      PerformanceProfiler.end("Type.predictWithContext");
-      return new PredictionResult(contextualWords, contextualScores);
-    }
-    
-    PerformanceProfiler.end("Type.predictWithContext");
-    return baseResult;
+    return predictInternal(keySequence, context);
   }
-  
+
   /**
    * Predict words and return with their scores (no context)
    */
   public PredictionResult predictWordsWithScores(String keySequence)
   {
-    return predictWordsWithContext(keySequence, null);
+    return predictInternal(keySequence, Collections.emptyList());
   }
-  
+
   /**
-   * Internal prediction logic
+   * UNIFIED prediction logic with early fusion of all signals
+   * Context is applied to ALL candidates BEFORE selecting top N
    */
-  private PredictionResult predictWordsWithScoresInternal(String keySequence)
+  private PredictionResult predictInternal(String keySequence, List<String> context)
   {
     if (keySequence == null || keySequence.isEmpty())
       return new PredictionResult(new ArrayList<>(), new ArrayList<>());
     
     PerformanceProfiler.start("Type.predictWordsWithScores");
 
-    // SINGLE-LIST SYSTEM - Regular typing only (no swipe fallback)
+    // UNIFIED SCORING with EARLY FUSION
+    // Context is applied to ALL candidates BEFORE selecting top N
     List<WordCandidate> candidates = new ArrayList<>();
     String lowerSequence = keySequence.toLowerCase();
 
-    android.util.Log.d("WordPredictor", "Predicting for: " + lowerSequence + " (len=" + lowerSequence.length() + ")");
+    android.util.Log.d("WordPredictor", "Predicting for: " + lowerSequence + " (len=" + lowerSequence.length() + ") with context: " + context);
 
-    // REGULAR TYPING ONLY - No swipe fallback (neural network handles all swipes)
     int maxPredictions = MAX_PREDICTIONS_TYPING;
 
     // Find all words that could match the typed prefix
@@ -307,23 +257,17 @@ public class WordPredictor
       int frequency = entry.getValue();
 
       // STRICT PREFIX MATCHING - Only suggest words that start with typed sequence
-      // This is correct behavior for regular typing predictions
       if (!word.startsWith(lowerSequence))
         continue;  // Skip words that don't start with typed prefix
 
-      // Calculate score based on exact prefix match
-      int score = calculatePrefixScore(word, lowerSequence);
+      // UNIFIED SCORING: Combine ALL signals into one score BEFORE selection
+      int score = calculateUnifiedScore(word, lowerSequence, frequency, context);
 
-      // Apply user adaptation multiplier before frequency multiplication
-      if (_adaptationManager != null)
+      if (score > 0)
       {
-        float adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
-        score = (int)(score * adaptationMultiplier);
+        candidates.add(new WordCandidate(word, score));
+        android.util.Log.d("WordPredictor", "Candidate: " + word + " (score=" + score + ")");
       }
-
-      // Keep frequency multiplication for common words boost
-      candidates.add(new WordCandidate(word, score * frequency));
-      android.util.Log.d("WordPredictor", "PREFIX match: " + word + " (score=" + score + ", freq=" + frequency + ")");
     }
 
     // Sort all candidates by score (descending)
@@ -353,32 +297,81 @@ public class WordPredictor
   }
   
   /**
-   * Calculate score for prefix-based matching (regular typing)
+   * UNIFIED SCORING - Combines all prediction signals (early fusion)
+   *
+   * Combines: prefix quality + frequency + user adaptation + context probability
+   * Context is evaluated for ALL candidates, not just top N (key improvement)
+   *
+   * @param word The word being scored
+   * @param keySequence The typed prefix
+   * @param frequency Dictionary frequency (higher = more common)
+   * @param context Previous words for contextual prediction (can be empty)
+   * @return Combined score
+   */
+  private int calculateUnifiedScore(String word, String keySequence, int frequency, List<String> context)
+  {
+    // 1. Base score from prefix match quality
+    int prefixScore = calculatePrefixScore(word, keySequence);
+    if (prefixScore == 0) return 0; // Should not happen if caller does prefix check
+
+    // 2. User adaptation multiplier (learns user's vocabulary)
+    float adaptationMultiplier = 1.0f;
+    if (_adaptationManager != null)
+    {
+      adaptationMultiplier = _adaptationManager.getAdaptationMultiplier(word);
+    }
+
+    // 3. Context multiplier (bigram probability boost)
+    float contextMultiplier = 1.0f;
+    if (_bigramModel != null && context != null && !context.isEmpty())
+    {
+      contextMultiplier = _bigramModel.getContextMultiplier(word, context);
+    }
+
+    // 4. Frequency scaling (log to prevent common words from dominating)
+    // Using log1p helps balance: "the" (freq ~10000) vs "think" (freq ~100)
+    // Without log: "the" would always win. With log: context can override frequency
+    float frequencyFactor = 1.0f + (float)Math.log1p(frequency / 1000.0f);
+
+    // COMBINE ALL SIGNALS
+    // Formula: prefixScore × adaptation × (1 + boosted_context) × freq_factor
+    // Context boost multiplied by 2.0 to give it significant influence
+    // A high context score can now override a slightly lower frequency
+    float finalScore = prefixScore
+        * adaptationMultiplier
+        * (1.0f + (contextMultiplier - 1.0f) * 2.0f)  // Boost context effect
+        * frequencyFactor;
+
+    return (int)finalScore;
+  }
+
+  /**
+   * Calculate base score for prefix-based matching (used by unified scoring)
    */
   private int calculatePrefixScore(String word, String keySequence)
   {
     // Direct match is highest score
     if (word.equals(keySequence))
       return 1000;
-      
+
     // Word starts with sequence (this is guaranteed by caller, but score based on completion ratio)
     if (word.startsWith(keySequence))
     {
       // Score based on how much of the word is already typed
       float completionRatio = (float)keySequence.length() / word.length();
-      
+
       // Higher score for more completion, but prefer shorter completions
       int baseScore = 800;
-      
+
       // Bonus for more typed characters (longer prefix = more specific)
       int prefixBonus = keySequence.length() * 50;
-      
+
       // Slight penalty for very long words to prefer common shorter words
       int lengthPenalty = Math.max(0, (word.length() - 6) * 10);
-      
+
       return baseScore + prefixBonus - lengthPenalty;
     }
-    
+
     return 0; // Should not reach here due to prefix check in caller
   }
   
