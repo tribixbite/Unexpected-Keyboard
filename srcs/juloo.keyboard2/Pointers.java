@@ -242,10 +242,25 @@ public final class Pointers implements Handler.Callback
             // a is between 0 and 2pi, 0 is pointing to the left
             // add 12 to align 0 to the top
             int direction = ((int)(a * 8 / Math.PI) + 12) % 16;
+
+            // Detailed logging for direction debugging
+            double angleDeg = Math.toDegrees(a);
+            int keyIndex = DIRECTION_TO_INDEX[direction];
+            String[] posNames = {"c", "nw", "ne", "sw", "se", "w", "e", "n", "s"};
+            String posName = (keyIndex >= 0 && keyIndex < posNames.length) ? posNames[keyIndex] : "?";
+
+            android.util.Log.d("Pointers", String.format(
+              "SHORT_SWIPE: key=%s dx=%.1f dy=%.1f dist=%.1f angle=%.1f° dir=%d→idx=%d(%s)",
+              ptr.key.keys[0], dx, dy, distance, angleDeg, direction, keyIndex, posName
+            ));
+
             // Use getNearestKeyAtDirection to search nearby if exact direction not defined
             KeyValue gestureValue = getNearestKeyAtDirection(ptr, direction);
 
-            android.util.Log.d("Pointers", "Short gesture triggered: dir=" + direction + " value=" + gestureValue);
+            android.util.Log.d("Pointers", String.format(
+              "SHORT_SWIPE_RESULT: dir=%d found=%s",
+              direction, gestureValue != null ? gestureValue.toString() : "null"
+            ));
 
             if (gestureValue != null)
             {
