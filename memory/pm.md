@@ -9,24 +9,25 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.121 (170)
+**Latest Version**: v1.32.127 (176)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.114-121)
+### Recent Work (v1.32.122-127)
 
-**Auto-Correction Feature** - Automatically corrects typos when pressing space
-- Fuzzy matching: same length + first 2 letters + 67% positional char match
-- Capitalization preservation (teh→the, Teh→The, TEH→THE)
-- Smart Termux detection: no space in Termux app, space in other apps
-- 4 configurable settings in UI
+**Swipe Symbols Documentation & Debug Logging** - Investigated and documented hit zone behavior
+- Created comprehensive spec: `docs/specs/SWIPE_SYMBOLS.md` (276 lines)
+- Documented why NE/SE positions have small hit zones (22.5° vs 45° for N/S)
+- Added detailed direction logging to `Pointers.java` for debugging
+- Logs show: dx/dy, distance, angle, direction→index(position), symbol found
+- View with: `adb logcat | grep SHORT_SWIPE`
 
-**WordPredictor Refactor** - Removed legacy swipe fallback system
-- Deleted 8 methods (~200 lines) - neural network handles all swipes
-- Unified scoring with early fusion (context applied to ALL candidates)
-- Removed 8 deprecated settings, added 2 functional weights
+**Previous (v1.32.114-121)**: Auto-Correction Feature & WordPredictor Refactor
+- Fuzzy matching auto-correction with capitalization preservation
+- Removed legacy swipe fallback system (~200 lines)
+- Unified scoring with early fusion
 
-**Files**: `WordPredictor.java`, `Config.java`, `Keyboard2.java`, `settings.xml`
+**Files**: `Pointers.java`, `docs/specs/SWIPE_SYMBOLS.md`
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed technical documentation.
 
@@ -42,6 +43,8 @@ None currently
 - **Documentation**: Some legacy docs need updating
 
 ### Low Priority
+- **Swipe Symbol UX**: NE/SE positions have narrow hit zones (22.5°) - consider expanding to 45° in future
+- **SwipeDebugActivity**: EditText focus issue (Android IME architectural limitation)
 - Consider adding undo mechanism for auto-correction
 
 ---
