@@ -9,18 +9,21 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.127 (176)
+**Latest Version**: v1.32.128 (177)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.122-127)
+### Recent Work (v1.32.128)
 
-**Swipe Symbols Documentation & Debug Logging** - Investigated and documented hit zone behavior
-- Created comprehensive spec: `docs/specs/SWIPE_SYMBOLS.md` (276 lines)
-- Documented why NE/SE positions have small hit zones (22.5° vs 45° for N/S)
-- Added detailed direction logging to `Pointers.java` for debugging
-- Logs show: dx/dy, distance, angle, direction→index(position), symbol found
-- View with: `adb logcat | grep SHORT_SWIPE`
+**SE Hit Zone Expansion & 2-Letter Word Shortcuts** - Fixed `}` and `]` accessibility
+- Expanded SE position from 22.5° to 45° hit zone (now same as N/S)
+- Changed DIRECTION_TO_INDEX: dirs 4-6 → SE (was 5-6)
+- Added 7 common 2-letter word swipes: to, it, as, so, do, up, me
+- Example: swipe east on `t` → "to", west on `i` → "it"
+
+**Previous (v1.32.122-127)**: Swipe Symbols Documentation & Debug Logging
+- Created comprehensive spec: `docs/specs/SWIPE_SYMBOLS.md`
+- Added detailed direction logging: `adb logcat | grep SHORT_SWIPE`
 
 **Previous (v1.32.114-121)**: Auto-Correction Feature & WordPredictor Refactor
 - Fuzzy matching auto-correction with capitalization preservation
@@ -43,9 +46,10 @@ None currently
 - **Documentation**: Some legacy docs need updating
 
 ### Low Priority
-- **Swipe Symbol UX**: NE/SE positions have narrow hit zones (22.5°) - consider expanding to 45° in future
+- **Swipe Symbol UX**: NE position still has narrow hit zone (22.5°) - SE fixed to 45° in v1.32.128
 - **SwipeDebugActivity**: EditText focus issue (Android IME architectural limitation)
 - Consider adding undo mechanism for auto-correction
+- Consider adding more common word shortcuts (is, we, go, on, in, etc.)
 
 ---
 
