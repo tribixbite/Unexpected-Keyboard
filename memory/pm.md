@@ -9,17 +9,19 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.130 (179)
+**Latest Version**: v1.32.131 (180)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.130)
+### Recent Work (v1.32.131)
 
-**2-Letter Word Shortcuts - 15 Common Words** - Comprehensive swipe shortcuts
-- Added: go (g→E), by (b→N)
-- Reorganized: me (m→NE from W), quote moved (m→SW from NE)
-- Complete list (15): to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by
-- Example: `t`→E:"to", `i`→W:"it", `o`→W:"of", `g`→E:"go", `b`→N:"by"
+**2-Letter Word Auto-Spacing & Layout Optimization** - Enhanced UX
+- **Auto-space**: All 15 two-letter words now insert with trailing space ("to " instead of "to")
+- **Reorganized**: `of`(o→NW), `we`(w→SE), `-`(g→NW), `go`(g→NE)
+- Complete list with auto-space: to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by
+- Example: Swipe t→E inserts "to " ready for next word
+
+**Previous (v1.32.130)**: Added go, by; reorganized me position
 
 **Previous (v1.32.129)**: Fixed do/so directions, added 6 words (we, in, of, on, hi, no)
 
