@@ -1117,7 +1117,22 @@ public class Keyboard2 extends InputMethodService
         String completedWord = _currentWord.toString();
 
         // Auto-correct the typed word if feature is enabled
-        if (_config.autocorrect_enabled && _wordPredictor != null && text.equals(" "))
+        // DISABLED in Termux app due to erratic behavior with terminal input
+        boolean inTermuxApp = false;
+        try
+        {
+          EditorInfo editorInfo = getCurrentInputEditorInfo();
+          if (editorInfo != null && editorInfo.packageName != null)
+          {
+            inTermuxApp = editorInfo.packageName.equals("com.termux");
+          }
+        }
+        catch (Exception e)
+        {
+          // Fallback: assume not Termux if detection fails
+        }
+
+        if (_config.autocorrect_enabled && _wordPredictor != null && text.equals(" ") && !inTermuxApp)
         {
           String correctedWord = _wordPredictor.autoCorrect(completedWord);
 
@@ -1136,35 +1151,8 @@ public class Keyboard2 extends InputMethodService
               // Delete the typed word + space (already committed)
               conn.deleteSurroundingText(completedWord.length() + 1, 0);
 
-              // Insert the corrected word - respect Termux mode for spacing
-              // Check if we're actually in Termux app, not just if Termux mode is enabled
-              boolean inTermuxApp = false;
-              try
-              {
-                EditorInfo editorInfo = getCurrentInputEditorInfo();
-                if (editorInfo != null && editorInfo.packageName != null)
-                {
-                  inTermuxApp = editorInfo.packageName.equals("com.termux");
-                }
-              }
-              catch (Exception e)
-              {
-                // Fallback to config setting if detection fails
-              }
-
-              String replacementText;
-              if (inTermuxApp)
-              {
-                // In Termux app: No trailing space for terminal compatibility
-                replacementText = correctedWord;
-              }
-              else
-              {
-                // Normal app: Add trailing space for better typing flow
-                // (Ignore global termux_mode setting - only respect actual Termux app)
-                replacementText = correctedWord + " ";
-              }
-              conn.commitText(replacementText, 1);
+              // Insert the corrected word WITH trailing space (normal apps only)
+              conn.commitText(correctedWord + " ", 1);
 
               // Update context with corrected word
               updateContext(correctedWord);
