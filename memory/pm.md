@@ -9,17 +9,19 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.129 (178)
+**Latest Version**: v1.32.130 (179)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.129)
+### Recent Work (v1.32.130)
 
-**2-Letter Word Shortcuts Expansion** - 13 common words via short swipes
-- Fixed `do` and `so` directions (ne instead of e)
-- Added 6 more words: we, in, of, on, hi, no
-- Complete list: to, it, as, so, do, up, me, we, in, of, on, hi, no
-- Example: `t`→E:"to", `i`→W:"it", `o`→W:"of", `o`→S:"on"
+**2-Letter Word Shortcuts - 15 Common Words** - Comprehensive swipe shortcuts
+- Added: go (g→E), by (b→N)
+- Reorganized: me (m→NE from W), quote moved (m→SW from NE)
+- Complete list (15): to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by
+- Example: `t`→E:"to", `i`→W:"it", `o`→W:"of", `g`→E:"go", `b`→N:"by"
+
+**Previous (v1.32.129)**: Fixed do/so directions, added 6 words (we, in, of, on, hi, no)
 
 **Previous (v1.32.128)**: SE Hit Zone Expansion
 - Expanded SE position from 22.5° to 45° hit zone (makes `}` and `]` easier)
