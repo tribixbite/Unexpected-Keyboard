@@ -9,13 +9,19 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.136 (185)
+**Latest Version**: v1.32.137 (186)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.136)
+### Recent Work (v1.32.137)
 
-**Backup/Restore Configuration System** - Complete settings management
+**Fixed Backup/Restore Crash** - Blacklist complex preferences
+- Fixed crash loop when importing settings
+- Skip preferences with custom serialization (layouts, extra_keys, etc.)
+- These preferences have dedicated save/load methods in their classes
+- Settings activity now works properly after restore
+
+**Previous (v1.32.136)**: **Backup/Restore Configuration System** - Complete settings management
 - Replaced non-functional ML data settings with proper backup/restore
 - Export all preferences to `kb-config-YYYYMMDD_HHMMSS.json` with metadata
 - Version-tolerant import (accepts any recognized keys, skips unknown)
