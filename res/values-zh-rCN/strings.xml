@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">添加自定义按键</string>
     <string name="pref_extra_keys_internal">选择要添加到键盘的按键</string>
     <string name="pref_category_typing">输入</string>
-    <string name="pref_swipe_dist_title">滑动触发距离</string>
-    <string name="pref_swipe_dist_summary">输入按键四角的符号需要滑动的距离 (%s)</string>
     <string name="pref_long_timeout_title">长按触发延时</string>
     <string name="pref_long_interval_title">长按后每次重复输入的时间间隔</string>
     <string name="pref_keyrepeat_enabled">长按重复输入</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">莫奈（浅色）</string>
     <string name="pref_theme_e_monetdark">莫奈（深色）</string>
     <string name="pref_theme_e_rosepine">桃红松韵（Rosé Pine）</string>
-    <string name="pref_swipe_dist_e_very_short">非常短</string>
-    <string name="pref_swipe_dist_e_short">短</string>
-    <string name="pref_swipe_dist_e_default">中（默认）</string>
-    <string name="pref_swipe_dist_e_far">长</string>
-    <string name="pref_swipe_dist_e_very_far">非常长</string>
     <string name="pref_key_horizontal_space">按键的左右边距</string>
     <string name="pref_key_vertical_space">按键的上下边距</string>
     <string name="pref_border_config_title">自定义边界</string>

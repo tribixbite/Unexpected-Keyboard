@@ -35,8 +35,6 @@
     <!-- <string name="pref_extra_keys_custom">Add custom keys</string> -->
     <!-- <string name="pref_extra_keys_internal">Select keys to add to the keyboard</string> -->
     <string name="pref_category_typing">Tipărire</string>
-    <string name="pref_swipe_dist_title">Distanța de glisare</string>
-    <string name="pref_swipe_dist_summary">Distanța dintre caracterele din colțurile tastelor (%s)</string>
     <!-- <string name="pref_long_timeout_title">Long press timeout</string> -->
     <string name="pref_long_interval_title">Intervalul de repetare a tastelor</string>
     <!-- <string name="pref_keyrepeat_enabled">Key repeat on long press</string> -->
@@ -73,11 +71,6 @@
     <!-- <string name="pref_theme_e_monetlight">Monet (Light)</string> -->
     <!-- <string name="pref_theme_e_monetdark">Monet (Dark)</string> -->
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">Foarte apropiată</string>
-    <string name="pref_swipe_dist_e_short">Apropiată</string>
-    <string name="pref_swipe_dist_e_default">Normală</string>
-    <string name="pref_swipe_dist_e_far">Depărtată</string>
-    <string name="pref_swipe_dist_e_very_far">Foarte depărtată</string>
     <string name="pref_key_horizontal_space">Distanța orizontală dintre taste</string>
     <string name="pref_key_vertical_space">Distanța verticală dintre taste</string>
     <!-- <string name="pref_border_config_title">Customize borders</string> -->

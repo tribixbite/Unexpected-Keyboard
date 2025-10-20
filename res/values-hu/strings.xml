@@ -35,8 +35,6 @@
     <!-- <string name="pref_extra_keys_custom">Add custom keys</string> -->
     <!-- <string name="pref_extra_keys_internal">Select keys to add to the keyboard</string> -->
     <!-- <string name="pref_category_typing">Typing</string> -->
-    <!-- <string name="pref_swipe_dist_title">Swiping distance</string> -->
-    <!-- <string name="pref_swipe_dist_summary">Distance of characters in the corners of the keys (%s)</string> -->
     <!-- <string name="pref_long_timeout_title">Long press timeout</string> -->
     <!-- <string name="pref_long_interval_title">Key repeat interval</string> -->
     <!-- <string name="pref_keyrepeat_enabled">Key repeat on long press</string> -->
@@ -73,11 +71,6 @@
     <!-- <string name="pref_theme_e_monetlight">Monet (Light)</string> -->
     <!-- <string name="pref_theme_e_monetdark">Monet (Dark)</string> -->
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <!-- <string name="pref_swipe_dist_e_very_short">Very short</string> -->
-    <!-- <string name="pref_swipe_dist_e_short">Short</string> -->
-    <!-- <string name="pref_swipe_dist_e_default">Normal</string> -->
-    <!-- <string name="pref_swipe_dist_e_far">Far</string> -->
-    <!-- <string name="pref_swipe_dist_e_very_far">Very far</string> -->
     <!-- <string name="pref_key_horizontal_space">Horizontal spacing between the keys</string> -->
     <!-- <string name="pref_key_vertical_space">Vertical spacing between the keys</string> -->
     <!-- <string name="pref_border_config_title">Customize borders</string> -->

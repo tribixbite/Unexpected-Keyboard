@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Добавить пользовательские клавиши</string>
     <string name="pref_extra_keys_internal">Выберите клавиши для добавления на клавиатуру</string>
     <string name="pref_category_typing">Набор текста</string>
-    <string name="pref_swipe_dist_title">Длина жеста</string>
-    <string name="pref_swipe_dist_summary">Расстояние между символами в углах клавиш (%s)</string>
     <string name="pref_long_timeout_title">Задержка долгого нажатия</string>
     <string name="pref_long_interval_title">Интервал повтора клавиш</string>
     <string name="pref_keyrepeat_enabled">Повтор клавиши при долгом нажатии</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Моне (светлая)</string>
     <string name="pref_theme_e_monetdark">Моне (темная)</string>
     <string name="pref_theme_e_rosepine">Розовая сосна</string>
-    <string name="pref_swipe_dist_e_very_short">Очень короткая</string>
-    <string name="pref_swipe_dist_e_short">Короткая</string>
-    <string name="pref_swipe_dist_e_default">Обычная</string>
-    <string name="pref_swipe_dist_e_far">Длинная</string>
-    <string name="pref_swipe_dist_e_very_far">Очень длинная</string>
     <string name="pref_key_horizontal_space">Горизонтальное расстояние между клавишами</string>
     <string name="pref_key_vertical_space">Расстояние по вертикали между клавишами</string>
     <string name="pref_border_config_title">Настройка рамки</string>

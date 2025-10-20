@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Benutzerdefinierte Tasten hinzufügen</string>
     <string name="pref_extra_keys_internal">Tasten auswählen, die der Tastatur hinzugefügt werden sollen</string>
     <string name="pref_category_typing">Tippen</string>
-    <string name="pref_swipe_dist_title">Länge der Wischgeste</string>
-    <string name="pref_swipe_dist_summary">Abstand der Zeichen in den Ecken der Tasten (%s)</string>
     <string name="pref_long_timeout_title">Zeitüberschreitung durch langes Drücken</string>
     <string name="pref_long_interval_title">Intervall der Tastenwiederholung</string>
     <string name="pref_keyrepeat_enabled">Tastenwiederholung bei langem Drücken</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (Hell)</string>
     <string name="pref_theme_e_monetdark">Monet (Dunkel)</string>
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">Sehr kurz</string>
-    <string name="pref_swipe_dist_e_short">Kurz</string>
-    <string name="pref_swipe_dist_e_default">Normal</string>
-    <string name="pref_swipe_dist_e_far">Weit</string>
-    <string name="pref_swipe_dist_e_very_far">Sehr weit</string>
     <string name="pref_key_horizontal_space">Horizontaler Abstand zwischen den Tasten</string>
     <string name="pref_key_vertical_space">Vertikaler Abstand zwischen den Tasten</string>
     <string name="pref_border_config_title">Ränder anpassen</string>

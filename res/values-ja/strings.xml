@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">キーを追加</string>
     <string name="pref_extra_keys_internal">キーボードに表示するキーを選択</string>
     <string name="pref_category_typing">入力</string>
-    <string name="pref_swipe_dist_title">スワイプ距離</string>
-    <string name="pref_swipe_dist_summary">キーの角をスワイプする距離 (%s)</string>
     <string name="pref_long_timeout_title">キー長押しの時間</string>
     <string name="pref_long_interval_title">キーを連続入力する間隔</string>
     <string name="pref_keyrepeat_enabled">長押しでキーを連続入力する</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (ライト)</string>
     <string name="pref_theme_e_monetdark">Monet (ダーク)</string>
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">短い</string>
-    <string name="pref_swipe_dist_e_short">やや短い</string>
-    <string name="pref_swipe_dist_e_default">普通</string>
-    <string name="pref_swipe_dist_e_far">やや長い</string>
-    <string name="pref_swipe_dist_e_very_far">長い</string>
     <string name="pref_key_horizontal_space">キー間の左右の間隔</string>
     <string name="pref_key_vertical_space">キー間の上下の間隔</string>
     <string name="pref_border_config_title">キー形状の設定</string>

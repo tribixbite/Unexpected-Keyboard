@@ -35,8 +35,6 @@
     <!-- <string name="pref_extra_keys_custom">Add custom keys</string> -->
     <!-- <string name="pref_extra_keys_internal">Select keys to add to the keyboard</string> -->
     <string name="pref_category_typing">درحال نوشتن</string>
-    <string name="pref_swipe_dist_title">فاصله کشیدن</string>
-    <string name="pref_swipe_dist_summary">فاصله حروف از گوشه‌های کلیدها )(%s)</string>
     <!-- <string name="pref_long_timeout_title">Long press timeout</string> -->
     <string name="pref_long_interval_title">فاصله تکرار کلید</string>
     <!-- <string name="pref_keyrepeat_enabled">Key repeat on long press</string> -->
@@ -73,11 +71,6 @@
     <!-- <string name="pref_theme_e_monetlight">Monet (Light)</string> -->
     <!-- <string name="pref_theme_e_monetdark">Monet (Dark)</string> -->
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">بسیار کوتاه</string>
-    <string name="pref_swipe_dist_e_short">کوتاه</string>
-    <string name="pref_swipe_dist_e_default">عادی</string>
-    <string name="pref_swipe_dist_e_far">دور</string>
-    <string name="pref_swipe_dist_e_very_far">بسیار دور</string>
     <string name="pref_key_horizontal_space">فاصله افقی بین کلیدها</string>
     <string name="pref_key_vertical_space">فاصله عمودی بین کلیدها</string>
     <!-- <string name="pref_border_config_title">Customize borders</string> -->

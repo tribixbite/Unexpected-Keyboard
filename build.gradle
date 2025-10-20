@@ -23,8 +23,8 @@ android {
     applicationId "juloo.keyboard2"
     minSdk 21
     targetSdkVersion 35
-    versionCode 193
-    versionName "1.32.144"
+    versionCode 196
+    versionName "1.32.147"
   }
 
   sourceSets {
@@ -96,6 +96,14 @@ android {
   }
 
   lintOptions {
+    // Suppress warnings about missing default values for removed swipe_dist settings
+    disable 'MissingDefaultResource'
+  }
+
+  // Suppress llvm-strip warnings on Termux ARM64 (x86_64 binaries can't run, libraries packaged unstripped)
+  packagingOptions {
+    doNotStrip "*/armeabi-v7a/*.so"
+    doNotStrip "*/arm64-v8a/*.so"
   }
 }
 
