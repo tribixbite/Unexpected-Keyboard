@@ -193,6 +193,13 @@ public class BackupRestoreManager
   private boolean importPreference(SharedPreferences.Editor editor, String key,
                                     com.google.gson.JsonElement value)
   {
+    // Skip complex preferences that use custom serialization
+    // These have their own save/load methods and shouldn't be imported as simple types
+    if (isComplexPreference(key))
+    {
+      Log.i(TAG, "Skipping complex preference: " + key);
+      return false;
+    }
     // Handle different preference types
     if (value.isJsonPrimitive())
     {
@@ -342,12 +349,6 @@ public class BackupRestoreManager
       case "circle_sensitivity":
         return value >= 1 && value <= 5;
 
-      // Version and layout indices (non-negative)
-      case "version":
-      case "current_layout_portrait":
-      case "current_layout_landscape":
-        return value >= 0;
-
       default:
         // Unknown integer preference - allow it (version-tolerant)
         return true;
@@ -391,6 +392,32 @@ public class BackupRestoreManager
       default:
         // Unknown float preference - allow it (version-tolerant)
         return true;
+    }
+  }
+
+  /**
+   * Check if a preference uses complex custom serialization
+   * These preferences have their own save/load methods and shouldn't be imported as simple types
+   */
+  private boolean isComplexPreference(String key)
+  {
+    // Preferences that use ListGroupPreference or custom serialization
+    switch (key)
+    {
+      // LayoutsPreference - uses custom JSON serialization
+      case "layouts":
+      // ExtraKeysPreference - uses custom Map<KeyValue, PreferredPos> serialization
+      case "extra_keys":
+      // CustomExtraKeysPreference - uses custom Map<KeyValue, PreferredPos> serialization
+      case "custom_extra_keys":
+      // Internal version tracking
+      case "version":
+      // Current layout indices (managed by Config)
+      case "current_layout_portrait":
+      case "current_layout_landscape":
+        return true;
+      default:
+        return false;
     }
   }
 
