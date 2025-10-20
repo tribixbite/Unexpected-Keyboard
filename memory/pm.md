@@ -9,13 +9,19 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.137 (186)
+**Latest Version**: v1.32.138 (187)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.137)
+### Recent Work (v1.32.138)
 
-**Fixed Backup/Restore Crash** - Blacklist complex preferences
+**Improved Backup/Restore Robustness** - Gemini-validated enhancements
+- Handle integer-as-string preferences (circle_sensitivity, show_numpad, etc.)
+- UI warnings when layouts/extra_keys aren't restored
+- Relaxed theme validation for forward compatibility
+- Prevents ClassCastException from ListPreference values
+
+**Previous (v1.32.137)**: **Fixed Backup/Restore Crash** - Blacklist complex preferences
 - Fixed crash loop when importing settings
 - Skip preferences with custom serialization (layouts, extra_keys, etc.)
 - These preferences have dedicated save/load methods in their classes
