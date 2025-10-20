@@ -578,19 +578,15 @@ public class BackupRestoreManager
   /**
    * Check if a preference stores integers as strings (from ListPreference)
    * These need to be parsed and stored as int to prevent ClassCastException
+   *
+   * IMPORTANT: ListPreference always stores values as strings, even if they look like numbers.
+   * Do NOT add ListPreference keys here - they must be imported as strings.
    */
   private boolean isIntegerStoredAsString(String key)
   {
-    switch (key)
-    {
-      // ListPreference values that are actually integers
-      case "circle_sensitivity":
-      // case "show_numpad": // Can be non-numeric ("never", "always", "landscape") - treat as string
-      case "clipboard_history_limit":
-        return true;
-      default:
-        return false;
-    }
+    // Currently no preferences need this treatment
+    // ListPreferences (show_numpad, circle_sensitivity, clipboard_history_limit) store as strings
+    return false;
   }
 
   /**
