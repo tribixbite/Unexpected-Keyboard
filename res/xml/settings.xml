@@ -27,6 +27,7 @@
       <juloo.keyboard2.prefs.SlideBarPreference android:key="autocorrect_char_match_threshold" android:title="Character Match Threshold" android:summary="How many characters must match (%s)" android:defaultValue="0.67" min="0.5" max="0.9" android:dependency="autocorrect_enabled"/>
       <juloo.keyboard2.prefs.IntSlideBarPreference android:key="autocorrect_confidence_min_frequency" android:title="Minimum Frequency" android:summary="Only correct to words with frequency ≥ %s" android:defaultValue="500" min="100" max="5000" android:dependency="autocorrect_enabled"/>
     </PreferenceScreen>
+    <Preference android:key="dictionary_manager" android:title="📚 Dictionary Manager" android:summary="Manage active, disabled, user, and custom dictionary words"/>
     <CheckBoxPreference android:key="swipe_typing_enabled" android:title="@string/pref_swipe_typing_title" android:summary="@string/pref_swipe_typing_summary" android:defaultValue="false"/>
     <PreferenceScreen android:key="swipe_calibration" android:title="@string/pref_swipe_calibration_title" android:summary="@string/pref_swipe_calibration_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="neural_swipe_settings" android:title="🧠 Neural Prediction Settings" android:summary="Configure ONNX transformer neural network parameters" android:dependency="swipe_typing_enabled">

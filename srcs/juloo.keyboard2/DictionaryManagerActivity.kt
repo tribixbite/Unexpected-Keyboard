@@ -1,0 +1,201 @@
+package juloo.keyboard2
+
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Spinner
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
+
+/**
+ * Dictionary Manager Activity
+ * Provides UI for managing dictionary words across multiple sources
+ */
+class DictionaryManagerActivity : AppCompatActivity() {
+
+    private lateinit var searchInput: EditText
+    private lateinit var filterSpinner: Spinner
+    private lateinit var resetButton: Button
+    private lateinit var tabLayout: TabLayout
+    private lateinit var viewPager: ViewPager2
+
+    private lateinit var fragments: List<WordListFragment>
+    private val searchHandler = Handler(Looper.getMainLooper())
+    private var searchRunnable: Runnable? = null
+    private var currentSearchQuery = ""
+
+    companion object {
+        private const val SEARCH_DEBOUNCE_MS = 300L
+        private val TAB_TITLES = listOf("Active", "Disabled", "User Dict", "Custom")
+    }
+
+    enum class FilterType {
+        ALL, DISABLED, ACTIVE, USER
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_dictionary_manager)
+
+        // Setup action bar
+        supportActionBar?.apply {
+            title = "Dictionary Manager"
+            setDisplayHomeAsUpEnabled(true)
+        }
+
+        initializeViews()
+        setupViewPager()
+        setupSearch()
+        setupFilter()
+        setupResetButton()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    private fun initializeViews() {
+        searchInput = findViewById(R.id.search_input)
+        filterSpinner = findViewById(R.id.filter_spinner)
+        resetButton = findViewById(R.id.reset_button)
+        tabLayout = findViewById(R.id.tab_layout)
+        viewPager = findViewById(R.id.view_pager)
+    }
+
+    private fun setupViewPager() {
+        // Create fragments for each tab
+        fragments = listOf(
+            WordListFragment.newInstance(WordListFragment.TabType.ACTIVE),
+            WordListFragment.newInstance(WordListFragment.TabType.DISABLED),
+            WordListFragment.newInstance(WordListFragment.TabType.USER),
+            WordListFragment.newInstance(WordListFragment.TabType.CUSTOM)
+        )
+
+        // Setup ViewPager2 adapter
+        viewPager.adapter = object : FragmentStateAdapter(this) {
+            override fun getItemCount() = fragments.size
+            override fun createFragment(position: Int) = fragments[position]
+        }
+
+        // Connect TabLayout with ViewPager2
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            tab.text = TAB_TITLES[position]
+        }.attach()
+    }
+
+    private fun setupSearch() {
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                val query = s?.toString() ?: ""
+
+                // Cancel previous search
+                searchRunnable?.let { searchHandler.removeCallbacks(it) }
+
+                // Schedule new search with debounce
+                searchRunnable = Runnable {
+                    currentSearchQuery = query
+                    performSearch(query)
+                }.also {
+                    searchHandler.postDelayed(it, SEARCH_DEBOUNCE_MS)
+                }
+            }
+        })
+    }
+
+    private fun setupFilter() {
+        val filterOptions = FilterType.values().map { it.name.lowercase().capitalize() }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filterOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        filterSpinner.adapter = adapter
+
+        filterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                applyFilter(FilterType.values()[position])
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    private fun setupResetButton() {
+        resetButton.setOnClickListener {
+            resetSearch()
+        }
+    }
+
+    private fun performSearch(query: String) {
+        // Apply search to all fragments
+        fragments.forEach { it.filter(query) }
+
+        // Auto-switch tabs if current tab has no results
+        if (query.isNotEmpty()) {
+            val currentFragment = fragments[viewPager.currentItem]
+            if (currentFragment.getFilteredCount() == 0) {
+                // Find first tab with results
+                val tabWithResults = fragments.indexOfFirst { it.getFilteredCount() > 0 }
+                if (tabWithResults >= 0 && tabWithResults != viewPager.currentItem) {
+                    viewPager.currentItem = tabWithResults
+                }
+            }
+        }
+    }
+
+    private fun applyFilter(filterType: FilterType) {
+        when (filterType) {
+            FilterType.ALL -> {
+                // Show all tabs, no filtering
+                performSearch(currentSearchQuery)
+            }
+            FilterType.ACTIVE -> {
+                // Switch to Active tab
+                viewPager.currentItem = 0
+                performSearch(currentSearchQuery)
+            }
+            FilterType.DISABLED -> {
+                // Switch to Disabled tab
+                viewPager.currentItem = 1
+                performSearch(currentSearchQuery)
+            }
+            FilterType.USER -> {
+                // Switch to User Dict tab
+                viewPager.currentItem = 2
+                performSearch(currentSearchQuery)
+            }
+        }
+    }
+
+    private fun resetSearch() {
+        searchInput.setText("")
+        filterSpinner.setSelection(0)  // Reset to "All"
+        currentSearchQuery = ""
+        performSearch("")
+    }
+
+    /**
+     * Called by fragments when words are modified to refresh other tabs
+     */
+    fun refreshAllTabs() {
+        fragments.forEach { it.refresh() }
+    }
+}
+
+// Extension function to capitalize first letter
+private fun String.capitalize(): String {
+    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+}

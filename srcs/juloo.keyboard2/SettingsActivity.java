@@ -135,6 +135,22 @@ public class SettingsActivity extends PreferenceActivity
       });
     }
 
+    // Set up dictionary manager preference click handler
+    Preference dictionaryManagerPref = findPreference("dictionary_manager");
+    if (dictionaryManagerPref != null)
+    {
+      dictionaryManagerPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          Intent intent = new Intent(SettingsActivity.this, DictionaryManagerActivity.class);
+          startActivity(intent);
+          return true;
+        }
+      });
+    }
+
     // Set up ML data export preference (PreferenceScreen type)
     Preference exportMLDataPref = findPreference("export_swipe_ml_data");
     if (exportMLDataPref != null)

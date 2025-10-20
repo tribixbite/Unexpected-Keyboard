@@ -481,20 +481,20 @@ public class BigramModel
   {
     Map<String, Float> currentBigrams = _languageBigramProbs.get(_currentLanguage);
     Map<String, Float> currentUnigrams = _languageUnigramProbs.get(_currentLanguage);
-    
+
     int totalBigramCount = 0;
     int totalUnigramCount = 0;
-    
+
     for (Map<String, Float> bigramMap : _languageBigramProbs.values())
     {
       totalBigramCount += bigramMap.size();
     }
-    
+
     for (Map<String, Float> unigramMap : _languageUnigramProbs.values())
     {
       totalUnigramCount += unigramMap.size();
     }
-    
+
     return String.format("BigramModel: Current Language: %s (%d bigrams, %d unigrams), Total: %d languages, %d bigrams, %d unigrams",
                         _currentLanguage,
                         currentBigrams != null ? currentBigrams.size() : 0,
@@ -502,5 +502,51 @@ public class BigramModel
                         _languageBigramProbs.size(),
                         totalBigramCount,
                         totalUnigramCount);
+  }
+
+  /**
+   * Get all words from current language dictionary
+   * Used by Dictionary Manager UI
+   * @return List of all words in current language
+   */
+  public List<String> getAllWords()
+  {
+    Map<String, Float> unigramMap = _languageUnigramProbs.get(_currentLanguage);
+    if (unigramMap == null) {
+      return new java.util.ArrayList<>();
+    }
+    return new java.util.ArrayList<>(unigramMap.keySet());
+  }
+
+  /**
+   * Get frequency for a specific word (0-1000 scale)
+   * @param word Word to look up
+   * @return Frequency score (probability * 1000)
+   */
+  public int getWordFrequency(String word)
+  {
+    Map<String, Float> unigramMap = _languageUnigramProbs.get(_currentLanguage);
+    if (unigramMap == null) {
+      return 0;
+    }
+    Float prob = unigramMap.get(word.toLowerCase());
+    if (prob == null) {
+      return 0;
+    }
+    // Convert probability (0.0-1.0) to frequency score (0-1000)
+    return Math.round(prob * 1000.0f);
+  }
+
+  /**
+   * Singleton instance for global access
+   */
+  private static BigramModel _instance;
+
+  public static synchronized BigramModel getInstance(Context context)
+  {
+    if (_instance == null) {
+      _instance = new BigramModel();
+    }
+    return _instance;
   }
 }

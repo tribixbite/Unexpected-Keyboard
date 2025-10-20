@@ -85,4 +85,9 @@
          preference screens. -->
     <item name="android:fitsSystemWindows">true</item>
   </style>
+  <!-- Dictionary Manager -->
+  <style name="ToggleSwitchStyle">
+    <item name="android:thumbTint">@android:color/holo_green_light</item>
+    <item name="android:trackTint">@android:color/darker_gray</item>
+  </style>
 </resources>
