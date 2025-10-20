@@ -730,6 +730,24 @@ public class SettingsActivity extends PreferenceActivity
              .append(" invalid or unrecognized settings");
     }
 
+    // Warn about complex preferences that weren't restored
+    boolean skippedLayouts = result.skippedKeys.contains("layouts");
+    boolean skippedExtraKeys = result.skippedKeys.contains("extra_keys") ||
+                               result.skippedKeys.contains("custom_extra_keys");
+
+    if (skippedLayouts || skippedExtraKeys)
+    {
+      message.append("\n\n⚠️ Not restored:");
+      if (skippedLayouts)
+      {
+        message.append("\n  • Keyboard layouts (needs manual reconfiguration)");
+      }
+      if (skippedExtraKeys)
+      {
+        message.append("\n  • Custom extra keys (needs manual reconfiguration)");
+      }
+    }
+
     if (!result.sourceVersion.equals("unknown"))
     {
       message.append("\n\nSource version: ").append(result.sourceVersion);

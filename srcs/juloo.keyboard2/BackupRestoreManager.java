@@ -248,6 +248,32 @@ public class BackupRestoreManager
       else if (primitive.isString())
       {
         String stringValue = primitive.getAsString();
+
+        // Some preferences store integers as strings (from ListPreference)
+        // Parse and store them as actual integers to prevent ClassCastException
+        if (isIntegerStoredAsString(key))
+        {
+          try
+          {
+            int intValue = Integer.parseInt(stringValue);
+            if (validateIntPreference(key, intValue))
+            {
+              editor.putInt(key, intValue);
+              return true;
+            }
+            else
+            {
+              Log.w(TAG, "Skipping invalid int-as-string value for " + key + ": " + intValue);
+              return false;
+            }
+          }
+          catch (NumberFormatException e)
+          {
+            Log.w(TAG, "Failed to parse int-as-string for " + key + ": " + stringValue);
+            return false;
+          }
+        }
+
         if (validateStringPreference(key, stringValue))
         {
           editor.putString(key, stringValue);
@@ -422,6 +448,24 @@ public class BackupRestoreManager
   }
 
   /**
+   * Check if a preference stores integers as strings (from ListPreference)
+   * These need to be parsed and stored as int to prevent ClassCastException
+   */
+  private boolean isIntegerStoredAsString(String key)
+  {
+    switch (key)
+    {
+      // ListPreference values that are actually integers
+      case "circle_sensitivity":
+      case "show_numpad":
+      case "clipboard_history_limit":
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
    * Validate string preference values
    */
   private boolean validateStringPreference(String key, String value)
@@ -431,10 +475,11 @@ public class BackupRestoreManager
 
     switch (key)
     {
-      // Theme values
+      // Theme values - relaxed validation for forward compatibility
+      // New themes added in future versions should still import successfully
       case "theme":
-        return value.matches("light|black|altblack|dark|white|epaper|desert|jungle|" +
-                           "monetlight|monetdark|monet|rosepine|system");
+        // Just ensure it's not empty - app will fall back to default if invalid
+        return !value.isEmpty();
 
       // Number row options
       case "number_row":
