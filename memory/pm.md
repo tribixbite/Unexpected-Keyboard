@@ -9,13 +9,23 @@
 
 ## 🔥 Current Status (2025-10-19)
 
-**Latest Version**: v1.32.133 (182)
+**Latest Version**: v1.32.136 (185)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.133)
+### Recent Work (v1.32.136)
 
-**17 Two-Letter Word Shortcuts** - Added "be", reorganized layout
+**Backup/Restore Configuration System** - Complete settings management
+- Replaced non-functional ML data settings with proper backup/restore
+- Export all preferences to `kb-config-YYYYMMDD_HHMMSS.json` with metadata
+- Version-tolerant import (accepts any recognized keys, skips unknown)
+- Uses Storage Access Framework (Android 15 compatible, no permissions)
+- Validates ranges for integers/floats on import
+- Warns about screen size mismatches from different devices
+- Prompts for app restart after restore
+- Added Gson dependency for robust JSON serialization
+
+**Previous (v1.32.133)**: **17 Two-Letter Word Shortcuts** - Added "be", reorganized layout
 - Added: be (b→NW)
 - Reorganized: me (m→NW from NE), as (a→E from S), quote (m→NE)
 - Complete list (17): to, it, as, so, do, up, me, we, in, of, on, hi, no, go, by, is, be
