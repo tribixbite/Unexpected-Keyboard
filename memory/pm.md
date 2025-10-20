@@ -9,13 +9,21 @@
 
 ## 🔥 Current Status (2025-10-20)
 
-**Latest Version**: v1.32.141 (190)
+**Latest Version**: v1.32.143 (192)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.141)
+### Recent Work (v1.32.143)
 
-**Full Backup/Restore with Layouts & Extra Keys** - Gemini-validated JSON handling
+**Fixed Backup/Restore Crash - Float vs Int Type Mismatch**
+- Root cause: SharedPreferences throws ClassCastException when type mismatches
+- JSON doesn't distinguish int/float - both `2` and `2.0` are numbers
+- Old heuristic failed: `key_horizontal_margin=2.0` imported as int(2), crash when reading as float
+- Solution: Whitelist all 8 known float preferences (character_size, margins, weights, thresholds)
+- All other numerics imported as int (correct for 40+ int preferences)
+- Backup/Restore now fully functional and crash-free
+
+**Previous (v1.32.141)**: **Full Backup/Restore with Layouts & Extra Keys** - Gemini-validated JSON handling
 - Properly exports and restores layouts, extra_keys, and custom_extra_keys
 - Parses JSON-string preferences during export to avoid double-encoding
 - Converts JsonElement back to JSON string during import
