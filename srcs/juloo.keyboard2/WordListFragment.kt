@@ -120,8 +120,11 @@ class WordListFragment : Fragment() {
         }
     }
 
-    fun filter(query: String) {
-        adapter.filter(query)
+    private var currentSourceFilter: WordSource? = null
+
+    fun filter(query: String, sourceFilter: WordSource? = null) {
+        currentSourceFilter = sourceFilter
+        adapter.filter(query, sourceFilter)
         updateEmptyState()
     }
 
@@ -189,7 +192,7 @@ class WordListFragment : Fragment() {
             .setView(input)
             .setPositiveButton("Add") { _, _ ->
                 val word = input.text.toString().trim()
-                if (word.isNotEmpty()) {
+                if (word.isNotBlank()) {
                     lifecycleScope.launch {
                         try {
                             dataSource.addWord(word, 100)
@@ -219,7 +222,7 @@ class WordListFragment : Fragment() {
             .setView(input)
             .setPositiveButton("Save") { _, _ ->
                 val newWord = input.text.toString().trim()
-                if (newWord.isNotEmpty() && newWord != word.word) {
+                if (newWord.isNotBlank() && newWord != word.word) {
                     lifecycleScope.launch {
                         try {
                             dataSource.updateWord(word.word, newWord, word.frequency)

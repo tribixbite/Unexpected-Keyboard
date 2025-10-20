@@ -175,9 +175,40 @@ class UserDictionarySource(
         }
     }
 
-    override suspend fun searchWords(query: String): List<DictionaryWord> {
-        if (query.isBlank()) return getAllWords()
-        return getAllWords().filter { it.word.contains(query, ignoreCase = true) }
+    override suspend fun searchWords(query: String): List<DictionaryWord> = withContext(Dispatchers.IO) {
+        if (query.isBlank()) return@withContext getAllWords()
+
+        try {
+            val words = mutableListOf<DictionaryWord>()
+            val selection = "${UserDictionary.Words.WORD} LIKE ?"
+            val selectionArgs = arrayOf("%$query%")
+            val cursor = contentResolver.query(
+                UserDictionary.Words.CONTENT_URI,
+                arrayOf(
+                    UserDictionary.Words.WORD,
+                    UserDictionary.Words.FREQUENCY
+                ),
+                selection,
+                selectionArgs,
+                "${UserDictionary.Words.WORD} ASC"
+            )
+
+            cursor?.use {
+                val wordIndex = it.getColumnIndex(UserDictionary.Words.WORD)
+                val freqIndex = it.getColumnIndex(UserDictionary.Words.FREQUENCY)
+
+                while (it.moveToNext()) {
+                    val word = it.getString(wordIndex)
+                    val freq = if (freqIndex >= 0) it.getInt(freqIndex) else 100
+                    words.add(DictionaryWord(word, freq, WordSource.USER, true))
+                }
+            }
+
+            words.sorted()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error searching user dictionary", e)
+            emptyList()
+        }
     }
 
     override suspend fun toggleWord(word: String, enabled: Boolean) {

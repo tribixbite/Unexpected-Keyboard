@@ -33,12 +33,18 @@ abstract class BaseWordAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>()
         diffResult.dispatchUpdatesTo(this)
     }
 
-    fun filter(query: String) {
+    fun filter(query: String, sourceFilter: WordSource? = null) {
         val oldWords = filteredWords
-        filteredWords = if (query.isBlank()) {
-            allWords
-        } else {
-            allWords.filter { it.word.contains(query, ignoreCase = true) }
+        filteredWords = allWords.filter { word ->
+            // Apply text search filter
+            val matchesQuery = if (query.isBlank()) true
+                else word.word.contains(query, ignoreCase = true)
+
+            // Apply source filter
+            val matchesSource = if (sourceFilter == null) true
+                else word.source == sourceFilter
+
+            matchesQuery && matchesSource
         }
 
         val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {

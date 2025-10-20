@@ -42,8 +42,10 @@ class DictionaryManagerActivity : AppCompatActivity() {
     }
 
     enum class FilterType {
-        ALL, DISABLED, ACTIVE, USER
+        ALL, MAIN, USER, CUSTOM
     }
+
+    private var currentFilter: FilterType = FilterType.ALL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,11 +142,18 @@ class DictionaryManagerActivity : AppCompatActivity() {
     }
 
     private fun performSearch(query: String) {
-        // Apply search to all fragments
-        fragments.forEach { it.filter(query) }
+        val sourceFilter = when (currentFilter) {
+            FilterType.ALL -> null
+            FilterType.MAIN -> WordSource.MAIN
+            FilterType.USER -> WordSource.USER
+            FilterType.CUSTOM -> WordSource.CUSTOM
+        }
+
+        // Apply search to all fragments with source filter
+        fragments.forEach { it.filter(query, sourceFilter) }
 
         // Auto-switch tabs if current tab has no results
-        if (query.isNotEmpty()) {
+        if (query.isNotEmpty() || sourceFilter != null) {
             val currentFragment = fragments[viewPager.currentItem]
             if (currentFragment.getFilteredCount() == 0) {
                 // Find first tab with results
@@ -157,27 +166,8 @@ class DictionaryManagerActivity : AppCompatActivity() {
     }
 
     private fun applyFilter(filterType: FilterType) {
-        when (filterType) {
-            FilterType.ALL -> {
-                // Show all tabs, no filtering
-                performSearch(currentSearchQuery)
-            }
-            FilterType.ACTIVE -> {
-                // Switch to Active tab
-                viewPager.currentItem = 0
-                performSearch(currentSearchQuery)
-            }
-            FilterType.DISABLED -> {
-                // Switch to Disabled tab
-                viewPager.currentItem = 1
-                performSearch(currentSearchQuery)
-            }
-            FilterType.USER -> {
-                // Switch to User Dict tab
-                viewPager.currentItem = 2
-                performSearch(currentSearchQuery)
-            }
-        }
+        currentFilter = filterType
+        performSearch(currentSearchQuery)
     }
 
     private fun resetSearch() {
