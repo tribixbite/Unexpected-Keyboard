@@ -22,9 +22,9 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :processDebugMainManifest
-> Task :parseDebugLocalResources
 > Task :mergeDebugResources
+> Task :parseDebugLocalResources
+> Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -32,15 +32,15 @@ Generated version info:  ()
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
 > Task :processDebugJavaRes NO-SOURCE
-> Task :processDebugManifestForPackage
-> Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
+> Task :checkDebugDuplicateClasses
+> Task :mergeDebugJniLibFolders
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugJavaResource
 > Task :mergeDebugNativeLibs
 
@@ -53,15 +53,16 @@ Generated version info:  ()
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-/data/data/com.termux/files/home/android-sdk/ndk/26.1.1090/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
-
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-/data/data/com.termux/files/home/android-sdk/ndk/26.1.1warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_default without required default value.
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
+warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_default without required default value.
 warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_far without required default value.
 warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_short without required default value.
 warn: removing resource juloo.keyboard2.debug:string/pref_swipe_dist_e_very_far without required default value.
@@ -79,9 +80,9 @@ Try one of the following options:
     2. Set a higher source/target version
     3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
 For more details on how to configure these settings, see https://developer.android.com/build/jdks.
-To suppress this warning, set android.javaCo> Task :compileDebugJavaWithJavac
-Java compiler version 21 has deprecated support for compiling with source/target version 8.
-Try one of the following optionswarning: [options] target value 8 is obsolete and will be removed in a future release
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
 warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
@@ -95,41 +96,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 25s
+BUILD SUCCESSFUL in 34s
 34 actionable tasks: 27 executed, 7 from cache
-To suppress warnings about obsolete options, use -Xlint:-options.
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-3 warnings
-
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
-
-BUILD SUCCESSFUL in 25s
-34 actionable tasks: 27 executed, 7 from cache
-
-=== BUILD SUCCESSFUL! ===
-APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
--rw-------. 1 u0_a364 u0_a364 43M Oct 20 05:22 build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
-Copying APK to /sdcard/unexpected/ for updates...
-APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 43M Oct 20 05:22 /sdcard/unexpected/debug-kb.apk
-
-Step 6: Attempting ADB connection and installation...
-No ADB device connected, attempting wireless connection...
-Scanning for ADB on host: 192.168.1.247
-Scanning ports 30000-50000 for ADB...
-Trying 192.168.1.247:5555... no response
-Trying 192.168.1.247:36293... no response
-Trying 192.168.1.247:38157... no response
-Trying 192.168.1.247:44649... no response
-No working ADB port found on 192.168.1.247
-❌ Could not establish ADB connection
-Opening APK for installation...

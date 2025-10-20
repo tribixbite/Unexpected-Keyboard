@@ -237,8 +237,29 @@ public class BackupRestoreManager
     // These are stored as JSON strings in SharedPreferences
     if (isJsonStringPreference(key))
     {
-      // Convert JsonElement back to JSON string for storage
-      String jsonString = gson.toJson(value);
+      String jsonString;
+
+      // Handle both old double-encoded strings and new native JSON arrays/objects
+      if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString())
+      {
+        // Old format: the JSON was exported as a string primitive (double-encoded)
+        // Just use the string value directly
+        jsonString = value.getAsString();
+        Log.i(TAG, "Importing old-format JSON-string preference: " + key);
+      }
+      else if (value.isJsonArray() || value.isJsonObject())
+      {
+        // New format: the JSON is a native array/object
+        // Convert to compact JSON string (no pretty printing for preferences)
+        jsonString = value.toString();
+        Log.i(TAG, "Importing new-format JSON-string preference: " + key);
+      }
+      else
+      {
+        Log.w(TAG, "Unexpected format for JSON-string preference: " + key);
+        return false;
+      }
+
       editor.putString(key, jsonString);
       return true;
     }
@@ -254,26 +275,12 @@ public class BackupRestoreManager
       }
       else if (primitive.isNumber())
       {
-        // Try to determine if it's int or float based on value
-        double numValue = primitive.getAsDouble();
-        if (numValue == Math.floor(numValue))
+        // Check if this preference is known to be a float type
+        // We must use the correct type because SharedPreferences throws ClassCastException
+        // if we try to read an int as float or vice versa
+        if (isFloatPreference(key))
         {
-          // Integer value - validate range for known keys
-          int intValue = primitive.getAsInt();
-          if (validateIntPreference(key, intValue))
-          {
-            editor.putInt(key, intValue);
-            return true;
-          }
-          else
-          {
-            Log.w(TAG, "Skipping invalid int value for " + key + ": " + intValue);
-            return false;
-          }
-        }
-        else
-        {
-          // Float value - validate range for known keys
+          // Known float preference
           float floatValue = primitive.getAsFloat();
           if (validateFloatPreference(key, floatValue))
           {
@@ -283,6 +290,21 @@ public class BackupRestoreManager
           else
           {
             Log.w(TAG, "Skipping invalid float value for " + key + ": " + floatValue);
+            return false;
+          }
+        }
+        else
+        {
+          // Assume integer for all other numeric preferences
+          int intValue = primitive.getAsInt();
+          if (validateIntPreference(key, intValue))
+          {
+            editor.putInt(key, intValue);
+            return true;
+          }
+          else
+          {
+            Log.w(TAG, "Skipping invalid int value for " + key + ": " + intValue);
             return false;
           }
         }
@@ -495,6 +517,36 @@ public class BackupRestoreManager
       // Current layout indices (managed by Config, device-specific)
       case "current_layout_portrait":
       case "current_layout_landscape":
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Check if a preference is stored as a float in SharedPreferences
+   * This is critical because SharedPreferences throws ClassCastException if you
+   * try to read an int as float or vice versa
+   */
+  private boolean isFloatPreference(String key)
+  {
+    switch (key)
+    {
+      // Character and UI sizing
+      case "character_size":
+      case "key_vertical_margin":
+      case "key_horizontal_margin":
+      case "custom_border_line_width":
+
+      // Prediction weights
+      case "prediction_context_boost":
+      case "prediction_frequency_scale":
+
+      // Auto-correction threshold
+      case "autocorrect_char_match_threshold":
+
+      // Neural confidence threshold
+      case "neural_confidence_threshold":
         return true;
       default:
         return false;
