@@ -37,54 +37,6 @@ public class BackupRestoreManager
   }
 
   /**
-   * Migrate ListPreference values from int to string
-   * This fixes crash when old imports stored numeric ListPreference values as integers
-   * Should be called before Settings UI loads preferences
-   */
-  public static void migrateListPreferences(SharedPreferences prefs)
-  {
-    SharedPreferences.Editor editor = prefs.edit();
-    boolean needsSave = false;
-
-    // List of preferences that MUST be strings (from ListPreference)
-    // Even though values look like numbers, ListPreference stores them as strings
-    String[] listPreferenceKeys = {
-      "show_numpad",           // "never", "always", "landscape", or numeric string
-      "circle_sensitivity",    // Numeric string: "1", "2", "3", etc.
-      "clipboard_history_limit", // Numeric string: "0", "50", "100", etc.
-      "swipe_dist",           // Numeric string (legacy, might exist in old configs)
-      "slider_sensitivity"     // Numeric string
-    };
-
-    for (String key : listPreferenceKeys)
-    {
-      if (prefs.contains(key))
-      {
-        try
-        {
-          // Try to read as int - if successful, it needs migration
-          int intValue = prefs.getInt(key, -1);
-          // If we get here without exception, value is stored as int
-          editor.remove(key);
-          editor.putString(key, String.valueOf(intValue));
-          needsSave = true;
-          Log.i(TAG, "Migrated " + key + " from int to string: " + intValue);
-        }
-        catch (ClassCastException e)
-        {
-          // Already stored as string, no migration needed
-        }
-      }
-    }
-
-    if (needsSave)
-    {
-      editor.apply();
-      Log.i(TAG, "ListPreference migration complete");
-    }
-  }
-
-  /**
    * Export all preferences to JSON file
    * @param uri URI from Storage Access Framework (ACTION_CREATE_DOCUMENT)
    * @return true if successful

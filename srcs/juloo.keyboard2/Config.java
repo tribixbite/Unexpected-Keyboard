@@ -340,8 +340,6 @@ public final class Config
       IKeyEventHandler handler, Boolean foldableUnfolded)
   {
     migrate(prefs);
-    // Migrate ListPreference values from int to string (fixes import crash)
-    BackupRestoreManager.migrateListPreferences(prefs);
     _globalConfig = new Config(prefs, res, handler, foldableUnfolded);
     LayoutModifier.init(_globalConfig, res);
   }
