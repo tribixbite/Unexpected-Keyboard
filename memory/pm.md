@@ -9,27 +9,27 @@
 
 ## 🔥 Current Status (2025-10-20)
 
-**Latest Version**: v1.32.157 (206)
+**Latest Version**: v1.32.160 (209)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.157)
+### Recent Work (v1.32.160)
 
-**Dictionary Manager UI - COMPLETE**
+**Dictionary Manager - Gemini Code Review Fixes**
+- Fixed filter dropdown to properly filter by WordSource (not switch tabs)
+- Filter now filters within current tab: ALL/MAIN/USER/CUSTOM
+- Optimized UserDictionary search to use database-level LIKE filtering (much faster)
+- Changed isNotEmpty() to isNotBlank() for word validation (prevents whitespace-only words)
+- Gemini confirmed all 12 original requirements implemented correctly
+
+**Previous (v1.32.157)**: Dictionary Manager UI - Initial Implementation
 - Modern Material Design dark mode UI with 4 tabs
-- Active Words: View/disable words from main BigramModel dictionary
-- Disabled Words: Re-enable previously disabled words
-- User Dictionary: Manage Android system user dictionary
-- Custom Words: Add/edit/delete app-specific custom words
+- Active/Disabled/User/Custom word management
 - Real-time search with 300ms debouncing
-- Filter dropdown: all/active/disabled/user
 - Auto-switch tabs when search has no results
-- RecyclerView + DiffUtil for efficient list updates
-- ViewPager2 + TabLayout + Fragments architecture
-- Kotlin-based with coroutines for async operations
-- SharedPreferences for disabled/custom word storage
-- BigramModel.getAllWords() exposes dictionary
-- APK size: 43MB → 47MB (Material Design + Kotlin libs)
+- RecyclerView + DiffUtil + ViewPager2 + Fragments
+- Kotlin + coroutines
+- APK size: 43MB → 47MB (Material Design + Kotlin)
 - Access via Settings → "📚 Dictionary Manager"
 
 **Previous (v1.32.156)**: Removed migration code, no backwards compat needed
