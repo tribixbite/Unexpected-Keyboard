@@ -9,17 +9,30 @@
 
 ## 🔥 Current Status (2025-10-20)
 
-**Latest Version**: v1.32.156 (205)
+**Latest Version**: v1.32.157 (206)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.156)
+### Recent Work (v1.32.157)
 
-**Removed Migration Code - Import Fixed, No Backwards Compatibility Needed**
-- Removed automatic migration that ran on every app startup (performance overhead)
-- Import code correctly stores ListPreferences as strings (fixed in v1.32.152)
-- Users with crash from v1.32.151: Clear app data and re-import settings
-- No need for backwards compatibility - feature is new, no production users yet
+**Dictionary Manager UI - COMPLETE**
+- Modern Material Design dark mode UI with 4 tabs
+- Active Words: View/disable words from main BigramModel dictionary
+- Disabled Words: Re-enable previously disabled words
+- User Dictionary: Manage Android system user dictionary
+- Custom Words: Add/edit/delete app-specific custom words
+- Real-time search with 300ms debouncing
+- Filter dropdown: all/active/disabled/user
+- Auto-switch tabs when search has no results
+- RecyclerView + DiffUtil for efficient list updates
+- ViewPager2 + TabLayout + Fragments architecture
+- Kotlin-based with coroutines for async operations
+- SharedPreferences for disabled/custom word storage
+- BigramModel.getAllWords() exposes dictionary
+- APK size: 43MB → 47MB (Material Design + Kotlin libs)
+- Access via Settings → "📚 Dictionary Manager"
+
+**Previous (v1.32.156)**: Removed migration code, no backwards compat needed
 
 **Previous (v1.32.152)**: Fixed import to store ListPreferences as strings - COMPLETE
 - Root cause: ListPreference ALWAYS stores values as strings, even numeric ones
