@@ -7,17 +7,23 @@
 
 ---
 
-## 🔥 Current Status (2025-10-19)
+## 🔥 Current Status (2025-10-20)
 
-**Latest Version**: v1.32.138 (187)
+**Latest Version**: v1.32.141 (190)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.138)
+### Recent Work (v1.32.141)
 
-**Improved Backup/Restore Robustness** - Gemini-validated enhancements
+**Full Backup/Restore with Layouts & Extra Keys** - Gemini-validated JSON handling
+- Properly exports and restores layouts, extra_keys, and custom_extra_keys
+- Parses JSON-string preferences during export to avoid double-encoding
+- Converts JsonElement back to JSON string during import
+- All user settings now fully restorable (previously layouts/extra_keys were skipped)
+- Only internal state preferences excluded (version, current_layout indices)
+
+**Previous (v1.32.138)**: **Improved Backup/Restore Robustness** - Gemini-validated enhancements
 - Handle integer-as-string preferences (circle_sensitivity, show_numpad, etc.)
-- UI warnings when layouts/extra_keys aren't restored
 - Relaxed theme validation for forward compatibility
 - Prevents ClassCastException from ListPreference values
 
