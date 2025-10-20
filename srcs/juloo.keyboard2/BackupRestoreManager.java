@@ -69,7 +69,7 @@ public class BackupRestoreManager
 
       root.add("metadata", metadata);
 
-      // Export preferences (filter out complex ones that shouldn't be serialized)
+      // Export all preferences
       Map<String, ?> allPrefs = prefs.getAll();
       JsonObject preferences = new JsonObject();
 
@@ -78,14 +78,31 @@ public class BackupRestoreManager
         String key = entry.getKey();
         Object value = entry.getValue();
 
-        // Skip complex preferences that have custom serialization
-        if (isComplexPreference(key))
+        // Preserve JSON-string preferences (layouts, extra_keys, custom_extra_keys)
+        // These are already stored as JSON strings and should be preserved as-is
+        if (isJsonStringPreference(key) && value instanceof String)
         {
-          Log.i(TAG, "Skipping complex preference on export: " + key);
-          continue;
+          try
+          {
+            // Parse the JSON string and add as JsonElement to avoid double-encoding
+            preferences.add(key, JsonParser.parseString((String)value));
+          }
+          catch (Exception e)
+          {
+            Log.w(TAG, "Failed to parse JSON preference: " + key, e);
+            // Fall back to regular serialization if parsing fails
+            preferences.add(key, gson.toJsonTree(value));
+          }
         }
-
-        preferences.add(key, gson.toJsonTree(value));
+        else if (isInternalPreference(key))
+        {
+          // Skip internal state preferences
+          Log.i(TAG, "Skipping internal preference on export: " + key);
+        }
+        else
+        {
+          preferences.add(key, gson.toJsonTree(value));
+        }
       }
 
       root.add("preferences", preferences);
@@ -209,12 +226,21 @@ public class BackupRestoreManager
   private boolean importPreference(SharedPreferences.Editor editor, String key,
                                     com.google.gson.JsonElement value)
   {
-    // Skip complex preferences that use custom serialization
-    // These have their own save/load methods and shouldn't be imported as simple types
-    if (isComplexPreference(key))
+    // Skip internal state preferences
+    if (isInternalPreference(key))
     {
-      Log.i(TAG, "Skipping complex preference: " + key);
+      Log.i(TAG, "Skipping internal preference: " + key);
       return false;
+    }
+
+    // Handle JSON-string preferences (layouts, extra_keys, custom_extra_keys)
+    // These are stored as JSON strings in SharedPreferences
+    if (isJsonStringPreference(key))
+    {
+      // Convert JsonElement back to JSON string for storage
+      String jsonString = gson.toJson(value);
+      editor.putString(key, jsonString);
+      return true;
     }
     // Handle different preference types
     if (value.isJsonPrimitive())
@@ -438,23 +464,35 @@ public class BackupRestoreManager
   }
 
   /**
-   * Check if a preference uses complex custom serialization
-   * These preferences have their own save/load methods and shouldn't be imported as simple types
+   * Check if a preference stores data as a JSON string
+   * These preferences use ListGroupPreference which stores data as JSON-encoded strings
    */
-  private boolean isComplexPreference(String key)
+  private boolean isJsonStringPreference(String key)
   {
-    // Preferences that use ListGroupPreference or custom serialization
     switch (key)
     {
-      // LayoutsPreference - uses custom JSON serialization
+      // LayoutsPreference - stores List<Layout> as JSON string
       case "layouts":
-      // ExtraKeysPreference - uses custom Map<KeyValue, PreferredPos> serialization
+      // ExtraKeysPreference - stores Map<KeyValue, PreferredPos> as JSON string
       case "extra_keys":
-      // CustomExtraKeysPreference - uses custom Map<KeyValue, PreferredPos> serialization
+      // CustomExtraKeysPreference - stores Map<KeyValue, PreferredPos> as JSON string
       case "custom_extra_keys":
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Check if a preference is internal state that shouldn't be exported/imported
+   */
+  private boolean isInternalPreference(String key)
+  {
+    switch (key)
+    {
       // Internal version tracking
       case "version":
-      // Current layout indices (managed by Config)
+      // Current layout indices (managed by Config, device-specific)
       case "current_layout_portrait":
       case "current_layout_landscape":
         return true;
