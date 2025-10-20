@@ -42,8 +42,6 @@
         <Preference android:key="neural_confidence_info" android:title="📖 About Confidence" android:summary="Confidence threshold filters low-quality predictions:\n\n• Lower values = More predictions shown\n• Higher values = Only high-confidence predictions\n• Range: 0.0 (show all) to 1.0 (perfect confidence only)\n• Optimal: 0.1 for balanced filtering"/>
       </PreferenceScreen>
     </PreferenceScreen>
-    <PreferenceScreen android:key="export_swipe_ml_data" android:title="@string/pref_export_swipe_ml_data_title" android:summary="@string/pref_export_swipe_ml_data_summary" android:dependency="swipe_typing_enabled"/>
-    <PreferenceScreen android:key="train_swipe_ml_model" android:title="@string/pref_train_swipe_ml_title" android:summary="@string/pref_train_swipe_ml_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="swipe_debug" android:title="🐛 Swipe Debug Log" android:summary="Real-time swipe typing pipeline analysis and debugging" android:dependency="swipe_typing_enabled">
       <CheckBoxPreference android:key="swipe_debug_detailed_logging" android:title="Detailed Pipeline Logging" android:summary="Log trajectory processing, key detection, and neural network internals" android:defaultValue="false"/>
       <CheckBoxPreference android:key="swipe_debug_show_raw_output" android:title="Show Raw NN Output" android:summary="Always display at least 2 raw predictions before pruning" android:defaultValue="true"/>
@@ -100,10 +98,9 @@
     <CheckBoxPreference android:key="clipboard_history_enabled" android:title="@string/pref_clipboard_history_enabled_title" android:summary="@string/pref_clipboard_history_enabled_summary" android:defaultValue="false"/>
     <ListPreference android:key="clipboard_history_limit" android:title="@string/pref_clipboard_history_limit_title" android:summary="@string/pref_clipboard_history_limit_summary" android:dependency="clipboard_history_enabled" android:defaultValue="6" android:entries="@array/pref_clipboard_history_limit_entries" android:entryValues="@array/pref_clipboard_history_limit_values"/>
   </PreferenceCategory>
-  <PreferenceCategory android:title="Swipe ML Data">
-    <Preference android:key="export_swipe_ml_data" android:title="Export ML Data" android:summary="Export collected swipe data for training"/>
-    <Preference android:key="import_swipe_ml_data" android:title="Import ML Data" android:summary="Import swipe data from file"/>
-    <Preference android:key="train_swipe_ml_model" android:title="Train ML Model" android:summary="Train swipe prediction model"/>
+  <PreferenceCategory android:title="Backup &amp; Restore">
+    <Preference android:key="backup_config" android:title="Export Configuration" android:summary="Save all settings to kb-config.json"/>
+    <Preference android:key="restore_config" android:title="Import Configuration" android:summary="Restore settings from kb-config.json"/>
   </PreferenceCategory>
   <PreferenceCategory android:title="About">
     <Preference android:key="version_info" android:title="Version Info" android:summary="Loading version info..."/>

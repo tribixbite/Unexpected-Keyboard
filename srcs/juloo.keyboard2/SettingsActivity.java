@@ -3,23 +3,34 @@ package juloo.keyboard2;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.widget.Toast;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Properties;
 import juloo.keyboard2.ml.SwipeMLDataStore;
 import juloo.keyboard2.ml.SwipeMLTrainer;
 import android.app.ProgressDialog;
 
-public class SettingsActivity extends PreferenceActivity 
+public class SettingsActivity extends PreferenceActivity
   implements SharedPreferences.OnSharedPreferenceChangeListener
 {
+  // Request codes for backup/restore file picker
+  private static final int REQUEST_CODE_BACKUP = 1001;
+  private static final int REQUEST_CODE_RESTORE = 1002;
+
+  private BackupRestoreManager backupRestoreManager;
+
   @Override
   public void onCreate(Bundle savedInstanceState)
   {
@@ -34,6 +45,12 @@ public class SettingsActivity extends PreferenceActivity
     }
     catch (Exception _e) { fallbackEncrypted(); return; }
     addPreferencesFromResource(R.xml.settings);
+
+    // Initialize backup/restore manager
+    backupRestoreManager = new BackupRestoreManager(this);
+
+    // Setup backup/restore preference handlers
+    setupBackupRestoreHandlers();
 
     // Add CGR reset button handlers and update summaries
     setupCGRResetButtons();
@@ -541,6 +558,218 @@ public class SettingsActivity extends PreferenceActivity
     super.onStop();
   }
   
+  /**
+   * Setup backup/restore preference handlers
+   */
+  private void setupBackupRestoreHandlers()
+  {
+    // Backup configuration
+    Preference backupPref = findPreference("backup_config");
+    if (backupPref != null)
+    {
+      backupPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          startBackup();
+          return true;
+        }
+      });
+    }
+
+    // Restore configuration
+    Preference restorePref = findPreference("restore_config");
+    if (restorePref != null)
+    {
+      restorePref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          startRestore();
+          return true;
+        }
+      });
+    }
+  }
+
+  /**
+   * Start backup process using Storage Access Framework
+   */
+  private void startBackup()
+  {
+    // Create filename with timestamp
+    String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+    String fileName = "kb-config-" + timestamp + ".json";
+
+    // Use Storage Access Framework to let user choose location
+    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("application/json");
+    intent.putExtra(Intent.EXTRA_TITLE, fileName);
+
+    try
+    {
+      startActivityForResult(intent, REQUEST_CODE_BACKUP);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start backup", e);
+    }
+  }
+
+  /**
+   * Start restore process using Storage Access Framework
+   */
+  private void startRestore()
+  {
+    // Use Storage Access Framework to let user choose file
+    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("application/json");
+
+    try
+    {
+      startActivityForResult(intent, REQUEST_CODE_RESTORE);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start restore", e);
+    }
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data)
+  {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    if (resultCode != RESULT_OK || data == null)
+    {
+      return;
+    }
+
+    Uri uri = data.getData();
+    if (uri == null)
+    {
+      return;
+    }
+
+    if (requestCode == REQUEST_CODE_BACKUP)
+    {
+      performBackup(uri);
+    }
+    else if (requestCode == REQUEST_CODE_RESTORE)
+    {
+      performRestore(uri);
+    }
+  }
+
+  /**
+   * Perform backup to the selected URI
+   */
+  private void performBackup(Uri uri)
+  {
+    try
+    {
+      SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+      boolean success = backupRestoreManager.exportConfig(uri, prefs);
+
+      if (success)
+      {
+        int count = prefs.getAll().size();
+        Toast.makeText(this, "Successfully exported " + count + " settings",
+                       Toast.LENGTH_LONG).show();
+      }
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Backup failed: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Backup failed", e);
+    }
+  }
+
+  /**
+   * Perform restore from the selected URI
+   */
+  private void performRestore(Uri uri)
+  {
+    try
+    {
+      SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+      BackupRestoreManager.ImportResult result =
+        backupRestoreManager.importConfig(uri, prefs);
+
+      // Show results and warnings
+      showRestoreResults(result);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Restore failed: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Restore failed", e);
+    }
+  }
+
+  /**
+   * Show restore results with warnings and restart prompt
+   */
+  private void showRestoreResults(BackupRestoreManager.ImportResult result)
+  {
+    StringBuilder message = new StringBuilder();
+    message.append("Successfully restored ").append(result.importedCount).append(" settings");
+
+    if (result.skippedCount > 0)
+    {
+      message.append("\n\nSkipped ").append(result.skippedCount)
+             .append(" invalid or unrecognized settings");
+    }
+
+    if (!result.sourceVersion.equals("unknown"))
+    {
+      message.append("\n\nSource version: ").append(result.sourceVersion);
+    }
+
+    if (result.hasScreenSizeMismatch())
+    {
+      message.append("\n\n⚠️ Warning: Backup was from a device with different screen size. ")
+             .append("Layout settings may need adjustment.");
+    }
+
+    message.append("\n\nThe app needs to restart to apply all settings correctly.");
+
+    // Create dialog with restart option
+    android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+    builder.setTitle("Restore Complete");
+    builder.setMessage(message.toString());
+    builder.setCancelable(false);
+
+    builder.setPositiveButton("Restart Now", (dialog, which) -> {
+      // Restart the app
+      Intent intent = getBaseContext().getPackageManager()
+        .getLaunchIntentForPackage(getBaseContext().getPackageName());
+      if (intent != null)
+      {
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+      }
+      finish();
+      System.exit(0);
+    });
+
+    builder.setNegativeButton("Later", (dialog, which) -> {
+      Toast.makeText(this, "Restart the app to apply all settings",
+                     Toast.LENGTH_LONG).show();
+    });
+
+    builder.show();
+  }
+
   /**
    * Setup CGR reset button functionality
    */
