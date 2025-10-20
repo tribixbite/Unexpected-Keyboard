@@ -69,9 +69,25 @@ public class BackupRestoreManager
 
       root.add("metadata", metadata);
 
-      // Export all preferences
+      // Export preferences (filter out complex ones that shouldn't be serialized)
       Map<String, ?> allPrefs = prefs.getAll();
-      JsonObject preferences = gson.toJsonTree(allPrefs).getAsJsonObject();
+      JsonObject preferences = new JsonObject();
+
+      for (Map.Entry<String, ?> entry : allPrefs.entrySet())
+      {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+
+        // Skip complex preferences that have custom serialization
+        if (isComplexPreference(key))
+        {
+          Log.i(TAG, "Skipping complex preference on export: " + key);
+          continue;
+        }
+
+        preferences.add(key, gson.toJsonTree(value));
+      }
+
       root.add("preferences", preferences);
 
       // Write to file
