@@ -9,18 +9,27 @@
 
 ## 🔥 Current Status (2025-10-20)
 
-**Latest Version**: v1.32.152 (201)
+**Latest Version**: v1.32.154 (203)
 **Build Status**: ✅ BUILD SUCCESSFUL
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.152)
+### Recent Work (v1.32.154)
 
-**Fixed Backup/Restore ListPreference Crash** - FINAL FIX
+**Added Automatic Migration for ListPreference Crash** - COMPLETE FIX
+- Added BackupRestoreManager.migrateListPreferences() method
+- Runs automatically on app startup (both keyboard service and Settings UI)
+- Detects int-stored ListPreference values and converts to strings
+- Fixes crashes from buggy imports in v1.32.151 and earlier
+- Migration is one-time and idempotent (safe to run multiple times)
+- Affected preferences: show_numpad, circle_sensitivity, clipboard_history_limit, slider_sensitivity, swipe_dist
+- Prevents ClassCastException: "Integer cannot be cast to String"
+
+**Previous (v1.32.152)**: Fixed import to store ListPreferences as strings (incomplete - still crashed)
 - Root cause: ListPreference ALWAYS stores values as strings, even numeric ones
 - Crashed importing: circle_sensitivity="2", clipboard_history_limit="0" as integers
 - ClassCastException: `Integer cannot be cast to String` in ListPreference.onSetInitialValue
 - Solution: Removed ALL entries from isIntegerStoredAsString - ListPreferences handle conversion internally
-- Backup/restore now FULLY FUNCTIONAL - all 171 preferences import correctly
+- Issue: Only fixed NEW imports, old SharedPreferences still had int values causing crash
 
 **Previous (v1.32.151)**: Gemini-validated fixes (show_numpad, JsonArray guards, export logging)
 
