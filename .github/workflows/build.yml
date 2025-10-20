@@ -43,11 +43,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Restore debug keystore from GitHub Secrets
+        run: |
+          # Use the same debug keystore across all builds to prevent signing key mismatches
+          # This allows testers to update without uninstalling
+          if [[ ! "${{ secrets.DEBUG_KEYSTORE }}" = "" ]]; then
+              echo "${{ secrets.DEBUG_KEYSTORE }}" > "debug.keystore.asc"
+              if [[ -s "debug.keystore.asc" ]]; then
+                  echo "Restoring debug keystore from GitHub secrets"
+                  gpg -d --passphrase "debug0" --batch "debug.keystore.asc" > "debug.keystore"
+              fi
+          fi
+
       - name: Run tests
         continue-on-error: true
         run: ./gradlew test --no-daemon --stacktrace
 
       - name: Build debug APK
+        env:
+          DEBUG_KEYSTORE: "debug.keystore"
+          DEBUG_KEYSTORE_PASSWORD: debug0
+          DEBUG_KEY_ALIAS: debug
+          DEBUG_KEY_PASSWORD: debug0
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload debug APK
