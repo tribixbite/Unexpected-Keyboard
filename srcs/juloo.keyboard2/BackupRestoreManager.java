@@ -115,7 +115,7 @@ public class BackupRestoreManager
         writer.flush();
       }
 
-      Log.i(TAG, "Exported " + allPrefs.size() + " preferences");
+      Log.i(TAG, "Exported " + preferences.size() + " preferences (out of " + allPrefs.size() + " total)");
       return true;
     }
     catch (Exception e)
@@ -189,16 +189,18 @@ public class BackupRestoreManager
           {
             imported++;
             result.importedKeys.add(key);
+            Log.d(TAG, "Imported: " + key + " = " + value);
           }
           else
           {
             skipped++;
             result.skippedKeys.add(key);
+            Log.i(TAG, "Skipped: " + key + " = " + value);
           }
         }
         catch (Exception e)
         {
-          Log.w(TAG, "Failed to import key: " + key, e);
+          Log.e(TAG, "Failed to import key: " + key + " = " + value, e);
           skipped++;
           result.skippedKeys.add(key);
         }
@@ -352,20 +354,40 @@ public class BackupRestoreManager
     }
     else if (value.isJsonArray())
     {
-      // Handle String Sets
-      Set<String> stringSet = new HashSet<>();
-      for (com.google.gson.JsonElement element : value.getAsJsonArray())
+      // Only parse as StringSet if this preference is known to be a StringSet
+      if (isStringSetPreference(key))
       {
-        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString())
+        Set<String> stringSet = new HashSet<>();
+        for (com.google.gson.JsonElement element : value.getAsJsonArray())
         {
-          stringSet.add(element.getAsString());
+          if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString())
+          {
+            stringSet.add(element.getAsString());
+          }
         }
+        editor.putStringSet(key, stringSet);
+        return true;
       }
-      editor.putStringSet(key, stringSet);
-      return true;
+      else
+      {
+        Log.w(TAG, "Skipping unexpected JsonArray for key: " + key);
+        return false;
+      }
+    }
+    else if (value.isJsonNull())
+    {
+      // Null values - skip (can't store null in SharedPreferences)
+      Log.i(TAG, "Skipping null preference: " + key);
+      return false;
+    }
+    else if (value.isJsonObject())
+    {
+      // Unexpected JsonObject that's not a JSON-string preference
+      Log.w(TAG, "Skipping unexpected JsonObject preference: " + key);
+      return false;
     }
 
-    Log.w(TAG, "Skipping unknown preference type for " + key);
+    Log.w(TAG, "Skipping unknown preference type for " + key + " type=" + value.getClass().getSimpleName());
     return false;
   }
 
@@ -563,12 +585,23 @@ public class BackupRestoreManager
     {
       // ListPreference values that are actually integers
       case "circle_sensitivity":
-      case "show_numpad":
+      // case "show_numpad": // Can be non-numeric ("never", "always", "landscape") - treat as string
       case "clipboard_history_limit":
         return true;
       default:
         return false;
     }
+  }
+
+  /**
+   * Check if a preference is stored as a StringSet
+   * Prevents accidentally parsing other array types as StringSet
+   */
+  private boolean isStringSetPreference(String key)
+  {
+    // Currently no known StringSet preferences in this app
+    // Add keys here if StringSet preferences are added in the future
+    return false;
   }
 
   /**
