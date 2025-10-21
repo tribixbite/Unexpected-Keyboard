@@ -61,7 +61,7 @@ abstract class BaseWordAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>()
 
     override fun getItemCount() = filteredWords.size
 
-    fun getFilteredCount() = filteredWords.size
+    open fun getFilteredCount() = filteredWords.size
 }
 
 /**
@@ -120,6 +120,8 @@ class WordEditableAdapter(
     }
 
     override fun getItemCount() = filteredWords.size + 1  // +1 for add button
+
+    override fun getFilteredCount() = filteredWords.size + 1  // Include + Add button
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == VIEW_TYPE_ADD) {

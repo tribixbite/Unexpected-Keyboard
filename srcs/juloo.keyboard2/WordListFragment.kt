@@ -103,6 +103,9 @@ class WordListFragment : Fragment() {
     }
 
     private fun loadWords() {
+        // Guard against calling before view is created
+        if (!::loadingProgress.isInitialized) return
+
         loadingProgress.visibility = View.VISIBLE
         emptyText.visibility = View.GONE
 
