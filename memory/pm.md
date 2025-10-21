@@ -9,13 +9,20 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.178 (227)
-**Build Status**: ✅ BUILD SUCCESSFUL - Live Dictionary Reload Implemented
+**Latest Version**: v1.32.180 (229)
+**Build Status**: ✅ BUILD SUCCESSFUL - Editable Frequency Feature
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.178)
+### Recent Work (v1.32.180)
 
-**Live Dictionary Reload - Immediate Updates Without Restart**
+**Editable Frequency - Full Control Over Word Priority**
+- **Add Dialog**: Two fields (word + frequency), default 100, range 1-10000
+- **Edit Dialog**: Edit both word and frequency, preserves values
+- **Validation**: Numeric keyboard, automatic range clamping via coerceIn()
+- **UI**: Clean LinearLayout with proper padding and hints
+- **Impact**: Frequency affects prediction ranking in both typing and swipe
+
+**Previous (v1.32.178)**: Live Dictionary Reload - Immediate Updates Without Restart
 - **Auto-Reload**: Custom/user/disabled words update immediately when changed
 - **Typing**: Lazy reload on next prediction (static signal flag, zero overhead)
 - **Swipe**: Immediate reload via singleton (one-time cost)
