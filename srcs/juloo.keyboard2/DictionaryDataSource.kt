@@ -23,30 +23,47 @@ interface DictionaryDataSource {
 }
 
 /**
- * Main dictionary source - reads from BigramModel
+ * Main dictionary source - loads from assets dictionary file
  */
 class MainDictionarySource(
     private val context: Context,
     private val disabledSource: DisabledDictionarySource
 ) : DictionaryDataSource {
 
-    private val bigramModel: BigramModel by lazy {
-        BigramModel.getInstance(context)
-    }
+    // Cache the dictionary after first load
+    private var cachedWords: List<DictionaryWord>? = null
 
     override suspend fun getAllWords(): List<DictionaryWord> = withContext(Dispatchers.IO) {
+        // Return cached if available
+        if (cachedWords != null) {
+            return@withContext cachedWords!!
+        }
+
         try {
             val disabled = disabledSource.getDisabledWords()
-            bigramModel.getAllWords()
-                .map { word ->
-                    DictionaryWord(
-                        word = word,
-                        frequency = bigramModel.getWordFrequency(word),
-                        source = WordSource.MAIN,
-                        enabled = !disabled.contains(word)
-                    )
-                }
-                .sorted()
+            val words = mutableListOf<DictionaryWord>()
+
+            // Load from enhanced dictionary file (same as WordPredictor)
+            val filename = "dictionaries/en_enhanced.txt"
+            context.assets.open(filename).bufferedReader().use { reader ->
+                reader.lineSequence()
+                    .filter { it.isNotBlank() && !it.startsWith("#") }
+                    .forEach { line ->
+                        val word = line.trim().lowercase()
+                        words.add(
+                            DictionaryWord(
+                                word = word,
+                                frequency = 100, // Default frequency
+                                source = WordSource.MAIN,
+                                enabled = !disabled.contains(word)
+                            )
+                        )
+                    }
+            }
+
+            Log.d(TAG, "Loaded ${words.size} words from main dictionary")
+            cachedWords = words.sorted()
+            cachedWords!!
         } catch (e: Exception) {
             Log.e(TAG, "Error loading main dictionary", e)
             emptyList()
