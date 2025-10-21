@@ -1382,6 +1382,20 @@ public class OnnxSwipePredictor
   /**
    * Force singleton reset (for testing/debugging only)
    */
+  /**
+   * Reload custom words, user dictionary, and disabled words in vocabulary
+   * Called when Dictionary Manager makes changes
+   * PERFORMANCE: Only reloads small dynamic sets, not the 10k main dictionary
+   */
+  public void reloadVocabulary()
+  {
+    if (_vocabulary != null)
+    {
+      _vocabulary.reloadCustomAndDisabledWords();
+      Log.d(TAG, "Vocabulary reloaded after dictionary changes");
+    }
+  }
+
   public static void resetSingleton()
   {
     synchronized (_singletonLock)

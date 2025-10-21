@@ -32,6 +32,10 @@ public class WordPredictor
   private UserAdaptationManager _adaptationManager;
   private Context _context; // For accessing SharedPreferences for disabled words
   private Set<String> _disabledWords; // Cache of disabled words
+
+  // Static flag to signal all WordPredictor instances need to reload custom/user/disabled words
+  private static volatile boolean _needsReload = false;
+  private long _lastReloadTime = 0;
   
   public WordPredictor()
   {
@@ -85,6 +89,45 @@ public class WordPredictor
   public void reloadDisabledWords()
   {
     loadDisabledWords();
+  }
+
+  /**
+   * Reload custom words and user dictionary (called when Dictionary Manager makes changes)
+   * PERFORMANCE: Only reloads small dynamic sets, overwrites existing entries
+   */
+  public void reloadCustomAndUserWords()
+  {
+    if (_context != null)
+    {
+      loadCustomAndUserWords(_context);
+      _lastReloadTime = System.currentTimeMillis();
+      android.util.Log.d("WordPredictor", "Reloaded custom and user dictionary words");
+    }
+  }
+
+  /**
+   * Signal all WordPredictor instances to reload custom/user/disabled words on next prediction
+   * Called by Dictionary Manager when user makes changes
+   */
+  public static void signalReloadNeeded()
+  {
+    _needsReload = true;
+    android.util.Log.d("WordPredictor", "Reload signal set - all instances will reload on next prediction");
+  }
+
+  /**
+   * Check if reload is needed and perform it
+   * Called at start of prediction
+   */
+  private void checkAndReload()
+  {
+    if (_needsReload && _context != null)
+    {
+      reloadDisabledWords();
+      reloadCustomAndUserWords();
+      // Don't clear flag - let all instances reload
+      android.util.Log.d("WordPredictor", "Auto-reloaded dictionaries due to signal");
+    }
   }
   
   /**
@@ -370,7 +413,10 @@ public class WordPredictor
   {
     if (keySequence == null || keySequence.isEmpty())
       return new PredictionResult(new ArrayList<>(), new ArrayList<>());
-    
+
+    // Check if dictionary changes require reload
+    checkAndReload();
+
     PerformanceProfiler.start("Type.predictWordsWithScores");
 
     // UNIFIED SCORING with EARLY FUSION

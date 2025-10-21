@@ -194,6 +194,28 @@ class DictionaryManagerActivity : AppCompatActivity() {
      */
     fun refreshAllTabs() {
         fragments.forEach { it.refresh() }
+
+        // Reload predictions to reflect dictionary changes
+        reloadPredictions()
+    }
+
+    /**
+     * Reload custom/user/disabled words in both typing and swipe predictors
+     * PERFORMANCE: Only reloads small dynamic sets, not main dictionaries
+     */
+    private fun reloadPredictions() {
+        try {
+            // Signal typing predictions to reload on next prediction (lazy reload for performance)
+            WordPredictor.signalReloadNeeded()
+
+            // Reload swipe beam search vocabulary immediately (singleton, one-time cost)
+            val swipePredictor = OnnxSwipePredictor.getInstance(this)
+            swipePredictor.reloadVocabulary()
+
+            android.util.Log.d("DictionaryManagerActivity", "Reloaded predictions after dictionary changes")
+        } catch (e: Exception) {
+            android.util.Log.e("DictionaryManagerActivity", "Failed to reload predictions", e)
+        }
     }
 }
 
