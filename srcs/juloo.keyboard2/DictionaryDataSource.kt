@@ -43,25 +43,53 @@ class MainDictionarySource(
             val disabled = disabledSource.getDisabledWords()
             val words = mutableListOf<DictionaryWord>()
 
-            // Load from enhanced dictionary file (same as WordPredictor)
-            val filename = "dictionaries/en_enhanced.txt"
-            context.assets.open(filename).bufferedReader().use { reader ->
-                reader.lineSequence()
-                    .filter { it.isNotBlank() && !it.startsWith("#") }
-                    .forEach { line ->
-                        val word = line.trim().lowercase()
+            // Try JSON format first (50k words with frequencies)
+            try {
+                val jsonFilename = "dictionaries/en_enhanced.json"
+                val jsonString = context.assets.open(jsonFilename).bufferedReader().use { it.readText() }
+                val jsonDict = org.json.JSONObject(jsonString)
+                val keys = jsonDict.keys()
+
+                while (keys.hasNext()) {
+                    val word = keys.next().lowercase()
+                    if (word.matches(Regex("^[a-z]+$"))) {
+                        val rawFreq = jsonDict.getInt(word)
+                        // Scale from 128-255 to 100-10000
+                        val frequency = 100 + ((rawFreq - 128) / 127.0 * 9900).toInt()
                         words.add(
                             DictionaryWord(
                                 word = word,
-                                frequency = 100, // Default frequency
+                                frequency = frequency,
                                 source = WordSource.MAIN,
                                 enabled = !disabled.contains(word)
                             )
                         )
                     }
+                }
+                Log.d(TAG, "Loaded ${words.size} words from JSON dictionary")
+            } catch (e: Exception) {
+                Log.w(TAG, "JSON dictionary not found, falling back to text format")
+
+                // Fall back to text format
+                val filename = "dictionaries/en_enhanced.txt"
+                context.assets.open(filename).bufferedReader().use { reader ->
+                    reader.lineSequence()
+                        .filter { it.isNotBlank() && !it.startsWith("#") }
+                        .forEach { line ->
+                            val word = line.trim().lowercase()
+                            words.add(
+                                DictionaryWord(
+                                    word = word,
+                                    frequency = 100,
+                                    source = WordSource.MAIN,
+                                    enabled = !disabled.contains(word)
+                                )
+                            )
+                        }
+                }
+                Log.d(TAG, "Loaded ${words.size} words from text dictionary")
             }
 
-            Log.d(TAG, "Loaded ${words.size} words from main dictionary")
             cachedWords = words.sorted()
             cachedWords!!
         } catch (e: Exception) {

@@ -4,6 +4,35 @@ Complete version history with detailed technical documentation.
 
 ---
 
+## v1.32.179-181 - Enhanced Dictionary & Frequency Control (2025-10-21)
+
+### 50k Dictionary Upgrade with Real Frequency Data
+
+**v1.32.181** (230) - ✅ BUILD SUCCESSFUL - 50k Dictionary with Real Frequencies
+- feat(dictionary): upgrade from 10k to 50k words with actual frequency data
+- Format: JSON format `{"word": freq, ...}` with 49,981 words
+- Frequency range: 128-255 raw values from source data
+- **WordPredictor.java**: Loads JSON, scales frequencies 128-255 → 100-10000 for scoring
+- **OptimizedVocabulary.java**: Two-pass loading (collect, sort by freq, assign tiers)
+  - Tier assignment based on sorted position: top 100 = tier 2, top 5000 = tier 1, rest = tier 0
+  - Normalizes frequencies to 0-1 range for beam search
+- **DictionaryDataSource.kt**: Displays frequencies in Dictionary Manager UI (100-10000 range)
+- All three loaders support JSON format with fallback to text format
+- APK size: 47MB → 48MB (+789K dictionary file)
+- Impact: Better prediction accuracy with real word frequency data, 5x vocabulary coverage
+
+**v1.32.180** (229) - Editable Word Frequency in Custom Tab
+- feat(dictionary): add editable frequency fields to custom word dialogs
+- Add dialog: Two fields (word + frequency), default 100, range 1-10000
+- Edit dialog: Both word and frequency editable, preserves existing values
+- Validation: Numeric keyboard for frequency input, automatic range clamping via coerceIn()
+- UI: Clean LinearLayout with proper padding and hints
+- Impact: Frequency directly affects prediction ranking in both typing and swipe
+
+**v1.32.179** - (skipped, version auto-increment)
+
+---
+
 ## v1.32.157-178 - Dictionary Manager (2025-10-21)
 
 ### Complete Dictionary Management System

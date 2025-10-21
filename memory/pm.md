@@ -9,13 +9,21 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.180 (229)
-**Build Status**: ✅ BUILD SUCCESSFUL - Editable Frequency Feature
+**Latest Version**: v1.32.181 (230)
+**Build Status**: ✅ BUILD SUCCESSFUL - 50k Dictionary Upgrade
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.180)
+### Recent Work (v1.32.181)
 
-**Editable Frequency - Full Control Over Word Priority**
+**50k Enhanced Dictionary - 5x Dictionary Size with Real Frequencies**
+- **Size**: Upgraded from 10k to 49,981 words
+- **Format**: JSON format with actual frequency data (128-255 range)
+- **Scaling**: WordPredictor/DictionaryDataSource scale to 100-10000, OptimizedVocabulary normalizes to 0-1
+- **Tier System**: OptimizedVocabulary assigns tiers by sorted frequency (top 100 = tier 2, top 5000 = tier 1)
+- **Fallback**: All three loaders (WordPredictor, OptimizedVocabulary, DictionaryDataSource) support both JSON and text formats
+- **Impact**: Better prediction accuracy with real word frequency data, expanded vocabulary coverage
+
+**Previous (v1.32.180)**: Editable Frequency - Full Control Over Word Priority
 - **Add Dialog**: Two fields (word + frequency), default 100, range 1-10000
 - **Edit Dialog**: Edit both word and frequency, preserves values
 - **Validation**: Numeric keyboard, automatic range clamping via coerceIn()

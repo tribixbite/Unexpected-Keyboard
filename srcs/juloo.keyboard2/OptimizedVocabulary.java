@@ -199,51 +199,115 @@ public class OptimizedVocabulary
    */
   private void loadWordFrequencies()
   {
+    // Try JSON format first (50k words with actual frequencies)
     try
     {
-      // Load English dictionary (already sorted by frequency)
-      InputStream inputStream = context.getAssets().open("dictionaries/en.txt");
+      InputStream inputStream = context.getAssets().open("dictionaries/en_enhanced.json");
       BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
+      StringBuilder jsonBuilder = new StringBuilder();
       String line;
-      int wordCount = 0;
       while ((line = reader.readLine()) != null)
       {
-        line = line.trim().toLowerCase();
-        if (!line.isEmpty() && line.matches("^[a-z]+$"))
+        jsonBuilder.append(line);
+      }
+      reader.close();
+
+      // Parse JSON object
+      org.json.JSONObject jsonDict = new org.json.JSONObject(jsonBuilder.toString());
+      java.util.Iterator<String> keys = jsonDict.keys();
+      int wordCount = 0;
+
+      // First pass: collect all words with frequencies to determine tiers
+      java.util.List<java.util.Map.Entry<String, Integer>> wordFreqList = new java.util.ArrayList<>();
+      while (keys.hasNext())
+      {
+        String word = keys.next().toLowerCase();
+        if (word.matches("^[a-z]+$"))
         {
-          // OPTIMIZATION: Assign frequency based on position (file is pre-sorted)
-          float frequency = 1.0f / (wordCount + 1.0f);
-
-          // OPTIMIZATION: Determine tier during loading (no separate sets needed!)
-          byte tier;
-          if (wordCount < 100) {
-            tier = 2; // common
-          } else if (wordCount < 5000) {
-            tier = 1; // top5000
-          } else {
-            tier = 0; // regular
-          }
-
-          // CRITICAL: Single structure with all info (1 lookup vs 3 lookups!)
-          vocabulary.put(line, new WordInfo(frequency, tier));
-          wordCount++;
-
-          // Limit to prevent memory issues (150k words max)
-          if (wordCount >= 150000)
-          {
-            break;
-          }
+          int freq = jsonDict.getInt(word);
+          wordFreqList.add(new java.util.AbstractMap.SimpleEntry<>(word, freq));
         }
       }
 
-      reader.close();
-      // Log.d(TAG, "Loaded " + wordCount + " words with frequencies");
+      // Sort by frequency descending (highest frequency first)
+      java.util.Collections.sort(wordFreqList, new java.util.Comparator<java.util.Map.Entry<String, Integer>>() {
+        @Override
+        public int compare(java.util.Map.Entry<String, Integer> a, java.util.Map.Entry<String, Integer> b) {
+          return Integer.compare(b.getValue(), a.getValue());
+        }
+      });
+
+      // Second pass: assign tiers based on sorted position
+      for (int i = 0; i < wordFreqList.size() && i < 150000; i++)
+      {
+        java.util.Map.Entry<String, Integer> entry = wordFreqList.get(i);
+        String word = entry.getKey();
+        int rawFreq = entry.getValue();
+
+        // Normalize frequency from 128-255 range to 0-1 range
+        float frequency = (rawFreq - 128) / 127.0f;
+
+        // Determine tier based on sorted position
+        byte tier;
+        if (i < 100) {
+          tier = 2; // common (top 100)
+        } else if (i < 5000) {
+          tier = 1; // top5000
+        } else {
+          tier = 0; // regular
+        }
+
+        vocabulary.put(word, new WordInfo(frequency, tier));
+        wordCount++;
+      }
+
+      Log.d(TAG, "Loaded JSON vocabulary: " + wordCount + " words with frequency tiers");
     }
-    catch (IOException e)
+    catch (Exception e)
     {
-      Log.e(TAG, "Failed to load word frequencies", e);
-      throw new RuntimeException("Could not load vocabulary", e);
+      Log.w(TAG, "JSON vocabulary not found, falling back to text format: " + e.getMessage());
+
+      // Fall back to text format (position-based frequency)
+      try
+      {
+        InputStream inputStream = context.getAssets().open("dictionaries/en.txt");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+        String line;
+        int wordCount = 0;
+        while ((line = reader.readLine()) != null)
+        {
+          line = line.trim().toLowerCase();
+          if (!line.isEmpty() && line.matches("^[a-z]+$"))
+          {
+            // Position-based frequency
+            float frequency = 1.0f / (wordCount + 1.0f);
+
+            // Determine tier based on position
+            byte tier;
+            if (wordCount < 100) {
+              tier = 2; // common
+            } else if (wordCount < 5000) {
+              tier = 1; // top5000
+            } else {
+              tier = 0; // regular
+            }
+
+            vocabulary.put(line, new WordInfo(frequency, tier));
+            wordCount++;
+
+            if (wordCount >= 150000) break;
+          }
+        }
+
+        reader.close();
+        Log.d(TAG, "Loaded text vocabulary: " + wordCount + " words");
+      }
+      catch (IOException e2)
+      {
+        Log.e(TAG, "Failed to load word frequencies", e2);
+        throw new RuntimeException("Could not load vocabulary", e2);
+      }
     }
   }
 

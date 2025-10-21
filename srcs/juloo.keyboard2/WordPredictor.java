@@ -249,36 +249,60 @@ public class WordPredictor
   public void loadDictionary(Context context, String language)
   {
     _dictionary.clear();
-    // Try enhanced dictionary first, fall back to basic
-    String filename = "dictionaries/" + language + "_enhanced.txt";
-    String fallbackFilename = "dictionaries/" + language + ".txt";
-    
-    boolean dictionaryLoaded = false;
-    
-    // Only use enhanced dictionary, no fallback to basic
+
+    // Try JSON format first (50k words with frequencies)
+    String jsonFilename = "dictionaries/" + language + "_enhanced.json";
     try
     {
       BufferedReader reader = new BufferedReader(
-        new InputStreamReader(context.getAssets().open(filename)));
+        new InputStreamReader(context.getAssets().open(jsonFilename)));
+      StringBuilder jsonBuilder = new StringBuilder();
       String line;
       while ((line = reader.readLine()) != null)
       {
-        String[] parts = line.trim().split("\t");
-        if (parts.length >= 1)
-        {
-          String word = parts[0].toLowerCase();
-          int frequency = parts.length > 1 ? Integer.parseInt(parts[1]) : 1000;
-          _dictionary.put(word, frequency);
-        }
+        jsonBuilder.append(line);
       }
       reader.close();
-      dictionaryLoaded = true;
-      android.util.Log.d("WordPredictor", "Loaded enhanced dictionary: " + filename + " with " + _dictionary.size() + " words");
+
+      // Parse JSON object
+      org.json.JSONObject jsonDict = new org.json.JSONObject(jsonBuilder.toString());
+      java.util.Iterator<String> keys = jsonDict.keys();
+      while (keys.hasNext())
+      {
+        String word = keys.next().toLowerCase();
+        int frequency = jsonDict.getInt(word);
+        // Frequency is 128-255, scale to 100-10000 range for better scoring
+        int scaledFreq = 100 + (int)((frequency - 128) / 127.0 * 9900);
+        _dictionary.put(word, scaledFreq);
+      }
+      android.util.Log.d("WordPredictor", "Loaded JSON dictionary: " + jsonFilename + " with " + _dictionary.size() + " words");
     }
-    catch (IOException e)
+    catch (Exception e)
     {
-      android.util.Log.e("WordPredictor", "Failed to load enhanced dictionary: " + filename + ", error: " + e.getMessage());
-      // Don't fall back to basic dictionary - keep dictionary empty if enhanced not found
+      android.util.Log.w("WordPredictor", "JSON dictionary not found, trying text format: " + e.getMessage());
+
+      // Fall back to text format (word-per-line)
+      String textFilename = "dictionaries/" + language + "_enhanced.txt";
+      try
+      {
+        BufferedReader reader = new BufferedReader(
+          new InputStreamReader(context.getAssets().open(textFilename)));
+        String line;
+        while ((line = reader.readLine()) != null)
+        {
+          String word = line.trim().toLowerCase();
+          if (!word.isEmpty())
+          {
+            _dictionary.put(word, 1000); // Default frequency
+          }
+        }
+        reader.close();
+        android.util.Log.d("WordPredictor", "Loaded text dictionary: " + textFilename + " with " + _dictionary.size() + " words");
+      }
+      catch (IOException e2)
+      {
+        android.util.Log.e("WordPredictor", "Failed to load dictionary: " + e2.getMessage());
+      }
     }
     
     // Load custom words and user dictionary (additive to main dictionary)
