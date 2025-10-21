@@ -9,17 +9,23 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.167 (216)
-**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Polished & Functional
+**Latest Version**: v1.32.170 (219)
+**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Full 10k Dictionary Loading
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.167)
+### Recent Work (v1.32.170)
 
-**Dictionary Manager - Polished Material3 UI + Functional Integration**
+**Dictionary Manager - Full 10k Dictionary Loading**
+- **Fixed**: MainDictionarySource now loads full 10,000 words from assets/dictionaries/en_enhanced.txt
+- **Fixed**: Parsing changed from tab-separated to word-per-line format
+- **Data**: All 10k words displayed with default frequency 100
+- **Verified**: Logcat confirms "Loaded 10000 words from main dictionary"
+- Complete dictionary viewing: All 10k+ words accessible in Active tab
+
+**Previous (v1.32.167)**: Dictionary Manager - Polished Material3 UI + Functional Integration
 - **UI**: Material3.DayNight.NoActionBar theme with clean dark colors
 - **UI**: Toolbar widget (no overlap), MaterialSwitch, MaterialButton components
 - **UI**: Proper spacing, typography, theme attributes matching CustomCamera quality
-- **Data**: BigramModel showing REAL dictionary words with actual frequencies (not stub data)
 - **Functional**: WordPredictor filters disabled words from predictions
 - **Functional**: Disabled words persisted in SharedPreferences
 - **Functional**: Toggle switches affect actual predictions in keyboard
