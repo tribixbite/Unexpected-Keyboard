@@ -9,13 +9,21 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.170 (219)
-**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Full 10k Dictionary Loading
+**Latest Version**: v1.32.174 (223)
+**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Fully Functional
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.170)
+### Recent Work (v1.32.174)
 
-**Dictionary Manager - Full 10k Dictionary Loading**
+**Dictionary Manager - Custom Tab + Crash Fixes**
+- **Fixed**: Custom tab now shows "+ Add New Word" button (was showing "no words found")
+- **Fixed**: getFilteredCount() override in WordEditableAdapter includes add button
+- **Fixed**: lateinit crash when toggling words across tabs
+- **Functional**: All 4 tabs working - Active (10k words), Disabled, User, Custom
+- **Functional**: Add/Edit/Delete custom words via dialogs
+- **Stable**: No crashes during word toggling or tab switching
+
+**Previous (v1.32.170)**: Dictionary Manager - Full 10k Dictionary Loading
 - **Fixed**: MainDictionarySource now loads full 10,000 words from assets/dictionaries/en_enhanced.txt
 - **Fixed**: Parsing changed from tab-separated to word-per-line format
 - **Data**: All 10k words displayed with default frequency 100
