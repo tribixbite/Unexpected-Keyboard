@@ -9,13 +9,21 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.174 (223)
-**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Fully Functional
+**Latest Version**: v1.32.176 (225)
+**Build Status**: ✅ BUILD SUCCESSFUL - Full Dictionary Integration Complete
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.174)
+### Recent Work (v1.32.176)
 
-**Dictionary Manager - Custom Tab + Crash Fixes**
+**Dictionary Integration - Custom/User Words + Disabled Filtering**
+- **Typing Predictions**: Custom words and user dictionary now included
+- **Swipe/Beam Search**: Custom words and user dictionary now included with high priority
+- **Disabled Words**: Filtered from BOTH typing and swipe predictions
+- **Performance**: Single load during init, cached in memory (O(1) lookups, no I/O overhead)
+- **Complete**: All dictionary sources (Main/Custom/User) unified in predictions
+- **Complete**: Disabled words excluded from all prediction paths
+
+**Previous (v1.32.174)**: Dictionary Manager - Custom Tab + Crash Fixes
 - **Fixed**: Custom tab now shows "+ Add New Word" button (was showing "no words found")
 - **Fixed**: getFilteredCount() override in WordEditableAdapter includes add button
 - **Fixed**: lateinit crash when toggling words across tabs
