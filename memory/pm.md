@@ -9,16 +9,22 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.181 (230)
-**Build Status**: ✅ BUILD SUCCESSFUL - 50k Dictionary Upgrade
+**Latest Version**: v1.32.182 (231)
+**Build Status**: ✅ BUILD SUCCESSFUL - 50k Dictionary with Raw Frequencies
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.181)
+### Recent Work (v1.32.182)
 
-**50k Enhanced Dictionary - 5x Dictionary Size with Real Frequencies**
+**Dictionary Manager UI - Display Raw Frequencies**
+- **UI**: Dictionary Manager now shows raw frequency values from JSON (128-255)
+- **Fixed**: Was showing scaled values (2516 for 'inflicting'), now shows raw (159)
+- **Internal**: WordPredictor/OptimizedVocabulary still use scaled values for scoring
+- **Consistency**: Main dictionary shows 128-255, custom words use 1-10000 (user-editable range)
+
+**Previous (v1.32.181)**: 50k Enhanced Dictionary - 5x Dictionary Size with Real Frequencies
 - **Size**: Upgraded from 10k to 49,981 words
 - **Format**: JSON format with actual frequency data (128-255 range)
-- **Scaling**: WordPredictor/DictionaryDataSource scale to 100-10000, OptimizedVocabulary normalizes to 0-1
+- **Scaling**: WordPredictor scales to 100-10000, OptimizedVocabulary normalizes to 0-1
 - **Tier System**: OptimizedVocabulary assigns tiers by sorted frequency (top 100 = tier 2, top 5000 = tier 1)
 - **Fallback**: All three loaders (WordPredictor, OptimizedVocabulary, DictionaryDataSource) support both JSON and text formats
 - **Impact**: Better prediction accuracy with real word frequency data, expanded vocabulary coverage

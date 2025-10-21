@@ -53,9 +53,8 @@ class MainDictionarySource(
                 while (keys.hasNext()) {
                     val word = keys.next().lowercase()
                     if (word.matches(Regex("^[a-z]+$"))) {
-                        val rawFreq = jsonDict.getInt(word)
-                        // Scale from 128-255 to 100-10000
-                        val frequency = 100 + ((rawFreq - 128) / 127.0 * 9900).toInt()
+                        val frequency = jsonDict.getInt(word)
+                        // Use raw frequency from JSON (128-255 range)
                         words.add(
                             DictionaryWord(
                                 word = word,

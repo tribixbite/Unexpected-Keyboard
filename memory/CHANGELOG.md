@@ -4,11 +4,18 @@ Complete version history with detailed technical documentation.
 
 ---
 
-## v1.32.179-181 - Enhanced Dictionary & Frequency Control (2025-10-21)
+## v1.32.179-182 - Enhanced Dictionary & Frequency Control (2025-10-21)
 
 ### 50k Dictionary Upgrade with Real Frequency Data
 
-**v1.32.181** (230) - ✅ BUILD SUCCESSFUL - 50k Dictionary with Real Frequencies
+**v1.32.182** (231) - ✅ BUILD SUCCESSFUL - Display Raw Frequencies in UI
+- fix(dictionary): show raw frequency values in Dictionary Manager
+- Dictionary Manager now displays raw JSON frequencies (128-255 range)
+- Fixed: was showing scaled values (e.g., 2516 for 'inflicting' instead of raw 159)
+- Internal scoring still uses scaled values (WordPredictor: 100-10000, OptimizedVocabulary: 0-1)
+- Main dictionary shows 128-255, custom words use 1-10000 (user-editable range)
+
+**v1.32.181** (230) - 50k Dictionary with Real Frequencies
 - feat(dictionary): upgrade from 10k to 50k words with actual frequency data
 - Format: JSON format `{"word": freq, ...}` with 49,981 words
 - Frequency range: 128-255 raw values from source data

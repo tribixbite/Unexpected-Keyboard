@@ -35,8 +35,8 @@ android {
     applicationId "juloo.keyboard2"
     minSdk 21
     targetSdkVersion 35
-    versionCode 230
-    versionName "1.32.181"
+    versionCode 231
+    versionName "1.32.182"
   }
 
   sourceSets {
