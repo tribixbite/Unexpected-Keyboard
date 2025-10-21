@@ -29,7 +29,7 @@
 
     <activity android:name="juloo.keyboard2.SwipeDebugActivity" android:label="Swipe Debug" android:theme="@style/settingsTheme" android:exported="false" android:directBootAware="true"/>
 
-    <activity android:name="juloo.keyboard2.DictionaryManagerActivity" android:label="Dictionary Manager" android:theme="@style/settingsTheme" android:exported="false" android:directBootAware="true"/>
+    <activity android:name="juloo.keyboard2.DictionaryManagerActivity" android:label="Dictionary Manager" android:theme="@style/DictionaryManagerTheme" android:exported="true" android:directBootAware="true"/>
   </application>
 
   <!-- To query enabled input methods for voice IME detection -->

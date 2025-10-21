@@ -123,16 +123,19 @@ class WordListFragment : Fragment() {
     private var currentSourceFilter: WordSource? = null
 
     fun filter(query: String, sourceFilter: WordSource? = null) {
+        if (!::adapter.isInitialized) return
         currentSourceFilter = sourceFilter
         adapter.filter(query, sourceFilter)
         updateEmptyState()
     }
 
     fun getFilteredCount(): Int {
+        if (!::adapter.isInitialized) return 0
         return adapter.getFilteredCount()
     }
 
     private fun updateEmptyState() {
+        if (!::adapter.isInitialized) return
         if (adapter.getFilteredCount() == 0) {
             emptyText.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
