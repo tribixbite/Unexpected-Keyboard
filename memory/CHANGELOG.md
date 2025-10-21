@@ -4,6 +4,95 @@ Complete version history with detailed technical documentation.
 
 ---
 
+## v1.32.157-178 - Dictionary Manager (2025-10-21)
+
+### Complete Dictionary Management System
+
+**v1.32.178** (227) - ✅ BUILD SUCCESSFUL - Live Dictionary Reload
+- feat(predictions): add auto-reload for dictionary changes
+- Custom/user/disabled words update immediately when changed
+- Typing: Lazy reload on next prediction (static signal flag, zero overhead)
+- Swipe: Immediate reload via singleton (one-time cost)
+- Performance: Only reloads small dynamic sets, not 10k main dictionary
+- UX: Custom words appear instantly in predictions without keyboard restart
+
+**v1.32.176** (225) - Full Dictionary Integration
+- feat(predictions): integrate custom/user dict + filter disabled words
+- Typing predictions now include custom words and user dictionary
+- Swipe beam search now includes custom words and user dictionary (high priority)
+- Disabled words filtered from BOTH typing and swipe predictions
+- Performance: Single load during init, cached in memory (O(1) lookups, no I/O)
+
+**v1.32.174** (223) - Custom Tab + Crash Fixes
+- fix(dictionary): show Custom tab + Add button, fix lateinit crash
+- Custom tab now shows "+ Add New Word" button (was showing "no words found")
+- Fixed getFilteredCount() override in WordEditableAdapter includes add button
+- Fixed lateinit crash when toggling words across tabs
+- All 4 tabs fully functional
+
+**v1.32.170** (219) - Full 10k Dictionary Loading
+- fix(dictionary): load full 10k word dictionary in Manager
+- Fixed MainDictionarySource parsing to handle word-per-line format
+- Dictionary Manager now displays all 10,000 words from assets
+
+**v1.32.167** (216) - Polished Material3 UI + Functional Integration
+- Material3.DayNight.NoActionBar theme with clean dark colors
+- Toolbar widget (no overlap), MaterialSwitch, MaterialButton components
+- WordPredictor filters disabled words from predictions
+- Disabled words persisted in SharedPreferences
+- Toggle switches affect actual predictions in keyboard
+- setContext() called for all WordPredictor instances
+
+**v1.32.163** (212) - Dictionary Manager Crash Fixes
+- Fixed Theme.AppCompat crash: Created DictionaryManagerTheme
+- Fixed lateinit adapter crash: Added initialization checks
+- Activity launches successfully and is fully functional
+
+**v1.32.160** (209) - Gemini Code Review Fixes
+- Fixed filter dropdown to properly filter by WordSource (not switch tabs)
+- Filter now filters within current tab: ALL/MAIN/USER/CUSTOM
+- Optimized UserDictionary search to use database-level LIKE filtering
+- Changed isNotEmpty() to isNotBlank() for word validation
+
+**v1.32.157** (206) - Initial Implementation
+- Modern Material Design dark mode UI with 4 tabs
+- Active/Disabled/User/Custom word management
+- Real-time search with 300ms debouncing
+- Auto-switch tabs when search has no results
+- RecyclerView + DiffUtil + ViewPager2 + Fragments
+- Kotlin + coroutines
+- APK size: 43MB → 47MB (Material Design + Kotlin)
+- Access via Settings → "📚 Dictionary Manager"
+
+**Architecture**:
+- `DictionaryDataSource.kt` - Interface for all dictionary sources
+- `MainDictionarySource` - Loads 10k words from assets
+- `DisabledDictionarySource` - Manages disabled word list via SharedPreferences
+- `UserDictionarySource` - Android UserDictionary ContentProvider integration
+- `CustomDictionarySource` - App-specific custom words via SharedPreferences JSON
+- `DictionaryWord.kt` - Data class with word/frequency/source/enabled
+- `WordListAdapter.kt` - RecyclerView adapters (toggle/editable variants)
+- `WordListFragment.kt` - Fragment for each tab with coroutines
+- `DictionaryManagerActivity.kt` - Main activity with ViewPager2
+
+**Integration**:
+- `WordPredictor.java` - Loads custom/user words during init, filters disabled
+- `OptimizedVocabulary.java` - Loads custom/user words into beam search, filters disabled
+- `OnnxSwipePredictor.java` - Exposes reloadVocabulary() for live updates
+
+**Commits**:
+- 552c4c5d - docs(pm): update to v1.32.178 with live dictionary reload
+- f998fd9f - feat(predictions): add auto-reload for dictionary changes
+- 0d9db2e6 - docs(pm): update to v1.32.176 with full dictionary integration
+- a5727918 - feat(predictions): integrate custom/user dict + filter disabled words
+- 7cda6dd3 - docs(pm): update to v1.32.174 with Custom tab fixes
+- cdef9137 - fix(dictionary): show Custom tab + Add button, fix lateinit crash
+- 516a5030 - docs(pm): update to v1.32.170 with full dictionary loading
+- f09af62e - fix(dictionary): load full 10k word dictionary in Manager
+- [... see git log for complete history]
+
+---
+
 ## v1.32.114-121 - Auto-Correction Feature (2025-10-19)
 
 ### Auto-Correction Implementation & Fixes
