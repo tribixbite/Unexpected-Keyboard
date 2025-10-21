@@ -195,6 +195,7 @@ public class Keyboard2 extends InputMethodService
       _dictionaryManager = new DictionaryManager(this);
       _dictionaryManager.setLanguage("en");
       _wordPredictor = new WordPredictor();
+      _wordPredictor.setContext(this); // Enable disabled words filtering
       _wordPredictor.setConfig(_config);
       _wordPredictor.setUserAdaptationManager(_adaptationManager);
       _wordPredictor.loadDictionary(this, "en");
@@ -457,6 +458,7 @@ public class Keyboard2 extends InputMethodService
         _dictionaryManager = new DictionaryManager(this);
         _dictionaryManager.setLanguage("en");
         _wordPredictor = new WordPredictor();
+        _wordPredictor.setContext(this); // Enable disabled words filtering
         _wordPredictor.setConfig(_config);
         _wordPredictor.loadDictionary(this, "en");
       }

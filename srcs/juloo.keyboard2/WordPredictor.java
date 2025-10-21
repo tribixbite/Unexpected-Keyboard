@@ -1,6 +1,7 @@
 package juloo.keyboard2;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Word prediction engine that matches swipe patterns to dictionary words
@@ -27,6 +30,8 @@ public class WordPredictor
   private static final int MAX_RECENT_WORDS = 20; // Keep last 20 words for language detection
   private Config _config;
   private UserAdaptationManager _adaptationManager;
+  private Context _context; // For accessing SharedPreferences for disabled words
+  private Set<String> _disabledWords; // Cache of disabled words
   
   public WordPredictor()
   {
@@ -36,6 +41,50 @@ public class WordPredictor
     _currentLanguage = "en"; // Default to English
     _recentWords = new ArrayList<>();
     _config = null;
+    _context = null;
+    _disabledWords = new HashSet<>();
+  }
+
+  /**
+   * Set context for accessing disabled words from SharedPreferences
+   */
+  public void setContext(Context context)
+  {
+    _context = context;
+    loadDisabledWords();
+  }
+
+  /**
+   * Load disabled words from SharedPreferences
+   */
+  private void loadDisabledWords()
+  {
+    if (_context == null) {
+      _disabledWords = new HashSet<>();
+      return;
+    }
+
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(_context);
+    Set<String> disabledSet = prefs.getStringSet("disabled_words", new HashSet<>());
+    // Create a new HashSet to avoid modifying the original
+    _disabledWords = new HashSet<>(disabledSet);
+    android.util.Log.d("WordPredictor", "Loaded " + _disabledWords.size() + " disabled words");
+  }
+
+  /**
+   * Check if a word is disabled
+   */
+  private boolean isWordDisabled(String word)
+  {
+    return _disabledWords.contains(word.toLowerCase());
+  }
+
+  /**
+   * Reload disabled words (called when Dictionary Manager updates the list)
+   */
+  public void reloadDisabledWords()
+  {
+    loadDisabledWords();
   }
   
   /**
@@ -259,6 +308,13 @@ public class WordPredictor
       // STRICT PREFIX MATCHING - Only suggest words that start with typed sequence
       if (!word.startsWith(lowerSequence))
         continue;  // Skip words that don't start with typed prefix
+
+      // SKIP DISABLED WORDS - Filter out words disabled via Dictionary Manager
+      if (isWordDisabled(word))
+      {
+        android.util.Log.d("WordPredictor", "Skipping disabled word: " + word);
+        continue;
+      }
 
       // UNIFIED SCORING: Combine ALL signals into one score BEFORE selection
       int score = calculateUnifiedScore(word, lowerSequence, frequency, context);

@@ -5,17 +5,19 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
@@ -25,9 +27,10 @@ import com.google.android.material.tabs.TabLayoutMediator
  */
 class DictionaryManagerActivity : AppCompatActivity() {
 
+    private lateinit var toolbar: Toolbar
     private lateinit var searchInput: EditText
     private lateinit var filterSpinner: Spinner
-    private lateinit var resetButton: Button
+    private lateinit var resetButton: MaterialButton
     private lateinit var tabLayout: TabLayout
     private lateinit var viewPager: ViewPager2
 
@@ -51,30 +54,39 @@ class DictionaryManagerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dictionary_manager)
 
-        // Setup action bar
-        supportActionBar?.apply {
-            title = "Dictionary Manager"
-            setDisplayHomeAsUpEnabled(true)
-        }
-
         initializeViews()
+        setupToolbar()
         setupViewPager()
         setupSearch()
         setupFilter()
         setupResetButton()
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun initializeViews() {
+        toolbar = findViewById(R.id.toolbar)
         searchInput = findViewById(R.id.search_input)
         filterSpinner = findViewById(R.id.filter_spinner)
         resetButton = findViewById(R.id.reset_button)
         tabLayout = findViewById(R.id.tab_layout)
         viewPager = findViewById(R.id.view_pager)
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(toolbar)
+        supportActionBar?.apply {
+            title = "Dictionary Manager"
+            setDisplayHomeAsUpEnabled(true)
+        }
     }
 
     private fun setupViewPager() {

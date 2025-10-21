@@ -86,13 +86,16 @@
     <item name="android:fitsSystemWindows">true</item>
   </style>
   <!-- Dictionary Manager -->
-  <style name="DictionaryManagerTheme" parent="Theme.AppCompat.DayNight">
+  <style name="DictionaryManagerTheme" parent="Theme.Material3.DayNight.NoActionBar">
     <item name="android:fitsSystemWindows">true</item>
-    <item name="colorPrimary">@android:color/holo_blue_dark</item>
-    <item name="colorPrimaryDark">@android:color/black</item>
-    <item name="colorAccent">@android:color/holo_red_light</item>
-    <item name="android:windowBackground">@android:color/black</item>
-    <item name="android:textColorPrimary">@android:color/white</item>
+    <item name="colorPrimary">#1E88E5</item>
+    <item name="colorOnPrimary">#FFFFFF</item>
+    <item name="colorSurface">#121212</item>
+    <item name="colorOnSurface">#E0E0E0</item>
+    <item name="colorSurfaceVariant">#1E1E1E</item>
+    <item name="colorOnSurfaceVariant">#AAAAAA</item>
+    <item name="android:statusBarColor">#000000</item>
+    <item name="android:navigationBarColor">#000000</item>
   </style>
   <style name="ToggleSwitchStyle">
     <item name="android:thumbTint">@android:color/holo_green_light</item>

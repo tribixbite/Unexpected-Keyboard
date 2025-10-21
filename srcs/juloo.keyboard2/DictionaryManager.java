@@ -53,6 +53,7 @@ public class DictionaryManager
     if (_currentPredictor == null)
     {
       _currentPredictor = new WordPredictor();
+      _currentPredictor.setContext(_context); // Enable disabled words filtering
       _currentPredictor.loadDictionary(_context, languageCode);
       _predictors.put(languageCode, _currentPredictor);
     }
@@ -159,6 +160,7 @@ public class DictionaryManager
       if (!_predictors.containsKey(code))
       {
         WordPredictor predictor = new WordPredictor();
+        predictor.setContext(_context); // Enable disabled words filtering
         predictor.loadDictionary(_context, code);
         _predictors.put(code, predictor);
       }
