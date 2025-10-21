@@ -189,19 +189,35 @@ class WordListFragment : Fragment() {
     }
 
     private fun showAddDialog() {
-        val input = EditText(requireContext())
-        input.inputType = InputType.TYPE_CLASS_TEXT
-        input.hint = "Enter word"
+        // Create layout with word and frequency inputs
+        val layout = android.widget.LinearLayout(requireContext())
+        layout.orientation = android.widget.LinearLayout.VERTICAL
+        layout.setPadding(60, 40, 60, 20)
+
+        val wordInput = EditText(requireContext())
+        wordInput.inputType = InputType.TYPE_CLASS_TEXT
+        wordInput.hint = "Enter word"
+        layout.addView(wordInput)
+
+        val freqInput = EditText(requireContext())
+        freqInput.inputType = InputType.TYPE_CLASS_NUMBER
+        freqInput.hint = "Frequency (1-10000)"
+        freqInput.setText("100")
+        freqInput.selectAll()
+        layout.addView(freqInput)
 
         AlertDialog.Builder(requireContext())
             .setTitle("Add Custom Word")
-            .setView(input)
+            .setView(layout)
             .setPositiveButton("Add") { _, _ ->
-                val word = input.text.toString().trim()
+                val word = wordInput.text.toString().trim()
+                val freqText = freqInput.text.toString().trim()
+                val frequency = freqText.toIntOrNull() ?: 100
+
                 if (word.isNotBlank()) {
                     lifecycleScope.launch {
                         try {
-                            dataSource.addWord(word, 100)
+                            dataSource.addWord(word, frequency.coerceIn(1, 10000))
                             loadWords()
                         } catch (e: Exception) {
                             AlertDialog.Builder(requireContext())
@@ -218,20 +234,36 @@ class WordListFragment : Fragment() {
     }
 
     private fun showEditDialog(word: DictionaryWord) {
-        val input = EditText(requireContext())
-        input.inputType = InputType.TYPE_CLASS_TEXT
-        input.setText(word.word)
-        input.selectAll()
+        // Create layout with word and frequency inputs
+        val layout = android.widget.LinearLayout(requireContext())
+        layout.orientation = android.widget.LinearLayout.VERTICAL
+        layout.setPadding(60, 40, 60, 20)
+
+        val wordInput = EditText(requireContext())
+        wordInput.inputType = InputType.TYPE_CLASS_TEXT
+        wordInput.hint = "Word"
+        wordInput.setText(word.word)
+        wordInput.selectAll()
+        layout.addView(wordInput)
+
+        val freqInput = EditText(requireContext())
+        freqInput.inputType = InputType.TYPE_CLASS_NUMBER
+        freqInput.hint = "Frequency (1-10000)"
+        freqInput.setText(word.frequency.toString())
+        layout.addView(freqInput)
 
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Word")
-            .setView(input)
+            .setView(layout)
             .setPositiveButton("Save") { _, _ ->
-                val newWord = input.text.toString().trim()
-                if (newWord.isNotBlank() && newWord != word.word) {
+                val newWord = wordInput.text.toString().trim()
+                val freqText = freqInput.text.toString().trim()
+                val newFrequency = freqText.toIntOrNull() ?: word.frequency
+
+                if (newWord.isNotBlank()) {
                     lifecycleScope.launch {
                         try {
-                            dataSource.updateWord(word.word, newWord, word.frequency)
+                            dataSource.updateWord(word.word, newWord, newFrequency.coerceIn(1, 10000))
                             loadWords()
                         } catch (e: Exception) {
                             AlertDialog.Builder(requireContext())
