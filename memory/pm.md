@@ -9,13 +9,21 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.176 (225)
-**Build Status**: ✅ BUILD SUCCESSFUL - Full Dictionary Integration Complete
+**Latest Version**: v1.32.178 (227)
+**Build Status**: ✅ BUILD SUCCESSFUL - Live Dictionary Reload Implemented
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.176)
+### Recent Work (v1.32.178)
 
-**Dictionary Integration - Custom/User Words + Disabled Filtering**
+**Live Dictionary Reload - Immediate Updates Without Restart**
+- **Auto-Reload**: Custom/user/disabled words update immediately when changed
+- **Typing**: Lazy reload on next prediction (static signal flag, zero overhead)
+- **Swipe**: Immediate reload via singleton (one-time cost)
+- **Trigger**: Dictionary Manager calls reload after add/delete/toggle
+- **Performance**: Only reloads small dynamic sets, not 10k main dictionary
+- **UX**: Custom words appear instantly in predictions without keyboard restart
+
+**Previous (v1.32.176)**: Dictionary Integration - Custom/User Words + Disabled Filtering
 - **Typing Predictions**: Custom words and user dictionary now included
 - **Swipe/Beam Search**: Custom words and user dictionary now included with high priority
 - **Disabled Words**: Filtered from BOTH typing and swipe predictions
