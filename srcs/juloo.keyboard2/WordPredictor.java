@@ -238,8 +238,91 @@ public class WordPredictor
       // Don't fall back to basic dictionary - keep dictionary empty if enhanced not found
     }
     
+    // Load custom words and user dictionary (additive to main dictionary)
+    loadCustomAndUserWords(context);
+
     // Set the N-gram model language to match the dictionary
     setLanguage(language);
+  }
+
+  /**
+   * Load custom words and Android user dictionary into predictions
+   * Called during dictionary initialization for performance
+   */
+  private void loadCustomAndUserWords(Context context)
+  {
+    if (context == null) return;
+
+    try
+    {
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+
+      // 1. Load custom words from SharedPreferences
+      String customWordsJson = prefs.getString("custom_words", "{}");
+      if (!customWordsJson.equals("{}"))
+      {
+        try
+        {
+          // Parse JSON map: {"word": frequency, ...}
+          org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
+          java.util.Iterator<String> keys = jsonObj.keys();
+          int customCount = 0;
+          while (keys.hasNext())
+          {
+            String word = keys.next().toLowerCase();
+            int frequency = jsonObj.optInt(word, 1000);
+            _dictionary.put(word, frequency);
+            customCount++;
+          }
+          android.util.Log.d("WordPredictor", "Loaded " + customCount + " custom words");
+        }
+        catch (org.json.JSONException e)
+        {
+          android.util.Log.e("WordPredictor", "Failed to parse custom words JSON", e);
+        }
+      }
+
+      // 2. Load Android user dictionary
+      try
+      {
+        android.database.Cursor cursor = context.getContentResolver().query(
+          android.provider.UserDictionary.Words.CONTENT_URI,
+          new String[]{
+            android.provider.UserDictionary.Words.WORD,
+            android.provider.UserDictionary.Words.FREQUENCY
+          },
+          null,
+          null,
+          null
+        );
+
+        if (cursor != null)
+        {
+          int wordIndex = cursor.getColumnIndex(android.provider.UserDictionary.Words.WORD);
+          int freqIndex = cursor.getColumnIndex(android.provider.UserDictionary.Words.FREQUENCY);
+          int userCount = 0;
+
+          while (cursor.moveToNext())
+          {
+            String word = cursor.getString(wordIndex).toLowerCase();
+            int frequency = (freqIndex >= 0) ? cursor.getInt(freqIndex) : 1000;
+            _dictionary.put(word, frequency);
+            userCount++;
+          }
+
+          cursor.close();
+          android.util.Log.d("WordPredictor", "Loaded " + userCount + " user dictionary words");
+        }
+      }
+      catch (Exception e)
+      {
+        android.util.Log.e("WordPredictor", "Failed to load user dictionary", e);
+      }
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("WordPredictor", "Error loading custom/user words", e);
+    }
   }
   
   /**

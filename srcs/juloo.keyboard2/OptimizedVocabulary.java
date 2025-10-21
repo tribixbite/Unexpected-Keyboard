@@ -47,15 +47,19 @@ public class OptimizedVocabulary
   
   // Filtering thresholds
   private Map<Integer, Float> minFrequencyByLength;
-  
+
+  // Disabled words filter (for Dictionary Manager integration)
+  private Set<String> disabledWords;
+
   private boolean isLoaded = false;
   private Context context;
-  
+
   public OptimizedVocabulary(Context context)
   {
     this.context = context;
     this.vocabulary = new HashMap<>();
     this.minFrequencyByLength = new HashMap<>();
+    this.disabledWords = new HashSet<>();
   }
   
   /**
@@ -70,6 +74,12 @@ public class OptimizedVocabulary
 
       // OPTIMIZATION: Load vocabulary with fast-path sets built during loading
       loadWordFrequencies();
+
+      // Load custom words and user dictionary for beam search
+      loadCustomAndUserWords();
+
+      // Load disabled words to filter from predictions
+      loadDisabledWords();
 
       // Initialize minimum frequency thresholds by word length
       initializeFrequencyThresholds();
@@ -112,6 +122,12 @@ public class OptimizedVocabulary
       if (!word.matches("^[a-z]+$"))
       {
         continue;
+      }
+
+      // FILTER OUT DISABLED WORDS (Dictionary Manager integration)
+      if (disabledWords.contains(word))
+      {
+        continue; // Skip disabled words from beam search
       }
 
       // CRITICAL OPTIMIZATION: SINGLE hash lookup (was 3 lookups!)
@@ -387,6 +403,112 @@ public class OptimizedVocabulary
     }
   }
   
+  /**
+   * Load custom words and Android user dictionary into beam search vocabulary
+   * High frequency ensures they appear in predictions
+   */
+  private void loadCustomAndUserWords()
+  {
+    if (context == null) return;
+
+    try
+    {
+      android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+
+      // 1. Load custom words from SharedPreferences
+      String customWordsJson = prefs.getString("custom_words", "{}");
+      if (!customWordsJson.equals("{}"))
+      {
+        try
+        {
+          org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
+          java.util.Iterator<String> keys = jsonObj.keys();
+          int customCount = 0;
+          while (keys.hasNext())
+          {
+            String word = keys.next().toLowerCase();
+            int frequency = jsonObj.optInt(word, 1000);
+            // High priority for custom words (tier 1 = top5000)
+            float normalizedFreq = 1.0f / 100.0f; // Equivalent to top 100
+            vocabulary.put(word, new WordInfo(normalizedFreq, (byte)1));
+            customCount++;
+          }
+          Log.d(TAG, "Loaded " + customCount + " custom words into beam search");
+        }
+        catch (org.json.JSONException e)
+        {
+          Log.e(TAG, "Failed to parse custom words JSON", e);
+        }
+      }
+
+      // 2. Load Android user dictionary
+      try
+      {
+        android.database.Cursor cursor = context.getContentResolver().query(
+          android.provider.UserDictionary.Words.CONTENT_URI,
+          new String[]{
+            android.provider.UserDictionary.Words.WORD,
+            android.provider.UserDictionary.Words.FREQUENCY
+          },
+          null,
+          null,
+          null
+        );
+
+        if (cursor != null)
+        {
+          int wordIndex = cursor.getColumnIndex(android.provider.UserDictionary.Words.WORD);
+          int userCount = 0;
+
+          while (cursor.moveToNext())
+          {
+            String word = cursor.getString(wordIndex).toLowerCase();
+            // High priority for user dictionary (tier 1 = top5000)
+            float normalizedFreq = 1.0f / 100.0f; // Equivalent to top 100
+            vocabulary.put(word, new WordInfo(normalizedFreq, (byte)1));
+            userCount++;
+          }
+
+          cursor.close();
+          Log.d(TAG, "Loaded " + userCount + " user dictionary words into beam search");
+        }
+      }
+      catch (Exception e)
+      {
+        Log.e(TAG, "Failed to load user dictionary for beam search", e);
+      }
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Error loading custom/user words for beam search", e);
+    }
+  }
+
+  /**
+   * Load disabled words set for filtering beam search results
+   */
+  private void loadDisabledWords()
+  {
+    if (context == null)
+    {
+      disabledWords = new HashSet<>();
+      return;
+    }
+
+    try
+    {
+      android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+      Set<String> disabledSet = prefs.getStringSet("disabled_words", new HashSet<>());
+      disabledWords = new HashSet<>(disabledSet);
+      Log.d(TAG, "Loaded " + disabledWords.size() + " disabled words for beam search filtering");
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Failed to load disabled words", e);
+      disabledWords = new HashSet<>();
+    }
+  }
+
   /**
    * Vocabulary statistics
    */
