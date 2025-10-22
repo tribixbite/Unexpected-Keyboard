@@ -499,6 +499,14 @@ private static final float RARE_WORDS_PENALTY = 0.75f;  // Tier 0 (rest)
 
 ## Changelog
 
+### v1.32.198 (2025-10-22) - Raw Predictions Display
+
+- **FEATURE**: Added top 3 raw beam search predictions to UI
+- Shows closest neural network matches alongside filtered vocabulary results
+- Clean format without bracketed markers in UI
+- Only adds raw predictions if not already in filtered results
+- Provides transparency into neural network vs vocabulary filtering decisions
+
 ### 2025-10-21 - Initial Analysis
 
 - Documented complete swipe prediction pipeline
