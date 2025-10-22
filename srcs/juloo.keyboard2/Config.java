@@ -250,8 +250,12 @@ public final class Config
     autocorrect_max_beam_candidates = safeGetInt(_prefs, "autocorrect_max_beam_candidates", 3);
 
     // Swipe scoring weights (v1.33+: user-configurable tier/confidence/frequency system)
-    swipe_confidence_weight = _prefs.getFloat("swipe_confidence_weight", 0.6f);
-    swipe_frequency_weight = _prefs.getFloat("swipe_frequency_weight", 0.4f);
+    // Single slider "Prediction Source" (0-100) controls both confidence and frequency weights
+    // 0=Dictionary (conf=0.0, freq=1.0), 60=Balanced (conf=0.6, freq=0.4), 100=AI (conf=1.0, freq=0.0)
+    int predictionSource = safeGetInt(_prefs, "swipe_prediction_source", 60);
+    swipe_confidence_weight = predictionSource / 100.0f;
+    swipe_frequency_weight = 1.0f - swipe_confidence_weight;
+
     swipe_common_words_boost = _prefs.getFloat("swipe_common_words_boost", 1.3f);
     swipe_top5000_boost = _prefs.getFloat("swipe_top5000_boost", 1.0f);
     swipe_rare_words_penalty = _prefs.getFloat("swipe_rare_words_penalty", 0.75f);

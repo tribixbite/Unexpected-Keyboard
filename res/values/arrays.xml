@@ -110,4 +110,14 @@
     <item>50</item>
     <item>100</item>
   </string-array>
+  <string-array name="swipe_correction_preset_entries">
+    <item>Strict (High Accuracy)</item>
+    <item>Balanced (Default)</item>
+    <item>Lenient (Flexible)</item>
+  </string-array>
+  <string-array name="swipe_correction_preset_values">
+    <item>strict</item>
+    <item>balanced</item>
+    <item>lenient</item>
+  </string-array>
 </resources>
