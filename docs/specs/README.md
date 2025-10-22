@@ -15,30 +15,37 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
    - Tab-based interface with result counts
 
 2. **[Swipe Typing](SWIPE_PREDICTION_PIPELINE.md)** - Neural network-based swipe prediction system
-   - Complete pipeline: Input → Encoder → Beam Search → Vocabulary
+   - Complete pipeline: Input → Encoder → Beam Search → Vocabulary → Autocorrect
    - ONNX Runtime integration
    - Performance analysis and optimizations
-   - Raw/closest predictions display
+   - Enhanced debug logging (3-stage pipeline transparency)
 
 3. **[Beam Search & Vocabulary](BEAM_SEARCH_VOCABULARY.md)** - Vocabulary filtering and ranking system
    - 50k word vocabulary with frequency-based ranking
    - Hybrid frequency model (main + custom + user dictionaries)
    - Tier system for common word boosting
+   - Autocorrect for swipe (fuzzy matching custom words)
    - Prefix indexing for fast lookups
 
 ### User Input Features
 
-4. **[Swipe Symbols](SWIPE_SYMBOLS.md)** - Short swipe gestures for quick symbol access
+4. **[Typing Predictions](TYPING_PREDICTION.md)** - Prefix-based word prediction for regular typing
+   - Prefix matching with O(1) index lookup
+   - Context boost with bigram model (⚠️ not yet validated)
+   - Logarithmic frequency scaling
+   - User-configurable weights (context boost, frequency scale)
+
+5. **[Swipe Symbols](SWIPE_SYMBOLS.md)** - Short swipe gestures for quick symbol access
    - 8-directional swipe detection
    - 17 two-letter word shortcuts
    - Hit zone configuration
    - Debug logging system
 
-5. **[Auto-Correction](AUTO_CORRECTION.md)** - Fuzzy matching and auto-correction
-   - Edit distance algorithms
-   - Capitalization preservation
-   - Context-aware correction
-   - User-controllable weights
+6. **[Auto-Correction](AUTO_CORRECTION.md)** - Fuzzy matching and auto-correction (typing + swipe)
+   - Typing autocorrect: Edit distance with capitalization preservation
+   - Swipe autocorrect: Custom words fuzzy matched against beam candidates
+   - Shared configuration (char match threshold)
+   - Future: User-configurable fuzzy matching params (v1.33+)
 
 ---
 
@@ -51,9 +58,10 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 - See [memory/pm.md](../../memory/pm.md) for project management and current status
 
 **Prediction System:**
-1. [SWIPE_PREDICTION_PIPELINE.md](SWIPE_PREDICTION_PIPELINE.md) - Overall pipeline architecture
-2. [BEAM_SEARCH_VOCABULARY.md](BEAM_SEARCH_VOCABULARY.md) - Vocabulary and ranking details
-3. [AUTO_CORRECTION.md](AUTO_CORRECTION.md) - Typing auto-correction
+1. [SWIPE_PREDICTION_PIPELINE.md](SWIPE_PREDICTION_PIPELINE.md) - Swipe prediction pipeline (neural network)
+2. [BEAM_SEARCH_VOCABULARY.md](BEAM_SEARCH_VOCABULARY.md) - Vocabulary filtering and autocorrect for swipe
+3. [TYPING_PREDICTION.md](TYPING_PREDICTION.md) - Typing prediction system (prefix matching)
+4. [AUTO_CORRECTION.md](AUTO_CORRECTION.md) - Auto-correction (typing + swipe modes)
 
 **User Input:**
 1. [SWIPE_SYMBOLS.md](SWIPE_SYMBOLS.md) - Swipe gesture shortcuts
@@ -67,7 +75,9 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 
 **Understanding Predictions:**
 - [SWIPE_PREDICTION_PIPELINE.md](SWIPE_PREDICTION_PIPELINE.md#pipeline-architecture) - How swipe predictions work
+- [TYPING_PREDICTION.md](TYPING_PREDICTION.md#scoring-algorithm) - How typing predictions work
 - [BEAM_SEARCH_VOCABULARY.md](BEAM_SEARCH_VOCABULARY.md#scoring-algorithm) - How words are ranked
+- [AUTO_CORRECTION.md](AUTO_CORRECTION.md#swipe-autocorrect-v13207) - How autocorrect works
 
 ---
 
@@ -76,10 +86,11 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 | Feature | Status | Version | Notes |
 |---------|--------|---------|-------|
 | Dictionary Manager | ✅ Complete | v1.32.200 | Tab counts, instant search |
-| Swipe Prediction | ✅ Complete | v1.32.198 | Raw/closest predictions |
-| Beam Search | ✅ Complete | v1.32.183 | 50k vocabulary, prefix indexing |
+| Swipe Prediction | ✅ Complete | v1.32.207 | Autocorrect + debug logging |
+| Beam Search | ✅ Complete | v1.32.207 | 50k vocab, autocorrect, prefix indexing |
+| Typing Prediction | ⚠️ Partial | v1.0 | Implemented, bigram not validated |
 | Swipe Symbols | ✅ Complete | v1.32.133 | 17 word shortcuts |
-| Auto-Correction | ✅ Complete | v1.32.121 | Fuzzy matching |
+| Auto-Correction | ✅ Complete | v1.32.207 | Typing + swipe modes |
 | Neural Network | ✅ Complete | v1.20.0 | ONNX Runtime 1.20.0 |
 
 ---
