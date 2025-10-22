@@ -9,11 +9,29 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.197 (246)
-**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager System Freeze Fix
+**Latest Version**: v1.32.198 (247)
+**Build Status**: ✅ BUILD SUCCESSFUL - Raw/Closest Predictions Restored
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.197)
+### Recent Work (v1.32.198)
+
+**Raw/Closest Predictions Restored**
+- **Issue**: v1.32.194 removed raw predictions from UI (made them log-only)
+- **Impact**: Horizontal scroll bar had nothing extra to show, users couldn't see NN's actual predictions
+- **Fix**: Re-added top 3 raw beam search predictions to UI
+  - Shows what neural network actually predicted vs vocabulary filtering
+  - Clean format: just the words, no bracketed markers in UI
+  - Only added if not already in filtered results
+  - Scored based on NN confidence (0-1000 range)
+- **Example**:
+  - Filtered: "hello" (vocab-validated, frequency boosted)
+  - Raw/Closest: "helo", "hallo" (NN predicted, may be filtered by vocab)
+- **Impact**: Users can now see all predictions, horizontal scroll works properly
+- **Files**: OnnxSwipePredictor.java
+
+**Previous (v1.32.197)**: Dictionary Manager System Freeze Fix
+
+### Previous Work (v1.32.197)
 
 **Dictionary Manager System Freeze Fix - AsyncListDiffer + Coroutine Cancellation**
 - **Root Cause Analysis**: Complete system freeze when typing in Dictionary Manager search
