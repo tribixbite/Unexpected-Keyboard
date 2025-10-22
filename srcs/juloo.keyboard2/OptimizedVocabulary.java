@@ -38,12 +38,12 @@ public class OptimizedVocabulary
     }
   }
   
-  // Scoring parameters (from web app)
+  // Scoring parameters (tuned for 50k vocabulary)
   private static final float CONFIDENCE_WEIGHT = 0.6f;
   private static final float FREQUENCY_WEIGHT = 0.4f;
-  private static final float COMMON_WORDS_BOOST = 1.2f;
+  private static final float COMMON_WORDS_BOOST = 1.3f;  // Increased for 50k vocab
   private static final float TOP5000_BOOST = 1.0f;
-  private static final float RARE_WORDS_PENALTY = 0.9f;
+  private static final float RARE_WORDS_PENALTY = 0.75f; // Strengthened for 50k vocab
   
   // Filtering thresholds
   private Map<Integer, Float> minFrequencyByLength;
@@ -248,11 +248,12 @@ public class OptimizedVocabulary
         float frequency = (rawFreq - 128) / 127.0f;
 
         // Determine tier based on sorted position
+        // Tightened thresholds for 50k vocabulary (was top 5000, now top 3000)
         byte tier;
         if (i < 100) {
           tier = 2; // common (top 100)
-        } else if (i < 5000) {
-          tier = 1; // top5000
+        } else if (i < 3000) {
+          tier = 1; // top3000 (6% of 50k vocab)
         } else {
           tier = 0; // regular
         }
@@ -573,14 +574,15 @@ public class OptimizedVocabulary
           while (cursor.moveToNext())
           {
             String word = cursor.getString(wordIndex).toLowerCase();
-            // UserDictionary words have standard frequency of 250
-            int frequency = 250;
+            // User dictionary words should rank HIGH - user explicitly added them
+            // CRITICAL: Previous value (250 → 0.025) ranked user words at position 48,736!
+            int frequency = 9000;
 
-            // Normalize to 0-1 range (~0.025)
+            // Normalize to 0-1 range (~0.90)
             float normalizedFreq = Math.max(0.0f, (float)(frequency - 1) / 9999.0f);
 
-            // Assign tier 1 to ensure prioritization
-            byte tier = 1;
+            // Assign tier 2 (common boost) - user words are important
+            byte tier = 2;
 
             vocabulary.put(word, new WordInfo(normalizedFreq, tier));
             userCount++;

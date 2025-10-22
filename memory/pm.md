@@ -9,13 +9,27 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.183 (232)
-**Build Status**: ✅ BUILD SUCCESSFUL - Beam Search Scoring Fixed + Hybrid Frequencies
+**Latest Version**: v1.32.184 (233)
+**Build Status**: ✅ BUILD SUCCESSFUL - Vocabulary Scaling Fixes + Comprehensive Specs
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.183)
+### Recent Work (v1.32.184)
 
-**CRITICAL: Fixed Beam Search Scoring Bug + Hybrid Frequency Model**
+**CRITICAL: 50k Vocabulary Scaling Fixes + Comprehensive Documentation**
+- **User Dict CRITICAL Fix**: freq 250 → 9000, tier 1 → tier 2 (was ranked at position 48,736 out of 50k!)
+- **Rare Words**: Penalty 0.9x → 0.75x (strengthened for 50k vocab)
+- **Common Boost**: 1.2x → 1.3x (increased for 50k vocab)
+- **Tier 1 Threshold**: 5000 → 3000 (tightened: 6% of vocab instead of 10%)
+- **Performance WARNING**: WordPredictor iterates ALL 50k words on every keystroke (5x slower than 10k)
+  - TODO added for prefix indexing implementation (would provide 100x speedup)
+- **Documentation**: Created comprehensive `docs/specs/BEAM_SEARCH_VOCABULARY.md`
+  - All constants with rationale
+  - Memory/performance analysis (7MB, 265-530ms load)
+  - Scaling considerations and future enhancements
+- **Documentation**: Updated `docs/specs/DICTIONARY_MANAGER.md` with 50k vocabulary details
+- **Impact**: User dictionary words now rank correctly, better filtering, comprehensive specs for future scaling
+
+**Previous (v1.32.183)**: Fixed Beam Search Scoring Bug + Hybrid Frequency Model
 - **Bug Fixed**: Scoring formula was inverted - rare words scored higher than common words!
 - **Root Cause**: `log10(frequency) / -10.0` inverted the 0-1 normalized frequency
 - **Fix**: Use frequency directly (already normalized 0-1 by loading code)

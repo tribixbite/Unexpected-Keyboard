@@ -4,9 +4,40 @@ Complete version history with detailed technical documentation.
 
 ---
 
-## v1.32.179-183 - Enhanced Dictionary & Frequency Control (2025-10-21)
+## v1.32.179-184 - Enhanced Dictionary & Frequency Control (2025-10-21)
 
 ### 50k Dictionary Upgrade with Real Frequency Data
+
+**v1.32.184** (233) - ✅ BUILD SUCCESSFUL - 50k Vocabulary Scaling Fixes
+- fix(beam-search): CRITICAL - user dictionary words ranked at position 48,736
+  - Changed user dict frequency: 250 → 9000 (normalized 0.025 → 0.90)
+  - Changed user dict tier: 1 → 2 (common boost instead of top5000)
+  - User explicitly added these words - should rank in top 10%, not bottom 3%!
+- fix(beam-search): strengthen rare words penalty for 50k vocabulary
+  - Changed RARE_WORDS_PENALTY: 0.9 → 0.75 (10% → 25% penalty)
+  - With 46k tier 0 words, 10% penalty too weak to filter obscure words
+- feat(beam-search): increase common words boost for 50k vocabulary
+  - Changed COMMON_WORDS_BOOST: 1.2 → 1.3 (20% → 30% boost)
+  - Helps common words compete better in larger vocabulary
+- feat(beam-search): tighten tier 1 threshold for 50k vocabulary
+  - Changed tier 1 threshold: 5000 → 3000 (10% → 6% of vocabulary)
+  - Top 10% too broad for 50k words, 6% better represents "common but not top 100"
+- perf(typing): add TODO for prefix indexing in WordPredictor
+  - WARNING: Iterates ALL 50,131 words on every keystroke (5x slower than 10k)
+  - Prefix indexing would reduce iterations from 50k → ~200 (100x speedup)
+  - Critical for future scaling, acceptable for now
+- docs(specs): create comprehensive BEAM_SEARCH_VOCABULARY.md specification
+  - All constants with rationale and scaling analysis
+  - Memory usage: 7 MB (acceptable for modern devices)
+  - Loading time: 265-530ms (one-time startup cost)
+  - Performance targets and known issues
+  - Future enhancements (prefix indexing, binary format, adaptive tiers)
+- docs(specs): update DICTIONARY_MANAGER.md for 50k vocabulary
+  - Updated dictionary size: 10k+ → 50k+
+  - Updated MainDictionarySource with JSON format details
+  - Updated DictionaryWord frequency ranges by source
+  - Added changelog for 50k upgrade
+- **Files**: OptimizedVocabulary.java (42-46, 252-258, 573-588), WordPredictor.java (456-459)
 
 **v1.32.183** (232) - ✅ BUILD SUCCESSFUL - CRITICAL: Fixed Beam Search Scoring Bug
 - fix(beam-search): correct inverted frequency scoring formula

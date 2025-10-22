@@ -33,7 +33,7 @@ The Dictionary Manager provides a comprehensive UI for managing dictionary words
 - Enable users to disable problematic words without deleting them
 - Allow custom word additions with frequency control
 - Integrate with Android's system UserDictionary
-- Maintain high performance with large dictionaries (10k+ words)
+- Maintain high performance with large dictionaries (50k+ words)
 
 ### Non-Goals
 
@@ -192,9 +192,19 @@ RecyclerView updates
 
 ### 1. MainDictionarySource
 
-**Purpose**: Read-only access to main BigramModel dictionary
+**Purpose**: Read-only access to main dictionary (50k words with real frequencies)
 
-**Data Source**: `BigramModel.getAllWords()` + `BigramModel.getWordFrequency()`
+**Data Source**: `assets/dictionaries/en_enhanced.json`
+
+**Format**: JSON object
+```json
+{"the": 255, "of": 254, "to": 254, "and": 254, ...}
+```
+
+**Statistics**:
+- **Word Count**: 49,981
+- **File Size**: 789 KB
+- **Frequency Range**: 128-255 (raw values displayed in UI)
 
 **Operations**:
 - `getAllWords()`: Returns List<DictionaryWord> with WordSource.MAIN
@@ -203,7 +213,10 @@ RecyclerView updates
 
 **Notes**:
 - Words are marked disabled based on DisabledDictionarySource
-- Frequency from BigramModel (probability * 1000)
+- Frequencies displayed as-is (128-255) in Dictionary Manager UI
+- Internal prediction engines scale frequencies for scoring:
+  - WordPredictor: 128-255 → 100-10000
+  - OptimizedVocabulary: 128-255 → 0.0-1.0
 
 ### 2. DisabledDictionarySource
 
@@ -335,11 +348,16 @@ RecyclerView updates
 ```kotlin
 data class DictionaryWord(
     val word: String,           // The word text
-    val frequency: Int = 0,     // 0-1000 scale
+    val frequency: Int = 0,     // Frequency range varies by source
     val source: WordSource,     // MAIN/USER/CUSTOM
     val enabled: Boolean = true // Disabled state
 ) : Comparable<DictionaryWord>
 ```
+
+**Frequency Ranges by Source**:
+- **MAIN**: 128-255 (raw values from JSON dictionary)
+- **USER**: Typically 250 (Android UserDictionary default)
+- **CUSTOM**: 1-10000 (user-editable, default 100)
 
 **Sorting**: By frequency descending, then alphabetically
 
@@ -724,6 +742,17 @@ AndroidManifest.xml                  # Activity + permission
 ---
 
 ## Changelog
+
+### v1.32.181-184 (2025-10-21)
+- **MAJOR**: Upgraded main dictionary from 10k to 50k words with real frequencies
+- Dictionary source changed from BigramModel to JSON (assets/dictionaries/en_enhanced.json)
+- Frequency range changed: probability*1000 (0-1000) → raw values (128-255)
+- Added editable frequency for custom words (default 100, range 1-10000)
+- Display raw frequency values in UI (128-255 for main, 1-10000 for custom)
+- Internal scoring engines scale frequencies appropriately:
+  - WordPredictor: 128-255 → 100-10000
+  - OptimizedVocabulary: 128-255 → 0.0-1.0
+- Updated spec to reflect 50k vocabulary scaling
 
 ### v1.32.157 (2025-10-20)
 - Initial implementation

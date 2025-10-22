@@ -453,6 +453,9 @@ public class WordPredictor
     int maxPredictions = MAX_PREDICTIONS_TYPING;
 
     // Find all words that could match the typed prefix
+    // TODO: CRITICAL PERFORMANCE - Iterates ALL 50,131 words on EVERY keystroke!
+    // Should implement prefix indexing: Map<String, Set<String>> for 100x speedup
+    // Example: "th" → {"the", "that", "there", ...} reduces 50k iterations to ~200
     for (Map.Entry<String, Integer> entry : _dictionary.entrySet())
     {
       String word = entry.getKey();
