@@ -116,12 +116,20 @@ public class OptimizedVocabulary
     // Enable debug mode if user has enabled "Detailed Pipeline Logging" in settings
     boolean debugMode = android.util.Log.isLoggable(TAG, android.util.Log.DEBUG);
 
-    // v1.33+: Load configurable scoring weights from preferences
+    // v1.33+: Load ALL configurable parameters from preferences (OPTIMIZED: read once per swipe)
     float confidenceWeight = CONFIDENCE_WEIGHT;  // default
     float frequencyWeight = FREQUENCY_WEIGHT;    // default
     float commonBoost = COMMON_WORDS_BOOST;      // default
     float top5000Boost = TOP5000_BOOST;          // default
     float rarePenalty = RARE_WORDS_PENALTY;      // default
+
+    // Autocorrect configuration (v1.33+: optimized to load once instead of inside loop)
+    boolean swipeAutocorrectEnabled = true;  // default
+    int maxLengthDiff = 2;
+    int prefixLength = 2;
+    int maxBeamCandidates = 3;
+    int minWordLength = 3;
+    float charMatchThreshold = 0.67f;
 
     if (context != null)
     {
@@ -136,6 +144,14 @@ public class OptimizedVocabulary
         commonBoost = prefs.getFloat("swipe_common_words_boost", COMMON_WORDS_BOOST);
         top5000Boost = prefs.getFloat("swipe_top5000_boost", TOP5000_BOOST);
         rarePenalty = prefs.getFloat("swipe_rare_words_penalty", RARE_WORDS_PENALTY);
+
+        // Read autocorrect configuration (v1.33+: separate from typing autocorrect)
+        swipeAutocorrectEnabled = prefs.getBoolean("swipe_autocorrect_enabled", true);
+        maxLengthDiff = prefs.getInt("autocorrect_max_length_diff", 2);
+        prefixLength = prefs.getInt("autocorrect_prefix_length", 2);
+        maxBeamCandidates = prefs.getInt("autocorrect_max_beam_candidates", 3);
+        minWordLength = prefs.getInt("autocorrect_min_word_length", 3);
+        charMatchThreshold = prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
       }
       catch (Exception e)
       {
@@ -242,71 +258,60 @@ public class OptimizedVocabulary
 
     // AUTOCORRECT FOR SWIPE: Fuzzy match top beam candidates against custom words
     // This allows "parametrek" (custom) to match "parameters" (beam output)
-    if (context != null && !validPredictions.isEmpty())
+    // v1.33+: OPTIMIZED - uses pre-loaded config from top of method (no redundant prefs reads)
+    if (swipeAutocorrectEnabled && context != null && !validPredictions.isEmpty())
     {
       try
       {
         android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
-        boolean autocorrectEnabled = prefs.getBoolean("autocorrect_enabled", true);
-        float charMatchThreshold = prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
-
-        // v1.33+: Configurable fuzzy matching parameters
-        int maxLengthDiff = prefs.getInt("autocorrect_max_length_diff", 2);
-        int prefixLength = prefs.getInt("autocorrect_prefix_length", 2);
-        int maxBeamCandidates = prefs.getInt("autocorrect_max_beam_candidates", 3);
-        int minWordLength = prefs.getInt("autocorrect_min_word_length", 3);
-
-        if (autocorrectEnabled)
+        // Get custom words (only SharedPreferences read in autocorrect block now)
+        String customWordsJson = prefs.getString("custom_words", "{}");
+        if (!customWordsJson.equals("{}"))
         {
-          // Get custom words
-          String customWordsJson = prefs.getString("custom_words", "{}");
-          if (!customWordsJson.equals("{}"))
+          org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
+          java.util.Iterator<String> keys = jsonObj.keys();
+
+          // For each custom word, check if it fuzzy matches any top beam candidate
+          while (keys.hasNext())
           {
-            org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
-            java.util.Iterator<String> keys = jsonObj.keys();
+            String customWord = keys.next().toLowerCase();
+            int customFreq = jsonObj.optInt(customWord, 1000);
 
-            // For each custom word, check if it fuzzy matches any top beam candidate
-            while (keys.hasNext())
+            // Check top N beam candidates for fuzzy match (v1.33+: uses pre-loaded maxBeamCandidates)
+            for (int i = 0; i < Math.min(maxBeamCandidates, validPredictions.size()); i++)
             {
-              String customWord = keys.next().toLowerCase();
-              int customFreq = jsonObj.optInt(customWord, 1000);
+              String beamWord = validPredictions.get(i).word;
 
-              // Check top N beam candidates for fuzzy match (v1.33+: configurable)
-              for (int i = 0; i < Math.min(maxBeamCandidates, validPredictions.size()); i++)
+              // v1.33+: Configurable fuzzy matching (uses pre-loaded params)
+              if (fuzzyMatch(customWord, beamWord, charMatchThreshold, maxLengthDiff, prefixLength, minWordLength))
               {
-                String beamWord = validPredictions.get(i).word;
+                // Add custom word as autocorrect suggestion
+                float normalizedFreq = Math.max(0.0f, (float)(customFreq - 1) / 9999.0f);
+                byte tier = (customFreq >= 8000) ? (byte)2 : (byte)1;
+                // v1.33+: Use configurable boost values
+                float boost = (tier == 2) ? commonBoost : top5000Boost;
 
-                // v1.33+: Configurable fuzzy matching (length diff + prefix + char match)
-                if (fuzzyMatch(customWord, beamWord, charMatchThreshold, maxLengthDiff, prefixLength, minWordLength))
+                // Use beam candidate's confidence for scoring
+                float confidence = validPredictions.get(i).confidence;
+                // v1.33+: Pass configurable weights to scoring function
+                float score = calculateCombinedScore(confidence, normalizedFreq, boost, confidenceWeight, frequencyWeight);
+
+                validPredictions.add(new FilteredPrediction(customWord, score, confidence, normalizedFreq, "autocorrect"));
+
+                if (debugMode)
                 {
-                  // Add custom word as autocorrect suggestion
-                  float normalizedFreq = Math.max(0.0f, (float)(customFreq - 1) / 9999.0f);
-                  byte tier = (customFreq >= 8000) ? (byte)2 : (byte)1;
-                  // v1.33+: Use configurable boost values
-                  float boost = (tier == 2) ? commonBoost : top5000Boost;
-
-                  // Use beam candidate's confidence for scoring
-                  float confidence = validPredictions.get(i).confidence;
-                  // v1.33+: Pass configurable weights to scoring function
-                  float score = calculateCombinedScore(confidence, normalizedFreq, boost, confidenceWeight, frequencyWeight);
-
-                  validPredictions.add(new FilteredPrediction(customWord, score, confidence, normalizedFreq, "autocorrect"));
-
-                  if (debugMode)
-                  {
-                    String matchMsg = String.format("🔄 AUTOCORRECT: \"%s\" (custom) matches \"%s\" (beam) → added with score=%.4f\n",
-                      customWord, beamWord, score);
-                    Log.d(TAG, matchMsg);
-                    sendDebugLog(matchMsg);
-                  }
-                  break; // Only match once per custom word
+                  String matchMsg = String.format("🔄 AUTOCORRECT: \"%s\" (custom) matches \"%s\" (beam) → added with score=%.4f\n",
+                    customWord, beamWord, score);
+                  Log.d(TAG, matchMsg);
+                  sendDebugLog(matchMsg);
                 }
+                break; // Only match once per custom word
               }
             }
-
-            // Re-sort after adding autocorrect suggestions
-            validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
           }
+
+          // Re-sort after adding autocorrect suggestions
+          validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
         }
       }
       catch (Exception e)
