@@ -9,11 +9,51 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.207 (256)
-**Build Status**: ✅ BUILD SUCCESSFUL - Autocorrect for Swipe + Enhanced Debug Logging
+**Latest Version**: v1.32.211 (260)
+**Build Status**: ✅ BUILD SUCCESSFUL - Configurable Fuzzy Matching + Scoring Weights
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.207)
+### Recent Work (v1.32.211)
+
+**Configurable Scoring System - User-Adjustable Tier/Confidence/Frequency Weights**
+- **Feature**: All swipe scoring weights now user-configurable (were hardcoded)
+- **New Settings (Config.java)**:
+  - `swipe_confidence_weight` (default: 0.6) - How much NN confidence matters vs frequency
+  - `swipe_frequency_weight` (default: 0.4) - How much dictionary frequency matters
+  - `swipe_common_words_boost` (default: 1.3) - Tier 2 boost for top 100 common words
+  - `swipe_top5000_boost` (default: 1.0) - Tier 1 boost for top 3000 words
+  - `swipe_rare_words_penalty` (default: 0.75) - Tier 0 penalty for rare words
+- **Scoring Formula** (now fully configurable):
+  ```
+  score = (confidenceWeight × NN_confidence + frequencyWeight × dict_frequency) × tierBoost
+  ```
+- **Use Cases**:
+  - Trust NN more → increase confidence_weight to 0.8
+  - Prefer dictionary → increase frequency_weight to 0.5
+  - Boost common words more → increase common_words_boost to 1.5
+- **Implementation**: Updated calculateCombinedScore() to accept weights as parameters
+- **Files**: Config.java, OptimizedVocabulary.java
+
+**Previous (v1.32.210)**: Configurable Fuzzy Matching
+
+### Previous Work (v1.32.210)
+
+**Configurable Fuzzy Matching - Remove Same-Length Requirement**
+- **Issue**: Strict same-length requirement prevented "parametrek" from matching "parameter"
+- **Feature**: All fuzzy matching parameters now user-configurable
+- **New Settings (Config.java)**:
+  - `autocorrect_max_length_diff` (default: 2) - Allow ±2 char length differences
+  - `autocorrect_prefix_length` (default: 2) - How many prefix chars must match
+  - `autocorrect_max_beam_candidates` (default: 3) - How many beam candidates to check
+- **Match Ratio Calculation**: Changed to use shorter word length as denominator
+  - Example: "parametrek" (10) vs "parameter" (9) → 9/9 = 100% match
+  - Previously: Required exact length match (10 ≠ 9 = rejected)
+- **Impact**: Custom words with spelling variations can now match beam search output
+- **Files**: Config.java, OptimizedVocabulary.java (fuzzyMatch method)
+
+**Previous (v1.32.207)**: Autocorrect for Swipe
+
+### Previous Work (v1.32.207)
 
 **Autocorrect for Swipe - Fuzzy Matching Custom Words**
 - **Feature**: Autocorrect now applies to swipe beam search, not just typing
