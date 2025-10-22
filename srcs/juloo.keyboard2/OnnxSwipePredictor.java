@@ -1250,18 +1250,35 @@ public class OnnxSwipePredictor
       }
     }
 
-    // DEBUG MODE: Always show at least 2 predictions to help debugging
-    // If filtering eliminated all predictions but we have candidates, show top 2 raw outputs
-    if (words.isEmpty() && !candidates.isEmpty() && _config != null && _config.swipe_debug_show_raw_output)
+    // DEBUG MODE: Show raw neural network outputs alongside threshold-filtered predictions
+    // This helps users understand what the NN predicted vs what threshold filtering did
+    if (_config != null && _config.swipe_debug_show_raw_output && !candidates.isEmpty())
     {
-      int numToShow = Math.min(2, candidates.size());
+      // Always show top 3 raw beam search outputs
+      int numToShow = Math.min(3, candidates.size());
       for (int i = 0; i < numToShow; i++)
       {
         BeamSearchCandidate candidate = candidates.get(i);
-        words.add(candidate.word + " [raw:" + String.format("%.2f", candidate.confidence) + "]");
+        // Check if this word is already in filtered results
+        boolean alreadyFiltered = false;
+        for (String word : words) {
+          if (word.equalsIgnoreCase(candidate.word)) {
+            alreadyFiltered = true;
+            break;
+          }
+        }
+
+        // Add with marker to distinguish raw vs filtered
+        if (alreadyFiltered) {
+          // Word was kept by threshold - show with [raw] marker for comparison
+          words.add(candidate.word + " [raw:" + String.format("%.2f", candidate.confidence) + "]");
+        } else {
+          // Word was below threshold - show with [closest] marker
+          words.add(candidate.word + " [closest:" + String.format("%.2f", candidate.confidence) + "]");
+        }
         scores.add((int)(candidate.confidence * 1000));
       }
-      logDebug("⚠️ No predictions above threshold - showing " + numToShow + " raw outputs for debugging");
+      logDebug("🔍 Debug mode: showing " + numToShow + " raw beam search outputs");
     }
 
     // logDebug("📊 Raw predictions: " + candidates.size() + " total, " + words.size() + " above threshold");
@@ -1295,18 +1312,35 @@ public class OnnxSwipePredictor
       scores.add((int)(pred.score * 1000)); // Convert combined score to 0-1000 range
     }
 
-    // DEBUG MODE: Always show at least 2 predictions to help debugging
-    // If filtering eliminated all predictions but we have candidates, show top 2 raw outputs
-    if (words.isEmpty() && !candidates.isEmpty() && _config != null && _config.swipe_debug_show_raw_output)
+    // DEBUG MODE: Show raw neural network outputs alongside filtered predictions
+    // This helps users understand what the NN predicted vs what vocabulary filtering did
+    if (_config != null && _config.swipe_debug_show_raw_output && !candidates.isEmpty())
     {
-      int numToShow = Math.min(2, candidates.size());
+      // Always show top 3 raw beam search outputs (even if vocabulary kept them)
+      int numToShow = Math.min(3, candidates.size());
       for (int i = 0; i < numToShow; i++)
       {
         BeamSearchCandidate candidate = candidates.get(i);
-        words.add(candidate.word + " [raw:" + String.format("%.2f", candidate.confidence) + "]");
+        // Check if this word is already in filtered results
+        boolean alreadyFiltered = false;
+        for (String word : words) {
+          if (word.equalsIgnoreCase(candidate.word)) {
+            alreadyFiltered = true;
+            break;
+          }
+        }
+
+        // Add with marker to distinguish raw vs filtered
+        if (alreadyFiltered) {
+          // Word was kept by vocab filter - show with [raw] marker for comparison
+          words.add(candidate.word + " [raw:" + String.format("%.2f", candidate.confidence) + "]");
+        } else {
+          // Word was filtered out - show with [closest] marker
+          words.add(candidate.word + " [closest:" + String.format("%.2f", candidate.confidence) + "]");
+        }
         scores.add((int)(candidate.confidence * 1000));
       }
-      logDebug("⚠️ No predictions after vocabulary filtering - showing " + numToShow + " raw outputs for debugging");
+      logDebug("🔍 Debug mode: showing " + numToShow + " raw beam search outputs");
     }
 
     // logDebug("📊 Optimized predictions: " + candidates.size() + " raw → " + filtered.size() + " filtered");

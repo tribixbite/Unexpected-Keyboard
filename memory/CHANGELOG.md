@@ -4,6 +4,30 @@ Complete version history with detailed technical documentation.
 
 ---
 
+## v1.32.192 - Swipe Prediction Pipeline Analysis + Raw/Closest Display (2025-10-22)
+
+**v1.32.192** (241) - ✅ BUILD SUCCESSFUL - Prediction Display Improvements
+- feat(swipe): always show raw beam search + closest predictions in debug mode
+  - **Before**: Raw outputs only shown when ALL predictions filtered out
+  - **After**: Always shows top 3 raw beam search outputs alongside filtered predictions
+  - Added "[raw:X.XX]" marker for words kept by vocabulary
+  - Added "[closest:X.XX]" marker for words filtered out (closest NN predictions)
+  - **Impact**: Users can now see what neural network predicted vs vocabulary filtering
+- docs(swipe): create comprehensive SWIPE_PREDICTION_PIPELINE.md analysis
+  - Complete end-to-end pipeline documentation: Input → Encoder → Beam Search → Vocab Filter → Display
+  - Identified 3 issues with prediction transparency
+  - Performance analysis: 30-75ms total (target <100ms ✅)
+  - Memory usage: ~15 MB total (acceptable ✅)
+  - Test cases and recommendations for improvements
+  - **Example Display**:
+    ```
+    Filtered: hello (975)
+    Raw/Closest: helo [closest:0.92], hello [raw:0.85]
+    ```
+- **Files**: OnnxSwipePredictor.java (createPredictionResult, createOptimizedPredictionResult), docs/specs/SWIPE_PREDICTION_PIPELINE.md
+
+---
+
 ## v1.32.191 - Dictionary Manager Performance Fixes (2025-10-21)
 
 **v1.32.191** (240) - ✅ BUILD SUCCESSFUL - Dictionary Manager Bug Fixes

@@ -7,13 +7,38 @@
 
 ---
 
-## 🔥 Current Status (2025-10-21)
+## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.191 (240)
-**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Performance Fixes
+**Latest Version**: v1.32.192 (241)
+**Build Status**: ✅ BUILD SUCCESSFUL - Swipe Prediction Pipeline Analysis + Improvements
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.191)
+### Recent Work (v1.32.192)
+
+**Swipe Prediction Pipeline Analysis + Raw/Closest Display**
+- **Pipeline Documentation**: Created comprehensive `docs/specs/SWIPE_PREDICTION_PIPELINE.md`
+  - Complete end-to-end analysis: Input → Encoder → Beam Search → Vocab Filter → Display
+  - Identified 3 issues with prediction transparency
+  - Performance breakdown: 30-75ms total (target <100ms ✅)
+  - Memory usage: ~15 MB total (acceptable ✅)
+  - Test cases for common words, typos, and uncommon terms
+  - Recommendations for future improvements
+- **Raw/Closest Predictions Display**: Fixed debug mode to always show beam search outputs
+  - **Before**: Raw NN outputs only shown when ALL predictions filtered out
+  - **After**: Always shows top 3 raw beam search outputs alongside filtered predictions
+  - **Markers**: `[raw:X.XX]` for words kept by vocab, `[closest:X.XX]` for words filtered out
+  - **Impact**: Users can now see what neural network predicted vs vocabulary filtering
+  - **Example**:
+    ```
+    Filtered predictions: hello (975)
+    Raw/Closest: helo [closest:0.92], hello [raw:0.85]
+    ```
+  - Helps debug "why didn't my swipe predict X?" questions
+  - Shows when vocabulary corrects NN typo predictions
+  - Reveals when NN predicts uncommon words correctly but vocab filters them
+- **Files**: OnnxSwipePredictor.java, docs/specs/SWIPE_PREDICTION_PIPELINE.md
+
+**Previous (v1.32.191)**: Dictionary Manager Bug Fixes
 
 **Dictionary Manager Bug Fixes - Search Performance + UI Fixes**
 - **Search Performance**: Fixed search lag by using prefix indexing
