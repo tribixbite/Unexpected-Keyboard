@@ -233,6 +233,12 @@ public class OptimizedVocabulary
         boolean autocorrectEnabled = prefs.getBoolean("autocorrect_enabled", true);
         float charMatchThreshold = prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
 
+        // v1.33+: Configurable fuzzy matching parameters
+        int maxLengthDiff = prefs.getInt("autocorrect_max_length_diff", 2);
+        int prefixLength = prefs.getInt("autocorrect_prefix_length", 2);
+        int maxBeamCandidates = prefs.getInt("autocorrect_max_beam_candidates", 3);
+        int minWordLength = prefs.getInt("autocorrect_min_word_length", 3);
+
         if (autocorrectEnabled)
         {
           // Get custom words
@@ -248,13 +254,13 @@ public class OptimizedVocabulary
               String customWord = keys.next().toLowerCase();
               int customFreq = jsonObj.optInt(customWord, 1000);
 
-              // Check top 3 beam candidates for fuzzy match
-              for (int i = 0; i < Math.min(3, validPredictions.size()); i++)
+              // Check top N beam candidates for fuzzy match (v1.33+: configurable)
+              for (int i = 0; i < Math.min(maxBeamCandidates, validPredictions.size()); i++)
               {
                 String beamWord = validPredictions.get(i).word;
 
-                // Same length + same first 2 chars + 66% char match
-                if (fuzzyMatch(customWord, beamWord, charMatchThreshold))
+                // v1.33+: Configurable fuzzy matching (length diff + prefix + char match)
+                if (fuzzyMatch(customWord, beamWord, charMatchThreshold, maxLengthDiff, prefixLength, minWordLength))
                 {
                   // Add custom word as autocorrect suggestion
                   float normalizedFreq = Math.max(0.0f, (float)(customFreq - 1) / 9999.0f);
@@ -484,20 +490,41 @@ public class OptimizedVocabulary
    * Get minimum frequency threshold for word length
    */
   /**
-   * Fuzzy match two words using autocorrect criteria:
-   * - Same length
-   * - Same first 2 characters
-   * - At least X% of characters match (default 66%)
+   * Fuzzy match two words using autocorrect criteria (v1.33+: configurable):
+   * - Length difference within threshold (default: ±2)
+   * - Same first N characters (default: 2)
+   * - At least X% of characters match (default 67%)
+   *
+   * @param word1 First word to compare
+   * @param word2 Second word to compare
+   * @param charMatchThreshold Required character match ratio (0.0-1.0)
+   * @param maxLengthDiff Maximum allowed length difference (e.g., 2 allows "parameter" vs "parametrek")
+   * @param prefixLength Number of prefix characters that must match exactly
+   * @param minWordLength Minimum word length for fuzzy matching
    */
-  private boolean fuzzyMatch(String word1, String word2, float charMatchThreshold)
+  private boolean fuzzyMatch(String word1, String word2, float charMatchThreshold,
+                            int maxLengthDiff, int prefixLength, int minWordLength)
   {
-    if (word1.length() != word2.length()) return false;
-    if (word1.length() < 3) return false; // Too short for fuzzy match
-    if (!word1.substring(0, 2).equals(word2.substring(0, 2))) return false;
+    // Check minimum word length
+    if (word1.length() < minWordLength || word2.length() < minWordLength) return false;
 
-    // Count matching characters
+    // Check length difference (v1.33+: configurable, was hardcoded same-length requirement)
+    int lengthDiff = Math.abs(word1.length() - word2.length());
+    if (lengthDiff > maxLengthDiff) return false;
+
+    // Check prefix match (v1.33+: configurable prefix length)
+    int actualPrefixLen = Math.min(prefixLength, Math.min(word1.length(), word2.length()));
+    if (actualPrefixLen > 0 && !word1.substring(0, actualPrefixLen).equals(word2.substring(0, actualPrefixLen)))
+    {
+      return false;
+    }
+
+    // Count matching characters at the same position
     int matches = 0;
-    for (int i = 0; i < word1.length(); i++)
+    int maxLength = Math.max(word1.length(), word2.length());
+    int minLength = Math.min(word1.length(), word2.length());
+
+    for (int i = 0; i < minLength; i++)
     {
       if (word1.charAt(i) == word2.charAt(i))
       {
@@ -505,7 +532,10 @@ public class OptimizedVocabulary
       }
     }
 
-    float matchRatio = (float)matches / word1.length();
+    // Calculate match ratio using shorter word length as denominator
+    // This allows "parametrek" (10 chars) to match "parameter" (9 chars)
+    // Example: "parametrek" vs "parameter" → 9/9 = 100% match (all chars of shorter word match)
+    float matchRatio = (float)matches / minLength;
     return matchRatio >= charMatchThreshold;
   }
 

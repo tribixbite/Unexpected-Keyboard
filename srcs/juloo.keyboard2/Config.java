@@ -86,6 +86,11 @@ public final class Config
   public float autocorrect_char_match_threshold;    // Required char match ratio (default: 0.67 = 2/3)
   public int autocorrect_confidence_min_frequency;  // Min dictionary frequency (default: 500)
 
+  // Fuzzy matching configuration (swipe autocorrect) - v1.33+
+  public int autocorrect_max_length_diff;           // Max length difference allowed (default: 2)
+  public int autocorrect_prefix_length;             // Prefix chars to match (default: 2)
+  public int autocorrect_max_beam_candidates;       // Max beam candidates to check (default: 3)
+
   // Short gesture configuration
   public boolean short_gestures_enabled; // Enable/disable short swipe gestures (e.g., swipe-up for @)
   public int short_gesture_min_distance; // Minimum swipe distance as % of key hypotenuse (10-95)
@@ -231,6 +236,11 @@ public final class Config
     autocorrect_min_word_length = safeGetInt(_prefs, "autocorrect_min_word_length", 3);
     autocorrect_char_match_threshold = _prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
     autocorrect_confidence_min_frequency = safeGetInt(_prefs, "autocorrect_confidence_min_frequency", 500);
+
+    // Fuzzy matching configuration (swipe autocorrect) - v1.33+
+    autocorrect_max_length_diff = safeGetInt(_prefs, "autocorrect_max_length_diff", 2);
+    autocorrect_prefix_length = safeGetInt(_prefs, "autocorrect_prefix_length", 2);
+    autocorrect_max_beam_candidates = safeGetInt(_prefs, "autocorrect_max_beam_candidates", 3);
 
     // Short gesture configuration
     short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true);
