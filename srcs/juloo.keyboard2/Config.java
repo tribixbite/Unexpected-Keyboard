@@ -91,6 +91,13 @@ public final class Config
   public int autocorrect_prefix_length;             // Prefix chars to match (default: 2)
   public int autocorrect_max_beam_candidates;       // Max beam candidates to check (default: 3)
 
+  // Swipe scoring weights (v1.33+: user-configurable tier/confidence/frequency system)
+  public float swipe_confidence_weight;             // NN confidence weight in scoring (default: 0.6)
+  public float swipe_frequency_weight;              // Dictionary frequency weight (default: 0.4)
+  public float swipe_common_words_boost;            // Tier 2 (top 100) boost (default: 1.3)
+  public float swipe_top5000_boost;                 // Tier 1 (top 3000) boost (default: 1.0)
+  public float swipe_rare_words_penalty;            // Tier 0 (rest) penalty (default: 0.75)
+
   // Short gesture configuration
   public boolean short_gestures_enabled; // Enable/disable short swipe gestures (e.g., swipe-up for @)
   public int short_gesture_min_distance; // Minimum swipe distance as % of key hypotenuse (10-95)
@@ -241,6 +248,13 @@ public final class Config
     autocorrect_max_length_diff = safeGetInt(_prefs, "autocorrect_max_length_diff", 2);
     autocorrect_prefix_length = safeGetInt(_prefs, "autocorrect_prefix_length", 2);
     autocorrect_max_beam_candidates = safeGetInt(_prefs, "autocorrect_max_beam_candidates", 3);
+
+    // Swipe scoring weights (v1.33+: user-configurable tier/confidence/frequency system)
+    swipe_confidence_weight = _prefs.getFloat("swipe_confidence_weight", 0.6f);
+    swipe_frequency_weight = _prefs.getFloat("swipe_frequency_weight", 0.4f);
+    swipe_common_words_boost = _prefs.getFloat("swipe_common_words_boost", 1.3f);
+    swipe_top5000_boost = _prefs.getFloat("swipe_top5000_boost", 1.0f);
+    swipe_rare_words_penalty = _prefs.getFloat("swipe_rare_words_penalty", 0.75f);
 
     // Short gesture configuration
     short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true);

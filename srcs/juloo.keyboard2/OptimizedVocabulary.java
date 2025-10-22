@@ -115,16 +115,31 @@ public class OptimizedVocabulary
     // DEBUG: Show all raw beam search candidates BEFORE filtering
     // Enable debug mode if user has enabled "Detailed Pipeline Logging" in settings
     boolean debugMode = android.util.Log.isLoggable(TAG, android.util.Log.DEBUG);
-    if (!debugMode && context != null)
+
+    // v1.33+: Load configurable scoring weights from preferences
+    float confidenceWeight = CONFIDENCE_WEIGHT;  // default
+    float frequencyWeight = FREQUENCY_WEIGHT;    // default
+    float commonBoost = COMMON_WORDS_BOOST;      // default
+    float top5000Boost = TOP5000_BOOST;          // default
+    float rarePenalty = RARE_WORDS_PENALTY;      // default
+
+    if (context != null)
     {
       try
       {
         android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
         debugMode = prefs.getBoolean("swipe_debug_detailed_logging", false);
+
+        // Read configurable scoring weights (v1.33+)
+        confidenceWeight = prefs.getFloat("swipe_confidence_weight", CONFIDENCE_WEIGHT);
+        frequencyWeight = prefs.getFloat("swipe_frequency_weight", FREQUENCY_WEIGHT);
+        commonBoost = prefs.getFloat("swipe_common_words_boost", COMMON_WORDS_BOOST);
+        top5000Boost = prefs.getFloat("swipe_top5000_boost", TOP5000_BOOST);
+        rarePenalty = prefs.getFloat("swipe_rare_words_penalty", RARE_WORDS_PENALTY);
       }
       catch (Exception e)
       {
-        // Ignore - debug mode stays false
+        // Ignore - use default values
       }
     }
 
@@ -174,17 +189,18 @@ public class OptimizedVocabulary
       }
 
       // OPTIMIZATION: Tier is embedded in WordInfo (no additional lookups!)
+      // v1.33+: Use configurable boost values instead of hardcoded constants
       float boost;
       String source;
 
       switch (info.tier)
       {
         case 2: // common (top 100)
-          boost = COMMON_WORDS_BOOST;
+          boost = commonBoost;  // v1.33+: configurable (default: 1.3)
           source = "common";
           break;
         case 1: // top5000
-          boost = TOP5000_BOOST;
+          boost = top5000Boost;  // v1.33+: configurable (default: 1.0)
           source = "top5000";
           break;
         default: // regular
@@ -196,12 +212,13 @@ public class OptimizedVocabulary
               word, info.frequency, minFreq, word.length()));
             continue; // Below threshold
           }
-          boost = RARE_WORDS_PENALTY;
+          boost = rarePenalty;  // v1.33+: configurable (default: 0.75)
           source = "vocabulary";
           break;
       }
 
-      float score = calculateCombinedScore(candidate.confidence, info.frequency, boost);
+      // v1.33+: Pass configurable weights to scoring function
+      float score = calculateCombinedScore(candidate.confidence, info.frequency, boost, confidenceWeight, frequencyWeight);
       validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, info.frequency, source));
 
       // DEBUG: Show successful candidates with all scoring details
@@ -265,11 +282,13 @@ public class OptimizedVocabulary
                   // Add custom word as autocorrect suggestion
                   float normalizedFreq = Math.max(0.0f, (float)(customFreq - 1) / 9999.0f);
                   byte tier = (customFreq >= 8000) ? (byte)2 : (byte)1;
-                  float boost = (tier == 2) ? COMMON_WORDS_BOOST : TOP5000_BOOST;
+                  // v1.33+: Use configurable boost values
+                  float boost = (tier == 2) ? commonBoost : top5000Boost;
 
                   // Use beam candidate's confidence for scoring
                   float confidence = validPredictions.get(i).confidence;
-                  float score = calculateCombinedScore(confidence, normalizedFreq, boost);
+                  // v1.33+: Pass configurable weights to scoring function
+                  float score = calculateCombinedScore(confidence, normalizedFreq, boost, confidenceWeight, frequencyWeight);
 
                   validPredictions.add(new FilteredPrediction(customWord, score, confidence, normalizedFreq, "autocorrect"));
 
@@ -327,14 +346,25 @@ public class OptimizedVocabulary
    * Calculate combined score from NN confidence and word frequency
    * Frequency is already normalized to 0.0-1.0 range where 1.0 = most frequent
    */
-  private float calculateCombinedScore(float confidence, float frequency, float boost)
+  /**
+   * Calculate combined score from neural network confidence and dictionary frequency
+   * v1.33+: Accepts configurable weights instead of using hardcoded constants
+   *
+   * @param confidence NN confidence from beam search (0.0-1.0)
+   * @param frequency Dictionary frequency (0.0-1.0, already normalized)
+   * @param boost Tier-based boost multiplier
+   * @param confidenceWeight Weight for NN confidence (default: 0.6)
+   * @param frequencyWeight Weight for dictionary frequency (default: 0.4)
+   */
+  private float calculateCombinedScore(float confidence, float frequency, float boost,
+                                      float confidenceWeight, float frequencyWeight)
   {
     // Use frequency directly - already normalized to [0,1] by loading code
     // FIXED: Previous log10 formula was inverted (rare words scored higher than common)
     float freqScore = frequency;
 
-    // Weighted combination with boost factor
-    return (CONFIDENCE_WEIGHT * confidence + FREQUENCY_WEIGHT * freqScore) * boost;
+    // Weighted combination with boost factor (v1.33+: configurable weights)
+    return (confidenceWeight * confidence + frequencyWeight * freqScore) * boost;
   }
   
   /**
