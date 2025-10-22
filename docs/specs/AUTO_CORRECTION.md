@@ -1,33 +1,245 @@
 # Auto-Correction System Specification
 
-**Version**: 1.0
-**Implemented**: v1.32.114-122
-**Status**: Active (disabled in Termux app)
+**Version**: 2.0 (Typing + Swipe)
+**Implemented**: v1.32.114-122 (typing), v1.32.207 (swipe)
+**Status**: Active (typing disabled in Termux app, swipe enabled everywhere)
 
 ---
 
 ## Overview
 
-The auto-correction system automatically corrects common typing mistakes when the user presses space after typing a word. It uses fuzzy string matching to find dictionary words that closely match the typed word, preserving capitalization patterns.
+The auto-correction system operates in TWO modes:
 
-### Key Features
+### 1. Typing Autocorrect (v1.32.114-122)
+Automatically corrects common typing mistakes when the user presses space after typing a word. Uses fuzzy string matching to find dictionary words that closely match the typed word, preserving capitalization patterns.
 
+**Disabled in Termux app** due to terminal input compatibility.
+
+### 2. Swipe Autocorrect (v1.32.207)
+Fuzzy matches custom words against neural network beam search outputs to suggest custom words even when the NN doesn't generate them directly.
+
+**Enabled everywhere** - allows user's custom vocabulary to appear in swipe predictions.
+
+---
+
+## Key Features
+
+### Typing Autocorrect
 - **Fuzzy Matching**: Same length + first 2 letters + positional character similarity
 - **Capitalization Preservation**: Maintains original case (teh→the, Teh→The, TEH→THE)
 - **App-Aware**: Disabled in Termux app, enabled in normal apps
 - **Configurable**: 4 user-adjustable settings via UI
 - **Context-Aware**: Updates context with corrected word for better predictions
 
+### Swipe Autocorrect
+- **Fuzzy Matching**: Same length + first 2 letters + ≥66% character match
+- **Beam Integration**: Matches custom words against top 3 beam search candidates
+- **Confidence Inheritance**: Custom word uses NN's confidence from matched beam candidate
+- **Score Blending**: Combines NN confidence with custom word frequency
+- **Always Active**: No app restrictions (unlike typing autocorrect)
+
+**NOTE**: ⚠️ **Fuzzy matching params to be exposed to user (v1.33+)** - current same-length requirement too strict
+
 ---
 
 ## Architecture
 
-### Components
+### Typing Autocorrect Components
 
 1. **WordPredictor.java** - Core correction algorithm
 2. **Keyboard2.java** - Integration with keyboard input flow
 3. **Config.java** - Settings storage and management
 4. **settings.xml** - UI configuration
+
+### Swipe Autocorrect Components
+
+1. **OptimizedVocabulary.java** - Fuzzy matching and scoring
+2. **OnnxSwipePredictor.java** - Beam search integration (calls filterPredictions)
+3. **Config.java** - Settings storage (autocorrect_enabled, autocorrect_char_match_threshold)
+
+---
+
+## Swipe Autocorrect (v1.32.207)
+
+### Data Flow
+
+```
+Neural Network Beam Search
+    ↓ (List<BeamSearchCandidate>)
+OptimizedVocabulary.filterPredictions()
+    ↓
+Vocabulary Filtering (main/custom/user dicts)
+    ↓ (List<FilteredPrediction>)
+AUTOCORRECT FOR SWIPE (lines 226-291)
+    ↓
+Load custom words from SharedPreferences
+    ↓
+For each custom word:
+  Check fuzzy match against top 3 beam candidates
+  If match: add custom word with inherited NN confidence
+    ↓
+Re-sort all predictions by score
+    ↓
+Return top 10 predictions
+```
+
+### Implementation
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:226-291`
+
+```java
+// AUTOCORRECT FOR SWIPE: Fuzzy match top beam candidates against custom words
+if (context != null && !validPredictions.isEmpty())
+{
+  try
+  {
+    android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+    boolean autocorrectEnabled = prefs.getBoolean("autocorrect_enabled", true);
+    float charMatchThreshold = prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
+
+    if (autocorrectEnabled)
+    {
+      // Get custom words from SharedPreferences
+      String customWordsJson = prefs.getString("custom_words", "{}");
+      if (!customWordsJson.equals("{}"))
+      {
+        org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
+        java.util.Iterator<String> keys = jsonObj.keys();
+
+        // For each custom word, check if it fuzzy matches any top beam candidate
+        while (keys.hasNext())
+        {
+          String customWord = keys.next().toLowerCase();
+          int customFreq = jsonObj.optInt(customWord, 1000);
+
+          // Check top 3 beam candidates for fuzzy match
+          for (int i = 0; i < Math.min(3, validPredictions.size()); i++)
+          {
+            String beamWord = validPredictions.get(i).word;
+
+            // Same length + same first 2 chars + 66% char match
+            if (fuzzyMatch(customWord, beamWord, charMatchThreshold))
+            {
+              // Add custom word as autocorrect suggestion
+              float normalizedFreq = Math.max(0.0f, (float)(customFreq - 1) / 9999.0f);
+              byte tier = (customFreq >= 8000) ? (byte)2 : (byte)1;
+              float boost = (tier == 2) ? COMMON_WORDS_BOOST : TOP5000_BOOST;
+
+              // Use beam candidate's confidence for scoring
+              float confidence = validPredictions.get(i).confidence;
+              float score = calculateCombinedScore(confidence, normalizedFreq, boost);
+
+              validPredictions.add(new FilteredPrediction(customWord, score, confidence, normalizedFreq, "autocorrect"));
+
+              if (debugMode)
+              {
+                String matchMsg = String.format("🔄 AUTOCORRECT: \"%s\" (custom) matches \"%s\" (beam) → added with score=%.4f\n",
+                  customWord, beamWord, score);
+                Log.d(TAG, matchMsg);
+                sendDebugLog(matchMsg);
+              }
+              break; // Only match once per custom word
+            }
+          }
+        }
+
+        // Re-sort after adding autocorrect suggestions
+        validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
+      }
+    }
+  }
+  catch (Exception e)
+  {
+    Log.e(TAG, "Failed to apply autocorrect to beam candidates", e);
+  }
+}
+```
+
+### Fuzzy Matching Algorithm
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:487-510`
+
+```java
+/**
+ * Fuzzy match two words using autocorrect criteria:
+ * - Same length
+ * - Same first 2 characters
+ * - At least X% of characters match (default 66%)
+ */
+private boolean fuzzyMatch(String word1, String word2, float charMatchThreshold)
+{
+  if (word1.length() != word2.length()) return false;
+  if (word1.length() < 3) return false; // Too short for fuzzy match
+  if (!word1.substring(0, 2).equals(word2.substring(0, 2))) return false;
+
+  // Count matching characters
+  int matches = 0;
+  for (int i = 0; i < word1.length(); i++)
+  {
+    if (word1.charAt(i) == word2.charAt(i))
+    {
+      matches++;
+    }
+  }
+
+  float matchRatio = (float)matches / word1.length();
+  return matchRatio >= charMatchThreshold;
+}
+```
+
+**Limitations**:
+- Same length requirement too strict (prevents "parametrek" matching "parameter")
+- Only checks top 3 beam candidates (hardcoded)
+- Minimum word length: 3 (hardcoded)
+- Same first 2 chars requirement (hardcoded)
+
+**NOTE**: 🚧 **Will be made configurable in v1.33+** to allow length differences and adjustable thresholds
+
+### Scoring
+
+**Formula**: `score = (CONFIDENCE_WEIGHT × confidence + FREQUENCY_WEIGHT × frequency) × tierBoost`
+
+```java
+// Constants
+CONFIDENCE_WEIGHT = 0.6  // Neural network confidence
+FREQUENCY_WEIGHT = 0.4   // Word frequency
+COMMON_WORDS_BOOST = 1.3 // Tier 2
+TOP5000_BOOST = 1.0      // Tier 1
+
+// Calculate score
+float normalizedFreq = (customFreq - 1) / 9999.0f;
+byte tier = (customFreq >= 8000) ? 2 : 1;
+float boost = (tier == 2) ? 1.3 : 1.0;
+float confidence = beamCandidate.confidence;  // Inherited from beam
+float score = (0.6 × confidence + 0.4 × normalizedFreq) × boost;
+```
+
+**Key Insight**: Custom word inherits NN's confidence from the beam candidate it matched.
+
+**Example**:
+- Custom word: "parametrek" (freq=3)
+- Matches beam: "parameters" (NN confidence=0.9998)
+- Score: (0.6 × 0.9998 + 0.4 × 0.0002) × 1.0 = 0.5999
+
+**NOTE**: 🚧 **Tier and confidence/frequency weights to be exposed to user for customization (v1.33+)**
+
+### Configuration
+
+**Shared Settings** (applies to both typing and swipe):
+- `autocorrect_enabled` (boolean, default: true)
+- `autocorrect_char_match_threshold` (float, default: 0.67)
+
+**Hardcoded for Swipe**:
+- Top 3 beam candidates checked
+- Same length requirement
+- Same first 2 chars requirement
+- Minimum word length: 3
+
+**File**: `srcs/juloo.keyboard2/Config.java:84-87`
+
+---
+
+## Typing Autocorrect (v1.32.114-122)
 
 ### Data Flow
 
@@ -665,11 +877,39 @@ if (_config.autocorrect_enabled && _wordPredictor != null && text.equals(" ") &&
 
 ## Version History
 
-- **v1.32.122** (2025-10-19): Disabled in Termux app
-- **v1.32.121** (2025-10-19): Smart Termux app detection
-- **v1.32.119** (2025-10-19): Fixed deletion count bug
-- **v1.32.116** (2025-10-19): Fixed space insertion bug
-- **v1.32.114** (2025-10-19): Initial implementation
+### v2.0 - Swipe Autocorrect (2025-10-22)
+
+- **v1.32.207**: Autocorrect for swipe beam search
+  - Fuzzy matches custom words against top 3 beam candidates
+  - Allows custom words to appear even when NN doesn't generate them
+  - Custom word inherits NN confidence from matched beam candidate
+  - Same length + same first 2 chars + ≥66% char match criteria
+  - Example: "parametrek" (custom) matches "parameters" (beam)
+  - **NOTE**: Same-length requirement too strict, will be configurable
+- **v1.32.206**: Enhanced debug logging for vocabulary filtering
+
+### v1.0 - Typing Autocorrect (2025-10-19)
+
+- **v1.32.122**: Disabled in Termux app
+- **v1.32.121**: Smart Termux app detection
+- **v1.32.119**: Fixed deletion count bug
+- **v1.32.116**: Fixed space insertion bug
+- **v1.32.114**: Initial typing autocorrect implementation
+
+### Future Enhancements (v1.33+)
+
+**NOTE**: 🚧 **Planned for v1.33+**:
+1. Fuzzy matching parameters exposed to user
+   - Allow length differences (remove same-length requirement)
+   - Configurable char match threshold
+   - Configurable prefix match length
+   - Configurable max beam candidates to check
+2. Tier and scoring weights exposed to user
+   - CONFIDENCE_WEIGHT (currently 0.6)
+   - FREQUENCY_WEIGHT (currently 0.4)
+   - COMMON_WORDS_BOOST (currently 1.3)
+   - TOP5000_BOOST (currently 1.0)
+3. Bigram model validation for context-aware autocorrect
 
 ---
 

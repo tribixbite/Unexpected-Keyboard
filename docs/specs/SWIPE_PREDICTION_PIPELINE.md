@@ -1,8 +1,8 @@
 # Swipe Prediction Pipeline Analysis
 
-**Date**: 2025-10-21
-**Status**: Analysis Complete
-**Version**: v1.32.191+
+**Date**: 2025-10-22
+**Status**: Production (with autocorrect + debug logging)
+**Version**: v1.32.207
 
 ---
 
@@ -31,11 +31,18 @@ ONNX Encoder (transformer)
 Beam Search Decoder (greedy or beam_width=2)
     ↓ (List<BeamSearchCandidate>: word + confidence)
 OptimizedVocabulary.filterPredictions()
-    ↓ (filters unknown words, applies frequency boost)
+    ├─ Stage 1: Vocabulary Filtering (v1.32.176)
+    │   ↓ (filters unknown words, applies tier boost + frequency)
+    ├─ Stage 2: Autocorrect for Swipe (v1.32.207)
+    │   ↓ (fuzzy match custom words against top 3 beam candidates)
+    └─ Stage 3: Debug Logging (v1.32.206)
+        ↓ (3-stage logging: raw beam → filtering → final ranking)
 createOptimizedPredictionResult()
     ↓ (PredictionResult: words + scores)
 Display to User
 ```
+
+**NOTE**: ⚠️ **Bigram model integration not yet validated**
 
 ---
 
@@ -117,13 +124,15 @@ Beam 2: "helo" (confidence: 0.03)
 
 ---
 
-### Stage 4: Vocabulary Filtering
+### Stage 4: Vocabulary Filtering + Autocorrect
 
 **Component**: `OptimizedVocabulary.filterPredictions()`
 
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:98-310`
+
 **Input**: `List<BeamSearchCandidate>` (raw neural network outputs)
 
-**Processing**:
+**Processing - Part 1: Vocabulary Filtering** (lines 134-221):
 1. For each candidate word:
    - Lookup in 50k vocabulary HashMap (O(1))
    - If NOT in vocabulary → **DISCARD** (unknown word)
@@ -140,25 +149,62 @@ Beam 2: "helo" (confidence: 0.03)
      frequency = 0.0-1.0 (normalized from 128-255 JSON range)
    ```
 3. Sort by combined score descending
-4. Return top 10
+
+**NOTE**: 🚧 **Tier and confidence/frequency weights to be exposed to user for customization (v1.33+)**
+
+**Processing - Part 2: Autocorrect for Swipe** (lines 226-291, v1.32.207):
+1. Load custom words from SharedPreferences (`custom_words` JSON)
+2. For each custom word:
+   - Check if it fuzzy matches any of top 3 beam candidates
+   - Fuzzy match criteria:
+     - Same length (⚠️ too strict, will be configurable)
+     - Same first 2 characters
+     - ≥66% character match (configurable via `autocorrect_char_match_threshold`)
+   - If match found:
+     - Add custom word with inherited NN confidence from beam candidate
+     - Score using custom word frequency + beam candidate confidence
+     - Example: "parametrek" (custom) matches "parameters" (beam)
+3. Re-sort all predictions by score
+
+**NOTE**: 🚧 **Fuzzy matching params to be exposed to user (v1.33+)** - remove same-length requirement
+
+**Processing - Part 3: Debug Logging** (v1.32.206):
+If debug mode enabled (`swipe_debug_detailed_logging`):
+1. Log top 10 raw beam search outputs with NN confidence
+2. Log detailed filtering process (why each word kept/rejected)
+3. Log top 10 final predictions with score breakdown
+4. Broadcast all logs to SwipeDebugActivity for real-time UI display
 
 **Output**: `List<FilteredPrediction>`
-- `word`: validated dictionary word
-- `score`: combined NN confidence + frequency
-- `source`: "common", "top3000", or "vocabulary"
+- `word`: validated dictionary word or autocorrected custom word
+- `score`: combined NN confidence + frequency + tier boost
+- `source`: "main", "custom", "user", or "autocorrect"
+- `confidence`: neural network confidence (0-1)
+- `frequency`: normalized frequency (0-1)
 
-**Performance**: <1ms (HashMap lookups)
+**Performance**: <2ms (HashMap lookups + autocorrect fuzzy matching)
 
 **Example**:
 ```
-Input (raw NN):
-  "hello" (0.85) → VALID (tier 2, freq 0.98) → score 0.87 * 1.3 = 1.13
-  "hallo" (0.12) → VALID (tier 0, freq 0.02) → score 0.08 * 0.75 = 0.06
-  "helo" (0.03) → INVALID (not in vocabulary) → DISCARDED
+Input (raw NN beam search):
+  "parameters" (0.9998)
+  "parametershic" (0.0001)
 
-Output (filtered):
-  "hello" (score: 1.13)
-  "hallo" (score: 0.06)
+Vocabulary Filtering:
+  "parameters" → VALID (tier 1, freq 0.2000) → score 0.6799 [main]
+  "parametershic" → INVALID (not in vocabulary) → DISCARDED
+
+Autocorrect:
+  Custom word: "parametrek" (freq=3)
+  Fuzzy match: "parametrek" vs "parameters"
+    - Same length: 10 == 10 ✓
+    - Same prefix: "pa" == "pa" ✓
+    - Char match: 9/10 = 0.90 >= 0.67 ✓
+  → Added: "parametrek" (score: 0.5999, NN: 0.9998, freq: 0.0002) [autocorrect]
+
+Final Output (sorted by score):
+  #1: "parameters" (score: 0.6799, NN: 0.9998, freq: 0.2000) [main]
+  #2: "parametrek" (score: 0.5999, NN: 0.9998, freq: 0.0002) [autocorrect]
 ```
 
 ---
@@ -499,6 +545,32 @@ private static final float RARE_WORDS_PENALTY = 0.75f;  // Tier 0 (rest)
 
 ## Changelog
 
+### v1.32.207 (2025-10-22) - Autocorrect for Swipe
+
+- **FEATURE**: Fuzzy matching custom words against beam search candidates
+- Custom words appear even when neural network doesn't generate them directly
+- Fuzzy match criteria: same length, same first 2 chars, ≥66% char match
+- Custom word inherits NN confidence from matched beam candidate
+- Example: "parametrek" (custom) matches "parameters" (beam) and is suggested
+- **NOTE**: Same-length requirement too strict, will be configurable in v1.33+
+
+**Files Modified**:
+- `srcs/juloo.keyboard2/OptimizedVocabulary.java`: autocorrect logic, fuzzyMatch()
+
+### v1.32.206 (2025-10-22) - Enhanced Debug Logging
+
+- **FEATURE**: Three-stage debug logging for complete pipeline transparency
+- Stage 1: Top 10 raw beam search outputs with NN confidence
+- Stage 2: Detailed filtering with rejection reasons (invalid format, disabled, not in vocab, below threshold)
+- Stage 3: Top 10 final predictions with score breakdown (NN + freq + tier)
+- Custom word loading debug: shows freq normalization and tier assignment
+- All logs broadcast to SwipeDebugActivity for real-time UI display
+- Debug mode activated via setting (`swipe_debug_detailed_logging`) or LogCat
+
+**Files Modified**:
+- `srcs/juloo.keyboard2/OptimizedVocabulary.java`: debug logging, sendDebugLog()
+- `srcs/juloo.keyboard2/SwipeDebugActivity.java`: text input focus fix
+
 ### v1.32.198 (2025-10-22) - Raw Predictions Display
 
 - **FEATURE**: Added top 3 raw beam search predictions to UI
@@ -513,3 +585,10 @@ private static final float RARE_WORDS_PENALTY = 0.75f;  // Tier 0 (rest)
 - Identified 3 issues with raw/closest predictions display
 - Provided recommendations for improvements
 - Created test cases for validation
+
+### Notes
+
+**🚧 Planned for v1.33+**:
+1. Fuzzy matching parameters exposed to user (remove same-length requirement, configurable thresholds)
+2. Tier and confidence/frequency weights exposed to user for customization
+3. ⚠️ Bigram model integration validation for context-aware predictions

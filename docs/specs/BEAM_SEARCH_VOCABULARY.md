@@ -1,9 +1,9 @@
 # Beam Search Vocabulary Specification
 
-**Version**: 2.1 (50k Vocabulary + Prefix Indexing)
+**Version**: 2.2 (Autocorrect for Swipe + Enhanced Debug Logging)
 **Status**: Implemented
 **Platform**: Android API 21+
-**Last Updated**: 2025-10-21
+**Last Updated**: 2025-10-22
 
 ---
 
@@ -14,11 +14,13 @@
 3. [Vocabulary Sources](#vocabulary-sources)
 4. [Tier System](#tier-system)
 5. [Scoring Algorithm](#scoring-algorithm)
-6. [Performance Characteristics](#performance-characteristics)
-7. [Configuration](#configuration)
-8. [Scaling Considerations](#scaling-considerations)
-9. [Known Issues](#known-issues)
-10. [Future Enhancements](#future-enhancements)
+6. [Autocorrect for Swipe](#autocorrect-for-swipe)
+7. [Debug Logging System](#debug-logging-system)
+8. [Performance Characteristics](#performance-characteristics)
+9. [Configuration](#configuration)
+10. [Scaling Considerations](#scaling-considerations)
+11. [Known Issues](#known-issues)
+12. [Future Enhancements](#future-enhancements)
 
 ---
 
@@ -201,9 +203,20 @@ else tier = 1;                     // Standard high priority
 
 ### Combined Score Formula
 
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:487-510`
+
 ```java
-combinedScore = (CONFIDENCE_WEIGHT * confidence + FREQUENCY_WEIGHT * frequency) * tierBoost
+// Calculate combined score from neural network confidence and word frequency
+private float calculateCombinedScore(float confidence, float frequency, float boost)
+{
+  return (CONFIDENCE_WEIGHT * confidence + FREQUENCY_WEIGHT * frequency) * boost;
+}
+
+// Where:
+combinedScore = (CONFIDENCE_WEIGHT × confidence + FREQUENCY_WEIGHT × frequency) × tierBoost
 ```
+
+**NOTE**: 🚧 **Tier and confidence/frequency weights to be exposed to user for customization (v1.33+)**
 
 ### Weights (Tuned for 50k Vocabulary)
 
@@ -248,6 +261,363 @@ score = (0.6 * 0.95 + 0.4 * 0.1) * 0.75
 ```
 
 **Ratio**: 1.261 / 0.458 = **2.75x** (common words strongly favored)
+
+---
+
+## Autocorrect for Swipe
+
+**Version**: v1.32.207
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:226-291`
+
+### Overview
+
+Autocorrect for swipe allows custom words to appear in predictions even when the neural network doesn't generate them directly. This is done by fuzzy matching custom words against the top beam search candidates.
+
+**Use Case**: User adds custom word "parametrek" (freq=3) but neural network predicts "parameters" instead. Autocorrect detects the similarity and suggests "parametrek" alongside "parameters".
+
+### Algorithm
+
+**Trigger Point**: After vocabulary filtering, before final sorting
+
+**Process**:
+1. Load custom words from SharedPreferences (`custom_words` JSON)
+2. For each custom word:
+   - Check if it fuzzy matches any of top 3 beam candidates
+   - If match found, add custom word as autocorrect suggestion
+3. Re-sort all predictions by score
+
+### Fuzzy Matching Criteria
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:487-510`
+
+```java
+/**
+ * Fuzzy match two words using autocorrect criteria:
+ * - Same length
+ * - Same first 2 characters
+ * - At least X% of characters match (default 66%)
+ */
+private boolean fuzzyMatch(String word1, String word2, float charMatchThreshold)
+{
+  if (word1.length() != word2.length()) return false;
+  if (word1.length() < 3) return false; // Too short for fuzzy match
+  if (!word1.substring(0, 2).equals(word2.substring(0, 2))) return false;
+
+  // Count matching characters
+  int matches = 0;
+  for (int i = 0; i < word1.length(); i++)
+  {
+    if (word1.charAt(i) == word2.charAt(i))
+    {
+      matches++;
+    }
+  }
+
+  float matchRatio = (float)matches / word1.length();
+  return matchRatio >= charMatchThreshold;
+}
+```
+
+**NOTE**: 🚧 **Fuzzy matching parameters to be exposed to user (v1.33+)**
+- Current same-length requirement is too strict (prevents "parametrek" matching "parameter")
+- Will allow length differences and configurable thresholds
+
+### Scoring Autocorrect Suggestions
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:251-261`
+
+```java
+// Use beam candidate's confidence for scoring
+float normalizedFreq = Math.max(0.0f, (float)(customFreq - 1) / 9999.0f);
+byte tier = (customFreq >= 8000) ? (byte)2 : (byte)1;
+float boost = (tier == 2) ? COMMON_WORDS_BOOST : TOP5000_BOOST;
+
+float confidence = validPredictions.get(i).confidence; // From beam candidate
+float score = calculateCombinedScore(confidence, normalizedFreq, boost);
+
+validPredictions.add(new FilteredPrediction(customWord, score, confidence, normalizedFreq, "autocorrect"));
+```
+
+**Key Insight**: Custom word inherits neural network's confidence from the beam candidate it matched, combined with its own frequency.
+
+### Configuration
+
+**Parameters**:
+- `autocorrect_enabled`: Master switch (default: true) - applies to both typing and swipe
+- `autocorrect_char_match_threshold`: Character match ratio (default: 0.67 = 66%)
+
+**Currently Hardcoded**:
+- Top 3 beam candidates checked
+- Same length requirement
+- Same first 2 characters requirement
+- Minimum word length: 3
+
+### Example
+
+**User Setup**:
+- Custom word: "parametrek" (frequency: 3)
+- Swipe pattern matches "parameters"
+
+**Beam Search Output**:
+```
+#1: "parameters" (NN confidence: 0.9998)
+#2: "parametershic" (NN confidence: 0.0001)
+```
+
+**Fuzzy Match Check**:
+```java
+word1 = "parametrek"    // Custom word
+word2 = "parameters"    // Beam candidate
+
+// Check criteria:
+word1.length() == word2.length()  // 10 == 10 ✓
+word1.substring(0,2) == word2.substring(0,2)  // "pa" == "pa" ✓
+
+// Count matches:
+p a r a m e t e r e k
+p a r a m e t e r s
+✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✗
+
+matches = 9 / 10 = 0.90 >= 0.67 ✓  MATCH!
+```
+
+**Autocorrect Addition**:
+```java
+normalizedFreq = (3 - 1) / 9999.0 = 0.0002
+tier = 1 (freq < 8000)
+boost = TOP5000_BOOST = 1.0
+
+confidence = 0.9998  // Inherited from "parameters"
+score = (0.6 × 0.9998 + 0.4 × 0.0002) × 1.0 = 0.5999
+
+Added: "parametrek" (score: 0.5999, confidence: 0.9998, freq: 0.0002) [autocorrect]
+```
+
+**Final Predictions**:
+```
+#1: "parameters" (score: 0.6799, NN: 0.9998, freq: 0.2000) [main]
+#2: "parametrek" (score: 0.5999, NN: 0.9998, freq: 0.0002) [autocorrect]
+```
+
+### Debug Logging
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:264-271`
+
+```java
+if (debugMode)
+{
+  String matchMsg = String.format("🔄 AUTOCORRECT: \"%s\" (custom) matches \"%s\" (beam) → added with score=%.4f\n",
+    customWord, beamWord, score);
+  Log.d(TAG, matchMsg);
+  sendDebugLog(matchMsg);
+}
+```
+
+**Output Example**:
+```
+🔄 AUTOCORRECT: "parametrek" (custom) matches "parameters" (beam) → added with score=0.5999
+```
+
+---
+
+## Debug Logging System
+
+**Version**: v1.32.206
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:98-275`
+
+### Overview
+
+Three-stage debug logging system provides complete transparency into vocabulary filtering pipeline. All logs sent to both LogCat and SwipeDebugActivity UI in real-time.
+
+### Debug Mode Activation
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:100-110`
+
+```java
+// Check if debug mode enabled
+boolean debugMode = android.util.Log.isLoggable(TAG, android.util.Log.DEBUG);
+if (!debugMode && context != null)
+{
+  try
+  {
+    android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+    debugMode = prefs.getBoolean("swipe_debug_detailed_logging", false);
+  }
+  catch (Exception e) {}
+}
+```
+
+**Activation Methods**:
+1. System LogCat debug level: `adb shell setprop log.tag.OptimizedVocabulary DEBUG`
+2. Settings preference: `swipe_debug_detailed_logging = true`
+
+### Stage 1: Raw Beam Search Output
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:112-128`
+
+Shows top 10 neural network beam search candidates BEFORE vocabulary filtering.
+
+```java
+if (debugMode && !rawPredictions.isEmpty())
+{
+  StringBuilder debug = new StringBuilder("\n🔍 VOCABULARY FILTERING DEBUG (top 10 beam search outputs):\n");
+  debug.append("─────────────────────────────────────────────────────────\n");
+  int numToShow = Math.min(10, rawPredictions.size());
+  for (int i = 0; i < numToShow; i++)
+  {
+    CandidateWord candidate = rawPredictions.get(i);
+    debug.append(String.format("#%d: \"%s\" (NN confidence: %.4f)\n", i+1, candidate.word, candidate.confidence));
+  }
+  String debugMsg = debug.toString();
+  Log.d(TAG, debugMsg);
+  sendDebugLog(debugMsg);
+}
+```
+
+**Example Output**:
+```
+🔍 VOCABULARY FILTERING DEBUG (top 10 beam search outputs):
+─────────────────────────────────────────────────────────
+#1: "parameters" (NN confidence: 0.9998)
+#2: "parametershic" (NN confidence: 0.0001)
+#3: "parameter" (NN confidence: 0.0001)
+```
+
+### Stage 2: Detailed Filtering Process
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:134-221`
+
+Shows WHY each word was kept or rejected.
+
+```java
+StringBuilder detailedLog = new StringBuilder("\n📋 DETAILED FILTERING:\n");
+detailedLog.append("─────────────────────────────────────────────────────────\n");
+
+for (CandidateWord candidate : rawPredictions)
+{
+  String word = candidate.word.toLowerCase().trim();
+
+  if (!word.matches("^[a-z]+$"))
+  {
+    if (debugMode) detailedLog.append(String.format("❌ \"%s\" - INVALID FORMAT (not a-z)\n", candidate.word));
+    continue;
+  }
+
+  if (disabledWords.contains(word))
+  {
+    if (debugMode) detailedLog.append(String.format("❌ \"%s\" - DISABLED by user\n", word));
+    continue;
+  }
+
+  WordInfo info = vocabulary.get(word);
+  if (info == null)
+  {
+    if (debugMode) detailedLog.append(String.format("❌ \"%s\" - NOT IN VOCABULARY (not in main/custom/user dict)\n", word));
+    continue;
+  }
+
+  // ... tier checking with detailed rejection reasons
+
+  // Word kept - log details
+  if (debugMode)
+  {
+    detailedLog.append(String.format("✅ \"%s\" - KEPT (tier=%d, freq=%.4f, boost=%.2fx, NN=%.4f → score=%.4f) [%s]\n",
+      word, info.tier, info.frequency, boost, candidate.confidence, score, source));
+  }
+}
+```
+
+**Example Output**:
+```
+📋 DETAILED FILTERING:
+─────────────────────────────────────────────────────────
+❌ "parametershic" - NOT IN VOCABULARY (not in main/custom/user dict)
+✅ "parameters" - KEPT (tier=1, freq=0.2000, boost=1.00x, NN=0.9998 → score=0.6799) [main]
+✅ "parameter" - KEPT (tier=1, freq=0.1800, boost=1.00x, NN=0.0001 → score=0.0721) [main]
+```
+
+### Stage 3: Final Ranking
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:293-309`
+
+Shows top 10 predictions after combining NN confidence + frequency + tier boost.
+
+```java
+if (debugMode && !validPredictions.isEmpty())
+{
+  StringBuilder ranking = new StringBuilder("\n🏆 FINAL RANKING (after combining NN + frequency):\n");
+  ranking.append("─────────────────────────────────────────────────────────\n");
+  int numToShow = Math.min(10, validPredictions.size());
+  for (int i = 0; i < numToShow; i++)
+  {
+    FilteredPrediction pred = validPredictions.get(i);
+    ranking.append(String.format("#%d: \"%s\" (score=%.4f, NN=%.4f, freq=%.4f) [%s]\n",
+      i+1, pred.word, pred.score, pred.confidence, pred.frequency, pred.source));
+  }
+  String rankingMsg = ranking.toString();
+  Log.d(TAG, rankingMsg);
+  sendDebugLog(rankingMsg);
+}
+```
+
+**Example Output**:
+```
+🏆 FINAL RANKING (after combining NN + frequency):
+─────────────────────────────────────────────────────────
+#1: "parameters" (score=0.6799, NN=0.9998, freq=0.2000) [main]
+#2: "parametrek" (score=0.5999, NN=0.9998, freq=0.0002) [autocorrect]
+#3: "parameter" (score=0.0721, NN=0.0001, freq=0.1800) [main]
+```
+
+### Custom Word Loading Debug
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:710-720`
+
+Shows each custom word as it's loaded with normalized frequency and tier assignment.
+
+```java
+vocabulary.put(word, new WordInfo(normalizedFreq, tier));
+customCount++;
+
+// DEBUG: Log each custom word loaded
+if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG))
+{
+  String debugMsg = String.format("  Custom word loaded: \"%s\" (freq=%d → normalized=%.4f, tier=%d)\n",
+    word, frequency, normalizedFreq, tier);
+  Log.d(TAG, debugMsg);
+  sendDebugLog(debugMsg);
+}
+```
+
+**Example Output**:
+```
+Custom word loaded: "parametrek" (freq=3 → normalized=0.0002, tier=1)
+Custom word loaded: "xyzzy" (freq=9500 → normalized=0.9499, tier=2)
+Loaded 2 custom words into beam search (frequency-based tiers)
+```
+
+### Broadcast System
+
+**File**: `srcs/juloo.keyboard2/OptimizedVocabulary.java:312-325`
+
+```java
+private void sendDebugLog(String message)
+{
+  if (context == null) return;
+  try
+  {
+    android.content.Intent intent = new android.content.Intent("juloo.keyboard2.DEBUG_LOG");
+    intent.setPackage(context.getPackageName());
+    intent.putExtra("log_message", message);
+    context.sendBroadcast(intent);
+  }
+  catch (Exception e) {}
+}
+```
+
+**Receiver**: `srcs/juloo.keyboard2/SwipeDebugActivity.java:35-49`
+
+All debug logs broadcast to SwipeDebugActivity for real-time UI display.
 
 ---
 
@@ -710,6 +1080,35 @@ Not implemented - Java code not yet covered by unit tests
 ---
 
 ## Changelog
+
+### v2.2 - Autocorrect for Swipe + Enhanced Debug Logging (2025-10-22)
+
+**Autocorrect for Swipe** (v1.32.207):
+- Custom words fuzzy matched against top 3 beam search candidates
+- Allows custom words to appear even when NN doesn't generate them directly
+- Fuzzy match criteria: same length, same first 2 chars, ≥66% char match
+- Custom word inherits NN confidence from matched beam candidate
+- Example: "parametrek" (custom) matches "parameters" (beam) and is suggested
+- **NOTE**: Same-length requirement too strict, will be configurable in v1.33+
+
+**Enhanced Debug Logging** (v1.32.206):
+- Three-stage logging: raw beam → detailed filtering → final ranking
+- Stage 1: Top 10 beam search outputs with NN confidence
+- Stage 2: Detailed rejection reasons (invalid format, disabled, not in vocab, below threshold)
+- Stage 3: Top 10 final predictions with score breakdown
+- Custom word loading debug: shows freq normalization and tier assignment
+- All logs broadcast to SwipeDebugActivity for real-time UI display
+- Debug mode activated via setting or LogCat debug level
+
+**Files Modified**:
+- `srcs/juloo.keyboard2/OptimizedVocabulary.java`: autocorrect logic, fuzzyMatch(), debug logging, sendDebugLog()
+
+**Notes**:
+- 🚧 Fuzzy matching parameters to be exposed to user (v1.33+)
+- 🚧 Tier and confidence/frequency weights to be exposed to user (v1.33+)
+- ⚠️ Bigram model integration not yet validated
+
+---
 
 ### v2.1 - Prefix Indexing (2025-10-21)
 
