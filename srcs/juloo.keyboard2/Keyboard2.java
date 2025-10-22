@@ -492,13 +492,25 @@ public class Keyboard2 extends InputMethodService
         _suggestionBar = theme != null ? new SuggestionBar(this, theme) : new SuggestionBar(this);
         _suggestionBar.setOnSuggestionSelectedListener(this);
         _suggestionBar.setOpacity(_config.suggestion_bar_opacity);
-        LinearLayout.LayoutParams suggestionParams = new LinearLayout.LayoutParams(
+
+        // Wrap SuggestionBar in HorizontalScrollView for scrollable predictions
+        android.widget.HorizontalScrollView scrollView = new android.widget.HorizontalScrollView(this);
+        scrollView.setHorizontalScrollBarEnabled(false); // Hide scrollbar
+        scrollView.setFillViewport(false); // Don't stretch content
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
           LinearLayout.LayoutParams.MATCH_PARENT,
           (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40,
             getResources().getDisplayMetrics()));
+        scrollView.setLayoutParams(scrollParams);
+
+        // Set SuggestionBar to wrap_content width for scrolling
+        LinearLayout.LayoutParams suggestionParams = new LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.WRAP_CONTENT,
+          LinearLayout.LayoutParams.MATCH_PARENT);
         _suggestionBar.setLayoutParams(suggestionParams);
-        
-        _inputViewContainer.addView(_suggestionBar);
+
+        scrollView.addView(_suggestionBar);
+        _inputViewContainer.addView(scrollView);
         _inputViewContainer.addView(_keyboardView);
       }
       

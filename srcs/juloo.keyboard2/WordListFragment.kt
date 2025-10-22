@@ -27,6 +27,7 @@ class WordListFragment : Fragment() {
     private lateinit var adapter: BaseWordAdapter
 
     private var tabType: TabType = TabType.ACTIVE
+    private var searchJob: kotlinx.coroutines.Job? = null  // Track search coroutine for cancellation
 
     enum class TabType {
         ACTIVE, DISABLED, USER, CUSTOM
@@ -129,9 +130,12 @@ class WordListFragment : Fragment() {
         if (!::adapter.isInitialized) return
         currentSourceFilter = sourceFilter
 
+        // Cancel previous search to prevent multiple concurrent operations
+        searchJob?.cancel()
+
         // Use DictionaryDataSource.searchWords() which has prefix indexing
         // instead of in-memory filtering of 50k words on main thread
-        lifecycleScope.launch {
+        searchJob = lifecycleScope.launch {
             try {
                 val words = if (query.isBlank() && sourceFilter == null) {
                     dataSource.getAllWords()
@@ -147,8 +151,12 @@ class WordListFragment : Fragment() {
                     }
                 }
 
+                // AsyncListDiffer.submitList() calculates diff on background thread
                 adapter.setWords(words)
                 updateEmptyState()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Search was cancelled - this is expected, don't log as error
+                android.util.Log.d("WordListFragment", "Search cancelled")
             } catch (e: Exception) {
                 android.util.Log.e("WordListFragment", "Error filtering words", e)
             }

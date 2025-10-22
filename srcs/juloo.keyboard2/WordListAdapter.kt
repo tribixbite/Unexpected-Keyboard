@@ -6,62 +6,49 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
+import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 
 /**
+ * DiffUtil callback for DictionaryWord comparison
+ * Used by AsyncListDiffer to calculate diffs on background thread
+ */
+private val WORD_DIFF_CALLBACK = object : DiffUtil.ItemCallback<DictionaryWord>() {
+    override fun areItemsTheSame(oldItem: DictionaryWord, newItem: DictionaryWord): Boolean {
+        return oldItem.word == newItem.word
+    }
+
+    override fun areContentsTheSame(oldItem: DictionaryWord, newItem: DictionaryWord): Boolean {
+        return oldItem == newItem
+    }
+}
+
+/**
  * Base adapter for word lists with filtering
+ * Uses AsyncListDiffer to perform diff calculations on background thread
+ * PERFORMANCE: Prevents main thread blocking with large word lists (50k words)
  */
 abstract class BaseWordAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    protected var allWords: List<DictionaryWord> = emptyList()
-    protected var filteredWords: List<DictionaryWord> = emptyList()
+    // AsyncListDiffer automatically calculates diffs on background thread
+    protected val differ = AsyncListDiffer(this, WORD_DIFF_CALLBACK)
 
+    /**
+     * Update word list - diff calculation runs on background thread
+     */
     fun setWords(words: List<DictionaryWord>) {
-        val oldWords = filteredWords
-        allWords = words
-        filteredWords = words
-
-        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-            override fun getOldListSize() = oldWords.size
-            override fun getNewListSize() = filteredWords.size
-            override fun areItemsTheSame(oldPos: Int, newPos: Int) =
-                oldWords[oldPos].word == filteredWords[newPos].word
-            override fun areContentsTheSame(oldPos: Int, newPos: Int) =
-                oldWords[oldPos] == filteredWords[newPos]
-        })
-
-        diffResult.dispatchUpdatesTo(this)
+        differ.submitList(words)
     }
 
-    fun filter(query: String, sourceFilter: WordSource? = null) {
-        val oldWords = filteredWords
-        filteredWords = allWords.filter { word ->
-            // Apply text search filter
-            val matchesQuery = if (query.isBlank()) true
-                else word.word.contains(query, ignoreCase = true)
+    /**
+     * Get current word list from differ
+     */
+    protected val currentList: List<DictionaryWord>
+        get() = differ.currentList
 
-            // Apply source filter
-            val matchesSource = if (sourceFilter == null) true
-                else word.source == sourceFilter
+    override fun getItemCount() = differ.currentList.size
 
-            matchesQuery && matchesSource
-        }
-
-        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-            override fun getOldListSize() = oldWords.size
-            override fun getNewListSize() = filteredWords.size
-            override fun areItemsTheSame(oldPos: Int, newPos: Int) =
-                oldWords[oldPos].word == filteredWords[newPos].word
-            override fun areContentsTheSame(oldPos: Int, newPos: Int) =
-                oldWords[oldPos] == filteredWords[newPos]
-        })
-
-        diffResult.dispatchUpdatesTo(this)
-    }
-
-    override fun getItemCount() = filteredWords.size
-
-    open fun getFilteredCount() = filteredWords.size
+    open fun getFilteredCount() = differ.currentList.size
 }
 
 /**
@@ -81,7 +68,7 @@ class WordToggleAdapter(
         // Use bindingAdapterPosition to get stable position (avoids stale position bugs)
         val adapterPosition = holder.bindingAdapterPosition
         if (adapterPosition != RecyclerView.NO_POSITION) {
-            (holder as ToggleViewHolder).bind(filteredWords[adapterPosition], onToggle)
+            (holder as ToggleViewHolder).bind(currentList[adapterPosition], onToggle)
         }
     }
 
@@ -123,9 +110,9 @@ class WordEditableAdapter(
         return if (position == 0) VIEW_TYPE_ADD else VIEW_TYPE_WORD
     }
 
-    override fun getItemCount() = filteredWords.size + 1  // +1 for add button
+    override fun getItemCount() = currentList.size + 1  // +1 for add button
 
-    override fun getFilteredCount() = filteredWords.size + 1  // Include + Add button
+    override fun getFilteredCount() = currentList.size + 1  // Include + Add button
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == VIEW_TYPE_ADD) {
@@ -148,8 +135,8 @@ class WordEditableAdapter(
             is AddViewHolder -> holder.bind(onAdd)
             is EditableViewHolder -> {
                 // Position 0 is Add button, actual words start at position 1
-                if (adapterPosition > 0 && adapterPosition - 1 < filteredWords.size) {
-                    holder.bind(filteredWords[adapterPosition - 1], onEdit, onDelete)
+                if (adapterPosition > 0 && adapterPosition - 1 < currentList.size) {
+                    holder.bind(currentList[adapterPosition - 1], onEdit, onDelete)
                 }
             }
         }

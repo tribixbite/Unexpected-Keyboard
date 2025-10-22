@@ -63,33 +63,22 @@ public class SuggestionBar extends LinearLayout
   {
     setOrientation(HORIZONTAL);
     setGravity(Gravity.CENTER_VERTICAL);
-    
+
     updateBackgroundOpacity();
-    
-    
+
     int padding = dpToPx(context, 8);
     setPadding(padding, padding, padding, padding);
-    
-    // Create suggestion text views
-    for (int i = 0; i < 5; i++)
-    {
-      TextView suggestionView = createSuggestionView(context, i);
-      _suggestionViews.add(suggestionView);
-      
-      // Add divider except for the last item
-      if (i < 4)
-      {
-        View divider = createDivider(context);
-        addView(divider);
-      }
-    }
+
+    // Don't create fixed TextViews - they'll be created dynamically in setSuggestionsWithScores()
   }
   
   private TextView createSuggestionView(Context context, final int index)
   {
     TextView textView = new TextView(context);
+    // Use wrap_content for horizontal scrolling
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-      0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);
+      ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
+    params.setMargins(0, 0, dpToPx(context, 4), 0); // Small right margin
     textView.setLayoutParams(params);
     textView.setGravity(Gravity.CENTER);
     textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
@@ -103,11 +92,12 @@ public class SuggestionBar extends LinearLayout
       // Fallback to white text if theme not initialized
       textView.setTextColor(Color.WHITE);
     }
-    textView.setPadding(dpToPx(context, 8), 0, dpToPx(context, 8), 0);
+    textView.setPadding(dpToPx(context, 12), 0, dpToPx(context, 12), 0);
     textView.setMaxLines(2);
     textView.setClickable(true);
     textView.setFocusable(true);
-    
+    textView.setMinWidth(dpToPx(context, 80)); // Minimum width for better touch targets
+
     // Set click listener
     textView.setOnClickListener(new OnClickListener()
     {
@@ -120,8 +110,7 @@ public class SuggestionBar extends LinearLayout
         }
       }
     });
-    
-    addView(textView);
+
     return textView;
   }
   
@@ -219,45 +208,51 @@ public class SuggestionBar extends LinearLayout
         _currentScores.addAll(scores);
       }
     }
-    
-    // Update text views
-    for (int i = 0; i < _suggestionViews.size(); i++)
+
+    // Clear existing views and suggestion list
+    removeAllViews();
+    _suggestionViews.clear();
+
+    // Dynamically create TextViews for all suggestions
+    for (int i = 0; i < _currentSuggestions.size(); i++)
     {
-      TextView textView = _suggestionViews.get(i);
-      if (i < _currentSuggestions.size())
+      // Add divider before each suggestion except the first
+      if (i > 0)
       {
-        String suggestion = _currentSuggestions.get(i);
-        
-        // Add debug score if enabled and available
-        if (_showDebugScores && i < _currentScores.size() && !_currentScores.isEmpty())
-        {
-          int score = _currentScores.get(i);
-          suggestion = suggestion + "\n" + score;
-        }
-        
-        textView.setText(suggestion);
-        textView.setVisibility(View.VISIBLE);
-        
-        // Highlight first suggestion with activated color
-        if (i == 0)
-        {
-          textView.setTypeface(Typeface.DEFAULT_BOLD);
-          textView.setTextColor(_theme != null && _theme.activatedColor != 0 ? _theme.activatedColor : Color.CYAN);
-        }
-        else
-        {
-          textView.setTypeface(Typeface.DEFAULT);
-          textView.setTextColor(_theme != null && _theme.labelColor != 0 ? _theme.labelColor : Color.WHITE);
-        }
+        View divider = createDivider(getContext());
+        addView(divider);
+      }
+
+      String suggestion = _currentSuggestions.get(i);
+
+      // Add debug score if enabled and available
+      if (_showDebugScores && i < _currentScores.size() && !_currentScores.isEmpty())
+      {
+        int score = _currentScores.get(i);
+        suggestion = suggestion + "\n" + score;
+      }
+
+      TextView textView = createSuggestionView(getContext(), i);
+      textView.setText(suggestion);
+
+      // Highlight first suggestion with activated color
+      if (i == 0)
+      {
+        textView.setTypeface(Typeface.DEFAULT_BOLD);
+        textView.setTextColor(_theme != null && _theme.activatedColor != 0 ? _theme.activatedColor : Color.CYAN);
       }
       else
       {
-        textView.setText("");
-        textView.setVisibility(View.GONE);
+        textView.setTypeface(Typeface.DEFAULT);
+        textView.setTextColor(_theme != null && _theme.labelColor != 0 ? _theme.labelColor : Color.WHITE);
       }
+
+      addView(textView);
+      _suggestionViews.add(textView);
     }
-    
+
     // Show or hide the entire bar based on suggestions (unless always visible mode)
+    // NOTE: Visibility is now controlled by the parent HorizontalScrollView
     if (_alwaysVisible)
     {
       setVisibility(View.VISIBLE); // Always keep visible to prevent UI rerendering
