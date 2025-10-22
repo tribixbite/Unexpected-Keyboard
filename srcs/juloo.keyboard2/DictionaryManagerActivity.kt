@@ -38,7 +38,6 @@ class DictionaryManagerActivity : AppCompatActivity() {
     private val searchHandler = Handler(Looper.getMainLooper())
     private var searchRunnable: Runnable? = null
     private var currentSearchQuery = ""
-    private var fragmentsLoadedCount = 0  // Track how many fragments have loaded
 
     companion object {
         private const val SEARCH_DEBOUNCE_MS = 300L
@@ -70,10 +69,11 @@ class DictionaryManagerActivity : AppCompatActivity() {
             searchInput.setText(currentSearchQuery)
             filterSpinner.setSelection(currentFilter.ordinal)
 
-            // Reapply search/filter after fragments load
+            // Reapply search/filter after all fragments load
+            // With offscreenPageLimit set, all 4 fragments will load immediately
             searchHandler.postDelayed({
                 performSearch(currentSearchQuery)
-            }, 200)
+            }, 400)  // Delay to ensure all 4 fragments created and data loaded
         }
     }
 
@@ -124,6 +124,11 @@ class DictionaryManagerActivity : AppCompatActivity() {
             override fun getItemCount() = fragments.size
             override fun createFragment(position: Int) = fragments[position]
         }
+
+        // CRITICAL: Set offscreenPageLimit to keep all fragments in memory
+        // Without this, ViewPager2 only loads visible tab + 1 adjacent tab
+        // This causes counts to show 0 for unvisited tabs after rotation
+        viewPager.offscreenPageLimit = fragments.size - 1  // Keep all 4 tabs loaded
 
         // Connect TabLayout with ViewPager2
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
@@ -210,14 +215,11 @@ class DictionaryManagerActivity : AppCompatActivity() {
      * Updates tab counts to reflect current state
      */
     fun onFragmentDataLoaded() {
-        // Increment counter and check if all fragments have loaded
-        fragmentsLoadedCount++
-
         // Update counts immediately when fragments finish loading
-        // This fixes the "0 results" issue on initial load
-        searchHandler.post {
+        // Small delay to ensure the fragment's adapter has been updated
+        searchHandler.postDelayed({
             updateTabCounts()
-        }
+        }, 50)
     }
 
     private fun applyFilter(filterType: FilterType) {
