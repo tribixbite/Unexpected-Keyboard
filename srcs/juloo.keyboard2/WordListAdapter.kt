@@ -6,49 +6,29 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
-import androidx.recyclerview.widget.AsyncListDiffer
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 
 /**
- * DiffUtil callback for DictionaryWord comparison
- * Used by AsyncListDiffer to calculate diffs on background thread
- */
-private val WORD_DIFF_CALLBACK = object : DiffUtil.ItemCallback<DictionaryWord>() {
-    override fun areItemsTheSame(oldItem: DictionaryWord, newItem: DictionaryWord): Boolean {
-        return oldItem.word == newItem.word
-    }
-
-    override fun areContentsTheSame(oldItem: DictionaryWord, newItem: DictionaryWord): Boolean {
-        return oldItem == newItem
-    }
-}
-
-/**
  * Base adapter for word lists with filtering
- * Uses AsyncListDiffer to perform diff calculations on background thread
- * PERFORMANCE: Prevents main thread blocking with large word lists (50k words)
+ * PERFORMANCE: Uses simple list updates instead of AsyncListDiffer
+ * Reason: AsyncListDiffer too slow for large datasets (50k words = 19 second delay)
+ * Trade-off: No animations, but instant updates (speed > animations for dictionary)
  */
 abstract class BaseWordAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    // AsyncListDiffer automatically calculates diffs on background thread
-    protected val differ = AsyncListDiffer(this, WORD_DIFF_CALLBACK)
+    protected var currentList: List<DictionaryWord> = emptyList()
 
     /**
-     * Update word list - diff calculation runs on background thread
+     * Update word list - instant update without diff calculation
+     * PERFORMANCE: No diff means no delay, critical for 50k word searches
      */
     fun setWords(words: List<DictionaryWord>) {
-        differ.submitList(words)
+        currentList = words
+        notifyDataSetChanged()
     }
 
-    /**
-     * Get current word list from differ
-     */
-    protected val currentList: List<DictionaryWord>
-        get() = differ.currentList
+    override fun getItemCount() = currentList.size
 
-    override fun getItemCount() = differ.currentList.size
-
-    open fun getFilteredCount() = differ.currentList.size
+    open fun getFilteredCount() = currentList.size
 }
 
 /**
