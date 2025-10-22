@@ -34,16 +34,16 @@ Generated version info:  ()
 > Task :compressDebugAssets FROM-CACHE
 > Task :mergeDebugResources
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :processDebugManifestForPackage
-> Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeDebugJniLibFolders
+> Task :checkDebugDuplicateClasses
+> Task :processDebugManifestForPackage
+> Task :mergeDebugNativeLibs
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
@@ -84,5 +84,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 3s
+BUILD SUCCESSFUL in 36s
 39 actionable tasks: 31 executed, 8 from cache

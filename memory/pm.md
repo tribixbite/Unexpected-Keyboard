@@ -9,13 +9,24 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.182 (231)
-**Build Status**: ✅ BUILD SUCCESSFUL - 50k Dictionary with Raw Frequencies
+**Latest Version**: v1.32.183 (232)
+**Build Status**: ✅ BUILD SUCCESSFUL - Beam Search Scoring Fixed + Hybrid Frequencies
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.182)
+### Recent Work (v1.32.183)
 
-**Dictionary Manager UI - Display Raw Frequencies**
+**CRITICAL: Fixed Beam Search Scoring Bug + Hybrid Frequency Model**
+- **Bug Fixed**: Scoring formula was inverted - rare words scored higher than common words!
+- **Root Cause**: `log10(frequency) / -10.0` inverted the 0-1 normalized frequency
+- **Fix**: Use frequency directly (already normalized 0-1 by loading code)
+- **Hybrid Frequencies**: Custom/user words now use actual frequency values in beam search
+  - Custom words: Normalize 1-10000 → 0-1, assign tier 2 if >=8000, else tier 1
+  - User dict: Normalize 250 → ~0.025, assign tier 1
+  - Previous: All hardcoded to 0.01 with tier 1 (ignored user's frequency choices)
+- **Impact**: Common words now rank correctly, custom word frequencies affect swipe predictions
+- **Credit**: Gemini-2.5-pro identified the scoring bug during consultation
+
+**Previous (v1.32.182)**: Dictionary Manager UI - Display Raw Frequencies
 - **UI**: Dictionary Manager now shows raw frequency values from JSON (128-255)
 - **Fixed**: Was showing scaled values (2516 for 'inflicting'), now shows raw (159)
 - **Internal**: WordPredictor/OptimizedVocabulary still use scaled values for scoring

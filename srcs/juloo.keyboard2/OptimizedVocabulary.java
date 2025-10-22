@@ -181,14 +181,14 @@ public class OptimizedVocabulary
   
   /**
    * Calculate combined score from NN confidence and word frequency
-   * Implements web app scoring algorithm with logarithmic frequency scaling
+   * Frequency is already normalized to 0.0-1.0 range where 1.0 = most frequent
    */
   private float calculateCombinedScore(float confidence, float frequency, float boost)
   {
-    // Logarithmic frequency scaling to normalize to ~0-1 range
-    float freqScore = (float)(Math.log10(frequency + 1e-10) / -10.0);
-    freqScore = Math.max(0.0f, Math.min(1.0f, freqScore)); // Clamp to [0,1]
-    
+    // Use frequency directly - already normalized to [0,1] by loading code
+    // FIXED: Previous log10 formula was inverted (rare words scored higher than common)
+    float freqScore = frequency;
+
     // Weighted combination with boost factor
     return (CONFIDENCE_WEIGHT * confidence + FREQUENCY_WEIGHT * freqScore) * boost;
   }
@@ -529,13 +529,21 @@ public class OptimizedVocabulary
           while (keys.hasNext())
           {
             String word = keys.next().toLowerCase();
-            int frequency = jsonObj.optInt(word, 1000);
-            // High priority for custom words (tier 1 = top5000)
-            float normalizedFreq = 1.0f / 100.0f; // Equivalent to top 100
-            vocabulary.put(word, new WordInfo(normalizedFreq, (byte)1));
+            int frequency = jsonObj.optInt(word, 1000); // Raw frequency 1-10000
+
+            // Normalize frequency to 0.0-1.0 range (1.0 = most frequent)
+            // Aligns with main dictionary normalization
+            float normalizedFreq = Math.max(0.0f, (float)(frequency - 1) / 9999.0f);
+
+            // Assign tier dynamically based on frequency
+            // Very high frequency (>=8000) = tier 2 (common boost)
+            // Otherwise = tier 1 (top5000 boost)
+            byte tier = (frequency >= 8000) ? (byte)2 : (byte)1;
+
+            vocabulary.put(word, new WordInfo(normalizedFreq, tier));
             customCount++;
           }
-          Log.d(TAG, "Loaded " + customCount + " custom words into beam search");
+          Log.d(TAG, "Loaded " + customCount + " custom words into beam search (frequency-based tiers)");
         }
         catch (org.json.JSONException e)
         {
@@ -565,9 +573,16 @@ public class OptimizedVocabulary
           while (cursor.moveToNext())
           {
             String word = cursor.getString(wordIndex).toLowerCase();
-            // High priority for user dictionary (tier 1 = top5000)
-            float normalizedFreq = 1.0f / 100.0f; // Equivalent to top 100
-            vocabulary.put(word, new WordInfo(normalizedFreq, (byte)1));
+            // UserDictionary words have standard frequency of 250
+            int frequency = 250;
+
+            // Normalize to 0-1 range (~0.025)
+            float normalizedFreq = Math.max(0.0f, (float)(frequency - 1) / 9999.0f);
+
+            // Assign tier 1 to ensure prioritization
+            byte tier = 1;
+
+            vocabulary.put(word, new WordInfo(normalizedFreq, tier));
             userCount++;
           }
 

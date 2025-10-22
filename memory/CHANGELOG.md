@@ -4,9 +4,24 @@ Complete version history with detailed technical documentation.
 
 ---
 
-## v1.32.179-182 - Enhanced Dictionary & Frequency Control (2025-10-21)
+## v1.32.179-183 - Enhanced Dictionary & Frequency Control (2025-10-21)
 
 ### 50k Dictionary Upgrade with Real Frequency Data
+
+**v1.32.183** (232) - ✅ BUILD SUCCESSFUL - CRITICAL: Fixed Beam Search Scoring Bug
+- fix(beam-search): correct inverted frequency scoring formula
+- **Critical Bug**: Scoring formula `log10(frequency) / -10.0` was inverted
+  - Rare words (freq=0.0) scored 1.0, common words (freq=1.0) scored 0.0
+  - This contradicted the goal of using frequency to rank predictions
+- **Fix**: Use frequency directly (already normalized 0-1 by loading code)
+- **New formula**: `(CONFIDENCE_WEIGHT * confidence + FREQUENCY_WEIGHT * frequency) * boost`
+- feat(beam-search): implement hybrid frequency model for custom/user words
+  - Custom words: Normalize freq (1-10000) → 0-1, dynamic tier (>=8000 = tier 2, else tier 1)
+  - User dict: Normalize freq (250) → ~0.025, tier 1
+  - Previous: All custom/user words hardcoded to freq=0.01, tier=1 (ignored user settings)
+- **Impact**: Common words now rank correctly, custom frequencies affect swipe predictions
+- **Credit**: Gemini-2.5-pro identified scoring bug during consultation
+- **Files**: OptimizedVocabulary.java lines 186-194 (scoring), 512-602 (hybrid frequencies)
 
 **v1.32.182** (231) - ✅ BUILD SUCCESSFUL - Display Raw Frequencies in UI
 - fix(dictionary): show raw frequency values in Dictionary Manager
