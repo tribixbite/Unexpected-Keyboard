@@ -4,6 +4,29 @@ Complete version history with detailed technical documentation.
 
 ---
 
+## v1.32.191 - Dictionary Manager Performance Fixes (2025-10-21)
+
+**v1.32.191** (240) - ✅ BUILD SUCCESSFUL - Dictionary Manager Bug Fixes
+- fix(dict-mgr): use prefix indexing for search instead of in-memory filtering
+  - Changed WordListFragment.filter() to call dataSource.searchWords()
+  - **Before**: Filtered ALL 50k words in memory on main thread (caused lag)
+  - **After**: Uses DictionaryDataSource.searchWords() with O(1) prefix indexing
+  - **Impact**: Search is now instant, no lag when typing in search box
+- fix(dict-mgr): use bindingAdapterPosition to prevent wrong word labels
+  - Changed onBindViewHolder() in both adapters to use holder.bindingAdapterPosition
+  - **Before**: Using stale position parameter caused wrong word labels after filtering
+  - **After**: Always uses current stable position from RecyclerView
+  - Added bounds checking for WordEditableAdapter (position > 0 && position - 1 < size)
+  - **Impact**: Word labels now display correctly after search/filter operations
+- fix(dict-mgr): reload predictions after add/delete/edit custom words
+  - Added refreshAllTabs() calls to deleteWord(), showAddDialog(), showEditDialog()
+  - **Before**: Deleting/adding custom words didn't remove/add them from predictions
+  - **After**: All dictionary changes immediately reload predictions
+  - **Impact**: Custom word changes reflected in typing and swipe predictions instantly
+- **Files**: WordListFragment.kt (search, add/delete/edit), WordListAdapter.kt (position bug)
+
+---
+
 ## v1.32.187 - Prefix Indexing for 50k Vocabulary (2025-10-21)
 
 **v1.32.187** (236) - ✅ BUILD SUCCESSFUL - Prefix Indexing Implementation

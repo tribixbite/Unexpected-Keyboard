@@ -128,8 +128,31 @@ class WordListFragment : Fragment() {
     fun filter(query: String, sourceFilter: WordSource? = null) {
         if (!::adapter.isInitialized) return
         currentSourceFilter = sourceFilter
-        adapter.filter(query, sourceFilter)
-        updateEmptyState()
+
+        // Use DictionaryDataSource.searchWords() which has prefix indexing
+        // instead of in-memory filtering of 50k words on main thread
+        lifecycleScope.launch {
+            try {
+                val words = if (query.isBlank() && sourceFilter == null) {
+                    dataSource.getAllWords()
+                } else {
+                    // searchWords() uses prefix indexing (O(1) lookup)
+                    val searchResults = dataSource.searchWords(query)
+
+                    // Apply source filter if needed
+                    if (sourceFilter != null) {
+                        searchResults.filter { it.source == sourceFilter }
+                    } else {
+                        searchResults
+                    }
+                }
+
+                adapter.setWords(words)
+                updateEmptyState()
+            } catch (e: Exception) {
+                android.util.Log.e("WordListFragment", "Error filtering words", e)
+            }
+        }
     }
 
     fun getFilteredCount(): Int {
@@ -175,6 +198,8 @@ class WordListFragment : Fragment() {
                     try {
                         dataSource.deleteWord(word.word)
                         loadWords()
+                        // Notify parent activity to refresh predictions
+                        (activity as? DictionaryManagerActivity)?.refreshAllTabs()
                     } catch (e: Exception) {
                         AlertDialog.Builder(requireContext())
                             .setTitle("Error")
@@ -219,6 +244,8 @@ class WordListFragment : Fragment() {
                         try {
                             dataSource.addWord(word, frequency.coerceIn(1, 10000))
                             loadWords()
+                            // Notify parent activity to refresh predictions
+                            (activity as? DictionaryManagerActivity)?.refreshAllTabs()
                         } catch (e: Exception) {
                             AlertDialog.Builder(requireContext())
                                 .setTitle("Error")
@@ -265,6 +292,8 @@ class WordListFragment : Fragment() {
                         try {
                             dataSource.updateWord(word.word, newWord, newFrequency.coerceIn(1, 10000))
                             loadWords()
+                            // Notify parent activity to refresh predictions
+                            (activity as? DictionaryManagerActivity)?.refreshAllTabs()
                         } catch (e: Exception) {
                             AlertDialog.Builder(requireContext())
                                 .setTitle("Error")

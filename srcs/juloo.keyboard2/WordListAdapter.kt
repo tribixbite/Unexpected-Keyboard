@@ -78,7 +78,11 @@ class WordToggleAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        (holder as ToggleViewHolder).bind(filteredWords[position], onToggle)
+        // Use bindingAdapterPosition to get stable position (avoids stale position bugs)
+        val adapterPosition = holder.bindingAdapterPosition
+        if (adapterPosition != RecyclerView.NO_POSITION) {
+            (holder as ToggleViewHolder).bind(filteredWords[adapterPosition], onToggle)
+        }
     }
 
     class ToggleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -136,9 +140,18 @@ class WordEditableAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        // Use bindingAdapterPosition to get stable position (avoids stale position bugs)
+        val adapterPosition = holder.bindingAdapterPosition
+        if (adapterPosition == RecyclerView.NO_POSITION) return
+
         when (holder) {
             is AddViewHolder -> holder.bind(onAdd)
-            is EditableViewHolder -> holder.bind(filteredWords[position - 1], onEdit, onDelete)
+            is EditableViewHolder -> {
+                // Position 0 is Add button, actual words start at position 1
+                if (adapterPosition > 0 && adapterPosition - 1 < filteredWords.size) {
+                    holder.bind(filteredWords[adapterPosition - 1], onEdit, onDelete)
+                }
+            }
         }
     }
 

@@ -9,11 +9,31 @@
 
 ## 🔥 Current Status (2025-10-21)
 
-**Latest Version**: v1.32.187 (236)
-**Build Status**: ✅ BUILD SUCCESSFUL - Prefix Indexing for 50k Vocabulary
+**Latest Version**: v1.32.191 (240)
+**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Performance Fixes
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.187)
+### Recent Work (v1.32.191)
+
+**Dictionary Manager Bug Fixes - Search Performance + UI Fixes**
+- **Search Performance**: Fixed search lag by using prefix indexing
+  - **Before**: filter() iterated ALL 50k words in memory on main thread (caused lag)
+  - **After**: Uses dataSource.searchWords() with O(1) prefix indexing
+  - Changed WordListFragment.filter() to call DictionaryDataSource.searchWords()
+  - **Impact**: Search is now instant, no lag when typing in search box
+- **RecyclerView Position Bug**: Fixed wrong word labels after filtering
+  - **Before**: Using stale position parameter caused wrong word labels
+  - **After**: Uses holder.bindingAdapterPosition for stable current position
+  - Added bounds checking for WordEditableAdapter
+  - **Impact**: Word labels now display correctly after search/filter operations
+- **Prediction Reload**: Fixed add/delete/edit not updating predictions
+  - **Before**: Deleting/adding custom words didn't remove/add them from predictions
+  - **After**: All dictionary changes call refreshAllTabs() to reload predictions
+  - Added refreshAllTabs() calls to deleteWord(), showAddDialog(), showEditDialog()
+  - **Impact**: Custom word changes reflected in typing and swipe predictions instantly
+- **Files**: WordListFragment.kt, WordListAdapter.kt
+
+**Previous (v1.32.187)**: Prefix Indexing Implementation - 100x Performance Improvement
 
 **Prefix Indexing Implementation - 100x Performance Improvement**
 - **WordPredictor.java**: Implemented prefix indexing for typing predictions
