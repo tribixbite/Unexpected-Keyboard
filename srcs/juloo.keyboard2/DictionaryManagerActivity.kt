@@ -42,6 +42,7 @@ class DictionaryManagerActivity : AppCompatActivity() {
     companion object {
         private const val SEARCH_DEBOUNCE_MS = 300L
         private val TAB_TITLES = listOf("Active", "Disabled", "User Dict", "Custom")
+        private const val COUNT_UPDATE_DELAY_MS = 100L // Delay to ensure fragments have updated
     }
 
     enum class FilterType {
@@ -60,6 +61,11 @@ class DictionaryManagerActivity : AppCompatActivity() {
         setupSearch()
         setupFilter()
         setupResetButton()
+
+        // Initialize tab counts after fragments are loaded
+        searchHandler.postDelayed({
+            updateTabCounts()
+        }, 500) // Longer delay for initial load
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -164,16 +170,23 @@ class DictionaryManagerActivity : AppCompatActivity() {
         // Apply search to all fragments with source filter
         fragments.forEach { it.filter(query, sourceFilter) }
 
-        // Auto-switch tabs if current tab has no results
-        if (query.isNotEmpty() || sourceFilter != null) {
-            val currentFragment = fragments[viewPager.currentItem]
-            if (currentFragment.getFilteredCount() == 0) {
-                // Find first tab with results
-                val tabWithResults = fragments.indexOfFirst { it.getFilteredCount() > 0 }
-                if (tabWithResults >= 0 && tabWithResults != viewPager.currentItem) {
-                    viewPager.currentItem = tabWithResults
-                }
-            }
+        // Update tab counts after search completes
+        // Small delay to ensure fragments have updated their counts
+        searchHandler.postDelayed({
+            updateTabCounts()
+        }, COUNT_UPDATE_DELAY_MS)
+    }
+
+    /**
+     * Update tab counts to show result numbers
+     * Modular design: automatically works with any number of tabs
+     */
+    private fun updateTabCounts() {
+        for (i in fragments.indices) {
+            val tab = tabLayout.getTabAt(i) ?: continue
+            val count = fragments[i].getFilteredCount()
+            val title = TAB_TITLES[i]
+            tab.text = "$title\n($count)"
         }
     }
 
@@ -194,6 +207,11 @@ class DictionaryManagerActivity : AppCompatActivity() {
      */
     fun refreshAllTabs() {
         fragments.forEach { it.refresh() }
+
+        // Update tab counts to reflect changes
+        searchHandler.postDelayed({
+            updateTabCounts()
+        }, COUNT_UPDATE_DELAY_MS)
 
         // Reload predictions to reflect dictionary changes
         reloadPredictions()
