@@ -1305,7 +1305,34 @@ public class OnnxSwipePredictor
       scores.add((int)(pred.score * 1000)); // Convert combined score to 0-1000 range
     }
 
-    // DEBUG MODE: Log raw neural network outputs for analysis (not shown in UI)
+    // Add raw beam search predictions (closest matches) after filtered predictions
+    // This shows what the neural network actually predicted vs vocabulary filtering
+    if (!candidates.isEmpty())
+    {
+      int numRawToAdd = Math.min(3, candidates.size());
+      for (int i = 0; i < numRawToAdd; i++)
+      {
+        BeamSearchCandidate candidate = candidates.get(i);
+
+        // Only add if not already in filtered results
+        boolean alreadyIncluded = false;
+        for (String word : words) {
+          if (word.equalsIgnoreCase(candidate.word)) {
+            alreadyIncluded = true;
+            break;
+          }
+        }
+
+        if (!alreadyIncluded)
+        {
+          // Add raw prediction with score based on NN confidence
+          words.add(candidate.word);
+          scores.add((int)(candidate.confidence * 1000));
+        }
+      }
+    }
+
+    // DEBUG MODE: Log raw neural network outputs for analysis
     if (_config != null && _config.swipe_debug_show_raw_output && !candidates.isEmpty())
     {
       StringBuilder debugOutput = new StringBuilder("🔍 Raw NN Beam Search (with vocab filtering):\n");
