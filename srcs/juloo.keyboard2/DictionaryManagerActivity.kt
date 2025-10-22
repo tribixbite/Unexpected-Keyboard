@@ -38,6 +38,7 @@ class DictionaryManagerActivity : AppCompatActivity() {
     private val searchHandler = Handler(Looper.getMainLooper())
     private var searchRunnable: Runnable? = null
     private var currentSearchQuery = ""
+    private var fragmentsLoadedCount = 0  // Track how many fragments have loaded
 
     companion object {
         private const val SEARCH_DEBOUNCE_MS = 300L
@@ -62,10 +63,24 @@ class DictionaryManagerActivity : AppCompatActivity() {
         setupFilter()
         setupResetButton()
 
-        // Initialize tab counts after fragments are loaded
-        searchHandler.postDelayed({
-            updateTabCounts()
-        }, 500) // Longer delay for initial load
+        // Restore state after configuration change (e.g., rotation)
+        if (savedInstanceState != null) {
+            currentSearchQuery = savedInstanceState.getString("searchQuery", "")
+            currentFilter = FilterType.values()[savedInstanceState.getInt("filterType", 0)]
+            searchInput.setText(currentSearchQuery)
+            filterSpinner.setSelection(currentFilter.ordinal)
+
+            // Reapply search/filter after fragments load
+            searchHandler.postDelayed({
+                performSearch(currentSearchQuery)
+            }, 200)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("searchQuery", currentSearchQuery)
+        outState.putInt("filterType", currentFilter.ordinal)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -187,6 +202,21 @@ class DictionaryManagerActivity : AppCompatActivity() {
             val count = fragments[i].getFilteredCount()
             val title = TAB_TITLES[i]
             tab.text = "$title\n($count)"
+        }
+    }
+
+    /**
+     * Called by fragments when they finish loading or filtering data
+     * Updates tab counts to reflect current state
+     */
+    fun onFragmentDataLoaded() {
+        // Increment counter and check if all fragments have loaded
+        fragmentsLoadedCount++
+
+        // Update counts immediately when fragments finish loading
+        // This fixes the "0 results" issue on initial load
+        searchHandler.post {
+            updateTabCounts()
         }
     }
 

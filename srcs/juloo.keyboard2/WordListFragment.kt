@@ -115,6 +115,8 @@ class WordListFragment : Fragment() {
                 val words = dataSource.getAllWords()
                 adapter.setWords(words)
                 updateEmptyState()
+                // Notify activity to update tab counts after load completes
+                (activity as? DictionaryManagerActivity)?.onFragmentDataLoaded()
             } catch (e: Exception) {
                 emptyText.text = "Error loading words: ${e.message}"
                 emptyText.visibility = View.VISIBLE
@@ -137,11 +139,18 @@ class WordListFragment : Fragment() {
         // instead of in-memory filtering of 50k words on main thread
         searchJob = lifecycleScope.launch {
             try {
-                val words = if (query.isBlank() && sourceFilter == null) {
+                // Normalize query: trim whitespace and treat pure whitespace as blank
+                val normalizedQuery = query.trim()
+
+                val words = if (normalizedQuery.isBlank() && sourceFilter == null) {
+                    // No search, no filter - show all words from this tab's data source
                     dataSource.getAllWords()
+                } else if (normalizedQuery.isBlank() && sourceFilter != null) {
+                    // No search query, but source filter applied - get all and filter by source
+                    dataSource.getAllWords().filter { it.source == sourceFilter }
                 } else {
-                    // searchWords() uses prefix indexing (O(1) lookup)
-                    val searchResults = dataSource.searchWords(query)
+                    // Has search query - use prefix indexing
+                    val searchResults = dataSource.searchWords(normalizedQuery)
 
                     // Apply source filter if needed
                     if (sourceFilter != null) {
@@ -151,9 +160,10 @@ class WordListFragment : Fragment() {
                     }
                 }
 
-                // AsyncListDiffer.submitList() calculates diff on background thread
                 adapter.setWords(words)
                 updateEmptyState()
+                // Notify activity to update tab counts after filter completes
+                (activity as? DictionaryManagerActivity)?.onFragmentDataLoaded()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Search was cancelled - this is expected, don't log as error
                 android.util.Log.d("WordListFragment", "Search cancelled")
