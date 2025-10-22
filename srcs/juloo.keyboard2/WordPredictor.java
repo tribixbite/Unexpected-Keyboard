@@ -20,6 +20,7 @@ import java.util.Set;
 public class WordPredictor
 {
   private final Map<String, Integer> _dictionary;
+  private final Map<String, Set<String>> _prefixIndex; // Prefix → words mapping for fast lookup
   private BigramModel _bigramModel;
   private LanguageDetector _languageDetector;
   private String _currentLanguage;
@@ -28,6 +29,7 @@ public class WordPredictor
   private static final int MAX_PREDICTIONS_SWIPE = 10;
   private static final int MAX_EDIT_DISTANCE = 2;
   private static final int MAX_RECENT_WORDS = 20; // Keep last 20 words for language detection
+  private static final int PREFIX_INDEX_MAX_LENGTH = 3; // Index prefixes up to 3 chars
   private Config _config;
   private UserAdaptationManager _adaptationManager;
   private Context _context; // For accessing SharedPreferences for disabled words
@@ -40,6 +42,7 @@ public class WordPredictor
   public WordPredictor()
   {
     _dictionary = new HashMap<>();
+    _prefixIndex = new HashMap<>();
     _bigramModel = new BigramModel();
     _languageDetector = new LanguageDetector();
     _currentLanguage = "en"; // Default to English
@@ -94,14 +97,17 @@ public class WordPredictor
   /**
    * Reload custom words and user dictionary (called when Dictionary Manager makes changes)
    * PERFORMANCE: Only reloads small dynamic sets, overwrites existing entries
+   * Also rebuilds prefix index to include new words
    */
   public void reloadCustomAndUserWords()
   {
     if (_context != null)
     {
       loadCustomAndUserWords(_context);
+      // Rebuild prefix index to include newly added custom/user words
+      buildPrefixIndex();
       _lastReloadTime = System.currentTimeMillis();
-      android.util.Log.d("WordPredictor", "Reloaded custom and user dictionary words");
+      android.util.Log.d("WordPredictor", "Reloaded custom and user dictionary words + rebuilt prefix index");
     }
   }
 
@@ -308,8 +314,49 @@ public class WordPredictor
     // Load custom words and user dictionary (additive to main dictionary)
     loadCustomAndUserWords(context);
 
+    // Build prefix index for fast lookup (100x speedup over iteration)
+    buildPrefixIndex();
+    android.util.Log.d("WordPredictor", "Built prefix index: " + _prefixIndex.size() + " prefixes for " + _dictionary.size() + " words");
+
     // Set the N-gram model language to match the dictionary
     setLanguage(language);
+  }
+
+  /**
+   * Build prefix index for fast word lookup during predictions
+   * Creates mapping from prefixes (1-3 chars) to sets of matching words
+   * Performance: Reduces 50k iterations per keystroke to ~100-500
+   */
+  private void buildPrefixIndex()
+  {
+    _prefixIndex.clear();
+
+    for (String word : _dictionary.keySet())
+    {
+      // Index prefixes of length 1 to PREFIX_INDEX_MAX_LENGTH (3)
+      int maxLen = Math.min(PREFIX_INDEX_MAX_LENGTH, word.length());
+      for (int len = 1; len <= maxLen; len++)
+      {
+        String prefix = word.substring(0, len);
+        _prefixIndex.computeIfAbsent(prefix, k -> new HashSet<>()).add(word);
+      }
+    }
+  }
+
+  /**
+   * Add words to prefix index (for incremental updates)
+   */
+  private void addToPrefixIndex(Set<String> words)
+  {
+    for (String word : words)
+    {
+      int maxLen = Math.min(PREFIX_INDEX_MAX_LENGTH, word.length());
+      for (int len = 1; len <= maxLen; len++)
+      {
+        String prefix = word.substring(0, len);
+        _prefixIndex.computeIfAbsent(prefix, k -> new HashSet<>()).add(word);
+      }
+    }
   }
 
   /**
@@ -404,6 +451,49 @@ public class WordPredictor
   }
 
   /**
+   * Get candidate words from prefix index
+   * Returns all words starting with the given prefix
+   * Performance: O(1) lookup instead of O(n) iteration
+   */
+  private Set<String> getPrefixCandidates(String prefix)
+  {
+    if (prefix.isEmpty())
+    {
+      // For empty prefix, return all words (fallback to full dictionary)
+      return _dictionary.keySet();
+    }
+
+    // Use prefix as-is if <= 3 chars, otherwise use first 3 chars
+    String lookupPrefix = prefix.length() <= PREFIX_INDEX_MAX_LENGTH
+        ? prefix
+        : prefix.substring(0, PREFIX_INDEX_MAX_LENGTH);
+
+    Set<String> candidates = _prefixIndex.get(lookupPrefix);
+
+    if (candidates == null)
+    {
+      // No words with this prefix
+      return Collections.emptySet();
+    }
+
+    // If typed prefix is longer than indexed prefix, filter further
+    if (prefix.length() > PREFIX_INDEX_MAX_LENGTH)
+    {
+      Set<String> filtered = new HashSet<>();
+      for (String word : candidates)
+      {
+        if (word.startsWith(prefix))
+        {
+          filtered.add(word);
+        }
+      }
+      return filtered;
+    }
+
+    return candidates;
+  }
+
+  /**
    * Predict words based on the sequence of touched keys
    * Returns list of predictions (for backward compatibility)
    */
@@ -452,25 +542,25 @@ public class WordPredictor
 
     int maxPredictions = MAX_PREDICTIONS_TYPING;
 
-    // Find all words that could match the typed prefix
-    // TODO: CRITICAL PERFORMANCE - Iterates ALL 50,131 words on EVERY keystroke!
-    // Should implement prefix indexing: Map<String, Set<String>> for 100x speedup
-    // Example: "th" → {"the", "that", "there", ...} reduces 50k iterations to ~200
-    for (Map.Entry<String, Integer> entry : _dictionary.entrySet())
+    // Find all words that could match the typed prefix using prefix index
+    // PERFORMANCE: Prefix index reduces 50k iterations to ~100-500 (100x speedup)
+    // Get candidate words from prefix index (only words starting with typed prefix)
+    Set<String> candidateWords = getPrefixCandidates(lowerSequence);
+
+    android.util.Log.d("WordPredictor", "Prefix index lookup: " + candidateWords.size() + " candidates for prefix '" + lowerSequence + "'");
+
+    for (String word : candidateWords)
     {
-      String word = entry.getKey();
-      int frequency = entry.getValue();
-
-      // STRICT PREFIX MATCHING - Only suggest words that start with typed sequence
-      if (!word.startsWith(lowerSequence))
-        continue;  // Skip words that don't start with typed prefix
-
       // SKIP DISABLED WORDS - Filter out words disabled via Dictionary Manager
       if (isWordDisabled(word))
       {
         android.util.Log.d("WordPredictor", "Skipping disabled word: " + word);
         continue;
       }
+
+      // Get frequency for scoring
+      Integer frequency = _dictionary.get(word);
+      if (frequency == null) continue; // Should not happen, but safe guard
 
       // UNIFIED SCORING: Combine ALL signals into one score BEFORE selection
       int score = calculateUnifiedScore(word, lowerSequence, frequency, context);

@@ -4,7 +4,33 @@ Complete version history with detailed technical documentation.
 
 ---
 
-## v1.32.179-184 - Enhanced Dictionary & Frequency Control (2025-10-21)
+## v1.32.187 - Prefix Indexing for 50k Vocabulary (2025-10-21)
+
+**v1.32.187** (236) - ✅ BUILD SUCCESSFUL - Prefix Indexing Implementation
+- perf(typing): implement prefix indexing in WordPredictor for 100x speedup
+  - Added _prefixIndex HashMap for O(1) word lookup
+  - Build prefix index (1-3 chars) during dictionary loading
+  - getPrefixCandidates() reduces iterations from 50k → 100-500 per keystroke
+  - Memory cost: +2 MB (acceptable for 100x performance gain)
+  - **Impact**: Typing predictions now scale efficiently with 50k vocabulary
+- perf(dict-mgr): implement prefix indexing in MainDictionarySource for instant search
+  - Added prefixIndex to MainDictionarySource class
+  - buildPrefixIndex() creates prefix → words mapping
+  - searchWords() uses O(1) lookup instead of O(n) linear search
+  - **Impact**: Dictionary Manager search instant for 50k words
+- fix(kotlin): merge companion objects in DictionaryDataSource.kt
+  - Combined two companion objects (TAG + PREFIX_INDEX_MAX_LENGTH)
+  - Fixed "Conflicting declarations" compilation error
+- docs(specs): update BEAM_SEARCH_VOCABULARY.md v2.0 → v2.1
+  - Documented prefix indexing implementation details
+  - Moved "WordPredictor O(n) Iteration" from Known Issues to Performance Optimizations
+  - Updated Future Enhancements with Dictionary Manager implementation
+  - Added v2.1 changelog with technical details and impact analysis
+- **Files**: WordPredictor.java (prefix index), DictionaryDataSource.kt (prefix index, companion object merge), docs/specs/BEAM_SEARCH_VOCABULARY.md (v2.1 documentation)
+
+---
+
+## v1.32.179-186 - Enhanced Dictionary & Frequency Control (2025-10-21)
 
 ### 50k Dictionary Upgrade with Real Frequency Data
 

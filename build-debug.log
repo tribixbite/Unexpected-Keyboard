@@ -20,14 +20,14 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :mapDebugSourceSetPaths
-> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
-> Task :mergeDebugResources
+> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :mergeDebugResources
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -39,10 +39,10 @@ Generated version info:  ()
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
+> Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -57,15 +57,73 @@ Generated version info:  ()
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
-> Task :compileDebugKotlin FROM-CACHE
-> Task :compileDebugJavaWithJavac FROM-CACHE
+> Task :compileDebugKotlin
+
+> Task :compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+3 warnings
+
 > Task :processDebugJavaRes
-> Task :dexBuilderDebug FROM-CACHE
-> Task :mergeProjectDexDebug FROM-CACHE
 > Task :mergeDebugJavaResource
+> Task :dexBuilderDebug
+> Task :mergeProjectDexDebug
 > Task :packageDebug
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 43s
-39 actionable tasks: 27 executed, 12 from cache
+BUILD SUCCESSFUL in 1m 26s
+39 actionable tasks: 31 executed, 8 from cache
+id.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+3 warnings
+
+> Task :processDebugJavaRes
+> Task :mergeDebugJavaResource
+> Task :dexBuilderDebug
+> Task :mergeProjectDexDebug
+> Task :packageDebug
+> Task :createDebugApkListingFileRedirect
+> Task :assembleDebug
+
+BUILD SUCCESSFUL in 1m 26s
+39 actionable tasks: 31 executed, 8 from cache
+
+=== BUILD SUCCESSFUL! ===
+APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
+
+-rw-------. 1 u0_a364 u0_a364 48M Oct 21 22:32 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+
+Copying APK to /sdcard/unexpected/ for updates...
+APK copied to: /sdcard/unexpected/debug-kb.apk
+-rw-rw----. 1 u0_a315 media_rw 48M Oct 21 22:32 /sdcard/unexpected/debug-kb.apk
+
+Step 6: Attempting ADB connection and installation...
+✅ ADB device already connected
+
+Uninstalling previous debug version...
+  ℹ️  No previous version found
+
+Installing new APK via ADB...
+./build-on-termux.sh: line 280: /data/data/com.termux/files/home/android-sdk/platform-tools/adb: cannot execute binary file: Exec format error
+❌ ADB install failed, falling back to manual installation
+Opening APK for installation...

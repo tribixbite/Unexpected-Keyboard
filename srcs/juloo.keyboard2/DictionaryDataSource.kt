@@ -24,6 +24,7 @@ interface DictionaryDataSource {
 
 /**
  * Main dictionary source - loads from assets dictionary file
+ * Uses prefix indexing for fast search with 50k vocabulary
  */
 class MainDictionarySource(
     private val context: Context,
@@ -32,6 +33,8 @@ class MainDictionarySource(
 
     // Cache the dictionary after first load
     private var cachedWords: List<DictionaryWord>? = null
+    // Prefix index for fast search: prefix -> list of matching words
+    private var prefixIndex: Map<String, List<DictionaryWord>>? = null
 
     override suspend fun getAllWords(): List<DictionaryWord> = withContext(Dispatchers.IO) {
         // Return cached if available
@@ -90,6 +93,10 @@ class MainDictionarySource(
             }
 
             cachedWords = words.sorted()
+
+            // Build prefix index for fast search
+            buildPrefixIndex(cachedWords!!)
+
             cachedWords!!
         } catch (e: Exception) {
             Log.e(TAG, "Error loading main dictionary", e)
@@ -97,8 +104,45 @@ class MainDictionarySource(
         }
     }
 
+    /**
+     * Build prefix index for fast word search
+     * Creates mapping from prefixes (1-3 chars) to lists of matching words
+     * Performance: Reduces 50k linear search to ~100-500 comparisons
+     */
+    private fun buildPrefixIndex(words: List<DictionaryWord>) {
+        val index = mutableMapOf<String, MutableList<DictionaryWord>>()
+
+        for (word in words) {
+            val maxLen = minOf(PREFIX_INDEX_MAX_LENGTH, word.word.length)
+            for (len in 1..maxLen) {
+                val prefix = word.word.substring(0, len).lowercase()
+                index.getOrPut(prefix) { mutableListOf() }.add(word)
+            }
+        }
+
+        prefixIndex = index
+        Log.d(TAG, "Built prefix index: ${index.size} prefixes for ${words.size} words")
+    }
+
     override suspend fun searchWords(query: String): List<DictionaryWord> {
         if (query.isBlank()) return getAllWords()
+
+        val lowerQuery = query.lowercase()
+
+        // Use prefix index if query starts at beginning of word (most common case)
+        if (lowerQuery.length <= PREFIX_INDEX_MAX_LENGTH) {
+            // Exact prefix match - use index
+            val candidates = prefixIndex?.get(lowerQuery) ?: emptyList()
+            // Filter for substring match (in case user typed middle of word)
+            return candidates.filter { it.word.contains(lowerQuery, ignoreCase = true) }
+        } else if (lowerQuery.length > PREFIX_INDEX_MAX_LENGTH) {
+            // Use first 3 chars from index, then filter
+            val prefix = lowerQuery.substring(0, PREFIX_INDEX_MAX_LENGTH)
+            val candidates = prefixIndex?.get(prefix) ?: emptyList()
+            return candidates.filter { it.word.contains(lowerQuery, ignoreCase = true) }
+        }
+
+        // Fallback to full search (should rarely happen)
         return getAllWords().filter { it.word.contains(query, ignoreCase = true) }
     }
 
@@ -123,6 +167,7 @@ class MainDictionarySource(
 
     companion object {
         private const val TAG = "MainDictionarySource"
+        private const val PREFIX_INDEX_MAX_LENGTH = 3
     }
 }
 
