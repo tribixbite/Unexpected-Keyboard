@@ -223,6 +223,73 @@ public class OptimizedVocabulary
     // Sort by combined score (confidence + frequency)
     validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
 
+    // AUTOCORRECT FOR SWIPE: Fuzzy match top beam candidates against custom words
+    // This allows "parametrek" (custom) to match "parameters" (beam output)
+    if (context != null && !validPredictions.isEmpty())
+    {
+      try
+      {
+        android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+        boolean autocorrectEnabled = prefs.getBoolean("autocorrect_enabled", true);
+        float charMatchThreshold = prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
+
+        if (autocorrectEnabled)
+        {
+          // Get custom words
+          String customWordsJson = prefs.getString("custom_words", "{}");
+          if (!customWordsJson.equals("{}"))
+          {
+            org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
+            java.util.Iterator<String> keys = jsonObj.keys();
+
+            // For each custom word, check if it fuzzy matches any top beam candidate
+            while (keys.hasNext())
+            {
+              String customWord = keys.next().toLowerCase();
+              int customFreq = jsonObj.optInt(customWord, 1000);
+
+              // Check top 3 beam candidates for fuzzy match
+              for (int i = 0; i < Math.min(3, validPredictions.size()); i++)
+              {
+                String beamWord = validPredictions.get(i).word;
+
+                // Same length + same first 2 chars + 66% char match
+                if (fuzzyMatch(customWord, beamWord, charMatchThreshold))
+                {
+                  // Add custom word as autocorrect suggestion
+                  float normalizedFreq = Math.max(0.0f, (float)(customFreq - 1) / 9999.0f);
+                  byte tier = (customFreq >= 8000) ? (byte)2 : (byte)1;
+                  float boost = (tier == 2) ? COMMON_WORDS_BOOST : TOP5000_BOOST;
+
+                  // Use beam candidate's confidence for scoring
+                  float confidence = validPredictions.get(i).confidence;
+                  float score = calculateCombinedScore(confidence, normalizedFreq, boost);
+
+                  validPredictions.add(new FilteredPrediction(customWord, score, confidence, normalizedFreq, "autocorrect"));
+
+                  if (debugMode)
+                  {
+                    String matchMsg = String.format("🔄 AUTOCORRECT: \"%s\" (custom) matches \"%s\" (beam) → added with score=%.4f\n",
+                      customWord, beamWord, score);
+                    Log.d(TAG, matchMsg);
+                    sendDebugLog(matchMsg);
+                  }
+                  break; // Only match once per custom word
+                }
+              }
+            }
+
+            // Re-sort after adding autocorrect suggestions
+            validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
+          }
+        }
+      }
+      catch (Exception e)
+      {
+        Log.e(TAG, "Failed to apply autocorrect to beam candidates", e);
+      }
+    }
+
     // DEBUG: Show final ranking
     if (debugMode && !validPredictions.isEmpty())
     {
@@ -416,6 +483,32 @@ public class OptimizedVocabulary
   /**
    * Get minimum frequency threshold for word length
    */
+  /**
+   * Fuzzy match two words using autocorrect criteria:
+   * - Same length
+   * - Same first 2 characters
+   * - At least X% of characters match (default 66%)
+   */
+  private boolean fuzzyMatch(String word1, String word2, float charMatchThreshold)
+  {
+    if (word1.length() != word2.length()) return false;
+    if (word1.length() < 3) return false; // Too short for fuzzy match
+    if (!word1.substring(0, 2).equals(word2.substring(0, 2))) return false;
+
+    // Count matching characters
+    int matches = 0;
+    for (int i = 0; i < word1.length(); i++)
+    {
+      if (word1.charAt(i) == word2.charAt(i))
+      {
+        matches++;
+      }
+    }
+
+    float matchRatio = (float)matches / word1.length();
+    return matchRatio >= charMatchThreshold;
+  }
+
   private float getMinFrequency(int length)
   {
     return minFrequencyByLength.getOrDefault(length, 1e-9f);
@@ -614,8 +707,19 @@ public class OptimizedVocabulary
 
             vocabulary.put(word, new WordInfo(normalizedFreq, tier));
             customCount++;
+
+            // DEBUG: Log each custom word loaded
+            if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG))
+            {
+              String debugMsg = String.format("  Custom word loaded: \"%s\" (freq=%d → normalized=%.4f, tier=%d)\n",
+                word, frequency, normalizedFreq, tier);
+              Log.d(TAG, debugMsg);
+              sendDebugLog(debugMsg);
+            }
           }
-          Log.d(TAG, "Loaded " + customCount + " custom words into beam search (frequency-based tiers)");
+          String loadMsg = "Loaded " + customCount + " custom words into beam search (frequency-based tiers)";
+          Log.d(TAG, loadMsg);
+          sendDebugLog(loadMsg + "\n");
         }
         catch (org.json.JSONException e)
         {
