@@ -9,13 +9,103 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.200 (249)
-**Build Status**: ✅ BUILD SUCCESSFUL - Tab Counts + No Auto-Switch
+**Latest Version**: v1.32.207 (256)
+**Build Status**: ✅ BUILD SUCCESSFUL - Autocorrect for Swipe + Enhanced Debug Logging
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.200)
+### Recent Work (v1.32.207)
 
-**Dictionary Manager Tab Counts + No Auto-Switch**
+**Autocorrect for Swipe - Fuzzy Matching Custom Words**
+- **Feature**: Autocorrect now applies to swipe beam search, not just typing
+- **How It Works**: Custom words fuzzy matched against top 3 beam search candidates
+  - Matching criteria: same length + same first 2 chars + ≥66% character match
+  - Example: "parametrek" (custom) matches "parameters" (beam) and is suggested
+  - Solves issue where neural network doesn't generate custom words directly
+- **Scoring**: Custom word uses beam candidate's NN confidence + its own frequency
+  - Scored like normal predictions: `(NN_confidence × 0.7 + frequency × 0.3) × tier_boost`
+  - Tier 2 (freq ≥8000): 1.3× boost, Tier 1: 1.0× boost
+- **Debug Logging Enhancements**:
+  - Added custom word loading logs: shows each word with freq, normalized freq, tier
+  - Added autocorrect match logs: `"🔄 AUTOCORRECT: 'parametrek' (custom) matches 'parameters' (beam) → added with score=0.XXXX"`
+  - All logs sent to both LogCat and SwipeDebugActivity UI
+- **Use Case**: Users with custom technical terms, names, or abbreviations
+  - If beam search predicts similar word, autocorrect suggests custom variant
+  - No need to retrain neural network for custom vocabulary
+- **Files**: OptimizedVocabulary.java
+
+**Previous (v1.32.206)**: Enhanced Debug Logging + Text Input Focus Fix
+
+### Previous Work (v1.32.206)
+
+**Enhanced Debug Logging - 3-Stage Vocabulary Filtering**
+- **Stage 1**: Raw beam search output (top 10 candidates with NN confidence)
+  - Shows what neural network actually predicted before filtering
+  - Example: `"#1: 'parameters' (NN confidence: 0.9998)"`
+- **Stage 2**: Detailed filtering process
+  - Shows why each word kept or rejected
+  - Rejection reasons: invalid format, disabled, not in vocab, below threshold
+  - Kept words: tier, frequency, boost, NN confidence, final score, source
+  - Example: `"✅ 'hello' - KEPT (tier=2, freq=0.9500, boost=1.30x, NN=0.85 → score=0.92) [main]"`
+- **Stage 3**: Final ranking after combining NN + frequency
+  - Top 10 predictions with score breakdown
+  - Example: `"#1: 'hello' (score=0.92, NN=0.85, freq=0.95) [main]"`
+- **Debug Mode Activation**: Enabled via `swipe_debug_detailed_logging` setting or LogCat debug level
+- **Broadcast Logging**: All debug output sent to SwipeDebugActivity for real-time UI display
+
+**SwipeDebugActivity Text Input Focus Fix**
+- **Issue**: EditText lost focus to ScrollView/TextView when scrolling logs
+- **Fix**:
+  - Force focus: `_inputText.requestFocus()` + `setFocusableInTouchMode(true)`
+  - Prevent log stealing focus: `_logScroll.setDescendantFocusability(FOCUS_BEFORE_DESCENDANTS)`
+  - Make log non-focusable: `_logOutput.setFocusable(false)`
+- **Impact**: Text input now stays focused, can type continuously for testing
+- **Files**: SwipeDebugActivity.java, OptimizedVocabulary.java
+
+**Previous (v1.32.205)**: ViewPager2 Lazy Loading Fix
+
+### Previous Work (v1.32.205)
+
+**ViewPager2 Lazy Loading Fix - Keep All Fragments in Memory**
+- **Issue**: Landscape rotation reset tab counts to (0) until tabs were visited
+- **Root Cause**: ViewPager2 uses lazy loading by default
+  - Only creates fragments for visible tab + 1 adjacent tab
+  - After rotation, only visible fragment loaded → unvisited tabs showed (0)
+- **Fix**: Set `viewPager.offscreenPageLimit = fragments.size - 1` (keep all 4 tabs loaded)
+  - All fragments created and loaded immediately
+  - Tab counts preserved across rotation
+  - Small memory trade-off (4 fragments always in memory) for better UX
+- **Impact**: Tab counts now show immediately after rotation, no need to visit each tab
+- **Files**: DictionaryManagerActivity.kt
+
+**Previous (v1.32.204)**: Dictionary Manager Bug Fixes
+
+### Previous Work (v1.32.204)
+
+**Dictionary Manager Bug Fixes - Search Performance + State Persistence**
+- **Bug 1: 0 results on initial load**
+  - Root cause: `updateTabCounts()` ran before async `loadWords()` completed
+  - Fix: Added `onFragmentDataLoaded()` callback - fragments notify activity when data loads
+  - Impact: Tab counts now show immediately after data loads
+- **Bug 2: Tabs not filtering when searching**
+  - Root cause: Filter logic didn't handle blank queries with source filters
+  - Fix: Normalized query with `trim()`, explicit handling for 3 cases:
+    1. No filter: `dataSource.getAllWords()`
+    2. Source-only filter: `getAllWords().filter { it.source == sourceFilter }`
+    3. Search + optional source: `searchWords(query).filter { ... }`
+  - Impact: Search and filter work correctly in all combinations
+- **Bug 3: Landscape rotation reset**
+  - Root cause: No state persistence across configuration changes
+  - Fix: Implemented `onSaveInstanceState()` / `onCreate()` restore
+    - Saves: search query, filter type
+    - Restores: text input, spinner selection, reapplies search
+  - Impact: Search and filter preserved when rotating device
+- **Bug 4: Space + backspace breaks search**
+  - Root cause: Pure whitespace queries treated as valid search
+  - Fix: Query normalization with `trim()` treats whitespace as blank
+  - Impact: No more broken state from whitespace queries
+- **Files**: WordListFragment.kt, DictionaryManagerActivity.kt
+
+**Previous (v1.32.200)**: Dictionary Manager Tab Counts + No Auto-Switch
 - **Features Added**:
   - Tab counts now display under tab names: "Title\n(count)"
   - Shows result count when searching (e.g., "Active\n(451)")
