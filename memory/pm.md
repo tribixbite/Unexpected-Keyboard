@@ -9,11 +9,40 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.199 (248)
-**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager Instant Search
+**Latest Version**: v1.32.200 (249)
+**Build Status**: ✅ BUILD SUCCESSFUL - Tab Counts + No Auto-Switch
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.199)
+### Recent Work (v1.32.200)
+
+**Dictionary Manager Tab Counts + No Auto-Switch**
+- **Features Added**:
+  - Tab counts now display under tab names: "Title\n(count)"
+  - Shows result count when searching (e.g., "Active\n(451)")
+  - Shows total count when no search (e.g., "Active\n(49981)")
+  - Updates dynamically on search, filter, reset, and word modifications
+- **Removed**: Auto tab-switching after search (was disorienting)
+  - Users stay on current tab regardless of result count
+  - Easier to compare results across tabs
+- **Modular Design**:
+  - updateTabCounts() loops through fragments.indices
+  - Automatically works with any number of tabs
+  - Easy to add new tabs in future (just add to TAB_TITLES array)
+- **Example Display**:
+  ```
+  Before search:
+    Active        Disabled      User Dict    Custom
+    (49981)       (0)           (12)         (5)
+
+  After search "test":
+    Active        Disabled      User Dict    Custom
+    (15)          (0)           (1)          (0)
+  ```
+- **Files**: DictionaryManagerActivity.kt
+
+**Previous (v1.32.199)**: Dictionary Manager Instant Search
+
+### Previous Work (v1.32.199)
 
 **Dictionary Manager Instant Search - AsyncListDiffer Removed**
 - **Issue**: Search results took 19 seconds to appear (AsyncListDiffer too slow)
