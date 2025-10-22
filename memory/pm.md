@@ -9,11 +9,46 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.192 (241)
-**Build Status**: ✅ BUILD SUCCESSFUL - Swipe Prediction Pipeline Analysis + Improvements
+**Latest Version**: v1.32.197 (246)
+**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Manager System Freeze Fix
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.192)
+### Recent Work (v1.32.197)
+
+**Dictionary Manager System Freeze Fix - AsyncListDiffer + Coroutine Cancellation**
+- **Root Cause Analysis**: Complete system freeze when typing in Dictionary Manager search
+  - DiffUtil.calculateDiff() ran synchronously on main thread with 50k words
+  - O(n²) complexity: 50k × 50k = 2.5 billion comparisons per fragment
+  - All 4 fragments updated simultaneously on every keystroke
+  - Main thread blocked for 100ms+ per fragment (400ms+ total UI freeze)
+  - On slower devices (Termux ARM64) caused complete system lockup
+- **Performance Fix**: Replaced manual DiffUtil with AsyncListDiffer
+  - **Before**: Manual DiffUtil.calculateDiff() blocked main thread
+  - **After**: AsyncListDiffer automatically runs diff on background thread
+  - Added coroutine cancellation to prevent concurrent search operations
+  - Proper CancellationException handling for cancelled searches
+  - **Impact**: Search now smooth and responsive, no system freeze
+- **Files**: WordListAdapter.kt (AsyncListDiffer implementation), WordListFragment.kt (coroutine cancellation)
+
+**Previous (v1.32.196)**: Horizontal Scrollable Suggestion Bar
+
+**Horizontal Scrollable Suggestion Bar**
+- **Before**: SuggestionBar used LinearLayout with 5 fixed TextViews (predictions cut off)
+- **After**: Wrapped in HorizontalScrollView with dynamically created TextViews
+- Shows ALL predictions from neural network, not just first 5
+- Smooth horizontal scrolling for long prediction lists
+- **Files**: keyboard_with_suggestions.xml, SuggestionBar.java, Keyboard2.java
+
+**Previous (v1.32.194)**: Debug Output Fix
+
+**Debug Output Fix - Bracketed Text Only in Logs**
+- **Issue**: Predictions showing "indermination [closest:0.84]" in actual UI
+- **Fix**: Changed to log debug output only, not add to predictions list
+- Top 5 beam search candidates logged with [kept]/[filtered] markers
+- Debug output goes to Log.d() and logDebug(), not shown to users
+- **Files**: OnnxSwipePredictor.java
+
+**Previous (v1.32.192)**: Swipe Prediction Pipeline Analysis
 
 **Swipe Prediction Pipeline Analysis + Raw/Closest Display**
 - **Pipeline Documentation**: Created comprehensive `docs/specs/SWIPE_PREDICTION_PIPELINE.md`
