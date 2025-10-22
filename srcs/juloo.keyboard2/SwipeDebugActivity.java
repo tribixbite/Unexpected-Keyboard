@@ -78,6 +78,14 @@ public class SwipeDebugActivity extends Activity
       }
     });
 
+    // Request focus for input text
+    _inputText.requestFocus();
+    _inputText.setFocusableInTouchMode(true);
+
+    // Prevent log output from stealing focus when scrolling
+    _logScroll.setDescendantFocusability(android.view.ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+    _logOutput.setFocusable(false);
+
     // Register broadcast receiver for debug logs
     IntentFilter filter = new IntentFilter(ACTION_DEBUG_LOG);
     registerReceiver(_logReceiver, filter, Context.RECEIVER_NOT_EXPORTED);

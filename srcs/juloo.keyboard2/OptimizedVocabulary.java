@@ -111,9 +111,42 @@ public class OptimizedVocabulary
       Log.w(TAG, "Vocabulary not loaded, returning raw predictions");
       return convertToFiltered(rawPredictions);
     }
-    
+
+    // DEBUG: Show all raw beam search candidates BEFORE filtering
+    // Enable debug mode if user has enabled "Detailed Pipeline Logging" in settings
+    boolean debugMode = android.util.Log.isLoggable(TAG, android.util.Log.DEBUG);
+    if (!debugMode && context != null)
+    {
+      try
+      {
+        android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+        debugMode = prefs.getBoolean("swipe_debug_detailed_logging", false);
+      }
+      catch (Exception e)
+      {
+        // Ignore - debug mode stays false
+      }
+    }
+
+    if (debugMode && !rawPredictions.isEmpty())
+    {
+      StringBuilder debug = new StringBuilder("\n🔍 VOCABULARY FILTERING DEBUG (top 10 beam search outputs):\n");
+      debug.append("─────────────────────────────────────────────────────────\n");
+      int numToShow = Math.min(10, rawPredictions.size());
+      for (int i = 0; i < numToShow; i++)
+      {
+        CandidateWord candidate = rawPredictions.get(i);
+        debug.append(String.format("#%d: \"%s\" (NN confidence: %.4f)\n", i+1, candidate.word, candidate.confidence));
+      }
+      String debugMsg = debug.toString();
+      Log.d(TAG, debugMsg);
+      sendDebugLog(debugMsg);
+    }
+
     List<FilteredPrediction> validPredictions = new ArrayList<>();
-    
+    StringBuilder detailedLog = debugMode ? new StringBuilder("\n📊 DETAILED FILTERING PROCESS:\n") : null;
+    if (debugMode) detailedLog.append("─────────────────────────────────────────────────────────\n");
+
     for (CandidateWord candidate : rawPredictions)
     {
       String word = candidate.word.toLowerCase().trim();
@@ -121,12 +154,14 @@ public class OptimizedVocabulary
       // Skip invalid word formats
       if (!word.matches("^[a-z]+$"))
       {
+        if (debugMode) detailedLog.append(String.format("❌ \"%s\" - INVALID FORMAT (not a-z)\n", candidate.word));
         continue;
       }
 
       // FILTER OUT DISABLED WORDS (Dictionary Manager integration)
       if (disabledWords.contains(word))
       {
+        if (debugMode) detailedLog.append(String.format("❌ \"%s\" - DISABLED by user\n", word));
         continue; // Skip disabled words from beam search
       }
 
@@ -134,6 +169,7 @@ public class OptimizedVocabulary
       WordInfo info = vocabulary.get(word);
       if (info == null)
       {
+        if (debugMode) detailedLog.append(String.format("❌ \"%s\" - NOT IN VOCABULARY (not in main/custom/user dict)\n", word));
         continue; // Word not in vocabulary
       }
 
@@ -156,6 +192,8 @@ public class OptimizedVocabulary
           float minFreq = getMinFrequency(word.length());
           if (info.frequency < minFreq)
           {
+            if (debugMode) detailedLog.append(String.format("❌ \"%s\" - BELOW FREQUENCY THRESHOLD (freq=%.4f < min=%.4f for length %d)\n",
+              word, info.frequency, minFreq, word.length()));
             continue; // Below threshold
           }
           boost = RARE_WORDS_PENALTY;
@@ -165,17 +203,50 @@ public class OptimizedVocabulary
 
       float score = calculateCombinedScore(candidate.confidence, info.frequency, boost);
       validPredictions.add(new FilteredPrediction(word, score, candidate.confidence, info.frequency, source));
+
+      // DEBUG: Show successful candidates with all scoring details
+      if (debugMode)
+      {
+        detailedLog.append(String.format("✅ \"%s\" - KEPT (tier=%d, freq=%.4f, boost=%.2fx, NN=%.4f → score=%.4f) [%s]\n",
+          word, info.tier, info.frequency, boost, candidate.confidence, score, source));
+      }
     }
-    
+
+    if (debugMode && detailedLog != null)
+    {
+      detailedLog.append("─────────────────────────────────────────────────────────\n");
+      String detailedMsg = detailedLog.toString();
+      Log.d(TAG, detailedMsg);
+      sendDebugLog(detailedMsg);
+    }
+
     // Sort by combined score (confidence + frequency)
     validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
-    
+
+    // DEBUG: Show final ranking
+    if (debugMode && !validPredictions.isEmpty())
+    {
+      StringBuilder ranking = new StringBuilder("\n🏆 FINAL RANKING (after combining NN + frequency):\n");
+      ranking.append("─────────────────────────────────────────────────────────\n");
+      int numToShow = Math.min(10, validPredictions.size());
+      for (int i = 0; i < numToShow; i++)
+      {
+        FilteredPrediction pred = validPredictions.get(i);
+        ranking.append(String.format("#%d: \"%s\" (score=%.4f, NN=%.4f, freq=%.4f) [%s]\n",
+          i+1, pred.word, pred.score, pred.confidence, pred.frequency, pred.source));
+      }
+      ranking.append("─────────────────────────────────────────────────────────\n");
+      String rankingMsg = ranking.toString();
+      Log.d(TAG, rankingMsg);
+      sendDebugLog(rankingMsg);
+    }
+
     // Apply swipe-specific filtering if needed
     if (swipeStats != null && swipeStats.expectedLength > 0)
     {
       return filterByExpectedLength(validPredictions, swipeStats.expectedLength);
     }
-    
+
     return validPredictions.subList(0, Math.min(validPredictions.size(), 10));
   }
   
@@ -628,6 +699,27 @@ public class OptimizedVocabulary
     }
   }
 
+    /**
+   * Send debug log message to SwipeDebugActivity if available
+   * Sends broadcast to be picked up by debug activity
+   */
+  private void sendDebugLog(String message)
+  {
+    if (context == null) return;
+
+    try
+    {
+      android.content.Intent intent = new android.content.Intent("juloo.keyboard2.DEBUG_LOG");
+      intent.setPackage(context.getPackageName());
+      intent.putExtra("log_message", message);
+      context.sendBroadcast(intent);
+    }
+    catch (Exception e)
+    {
+      // Silently fail - debug activity might not be running
+    }
+  }
+
   /**
    * Vocabulary statistics
    */
@@ -637,7 +729,7 @@ public class OptimizedVocabulary
     public final int commonWords;
     public final int top5000;
     public final boolean isLoaded;
-    
+
     public VocabularyStats(int totalWords, int commonWords, int top5000, boolean isLoaded)
     {
       this.totalWords = totalWords;
