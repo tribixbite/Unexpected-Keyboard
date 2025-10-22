@@ -9,11 +9,38 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.211 (260)
-**Build Status**: ✅ BUILD SUCCESSFUL - Configurable Fuzzy Matching + Scoring Weights
+**Latest Version**: v1.32.212 (262)
+**Build Status**: ✅ BUILD SUCCESSFUL - Complete Settings UI for Swipe Parameters
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.211)
+### Recent Work (v1.32.212)
+
+**Settings UI - Expose All Configurable Swipe Parameters**
+- **Feature**: Complete settings UI for all fuzzy matching and scoring parameters
+- **Location**: Settings → Typing → ✨ Swipe Corrections (requires swipe typing enabled)
+- **Preset System**: Strict / Balanced (default) / Lenient quick-start configurations
+- **Fuzzy Matching Settings** (beginner-friendly):
+  - Typo Forgiveness (0-5 chars, default: 2) - length difference allowed
+  - Starting Letter Accuracy (0-4 letters, default: 2) - prefix match requirement
+  - Correction Search Depth (1-10 candidates, default: 3) - beam candidates to check
+- **Advanced Swipe Tuning** (power users):
+  - Prediction Source (0-100%, default: 60%) - single slider for AI vs Dictionary balance
+    - 0% = Pure Dictionary (conf=0.0, freq=1.0)
+    - 60% = Balanced (conf=0.6, freq=0.4)
+    - 100% = Pure AI Model (conf=1.0, freq=0.0)
+  - Common Words Boost (0.5-2.0x, default: 1.3x) - Tier 2 top 100 words
+  - Frequent Words Boost (0.5-2.0x, default: 1.0x) - Tier 1 top 3000 words
+  - Rare Words Penalty (0.0-1.5x, default: 0.75x) - Tier 0 rest of vocabulary
+  - Reset Swipe Settings button
+- **Immediate Effect**: Settings apply instantly via existing SharedPreferences listener
+  - No app restart needed
+  - Keyboard2.onSharedPreferenceChanged() → refresh_config() → updates engines
+- **Design**: UI/UX designed with Gemini via Zen MCP for optimal user experience
+- **Files**: settings.xml, arrays.xml, Config.java
+
+**Previous (v1.32.211)**: Configurable Scoring System
+
+### Previous Work (v1.32.211)
 
 **Configurable Scoring System - User-Adjustable Tier/Confidence/Frequency Weights**
 - **Feature**: All swipe scoring weights now user-configurable (were hardcoded)
