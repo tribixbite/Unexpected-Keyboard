@@ -349,7 +349,12 @@ public class OptimizedVocabulary
           }
 
           // Try fuzzy matching against dictionary words of similar length
+          // v1.33.2: CRITICAL FIX - find BEST match (highest score), not FIRST match
           int targetLength = beamWord.length();
+          String bestMatch = null;
+          float bestScore = 0.0f;
+          float bestFrequency = 0.0f;
+          String bestSource = null;
 
           for (java.util.Map.Entry<String, WordInfo> entry : vocabulary.entrySet())
           {
@@ -393,17 +398,28 @@ public class OptimizedVocabulary
               // Use beam output's NN confidence + dictionary word's frequency
               float score = calculateCombinedScore(beamConfidence, info.frequency, boost, confidenceWeight, frequencyWeight);
 
-              validPredictions.add(new FilteredPrediction(dictWord, score, beamConfidence, info.frequency, source));
-
-              if (debugMode)
+              // Keep track of best match (v1.33.2: don't break on first match!)
+              if (score > bestScore)
               {
-                String matchMsg = String.format("🔄 DICT FUZZY: \"%s\" (dict) matches \"%s\" (beam #%d, NN=%.4f) → added with score=%.4f\n",
-                  dictWord, beamWord, i+1, beamConfidence, score);
-                Log.d(TAG, matchMsg);
-                sendDebugLog(matchMsg);
+                bestScore = score;
+                bestMatch = dictWord;
+                bestFrequency = info.frequency;
+                bestSource = source;
               }
+            }
+          }
 
-              break; // Only match once per beam word (take first match)
+          // Add the best match found for this beam word (if any)
+          if (bestMatch != null)
+          {
+            validPredictions.add(new FilteredPrediction(bestMatch, bestScore, beamConfidence, bestFrequency, bestSource));
+
+            if (debugMode)
+            {
+              String matchMsg = String.format("🔄 DICT FUZZY: \"%s\" (dict) matches \"%s\" (beam #%d, NN=%.4f) → added with score=%.4f\n",
+                bestMatch, beamWord, i+1, beamConfidence, bestScore);
+              Log.d(TAG, matchMsg);
+              sendDebugLog(matchMsg);
             }
           }
         }

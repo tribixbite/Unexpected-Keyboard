@@ -9,11 +9,40 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.213 (263)
-**Build Status**: ✅ BUILD SUCCESSFUL - Critical Performance Fix + Separate Autocorrect Toggle
+**Latest Version**: v1.32.218 (268)
+**Build Status**: ✅ BUILD SUCCESSFUL - Critical Autocorrect Fixes + Dict Fuzzy Matching
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.213)
+### Recent Work (v1.32.218)
+
+**CRITICAL AUTOCORRECT FIXES + Main Dictionary Fuzzy Matching**
+- **Bug #1 Fixed**: Autocorrect only ran when `validPredictions` was non-empty
+  - **Problem**: `!validPredictions.isEmpty()` check prevented autocorrect when ALL beam outputs rejected
+  - **Example**: Swipe "proximity" → beam outputs "provity", "proxity" (all rejected) → autocorrect didn't run
+  - **Fix**: Removed isEmpty check, changed condition to `!rawPredictions.isEmpty()`
+  - **Impact**: Custom word autocorrect now works in ALL cases, not just when vocabulary filtering succeeds
+- **Bug #2 Fixed**: Autocorrect matched against filtered predictions instead of raw beam
+  - **Problem**: Looped through `validPredictions` (already vocab-filtered) instead of `rawPredictions`
+  - **Impact**: Autocorrect only matched custom words against words that ALREADY passed vocab filtering (defeats purpose!)
+  - **Fix**: Changed loop to use `rawPredictions`, use raw beam candidate confidence for scoring
+  - **Example**: Now custom word "parametrek" can match beam output "parameters" even if "parameters" was rejected
+- **NEW FEATURE: Main Dictionary Fuzzy Matching**
+  - **Purpose**: Rescue rejected beam outputs by fuzzy matching against main dictionary
+  - **Example**: "proxity" (beam, rejected) → fuzzy matches → "proximity" (dict, position 8470, freq 199)
+  - **Trigger**: Only runs when `validPredictions.size() < 3` (emergency rescue mode)
+  - **Performance**: Only checks words of similar length (±maxLengthDiff) for efficiency
+  - **Scoring**: Uses beam output's NN confidence + dictionary word's frequency + tier boost
+  - **Debug Logging**: `"🔄 DICT FUZZY: 'proximity' (dict) matches 'proxity' (beam #2, NN=0.0009) → added with score=0.XXXX"`
+  - **Files**: OptimizedVocabulary.java (lines 325-421)
+- **Known Issue**: Gesture tracker sampling still produces bad key sequences
+  - Example: Swiping "proximity" → gesture tracker outputs "poirhgkjt" (9 keys from 147 points)
+  - Neural network gets garbage input → predicts garbage output
+  - Autocorrect can now rescue SOME cases, but underlying gesture sampling needs investigation
+  - User observation: "random sampling of letters from the swipe trace... hugely deleterious impact"
+
+**Previous (v1.32.213)**: Performance Fix - Swipe Autocorrect Optimization
+
+### Previous Work (v1.32.213)
 
 **CRITICAL PERFORMANCE FIX - Swipe Autocorrect Optimization + Separate Toggle**
 - **Performance Regression Fixed**: v1.32.212 settings UI caused 2x latency increase
