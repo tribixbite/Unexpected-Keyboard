@@ -9,11 +9,37 @@
 
 ## 🔥 Current Status (2025-10-22)
 
-**Latest Version**: v1.32.212 (262)
-**Build Status**: ✅ BUILD SUCCESSFUL - Complete Settings UI for Swipe Parameters
+**Latest Version**: v1.32.213 (263)
+**Build Status**: ✅ BUILD SUCCESSFUL - Critical Performance Fix + Separate Autocorrect Toggle
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.212)
+### Recent Work (v1.32.213)
+
+**CRITICAL PERFORMANCE FIX - Swipe Autocorrect Optimization + Separate Toggle**
+- **Performance Regression Fixed**: v1.32.212 settings UI caused 2x latency increase
+  - **Root Cause**: SharedPreferences reads INSIDE autocorrect loop (7+ reads per custom word checked)
+  - **Before Optimization**: 100s of SharedPreferences reads per swipe (catastrophic overhead)
+  - **After Optimization**: 11 SharedPreferences reads total per swipe (fixed overhead)
+  - **Expected Impact**: Latency restored to original levels
+- **Settings Conflict Resolved**: Separate typing vs swipe autocorrect toggles
+  - **Old**: `autocorrect_enabled` (for typing autocorrect in "✨ Auto-Correction" section)
+  - **New**: `swipe_autocorrect_enabled` (for swipe autocorrect in "✨ Swipe Corrections" section)
+  - **Impact**: Users can now disable swipe autocorrect independently from typing autocorrect
+- **Missing Settings Added**:
+  - `autocorrect_char_match_threshold` (0.5-0.9, default: 0.67) - Character Match Threshold
+  - `autocorrect_confidence_min_frequency` (100-5000, default: 500) - Minimum Frequency
+  - Both were missing from v1.32.212 Swipe Corrections UI
+- **Optimization Details** (OptimizedVocabulary.java):
+  - Moved ALL SharedPreferences reads from autocorrect loop (lines 265-273) to top of filterPredictions() (lines 119-160)
+  - Pre-loaded variables: swipeAutocorrectEnabled, maxLengthDiff, prefixLength, maxBeamCandidates, minWordLength, charMatchThreshold
+  - Autocorrect block (lines 259-321) now uses pre-loaded config instead of redundant prefs reads
+  - Only reads custom words JSON inside autocorrect block (unavoidable single read)
+- **User Control**: Toggle to completely disable swipe autocorrect if still too slow
+- **Files**: settings.xml (CheckBoxPreference + 2 new sliders), OptimizedVocabulary.java (critical optimization)
+
+**Previous (v1.32.212)**: Settings UI - Expose All Configurable Swipe Parameters
+
+### Previous Work (v1.32.212)
 
 **Settings UI - Expose All Configurable Swipe Parameters**
 - **Feature**: Complete settings UI for all fuzzy matching and scoring parameters
@@ -23,6 +49,8 @@
   - Typo Forgiveness (0-5 chars, default: 2) - length difference allowed
   - Starting Letter Accuracy (0-4 letters, default: 2) - prefix match requirement
   - Correction Search Depth (1-10 candidates, default: 3) - beam candidates to check
+  - Character Match Threshold (0.5-0.9, default: 0.67) - ratio of matching characters
+  - Minimum Frequency (100-5000, default: 500) - only match words with freq ≥ threshold
 - **Advanced Swipe Tuning** (power users):
   - Prediction Source (0-100%, default: 60%) - single slider for AI vs Dictionary balance
     - 0% = Pure Dictionary (conf=0.0, freq=1.0)
@@ -36,6 +64,7 @@
   - No app restart needed
   - Keyboard2.onSharedPreferenceChanged() → refresh_config() → updates engines
 - **Design**: UI/UX designed with Gemini via Zen MCP for optimal user experience
+- **Performance Issue**: Caused 2x latency regression (fixed in v1.32.213)
 - **Files**: settings.xml, arrays.xml, Config.java
 
 **Previous (v1.32.211)**: Configurable Scoring System

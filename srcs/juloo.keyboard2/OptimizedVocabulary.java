@@ -259,7 +259,8 @@ public class OptimizedVocabulary
     // AUTOCORRECT FOR SWIPE: Fuzzy match top beam candidates against custom words
     // This allows "parametrek" (custom) to match "parameters" (beam output)
     // v1.33+: OPTIMIZED - uses pre-loaded config from top of method (no redundant prefs reads)
-    if (swipeAutocorrectEnabled && context != null && !validPredictions.isEmpty())
+    // v1.33.1: CRITICAL FIX - removed isEmpty check and match against raw beam outputs
+    if (swipeAutocorrectEnabled && context != null && !rawPredictions.isEmpty())
     {
       try
       {
@@ -277,10 +278,11 @@ public class OptimizedVocabulary
             String customWord = keys.next().toLowerCase();
             int customFreq = jsonObj.optInt(customWord, 1000);
 
-            // Check top N beam candidates for fuzzy match (v1.33+: uses pre-loaded maxBeamCandidates)
-            for (int i = 0; i < Math.min(maxBeamCandidates, validPredictions.size()); i++)
+            // Check top N RAW beam candidates for fuzzy match (v1.33.1: CRITICAL FIX - was using validPredictions)
+            // This allows autocorrect to work even when ALL beam outputs are rejected by vocabulary filtering
+            for (int i = 0; i < Math.min(maxBeamCandidates, rawPredictions.size()); i++)
             {
-              String beamWord = validPredictions.get(i).word;
+              String beamWord = rawPredictions.get(i).word;
 
               // v1.33+: Configurable fuzzy matching (uses pre-loaded params)
               if (fuzzyMatch(customWord, beamWord, charMatchThreshold, maxLengthDiff, prefixLength, minWordLength))
@@ -291,8 +293,8 @@ public class OptimizedVocabulary
                 // v1.33+: Use configurable boost values
                 float boost = (tier == 2) ? commonBoost : top5000Boost;
 
-                // Use beam candidate's confidence for scoring
-                float confidence = validPredictions.get(i).confidence;
+                // Use RAW beam candidate's confidence for scoring (v1.33.1: CRITICAL FIX - was using validPredictions)
+                float confidence = rawPredictions.get(i).confidence;
                 // v1.33+: Pass configurable weights to scoring function
                 float score = calculateCombinedScore(confidence, normalizedFreq, boost, confidenceWeight, frequencyWeight);
 
@@ -317,6 +319,104 @@ public class OptimizedVocabulary
       catch (Exception e)
       {
         Log.e(TAG, "Failed to apply autocorrect to beam candidates", e);
+      }
+    }
+
+    // MAIN DICTIONARY FUZZY MATCHING: Match rejected beam outputs against dictionary words
+    // v1.33.1: NEW - allows "proxity" (beam) to match "proximity" (dict)
+    // Only run if autocorrect is enabled and we have few/no valid predictions
+    if (swipeAutocorrectEnabled && validPredictions.size() < 3 && !rawPredictions.isEmpty())
+    {
+      try
+      {
+        if (debugMode)
+        {
+          String fuzzyMsg = String.format("\n🔍 MAIN DICTIONARY FUZZY MATCHING (validPredictions=%d, trying to rescue rejected beam outputs):\n", validPredictions.size());
+          Log.d(TAG, fuzzyMsg);
+          sendDebugLog(fuzzyMsg);
+        }
+
+        // Check top beam candidates that were rejected by vocabulary filtering
+        for (int i = 0; i < Math.min(maxBeamCandidates, rawPredictions.size()); i++)
+        {
+          String beamWord = rawPredictions.get(i).word.toLowerCase().trim();
+          float beamConfidence = rawPredictions.get(i).confidence;
+
+          // Skip if this beam word already passed vocabulary filtering
+          if (vocabulary.containsKey(beamWord))
+          {
+            continue; // Already in validPredictions
+          }
+
+          // Try fuzzy matching against dictionary words of similar length
+          int targetLength = beamWord.length();
+
+          for (java.util.Map.Entry<String, WordInfo> entry : vocabulary.entrySet())
+          {
+            String dictWord = entry.getKey();
+            WordInfo info = entry.getValue();
+
+            // Only check words of similar length (performance optimization)
+            if (Math.abs(dictWord.length() - targetLength) > maxLengthDiff)
+            {
+              continue;
+            }
+
+            // Skip disabled words
+            if (disabledWords.contains(dictWord))
+            {
+              continue;
+            }
+
+            // Try fuzzy matching
+            if (fuzzyMatch(dictWord, beamWord, charMatchThreshold, maxLengthDiff, prefixLength, minWordLength))
+            {
+              // Determine tier boost for matched word
+              float boost;
+              String source;
+              switch (info.tier)
+              {
+                case 2:
+                  boost = commonBoost;
+                  source = "dict-fuzzy-common";
+                  break;
+                case 1:
+                  boost = top5000Boost;
+                  source = "dict-fuzzy-top5k";
+                  break;
+                default:
+                  boost = rarePenalty;
+                  source = "dict-fuzzy";
+                  break;
+              }
+
+              // Use beam output's NN confidence + dictionary word's frequency
+              float score = calculateCombinedScore(beamConfidence, info.frequency, boost, confidenceWeight, frequencyWeight);
+
+              validPredictions.add(new FilteredPrediction(dictWord, score, beamConfidence, info.frequency, source));
+
+              if (debugMode)
+              {
+                String matchMsg = String.format("🔄 DICT FUZZY: \"%s\" (dict) matches \"%s\" (beam #%d, NN=%.4f) → added with score=%.4f\n",
+                  dictWord, beamWord, i+1, beamConfidence, score);
+                Log.d(TAG, matchMsg);
+                sendDebugLog(matchMsg);
+              }
+
+              break; // Only match once per beam word (take first match)
+            }
+          }
+        }
+
+        // Re-sort after adding fuzzy matches
+        if (!validPredictions.isEmpty())
+        {
+          validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
+        }
+      }
+      catch (Exception e)
+      {
+        Log.e(TAG, "Failed to apply dictionary fuzzy matching", e);
       }
     }
 
