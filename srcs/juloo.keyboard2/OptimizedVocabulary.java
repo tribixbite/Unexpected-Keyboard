@@ -295,8 +295,14 @@ public class OptimizedVocabulary
 
                 // Use RAW beam candidate's confidence for scoring (v1.33.1: CRITICAL FIX - was using validPredictions)
                 float confidence = rawPredictions.get(i).confidence;
-                // v1.33+: Pass configurable weights to scoring function
-                float score = calculateCombinedScore(confidence, normalizedFreq, boost, confidenceWeight, frequencyWeight);
+
+                // v1.33.3: MULTIPLICATIVE SCORING - match quality dominates
+                // Custom words: base_score = NN_confidence (ignore frequency)
+                // final_score = base_score × (match_quality^3) × tier_boost
+                float matchQuality = calculateMatchQuality(customWord, beamWord);
+                float matchPower = matchQuality * matchQuality * matchQuality; // Cubic
+                float baseScore = confidence;  // Ignore frequency for custom words
+                float score = baseScore * matchPower * boost;
 
                 validPredictions.add(new FilteredPrediction(customWord, score, confidence, normalizedFreq, "autocorrect"));
 
@@ -395,8 +401,13 @@ public class OptimizedVocabulary
                   break;
               }
 
-              // Use beam output's NN confidence + dictionary word's frequency
-              float score = calculateCombinedScore(beamConfidence, info.frequency, boost, confidenceWeight, frequencyWeight);
+              // v1.33.3: MULTIPLICATIVE SCORING - match quality dominates
+              // Dict fuzzy: base_score = (0.7×NN + 0.3×freq)
+              // final_score = base_score × (match_quality^3) × tier_boost
+              float matchQuality = calculateMatchQuality(dictWord, beamWord);
+              float matchPower = matchQuality * matchQuality * matchQuality; // Cubic
+              float baseScore = (0.7f * beamConfidence) + (0.3f * info.frequency);
+              float score = baseScore * matchPower * boost;
 
               // Keep track of best match (v1.33.2: don't break on first match!)
               if (score > bestScore)
@@ -688,6 +699,38 @@ public class OptimizedVocabulary
     // Example: "parametrek" vs "parameter" → 9/9 = 100% match (all chars of shorter word match)
     float matchRatio = (float)matches / minLength;
     return matchRatio >= charMatchThreshold;
+  }
+
+  /**
+   * Calculate match quality between two words based on positional character matching
+   * Uses TARGET (dict word) length as denominator per user requirement
+   *
+   * v1.33.3: Multiplicative scoring - match quality dramatically affects final score
+   * Example: "proximity" vs "proxibity"
+   *   - 8 chars match at same positions
+   *   - match_quality = 8/9 = 0.889 (dict word "proximity" is 9 chars)
+   *
+   * @param dictWord The dictionary word (target)
+   * @param beamWord The beam search output (source)
+   * @return Match quality ratio 0.0-1.0 (1.0 = perfect match)
+   */
+  private float calculateMatchQuality(String dictWord, String beamWord)
+  {
+    int matches = 0;
+    int minLen = Math.min(dictWord.length(), beamWord.length());
+
+    // Count positional character matches
+    for (int i = 0; i < minLen; i++)
+    {
+      if (dictWord.charAt(i) == beamWord.charAt(i))
+      {
+        matches++;
+      }
+    }
+
+    // Use TARGET (dict word) length as denominator
+    // This gives higher match quality when more of the target is matched
+    return (float)matches / dictWord.length();
   }
 
   private float getMinFrequency(int length)

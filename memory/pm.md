@@ -7,13 +7,64 @@
 
 ---
 
-## 🔥 Current Status (2025-10-22)
+## 🔥 Current Status (2025-10-23)
 
-**Latest Version**: v1.32.218 (268)
-**Build Status**: ✅ BUILD SUCCESSFUL - Critical Autocorrect Fixes + Dict Fuzzy Matching
+**Latest Version**: v1.32.220 (270)
+**Build Status**: ✅ BUILD SUCCESSFUL - Multiplicative Scoring with Match Quality
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.218)
+### Recent Work (v1.32.220)
+
+**MULTIPLICATIVE SCORING: Match Quality Dominates with Cubic Power**
+- **Problem**: Additive scoring let high frequency compensate for poor match quality
+  - Example: `"proxibity"` (beam) matched `"prohibited"` (10 chars, 7 match, freq 0.6063, score 0.5875)
+  - Should match `"proximity"` (9 chars, 8 match, freq 0.5591) but scored lower (0.5733)
+  - Issue: Same NN confidence used for both, frequency dominated, match quality ignored
+  - User requirement: "1 char off should be VASTLY preferred to 3-4 chars off, not 20% of a portion"
+- **Solution**: Gemini-recommended multiplicative approach with cubic match power
+  - **Formula**: `base_score = (0.7×NN + 0.3×freq)` → `final_score = base_score × (match_quality^3) × tier_boost`
+  - **Match Quality**: `(matching_chars_at_same_positions) / (dict_word_length)` - uses TARGET length as denominator
+  - **Cubic Power**: `match_quality^3` dramatically penalizes poor matches
+    - 8/9 match (0.889): `0.889^3 = 0.703` → score = 0.5610
+    - 5/9 match (0.556): `0.556^3 = 0.172` → score = 0.1549
+    - **Result**: 262% score advantage for better match! ✅
+- **Custom Words**: Separate logic ignores dictionary frequency
+  - Formula: `base_score = NN_confidence` → `final_score = base_score × (match_quality^3) × tier_boost`
+  - Custom words ranked purely by NN confidence + match quality, not frequency
+- **Implementation**:
+  - Added `calculateMatchQuality(String dictWord, String beamWord)` helper (lines 693-723)
+  - Updated custom word autocorrect scoring (lines 299-305) - ignore frequency
+  - Updated dict fuzzy matching scoring (lines 404-410) - weight frequency 30%
+  - Performance: Two multiplications per candidate, negligible overhead
+- **Expected Impact**:
+  - `"proximity"` should now WIN when user swipes "proximity"
+  - Perfect matches score 100% higher than 1-char-off matches
+  - 1-char-off matches score 262% higher than 4-chars-off matches
+- **Files**: OptimizedVocabulary.java (lines 299-305, 404-410, 693-723)
+
+**Previous (v1.32.219)**: Dict Fuzzy Matching Best-Match Fix
+
+### Previous Work (v1.32.219)
+
+**CRITICAL FIX: Dictionary Fuzzy Matching - Find BEST Match, Not FIRST Match**
+- **Problem**: HashMap iteration has random order, code broke on first fuzzy match found
+  - Example: `"proximite"` (beam) → matched `"proxies"` (first found, score 0.2286)
+  - Never checked `"proximity"` (better match with higher score)
+  - User test showed: got "prohibit" and "proxies" instead of "proximity"
+- **Fix**: Track best match (highest score) across ALL dictionary words
+  - Added: `bestMatch`, `bestScore`, `bestFrequency`, `bestSource` tracking variables
+  - Loop through ALL fuzzy matches, keep only the one with highest combined score
+  - Add single best match to validPredictions after checking entire dictionary
+- **Expected Impact**:
+  - `"proximite"` (beam, NN=0.3611) → should now match `"proximity"` (not "proxies")
+  - `"proximites"` (beam, NN=0.2332) → should match `"proximities"` or `"proximity"` (not "prohibit")
+  - `"proximited"` (beam, NN=0.1826) → should match `"proximity"`
+- **Remarkable Finding**: Neural network predicted `"proximite"`, `"proximites"`, `"proximited"` from garbage gesture tracker input `"poitruxcjimuty"` (14 random keys) - NN is working amazingly well despite terrible input!
+- **Files**: OptimizedVocabulary.java (lines 354-424)
+
+**Previous (v1.32.218)**: Critical Autocorrect Fixes + Dict Fuzzy Matching
+
+### Previous Work (v1.32.218)
 
 **CRITICAL AUTOCORRECT FIXES + Main Dictionary Fuzzy Matching**
 - **Bug #1 Fixed**: Autocorrect only ran when `validPredictions` was non-empty
