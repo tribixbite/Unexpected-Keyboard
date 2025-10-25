@@ -98,6 +98,10 @@ public final class Config
   public float swipe_top5000_boost;                 // Tier 1 (top 3000) boost (default: 1.0)
   public float swipe_rare_words_penalty;            // Tier 0 (rest) penalty (default: 0.75)
 
+  // Swipe autocorrect configuration (v1.33.4: split into beam and final output controls)
+  public boolean swipe_beam_autocorrect_enabled;    // Enable fuzzy matching during beam search (custom words + dict fuzzy)
+  public boolean swipe_final_autocorrect_enabled;   // Enable autocorrect on final selected/auto-inserted word
+
   // Short gesture configuration
   public boolean short_gestures_enabled; // Enable/disable short swipe gestures (e.g., swipe-up for @)
   public int short_gesture_min_distance; // Minimum swipe distance as % of key hypotenuse (10-95)
@@ -109,6 +113,7 @@ public final class Config
   public float neural_confidence_threshold; // 0.0 - 1.0
   public boolean swipe_debug_detailed_logging; // Enable detailed trajectory/NN logging
   public boolean swipe_debug_show_raw_output; // Always show at least 2 raw NN outputs
+  public boolean swipe_show_raw_beam_predictions; // Show raw beam outputs (labeled) at end of suggestions
   public boolean termux_mode_enabled; // Termux-compatible prediction insertion
 
   // Dynamically set
@@ -249,6 +254,10 @@ public final class Config
     autocorrect_prefix_length = safeGetInt(_prefs, "autocorrect_prefix_length", 2);
     autocorrect_max_beam_candidates = safeGetInt(_prefs, "autocorrect_max_beam_candidates", 3);
 
+    // Swipe autocorrect toggle split (v1.33.4: separate beam vs final output controls)
+    swipe_beam_autocorrect_enabled = _prefs.getBoolean("swipe_beam_autocorrect_enabled", true);
+    swipe_final_autocorrect_enabled = _prefs.getBoolean("swipe_final_autocorrect_enabled", true);
+
     // Swipe scoring weights (v1.33+: user-configurable tier/confidence/frequency system)
     // Single slider "Prediction Source" (0-100) controls both confidence and frequency weights
     // 0=Dictionary (conf=0.0, freq=1.0), 60=Balanced (conf=0.6, freq=0.4), 100=AI (conf=1.0, freq=0.0)
@@ -274,6 +283,7 @@ public final class Config
     termux_mode_enabled = _prefs.getBoolean("termux_mode_enabled", false);
     swipe_debug_detailed_logging = _prefs.getBoolean("swipe_debug_detailed_logging", false);
     swipe_debug_show_raw_output = _prefs.getBoolean("swipe_debug_show_raw_output", true);
+    swipe_show_raw_beam_predictions = _prefs.getBoolean("swipe_show_raw_beam_predictions", false);
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;

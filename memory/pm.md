@@ -7,13 +7,49 @@
 
 ---
 
-## 🔥 Current Status (2025-10-23)
+## 🔥 Current Status (2025-10-25)
 
-**Latest Version**: v1.32.220 (270)
-**Build Status**: ✅ BUILD SUCCESSFUL - Multiplicative Scoring with Match Quality
+**Latest Version**: v1.32.221 (271)
+**Build Status**: ✅ BUILD SUCCESSFUL - Raw Predictions Fix + Split Autocorrect Toggles
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.220)
+### Recent Work (v1.32.221)
+
+**RAW PREDICTIONS FIX: Always Rank Below Valid Words + Split Autocorrect Controls**
+- **Problem #1**: Raw beam predictions outranked valid vocabulary words
+  - Raw predictions used `NN_confidence * 1000` as score
+  - Filtered predictions used `combined_score * 1000`
+  - After multiplicative scoring, combined scores often LOWER than raw NN confidence
+  - Example: "vinyl" (filtered, score 0.2525 → 252) vs "vinul" (raw, NN 0.3550 → 355)
+  - Result: Invalid "vinul" ranked HIGHER than valid "vinyl" and got auto-inserted!
+- **Problem #2**: Swipe autocorrect toggle controlled both beam and final output
+  - Single toggle `swipe_autocorrect_enabled` controlled:
+    - Beam autocorrect (custom words + dict fuzzy matching during prediction)
+    - Final autocorrect (on selected/auto-inserted word)
+  - User needed separate control for each behavior
+- **Solution #1**: Cap raw prediction scores below minimum filtered score
+  - Find minimum score from filtered predictions
+  - Cap raw scores at 10% of minimum → ensures they ALWAYS rank last
+  - Add "raw:" prefix to clearly identify unfiltered beam outputs
+  - Gate behind new config `swipe_show_raw_beam_predictions` (default: false)
+  - Formula: `rawScore = min(NN_confidence * 1000, minFilteredScore / 10)`
+- **Solution #2**: Split autocorrect toggle into two separate controls
+  - `swipe_beam_autocorrect_enabled` (default: true) - Controls beam search fuzzy matching
+    - Custom word autocorrect (match user's custom words against beam outputs)
+    - Dict fuzzy matching (rescue rejected beam outputs via dictionary matching)
+  - `swipe_final_autocorrect_enabled` (default: true) - Controls final output autocorrect
+    - Autocorrect on the single word that gets selected/auto-inserted
+  - Both independent, can be disabled separately
+- **Expected Impact**:
+  - Raw predictions NEVER auto-insert over valid vocabulary words ✅
+  - Raw predictions clearly labeled with "raw:" prefix ✅
+  - Users can disable beam autocorrect without disabling final autocorrect ✅
+  - Valid words always appear first in suggestions ✅
+- **Files**: OnnxSwipePredictor.java (lines 1308-1348), Config.java (new fields + loading), OptimizedVocabulary.java (line 149)
+
+**Previous (v1.32.220)**: Multiplicative Scoring with Match Quality
+
+### Previous Work (v1.32.220)
 
 **MULTIPLICATIVE SCORING: Match Quality Dominates with Cubic Power**
 - **Problem**: Additive scoring let high frequency compensate for poor match quality

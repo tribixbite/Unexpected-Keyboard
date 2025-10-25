@@ -145,8 +145,8 @@ public class OptimizedVocabulary
         top5000Boost = prefs.getFloat("swipe_top5000_boost", TOP5000_BOOST);
         rarePenalty = prefs.getFloat("swipe_rare_words_penalty", RARE_WORDS_PENALTY);
 
-        // Read autocorrect configuration (v1.33+: separate from typing autocorrect)
-        swipeAutocorrectEnabled = prefs.getBoolean("swipe_autocorrect_enabled", true);
+        // Read autocorrect configuration (v1.33.4: beam autocorrect only, final autocorrect handled separately)
+        swipeAutocorrectEnabled = prefs.getBoolean("swipe_beam_autocorrect_enabled", true);
         maxLengthDiff = prefs.getInt("autocorrect_max_length_diff", 2);
         prefixLength = prefs.getInt("autocorrect_prefix_length", 2);
         maxBeamCandidates = prefs.getInt("autocorrect_max_beam_candidates", 3);

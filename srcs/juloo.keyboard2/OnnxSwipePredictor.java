@@ -1305,10 +1305,23 @@ public class OnnxSwipePredictor
       scores.add((int)(pred.score * 1000)); // Convert combined score to 0-1000 range
     }
 
-    // Add raw beam search predictions (closest matches) after filtered predictions
+    // Add raw beam search predictions (closest matches) AFTER filtered predictions
+    // v1.33.4: CRITICAL FIX - raw predictions must ALWAYS rank below valid vocabulary words
     // This shows what the neural network actually predicted vs vocabulary filtering
-    if (!candidates.isEmpty())
+    if (!candidates.isEmpty() && _config != null && _config.swipe_show_raw_beam_predictions)
     {
+      // Find minimum score from filtered predictions to ensure raw ones rank lower
+      int minFilteredScore = Integer.MAX_VALUE;
+      for (int score : scores) {
+        if (score < minFilteredScore) {
+          minFilteredScore = score;
+        }
+      }
+
+      // Cap raw prediction scores well below filtered predictions
+      // Use 10% of minimum filtered score to ensure they always appear last
+      int rawScoreCap = Math.max(1, minFilteredScore / 10);
+
       int numRawToAdd = Math.min(3, candidates.size());
       for (int i = 0; i < numRawToAdd; i++)
       {
@@ -1325,9 +1338,11 @@ public class OnnxSwipePredictor
 
         if (!alreadyIncluded)
         {
-          // Add raw prediction with score based on NN confidence
-          words.add(candidate.word);
-          scores.add((int)(candidate.confidence * 1000));
+          // v1.33.4: Cap raw prediction score to ensure it ranks BELOW all valid words
+          // Add "raw:" prefix to clearly identify unfiltered beam outputs
+          int rawScore = Math.min((int)(candidate.confidence * 1000), rawScoreCap);
+          words.add("raw:" + candidate.word);
+          scores.add(rawScore);
         }
       }
     }
