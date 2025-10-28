@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -1295,14 +1296,29 @@ public class OnnxSwipePredictor
     OptimizedVocabulary.SwipeStats swipeStats = null; // TODO: Extract from SwipeInput if needed
     List<OptimizedVocabulary.FilteredPrediction> filtered = _vocabulary.filterPredictions(vocabCandidates, swipeStats);
 
-    // Convert back to PredictionResult format
-    List<String> words = new ArrayList<>();
-    List<Integer> scores = new ArrayList<>();
+    // Convert back to PredictionResult format with deduplication
+    // v1.33.5: CRITICAL FIX - deduplicate words, keeping highest score
+    Map<String, Integer> wordScoreMap = new LinkedHashMap<>(); // Preserve insertion order
 
     for (OptimizedVocabulary.FilteredPrediction pred : filtered)
     {
-      words.add(pred.word);
-      scores.add((int)(pred.score * 1000)); // Convert combined score to 0-1000 range
+      String wordLower = pred.word.toLowerCase();
+      int score = (int)(pred.score * 1000); // Convert combined score to 0-1000 range
+
+      // Keep only the highest score for each word
+      if (!wordScoreMap.containsKey(wordLower) || score > wordScoreMap.get(wordLower))
+      {
+        wordScoreMap.put(wordLower, score);
+      }
+    }
+
+    // Convert deduplicated map to lists
+    List<String> words = new ArrayList<>();
+    List<Integer> scores = new ArrayList<>();
+    for (Map.Entry<String, Integer> entry : wordScoreMap.entrySet())
+    {
+      words.add(entry.getKey());
+      scores.add(entry.getValue());
     }
 
     // Add raw beam search predictions (closest matches) AFTER filtered predictions

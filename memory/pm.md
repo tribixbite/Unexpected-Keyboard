@@ -7,13 +7,50 @@
 
 ---
 
-## 🔥 Current Status (2025-10-25)
+## 🔥 Current Status (2025-10-28)
 
-**Latest Version**: v1.32.221 (271)
-**Build Status**: ✅ BUILD SUCCESSFUL - Raw Predictions Fix + Split Autocorrect Toggles
+**Latest Version**: v1.32.226 (276)
+**Build Status**: ✅ BUILD SUCCESSFUL - Deduplication + Settings UI for Split Toggles
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.221)
+### Recent Work (v1.32.226)
+
+**DEDUPLICATION + SETTINGS UI: Fixed Duplicate Predictions + Added Missing Toggles**
+- **Problem #1**: Same word appearing multiple times in suggestion bar
+  - Example: "swipe" appeared 4 times when swiping "swollen"
+  - Multiple autocorrect sources (custom word autocorrect + dict fuzzy) independently matched same word
+  - Each match added separately to prediction list → duplicates
+- **Problem #2**: Settings UI missing for split autocorrect toggles
+  - Config fields added in v1.32.221: `swipe_beam_autocorrect_enabled`, `swipe_final_autocorrect_enabled`
+  - Loading code added to Config.java
+  - BUT no UI checkboxes in settings.xml → user couldn't access toggles
+- **Problem #3**: Raw predictions toggle had no UI
+  - Config field `swipe_show_raw_beam_predictions` added in v1.32.221
+  - Default: false (hidden)
+  - No checkbox to enable → raw predictions never visible
+- **Solution #1**: LinkedHashMap deduplication keeping highest score
+  - Use `LinkedHashMap<String, Integer>` with word (lowercase) as key
+  - When duplicate found: keep only highest score from any source
+  - Preserves insertion order for predictable ranking
+  - Added in OnnxSwipePredictor.java lines 1298-1321
+- **Solution #2**: Added CheckBoxPreference for both autocorrect toggles
+  - `swipe_beam_autocorrect_enabled` - "Enable Beam Search Corrections"
+  - `swipe_final_autocorrect_enabled` - "Enable Final Output Corrections"
+  - Updated dependency attributes to use new key names
+  - Added in settings.xml lines 47-51
+- **Solution #3**: Added CheckBoxPreference for raw predictions toggle
+  - `swipe_show_raw_beam_predictions` - "Show Raw Beam Predictions"
+  - Placed in debug settings section
+  - Added in settings.xml line 69
+- **Expected Impact**:
+  - Each word appears only once in suggestion bar ✅
+  - User can control beam vs final autocorrect independently ✅
+  - User can enable raw predictions for debugging ✅
+- **Files**: OnnxSwipePredictor.java (lines 13-14 import, 1298-1321 deduplication), settings.xml (lines 47-51, 69)
+
+**Previous (v1.32.221)**: Raw Predictions Fix + Split Autocorrect Controls
+
+### Previous Work (v1.32.221)
 
 **RAW PREDICTIONS FIX: Always Rank Below Valid Words + Split Autocorrect Controls**
 - **Problem #1**: Raw beam predictions outranked valid vocabulary words

@@ -30,13 +30,13 @@ Generated version info:  ()
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugAssets
 > Task :mergeDebugResources
+> Task :mergeDebugAssets
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :compressDebugAssets FROM-CACHE
 > Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
-> Task :compressDebugAssets
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
@@ -84,47 +84,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 54s
-39 actionable tasks: 32 executed, 7 from cache
-toolchain)
-For more details on how to configure these settings, see https://developer.android.com/build/jdks.
-To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
-warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target value 8 is obsolete and will be removed in a future release
-warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-3 warnings
-
-> Task :processDebugJavaRes
-> Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
-
-BUILD SUCCESSFUL in 54s
-39 actionable tasks: 32 executed, 7 from cache
-
-=== BUILD SUCCESSFUL! ===
-APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
--rw-------. 1 u0_a364 u0_a364 47M Oct 25 19:14 build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
-Copying APK to /sdcard/unexpected/ for updates...
-APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 47M Oct 25 19:14 /sdcard/unexpected/debug-kb.apk
-
-Step 6: Attempting ADB connection and installation...
-No ADB device connected, attempting wireless connection...
-Scanning for ADB on host: 192.168.1.247
-Scanning ports 30000-50000 for ADB...
-Trying 192.168.1.247:5555... no response
-Trying 192.168.1.247:34981... no response
-Trying 192.168.1.247:35951... no response
-No working ADB port found on 192.168.1.247
-❌ Could not establish ADB connection
-Opening APK for installation...
+BUILD SUCCESSFUL in 58s
+39 actionable tasks: 31 executed, 8 from cache
