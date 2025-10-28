@@ -101,6 +101,7 @@ public final class Config
   // Swipe autocorrect configuration (v1.33.4: split into beam and final output controls)
   public boolean swipe_beam_autocorrect_enabled;    // Enable fuzzy matching during beam search (custom words + dict fuzzy)
   public boolean swipe_final_autocorrect_enabled;   // Enable autocorrect on final selected/auto-inserted word
+  public String swipe_fuzzy_match_mode;             // Fuzzy matching algorithm: "positional" or "edit_distance"
 
   // Short gesture configuration
   public boolean short_gestures_enabled; // Enable/disable short swipe gestures (e.g., swipe-up for @)
@@ -257,6 +258,7 @@ public final class Config
     // Swipe autocorrect toggle split (v1.33.4: separate beam vs final output controls)
     swipe_beam_autocorrect_enabled = _prefs.getBoolean("swipe_beam_autocorrect_enabled", true);
     swipe_final_autocorrect_enabled = _prefs.getBoolean("swipe_final_autocorrect_enabled", true);
+    swipe_fuzzy_match_mode = _prefs.getString("swipe_fuzzy_match_mode", "edit_distance"); // Default to edit distance (better accuracy)
 
     // Swipe scoring weights (v1.33+: user-configurable tier/confidence/frequency system)
     // Single slider "Prediction Source" (0-100) controls both confidence and frequency weights

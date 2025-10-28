@@ -120,4 +120,12 @@
     <item>balanced</item>
     <item>lenient</item>
   </string-array>
+  <string-array name="swipe_fuzzy_match_mode_entries">
+    <item>Edit Distance (Recommended)</item>
+    <item>Positional Matching (Legacy)</item>
+  </string-array>
+  <string-array name="swipe_fuzzy_match_mode_values">
+    <item>edit_distance</item>
+    <item>positional</item>
+  </string-array>
 </resources>

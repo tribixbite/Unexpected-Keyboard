@@ -9,11 +9,41 @@
 
 ## 🔥 Current Status (2025-10-28)
 
-**Latest Version**: v1.32.226 (276)
-**Build Status**: ✅ BUILD SUCCESSFUL - Deduplication + Settings UI for Split Toggles
+**Latest Version**: v1.32.227 (277)
+**Build Status**: ✅ BUILD SUCCESSFUL - Levenshtein Distance (Edit Distance) Fuzzy Matching
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.226)
+### Recent Work (v1.32.227)
+
+**EDIT DISTANCE ALGORITHM: Levenshtein Distance for Accurate Fuzzy Matching**
+- **Problem**: Positional character matching fails on insertions/deletions
+  - Example: "swollen" vs "swolen" (missing 'l')
+  - Positional: compares s=s, w=w, o=o, l=l, l≠e, e≠n → poor match
+  - Issue: Extra/missing characters shift all subsequent positions
+  - Result: Custom word "swipe" (freq 8000) didn't match when swiping "swollen" or "swipe"
+- **Solution**: Implement Levenshtein distance (edit distance) algorithm
+  - Counts minimum insertions, deletions, substitutions to transform one word into another
+  - "swollen" vs "swolen": distance 1 (1 deletion) → quality 0.889
+  - "swollen" vs "swore": distance 4 (4 operations) → quality 0.556
+  - Better handles typos with insertions/deletions
+- **Implementation**:
+  - Added `calculateLevenshteinDistance(s1, s2)` using dynamic programming (lines 717-753)
+  - Modified `calculateMatchQuality()` to support both algorithms (lines 755-815)
+    - Edit Distance (default): `quality = 1.0 - (distance / maxLength)`
+    - Positional (legacy): `quality = matchingChars / dictWordLength`
+  - Added config field `swipe_fuzzy_match_mode` (Config.java line 104)
+  - Added ListPreference UI toggle in settings (settings.xml line 52)
+  - Arrays for dropdown: "Edit Distance (Recommended)" / "Positional Matching (Legacy)"
+- **Expected Impact**:
+  - Custom word "swipe" should now match correctly when swiping variations ✅
+  - Insertions/deletions handled accurately (e.g., "swollen" → "swolen") ✅
+  - User can switch back to positional matching if needed ✅
+  - Default: edit distance for better accuracy ✅
+- **Files**: OptimizedVocabulary.java (lines 133, 157-159, 307, 412, 717-815), Config.java (lines 104, 261), settings.xml (line 52), arrays.xml (lines 123-130)
+
+**Previous (v1.32.226)**: Deduplication + Settings UI
+
+### Previous Work (v1.32.226)
 
 **DEDUPLICATION + SETTINGS UI: Fixed Duplicate Predictions + Added Missing Toggles**
 - **Problem #1**: Same word appearing multiple times in suggestion bar

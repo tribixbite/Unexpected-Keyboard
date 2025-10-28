@@ -130,6 +130,7 @@ public class OptimizedVocabulary
     int maxBeamCandidates = 3;
     int minWordLength = 3;
     float charMatchThreshold = 0.67f;
+    boolean useEditDistance = true;  // v1.33.6: default to edit distance (more accurate)
 
     if (context != null)
     {
@@ -152,6 +153,10 @@ public class OptimizedVocabulary
         maxBeamCandidates = prefs.getInt("autocorrect_max_beam_candidates", 3);
         minWordLength = prefs.getInt("autocorrect_min_word_length", 3);
         charMatchThreshold = prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
+
+        // v1.33.6: Fuzzy matching algorithm selection (edit_distance or positional)
+        String fuzzyMatchMode = prefs.getString("swipe_fuzzy_match_mode", "edit_distance");
+        useEditDistance = "edit_distance".equals(fuzzyMatchMode);
       }
       catch (Exception e)
       {
@@ -299,7 +304,7 @@ public class OptimizedVocabulary
                 // v1.33.3: MULTIPLICATIVE SCORING - match quality dominates
                 // Custom words: base_score = NN_confidence (ignore frequency)
                 // final_score = base_score × (match_quality^3) × tier_boost
-                float matchQuality = calculateMatchQuality(customWord, beamWord);
+                float matchQuality = calculateMatchQuality(customWord, beamWord, useEditDistance);
                 float matchPower = matchQuality * matchQuality * matchQuality; // Cubic
                 float baseScore = confidence;  // Ignore frequency for custom words
                 float score = baseScore * matchPower * boost;
@@ -404,7 +409,7 @@ public class OptimizedVocabulary
               // v1.33.3: MULTIPLICATIVE SCORING - match quality dominates
               // Dict fuzzy: base_score = (0.7×NN + 0.3×freq)
               // final_score = base_score × (match_quality^3) × tier_boost
-              float matchQuality = calculateMatchQuality(dictWord, beamWord);
+              float matchQuality = calculateMatchQuality(dictWord, beamWord, useEditDistance);
               float matchPower = matchQuality * matchQuality * matchQuality; // Cubic
               float baseScore = (0.7f * beamConfidence) + (0.3f * info.frequency);
               float score = baseScore * matchPower * boost;
@@ -702,35 +707,116 @@ public class OptimizedVocabulary
   }
 
   /**
-   * Calculate match quality between two words based on positional character matching
-   * Uses TARGET (dict word) length as denominator per user requirement
+   * Calculate Levenshtein distance (edit distance) between two words
+   * Counts minimum insertions, deletions, and substitutions needed to transform one word into another
    *
-   * v1.33.3: Multiplicative scoring - match quality dramatically affects final score
-   * Example: "proximity" vs "proxibity"
-   *   - 8 chars match at same positions
-   *   - match_quality = 8/9 = 0.889 (dict word "proximity" is 9 chars)
+   * v1.33.6: Levenshtein distance for accurate fuzzy matching
+   * Better handles insertions/deletions that shift character positions
+   * Example: "swollen" vs "swolen" → distance 1 (1 deletion)
+   *          "swollen" vs "swore"  → distance 4 (much worse match)
    *
-   * @param dictWord The dictionary word (target)
-   * @param beamWord The beam search output (source)
-   * @return Match quality ratio 0.0-1.0 (1.0 = perfect match)
+   * @param s1 First word
+   * @param s2 Second word
+   * @return Edit distance (0 = identical, higher = more different)
    */
-  private float calculateMatchQuality(String dictWord, String beamWord)
+  private int calculateLevenshteinDistance(String s1, String s2)
   {
-    int matches = 0;
-    int minLen = Math.min(dictWord.length(), beamWord.length());
+    int len1 = s1.length();
+    int len2 = s2.length();
 
-    // Count positional character matches
-    for (int i = 0; i < minLen; i++)
+    // Early exit for identical strings
+    if (s1.equals(s2)) return 0;
+
+    // Early exit for empty strings
+    if (len1 == 0) return len2;
+    if (len2 == 0) return len1;
+
+    // Create distance matrix
+    int[][] dp = new int[len1 + 1][len2 + 1];
+
+    // Initialize first row and column
+    for (int i = 0; i <= len1; i++) dp[i][0] = i;
+    for (int j = 0; j <= len2; j++) dp[0][j] = j;
+
+    // Fill matrix using dynamic programming
+    for (int i = 1; i <= len1; i++)
     {
-      if (dictWord.charAt(i) == beamWord.charAt(i))
+      for (int j = 1; j <= len2; j++)
       {
-        matches++;
+        int cost = (s1.charAt(i - 1) == s2.charAt(j - 1)) ? 0 : 1;
+
+        dp[i][j] = Math.min(
+          Math.min(
+            dp[i - 1][j] + 1,      // Deletion
+            dp[i][j - 1] + 1),     // Insertion
+            dp[i - 1][j - 1] + cost  // Substitution
+        );
       }
     }
 
-    // Use TARGET (dict word) length as denominator
-    // This gives higher match quality when more of the target is matched
-    return (float)matches / dictWord.length();
+    return dp[len1][len2];
+  }
+
+  /**
+   * Calculate match quality between two words using configurable algorithm
+   * Supports both positional matching (legacy) and edit distance (recommended)
+   * Uses TARGET (dict word) length as denominator per user requirement
+   *
+   * v1.33.6: Configurable fuzzy matching algorithm
+   * - Positional: Count matching chars at same positions (fails on insertions/deletions)
+   * - Edit Distance: Levenshtein distance (handles insertions/deletions correctly)
+   *
+   * v1.33.3: Multiplicative scoring - match quality dramatically affects final score
+   * Example: "proximity" vs "proxibity"
+   *   - Positional: 8 chars match at same positions → 8/9 = 0.889
+   *   - Edit Distance: distance 1 → quality 1 - (1/9) = 0.889
+   *
+   * @param dictWord The dictionary word (target)
+   * @param beamWord The beam search output (source)
+   * @param useEditDistance If true, use Levenshtein distance; if false, use positional matching
+   * @return Match quality ratio 0.0-1.0 (1.0 = perfect match)
+   */
+  private float calculateMatchQuality(String dictWord, String beamWord, boolean useEditDistance)
+  {
+    if (useEditDistance)
+    {
+      // Edit distance algorithm: more accurate for insertions/deletions
+      int distance = calculateLevenshteinDistance(dictWord, beamWord);
+
+      // Convert distance to quality ratio (0.0-1.0)
+      // Perfect match (distance=0) → quality=1.0
+      // Distance equal to word length → quality=0.0
+      int maxDistance = Math.max(dictWord.length(), beamWord.length());
+      return 1.0f - ((float)distance / maxDistance);
+    }
+    else
+    {
+      // Positional matching algorithm: legacy behavior
+      int matches = 0;
+      int minLen = Math.min(dictWord.length(), beamWord.length());
+
+      // Count positional character matches
+      for (int i = 0; i < minLen; i++)
+      {
+        if (dictWord.charAt(i) == beamWord.charAt(i))
+        {
+          matches++;
+        }
+      }
+
+      // Use TARGET (dict word) length as denominator
+      // This gives higher match quality when more of the target is matched
+      return (float)matches / dictWord.length();
+    }
+  }
+
+  /**
+   * Calculate match quality using default algorithm (edit distance)
+   * Wrapper for backwards compatibility
+   */
+  private float calculateMatchQuality(String dictWord, String beamWord)
+  {
+    return calculateMatchQuality(dictWord, beamWord, true); // Default to edit distance
   }
 
   private float getMinFrequency(int length)
