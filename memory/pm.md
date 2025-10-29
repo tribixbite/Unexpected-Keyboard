@@ -9,11 +9,42 @@
 
 ## 🔥 Current Status (2025-10-28)
 
-**Latest Version**: v1.32.227 (277)
-**Build Status**: ✅ BUILD SUCCESSFUL - Levenshtein Distance (Edit Distance) Fuzzy Matching
+**Latest Version**: v1.32.229 (279)
+**Build Status**: ✅ BUILD SUCCESSFUL - Raw Prefix Bug Fix + Final Autocorrect Implementation
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.227)
+### Recent Work (v1.32.229)
+
+**BUG FIX + FINAL AUTOCORRECT: Fixed raw: prefix insertion + Implemented missing final autocorrect**
+- **Bug #1**: raw: prefix inserted into text when user selects raw predictions
+  - Problem: Regex mismatch between prefix format and stripping pattern
+  - Added: `"raw:word"` (OnnxSwipePredictor.java:1360)
+  - Stripping regex: `" \\[raw:[0-9.]+\\]$"` (looking for " [raw:0.08]" at end)
+  - Result: "raw:" never stripped → user gets "raw:example" in their text!
+- **Bug #2**: `swipe_final_autocorrect_enabled` toggle did nothing
+  - UI toggle existed (settings.xml:48) "Enable Final Output Corrections"
+  - Config field existed and loaded (Config.java:103, 260)
+  - But NO implementation anywhere in codebase
+  - Result: User changes toggle, nothing happens (confusing UX)
+- **Solution #1**: Fixed raw: prefix stripping regex (Keyboard2.java)
+  - Line 900: `topPrediction.replaceAll("^raw:", "")` (was wrong regex)
+  - Line 926: `word.replaceAll("^raw:", "")` (was wrong regex)
+  - Now correctly strips prefix before insertion
+- **Solution #2**: Implemented final autocorrect functionality (Keyboard2.java:928-941)
+  - Runs AFTER beam search, before text insertion
+  - Uses WordPredictor.autoCorrect() for fuzzy matching
+  - Scenario: beam_autocorrect OFF → raw prediction selected → final autocorrect ON → corrects before insertion
+  - Example: "raw:exampel" → final autocorrect → "example" inserted
+- **Expected Impact**:
+  - raw: prefix never appears in committed text ✅
+  - Final autocorrect toggle now functional ✅
+  - Safety net for raw predictions and vocabulary misses ✅
+  - Independent control: beam autocorrect (during search) vs final autocorrect (on selection) ✅
+- **Files**: Keyboard2.java (lines 900, 926-926, 928-941)
+
+**Previous (v1.32.227)**: Levenshtein Distance Fuzzy Matching
+
+### Previous Work (v1.32.227)
 
 **EDIT DISTANCE ALGORITHM: Levenshtein Distance for Accurate Fuzzy Matching**
 - **Problem**: Positional character matching fails on insertions/deletions

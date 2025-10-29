@@ -896,8 +896,8 @@ public class Keyboard2 extends InputMethodService
         onSuggestionSelected(topPrediction);
 
         // NOW track this as auto-inserted so tapping another suggestion will replace ONLY this word
-        // CRITICAL: Strip debug annotations BEFORE storing (they're stripped before commit but we need clean text for deletion count)
-        String cleanPrediction = topPrediction.replaceAll(" \\[raw:[0-9.]+\\]$", "");
+        // CRITICAL: Strip "raw:" prefix BEFORE storing (v1.33.7: fixed regex to match actual prefix format)
+        String cleanPrediction = topPrediction.replaceAll("^raw:", "");
         _lastAutoInsertedWord = cleanPrediction;
         _lastCommitSource = PredictionSource.NEURAL_SWIPE;
 
@@ -921,8 +921,24 @@ public class Keyboard2 extends InputMethodService
       return;
     }
 
-    // Strip debug annotations before processing (e.g., "hello [raw:0.08]" → "hello")
-    word = word.replaceAll(" \\[raw:[0-9.]+\\]$", "");
+    // Strip "raw:" prefix before processing (v1.33.7: fixed regex to match actual prefix format)
+    // Prefix format: "raw:word" not " [raw:0.08]"
+    word = word.replaceAll("^raw:", "");
+
+    // v1.33.7: Final autocorrect - second chance autocorrect after beam search
+    // Applies when user selects/auto-inserts a prediction (even if beam autocorrect was OFF)
+    // Useful for correcting raw predictions or vocabulary misses
+    if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null)
+    {
+      String correctedWord = _wordPredictor.autoCorrect(word);
+
+      // If autocorrect found a better match, use it
+      if (!correctedWord.equals(word))
+      {
+        android.util.Log.d("Keyboard2", String.format("FINAL AUTOCORRECT: \"%s\" → \"%s\"", word, correctedWord));
+        word = correctedWord;
+      }
+    }
 
     // Record user selection for adaptation learning
     if (_adaptationManager != null)
