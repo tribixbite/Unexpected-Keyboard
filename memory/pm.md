@@ -7,13 +7,47 @@
 
 ---
 
-## 🔥 Current Status (2025-10-28)
+## 🔥 Current Status (2025-11-01)
 
-**Latest Version**: v1.32.229 (279)
-**Build Status**: ✅ BUILD SUCCESSFUL - Raw Prefix Bug Fix + Final Autocorrect Implementation
+**Latest Version**: v1.32.231 (281)
+**Build Status**: ✅ BUILD SUCCESSFUL - Correction Preset Functionality Implemented
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.229)
+### Recent Work (v1.32.231)
+
+**CORRECTION PRESET IMPLEMENTATION: swipe_correction_preset now functional with 3 presets**
+- **Problem**: `swipe_correction_preset` toggle existed in UI but did nothing
+  - ListPreference in settings.xml:50 with values: "strict", "balanced", "lenient"
+  - No implementation anywhere in codebase
+  - User changes dropdown, nothing happens (confusing UX)
+- **Solution**: Implemented preset functionality in SettingsActivity
+  - Added preference change listener (line 895)
+  - Applies preset values to 4 fuzzy matching parameters:
+    - autocorrect_max_length_diff (typo forgiveness)
+    - autocorrect_prefix_length (starting letter accuracy)
+    - autocorrect_max_beam_candidates (search depth)
+    - autocorrect_char_match_threshold (character match ratio)
+- **Preset Values**:
+  - **Strict (High Accuracy)**: length_diff=1, prefix=3, candidates=2, threshold=0.80
+    - Minimizes false corrections, stricter matching
+  - **Balanced (Default)**: length_diff=2, prefix=2, candidates=3, threshold=0.67
+    - Middle ground for most users
+  - **Lenient (Flexible)**: length_diff=4, prefix=1, candidates=5, threshold=0.55
+    - Maximizes corrections, accepts more false positives
+- **Bonus**: Added reset button handler (line 843)
+  - "Reset Swipe Settings" button now works
+  - Resets all correction settings to defaults
+  - Resets scoring weights, autocorrect toggles, fuzzy match mode
+- **Expected Impact**:
+  - Preset dropdown now functional ✅
+  - One-click adjustment of 4 related parameters ✅
+  - Easy reset to defaults via button ✅
+  - Better UX for novice users ✅
+- **Files**: SettingsActivity.java (lines 843-855, 895-900, 910-965)
+
+**Previous (v1.32.229)**: Raw Prefix Bug Fix + Final Autocorrect
+
+### Previous Work (v1.32.229)
 
 **BUG FIX + FINAL AUTOCORRECT: Fixed raw: prefix insertion + Implemented missing final autocorrect**
 - **Bug #1**: raw: prefix inserted into text when user selects raw predictions

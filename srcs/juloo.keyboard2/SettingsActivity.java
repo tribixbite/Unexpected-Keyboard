@@ -823,8 +823,8 @@ public class SettingsActivity extends PreferenceActivity
         }
       });
     }
-    
-    // Reset to Strict Values button  
+
+    // Reset to Strict Values button
     Preference resetStrictPref = findPreference("swipe_reset_strict");
     if (resetStrictPref != null)
     {
@@ -834,6 +834,21 @@ public class SettingsActivity extends PreferenceActivity
         public boolean onPreferenceClick(Preference preference)
         {
           resetToSwipeStrict();
+          return true;
+        }
+      });
+    }
+
+    // v1.33.8: Reset swipe corrections to defaults button
+    Preference resetCorrectionsRef = findPreference("reset_swipe_corrections");
+    if (resetCorrectionsRef != null)
+    {
+      resetCorrectionsRef.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          resetSwipeCorrections();
           return true;
         }
       });
@@ -871,7 +886,7 @@ public class SettingsActivity extends PreferenceActivity
   {
     SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
     SharedPreferences.Editor editor = prefs.edit();
-    
+
     // Set strict values for precise recognition
     editor.putInt("proximity_weight", 200);      // High proximity requirement
     editor.putInt("missing_key_penalty", 1500);  // Very strong penalty for missing letters (15.0)
@@ -881,33 +896,126 @@ public class SettingsActivity extends PreferenceActivity
     editor.putInt("key_zone_radius", 80);        // Smaller detection area (precise)
     editor.putInt("path_sample_distance", 5);    // Very frequent sampling
     editor.apply();
-    
+
     // Force UI refresh
     recreate();
-    
+
     Toast.makeText(this, "Reset to strict recognition values", Toast.LENGTH_SHORT).show();
+  }
+
+  /**
+   * Reset swipe correction settings to defaults
+   * v1.33.8: Implements reset button for swipe corrections
+   */
+  private void resetSwipeCorrections()
+  {
+    SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+    SharedPreferences.Editor editor = prefs.edit();
+
+    // Reset to balanced preset
+    editor.putString("swipe_correction_preset", "balanced");
+
+    // Reset fuzzy matching parameters to defaults
+    editor.putInt("autocorrect_max_length_diff", 2);
+    editor.putInt("autocorrect_prefix_length", 2);
+    editor.putInt("autocorrect_max_beam_candidates", 3);
+    editor.putFloat("autocorrect_char_match_threshold", 0.67f);
+    editor.putInt("autocorrect_confidence_min_frequency", 500);
+
+    // Reset autocorrect toggles to defaults
+    editor.putBoolean("swipe_beam_autocorrect_enabled", true);
+    editor.putBoolean("swipe_final_autocorrect_enabled", true);
+    editor.putString("swipe_fuzzy_match_mode", "edit_distance");
+
+    // Reset scoring weights to defaults
+    editor.putInt("swipe_prediction_source", 60); // Balanced (60% NN, 40% freq)
+    editor.putFloat("swipe_common_words_boost", 1.3f);
+    editor.putFloat("swipe_top5000_boost", 1.0f);
+    editor.putFloat("swipe_rare_words_penalty", 0.75f);
+
+    editor.apply();
+
+    // Force UI refresh to show updated values
+    recreate();
+
+    Toast.makeText(this, "Reset all swipe correction settings to defaults", Toast.LENGTH_LONG).show();
+    android.util.Log.d("SettingsActivity", "Reset swipe corrections to default values");
   }
   
   @Override
   public void onSharedPreferenceChanged(SharedPreferences prefs, String key)
   {
+    // v1.33.8: Handle swipe correction preset changes
+    if ("swipe_correction_preset".equals(key))
+    {
+      String preset = prefs.getString(key, "balanced");
+      applySwipeCorrectionPreset(prefs, preset);
+      Toast.makeText(this, "Applied \"" + preset + "\" correction preset", Toast.LENGTH_SHORT).show();
+      return;
+    }
+
     // Trigger CGR parameter reload when settings change
     if (key != null && key.startsWith("cgr_"))
     {
       android.util.Log.d("SettingsActivity", "CGR parameter changed: " + key);
-      
+
       // Parameter changes will take effect on next keyboard restart
       android.util.Log.d("SettingsActivity", "CGR parameter " + key + " changed, will take effect on restart");
-      
+
       // Show current value for verification and update summaries
       int currentValue = prefs.getInt(key, -1);
       Toast.makeText(this, "Updated " + key + " = " + currentValue + " (takes effect immediately)", Toast.LENGTH_LONG).show();
-      
+
       // Update parameter summaries to show new values
       updateCGRParameterSummaries();
     }
-    
+
     // No super call needed for interface method
+  }
+
+  /**
+   * Apply swipe correction preset values to fuzzy matching parameters
+   * v1.33.8: Implements the swipe_correction_preset functionality
+   *
+   * @param prefs SharedPreferences to update
+   * @param preset "strict", "balanced", or "lenient"
+   */
+  private void applySwipeCorrectionPreset(SharedPreferences prefs, String preset)
+  {
+    SharedPreferences.Editor editor = prefs.edit();
+
+    switch (preset)
+    {
+      case "strict":
+        // Strict (High Accuracy) - Minimize false corrections
+        editor.putInt("autocorrect_max_length_diff", 1);       // Very strict on length
+        editor.putInt("autocorrect_prefix_length", 3);         // First 3 letters must match
+        editor.putInt("autocorrect_max_beam_candidates", 2);   // Only check top 2
+        editor.putFloat("autocorrect_char_match_threshold", 0.80f); // 80% chars must match
+        android.util.Log.d("SettingsActivity", "Applied STRICT preset: length_diff=1, prefix=3, candidates=2, threshold=0.80");
+        break;
+
+      case "lenient":
+        // Lenient (Flexible) - Maximize corrections, accept more false positives
+        editor.putInt("autocorrect_max_length_diff", 4);       // Very forgiving
+        editor.putInt("autocorrect_prefix_length", 1);         // Only first letter
+        editor.putInt("autocorrect_max_beam_candidates", 5);   // Check more
+        editor.putFloat("autocorrect_char_match_threshold", 0.55f); // Only 55% match needed
+        android.util.Log.d("SettingsActivity", "Applied LENIENT preset: length_diff=4, prefix=1, candidates=5, threshold=0.55");
+        break;
+
+      case "balanced":
+      default:
+        // Balanced (Default) - Middle ground
+        editor.putInt("autocorrect_max_length_diff", 2);       // Default
+        editor.putInt("autocorrect_prefix_length", 2);         // Default
+        editor.putInt("autocorrect_max_beam_candidates", 3);   // Default
+        editor.putFloat("autocorrect_char_match_threshold", 0.67f); // Default
+        android.util.Log.d("SettingsActivity", "Applied BALANCED preset: length_diff=2, prefix=2, candidates=3, threshold=0.67");
+        break;
+    }
+
+    editor.apply();
   }
   
   @Override
