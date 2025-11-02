@@ -2175,6 +2175,10 @@
     {
       "contraction": "couldn't",
       "frequency": 175
+    },
+    {
+      "contraction": "could've",
+      "frequency": 165
     }
   ],
   "council": [
@@ -6141,6 +6145,10 @@
     {
       "contraction": "mightn't",
       "frequency": 140
+    },
+    {
+      "contraction": "might've",
+      "frequency": 145
     }
   ],
   "mike": [
@@ -8525,6 +8533,10 @@
     {
       "contraction": "shouldn't",
       "frequency": 164
+    },
+    {
+      "contraction": "should've",
+      "frequency": 160
     }
   ],
   "show": [
@@ -9257,6 +9269,10 @@
     {
       "contraction": "that's",
       "frequency": 221
+    },
+    {
+      "contraction": "that'll",
+      "frequency": 180
     }
   ],
   "theatre": [
@@ -9275,6 +9291,14 @@
     {
       "contraction": "there's",
       "frequency": 198
+    },
+    {
+      "contraction": "there'd",
+      "frequency": 155
+    },
+    {
+      "contraction": "there'll",
+      "frequency": 160
     }
   ],
   "they": [
@@ -10413,6 +10437,10 @@
     {
       "contraction": "wouldn't",
       "frequency": 179
+    },
+    {
+      "contraction": "would've",
+      "frequency": 170
     }
   ],
   "wright": [
@@ -10591,6 +10619,12 @@
     {
       "contraction": "who're",
       "frequency": 200
+    }
+  ],
+  "it": [
+    {
+      "contraction": "it'll",
+      "frequency": 185
     }
   ]
 }

@@ -23158,6 +23158,7 @@ itinerant
 itineraries
 itinerary
 itis
+itll
 ito
 its
 itself
@@ -48671,6 +48672,7 @@ would
 woulda
 wouldn
 wouldnt
+wouldve
 wound
 wounded
 wounding
@@ -48871,6 +48873,7 @@ yak
 yakima
 yakuza
 yale
+yall
 yalta
 yam
 yama

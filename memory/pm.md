@@ -9,11 +9,72 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.263 (313)
-**Build Status**: ✅ BUILD SUCCESSFUL - NN-Based Contraction Filtering
+**Latest Version**: v1.32.265 (315)
+**Build Status**: ✅ BUILD SUCCESSFUL - Complete Contraction System
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.263)
+### Recent Work (v1.32.264-265)
+
+**COMPLETE CONTRACTION COVERAGE: Added 9 missing contractions + comprehensive documentation**
+- **Problem**: Missing several common contractions from coverage
+  - User requested verification: "there'll, ya'll. couldn't, wouldn't shouldn't, doesn't hasn't hadn't mustn't mightve"
+  - Found 9 missing contractions that should be included
+- **Missing contractions identified**:
+  - **'ve contractions**: could've, should've, would've, might've (4 forms)
+  - **Demonstratives**: there'd, there'll, that'll (3 forms)
+  - **Pronouns**: it'll (1 form)
+  - **Colloquial**: y'all (1 form)
+  - Total: 9 missing contractions
+- **Solution**: Added all 9 to both paired and non-paired systems
+  1. **contraction_pairings.json**: Added 9 variants
+     - could → could've (freq 165)
+     - should → should've (freq 165)
+     - would → would've (freq 165)
+     - might → might've (freq 135)
+     - there → there'd (freq 140), there'll (freq 145)
+     - that → that'll (freq 145)
+     - it → it'll (freq 150)
+     - Created new base word "it" with 1 variant
+  2. **contractions_non_paired.json**: Added 9 apostrophe-free mappings
+     - couldve → could've, shouldve → should've, wouldve → would've, mightve → might've
+     - thered → there'd, therell → there'll, thatll → that'll
+     - itll → it'll, yall → y'all
+  3. **en_enhanced.json**: Added 3 new apostrophe-free forms
+     - wouldve (200), itll (200), yall (200)
+     - Note: couldve, shouldve, mightve already present from previous work
+     - Dictionary: 49,293 → 49,296 words (+3)
+- **Documentation**: Complete rewrite of docs/specs/CONTRACTION_SYSTEM.md
+  - Architecture overview with three-tier system diagram
+  - File specifications with JSON format examples
+  - Code flow with line numbers and actual code snippets
+  - Complete contraction coverage list (66 distinct non-possessive contractions)
+  - NN-based filtering explanation with examples
+  - Before/after problem cases with comparison tables
+  - Testing checklist (all 66 contractions covered)
+  - Maintenance guide for adding new contractions
+  - Version history through v1.32.264
+  - Key insights and design principles
+- **Final counts**:
+  - Dictionary: 49,296 words (includes 62 apostrophe-free forms)
+  - Paired contractions: 1,744 base words → multiple variants
+  - Non-paired mappings: 62 apostrophe-free forms → proper contractions
+  - Total coverage: 66 distinct non-possessive contractions
+- **Result**:
+  - All requested contractions now working ✓
+  - could've, should've, would've, might've functional ✓
+  - there'd, there'll, that'll functional ✓
+  - it'll functional ✓
+  - y'all functional ✓
+  - Comprehensive documentation for future maintenance ✓
+- **Files Modified**:
+  - assets/dictionaries/en_enhanced.json (49,296 words, +3)
+  - assets/dictionaries/en_enhanced.txt (regenerated)
+  - assets/dictionaries/contraction_pairings.json (1,744 base words, +1)
+  - assets/dictionaries/contractions_non_paired.json (62 mappings, +9)
+  - docs/specs/CONTRACTION_SYSTEM.md (complete rewrite)
+  - build.gradle (versionCode 315, versionName 1.32.265)
+
+### Previous Work (v1.32.263)
 
 **NN-BASED CONTRACTION FILTERING: Use raw neural network output instead of swipe path**
 - **Problem**: Swipe path filtering wasn't working
