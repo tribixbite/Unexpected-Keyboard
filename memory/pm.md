@@ -9,11 +9,49 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.259 (309)
-**Build Status**: ✅ BUILD SUCCESSFUL - Fix Contraction System
+**Latest Version**: v1.32.261 (311)
+**Build Status**: ✅ BUILD SUCCESSFUL - Smart Contraction Filtering
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.259)
+### Recent Work (v1.32.261)
+
+**SMART CONTRACTION FILTERING: Use last swipe character to filter contraction variants**
+- **Problem**: All contraction variants showing for pronoun/question words
+  - User reported: "what'll" shows up when swiping "what'd"
+  - Root cause: Paired contractions create ALL variants regardless of swipe path
+  - Example: "what" → creates what'd, what'll, what're, what's, what've (all 5 appear)
+- **User's request**: Filter by last character of swipe path
+  - Swipe ending near 'd' → only show "what'd" (not what'll, what's, etc.)
+  - Swipe ending near 'l' → only show "what'll" (not what'd, what's, etc.)
+  - Swipe ending near 's' → only show "what's" (not what'd, what'll, etc.)
+- **Solution**: Extract last character from swipe path, filter contractions by ending
+  1. **Add lastChar to SwipeStats** (OptimizedVocabulary.java:1085)
+     - New field: `public final char lastChar`
+     - Stores last character from swipe keySequence
+  2. **Extract lastChar from SwipeInput** (OnnxSwipePredictor.java:1296-1299)
+     - Get last char: `input.keySequence.charAt(length - 1)`
+     - Pass to SwipeStats in createOptimizedPredictionResult
+  3. **Filter paired contractions by lastChar** (OptimizedVocabulary.java:489-507)
+     - Check contraction ending: `contraction.charAt(length - 1)`
+     - Only create variant if ending matches swipe lastChar
+     - Example: "what" + lastChar='d' → only create "what'd"
+- **Logic**:
+  - If swipeStats is null or lastChar is '\0': Create all variants (backward compatibility)
+  - If lastChar is set: Only create contractions ending with that character
+- **Implementation**:
+  1. **SwipeStats**: Added lastChar field (char)
+  2. **OnnxSwipePredictor**: Extract lastChar from input.keySequence
+  3. **OptimizedVocabulary**: Filter contractions by ending character
+- **Result**:
+  - Swipe "what'd" (ending with 'd') → only "what'd" appears ✓
+  - Swipe "what'll" (ending with 'l') → only "what'll" appears ✓
+  - Swipe "what's" (ending with 's') → only "what's" appears ✓
+  - Same logic applies to all paired contractions (i, he, she, they, we, you, who, etc.)
+- **Files Modified**:
+  - srcs/juloo.keyboard2/OptimizedVocabulary.java (SwipeStats + filter logic)
+  - srcs/juloo.keyboard2/OnnxSwipePredictor.java (extract and pass lastChar)
+
+### Previous Work (v1.32.259)
 
 **FIX CONTRACTION SYSTEM: Add apostrophe-free forms to dictionary + replace instead of variant**
 - **Problem**: can't, don't, i've, i'm not generating from swipes

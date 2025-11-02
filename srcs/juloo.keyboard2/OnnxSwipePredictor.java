@@ -304,7 +304,7 @@ public class OnnxSwipePredictor
           
           // Post-processing with timing
           long postprocessStartTime = System.nanoTime();
-          PredictionResult result = createPredictionResult(candidates);
+          PredictionResult result = createPredictionResult(candidates, input);
           long postprocessTime = System.nanoTime() - postprocessStartTime;
           // logDebug("⏱️ Post-processing: " + (postprocessTime / 1_000_000.0) + "ms");
           
@@ -1230,12 +1230,12 @@ public class OnnxSwipePredictor
     }
   }
   
-  private PredictionResult createPredictionResult(List<BeamSearchCandidate> candidates)
+  private PredictionResult createPredictionResult(List<BeamSearchCandidate> candidates, SwipeInput input)
   {
     // OPTIMIZATION: Use vocabulary filtering for better predictions (2x speedup + quality)
     if (_vocabulary != null && _vocabulary.isLoaded())
     {
-      return createOptimizedPredictionResult(candidates);
+      return createOptimizedPredictionResult(candidates, input);
     }
 
     // Fallback: Basic filtering for testing
@@ -1283,7 +1283,7 @@ public class OnnxSwipePredictor
    * OPTIMIZATION: Create optimized prediction result using vocabulary filtering
    * Implements web app fast-path lookup and combined scoring
    */
-  private PredictionResult createOptimizedPredictionResult(List<BeamSearchCandidate> candidates)
+  private PredictionResult createOptimizedPredictionResult(List<BeamSearchCandidate> candidates, SwipeInput input)
   {
     // Convert beam candidates to vocabulary format
     List<OptimizedVocabulary.CandidateWord> vocabCandidates = new ArrayList<>();
@@ -1292,8 +1292,20 @@ public class OnnxSwipePredictor
       vocabCandidates.add(new OptimizedVocabulary.CandidateWord(candidate.word, candidate.confidence));
     }
 
+    // Extract last character from swipe path for contraction filtering
+    char lastChar = '\0';
+    if (input != null && input.keySequence != null && !input.keySequence.isEmpty())
+    {
+      lastChar = input.keySequence.charAt(input.keySequence.length() - 1);
+    }
+
     // Apply vocabulary filtering with fast-path optimization
-    OptimizedVocabulary.SwipeStats swipeStats = null; // TODO: Extract from SwipeInput if needed
+    OptimizedVocabulary.SwipeStats swipeStats = new OptimizedVocabulary.SwipeStats(
+      input != null && input.keySequence != null ? input.keySequence.length() : 0,
+      input != null ? input.pathLength : 0,
+      input != null ? input.averageVelocity : 0,
+      lastChar
+    );
     List<OptimizedVocabulary.FilteredPrediction> filtered = _vocabulary.filterPredictions(vocabCandidates, swipeStats);
 
     // Convert back to PredictionResult format with deduplication

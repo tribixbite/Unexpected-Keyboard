@@ -477,11 +477,35 @@ public class OptimizedVocabulary
           String word = pred.word;
 
           // Check for paired contractions (base word exists: "well" -> "we'll")
+          // Filter by last character of swipe path to show only relevant contractions
+          // Example: "what" + lastChar='d' → only "what'd" (not what'll, what's, etc.)
           if (contractionPairings.containsKey(word))
           {
             List<String> contractions = contractionPairings.get(word);
+            char lastChar = (swipeStats != null) ? swipeStats.lastChar : '\0';
+
             for (String contraction : contractions)
             {
+              // Filter by last character if available
+              // If lastChar is set, only create contraction if it ends with that character
+              // Example: swipe path ending in 'd' should only create "what'd", not "what'll"
+              if (lastChar != '\0' && !contraction.isEmpty())
+              {
+                char contractionEnd = contraction.charAt(contraction.length() - 1);
+                if (contractionEnd != lastChar)
+                {
+                  // Skip this contraction - doesn't match swipe path ending
+                  if (debugMode)
+                  {
+                    String msg = String.format("📝 CONTRACTION FILTERED: \"%s\" → skipped \"%s\" (ends with '%c', swipe ends with '%c')\n",
+                      word, contraction, contractionEnd, lastChar);
+                    Log.d(TAG, msg);
+                    sendDebugLog(msg);
+                  }
+                  continue;
+                }
+              }
+
               // Add contraction variant with slightly lower score (0.95x)
               // This ensures base word appears first, followed by contraction
               // CRITICAL: word = contraction (for insertion), displayText = contraction (for UI)
@@ -498,8 +522,8 @@ public class OptimizedVocabulary
 
               if (debugMode)
               {
-                String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (word=%s, display=%s, score=%.4f)\n",
-                  word, contraction, contraction, contraction, variantScore);
+                String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (word=%s, display=%s, score=%.4f, lastChar='%c')\n",
+                  word, contraction, contraction, contraction, variantScore, lastChar);
                 Log.d(TAG, msg);
                 sendDebugLog(msg);
               }
@@ -1082,12 +1106,14 @@ public class OptimizedVocabulary
     public final int expectedLength;
     public final float pathLength;
     public final float speed;
-    
-    public SwipeStats(int expectedLength, float pathLength, float speed)
+    public final char lastChar;  // Last character of swipe path for contraction filtering
+
+    public SwipeStats(int expectedLength, float pathLength, float speed, char lastChar)
     {
       this.expectedLength = expectedLength;
       this.pathLength = pathLength;
       this.speed = speed;
+      this.lastChar = lastChar;
     }
   }
   
