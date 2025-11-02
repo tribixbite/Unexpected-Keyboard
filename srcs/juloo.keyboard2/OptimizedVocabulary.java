@@ -485,9 +485,11 @@ public class OptimizedVocabulary
             {
               // Add contraction variant with slightly lower score (0.95x)
               // This ensures base word appears first, followed by contraction
+              // word = base (for insertion), displayText = contraction (for UI)
               float variantScore = pred.score * 0.95f;
               contractionVariants.add(new FilteredPrediction(
-                contraction,
+                word,                    // word for insertion (apostrophe-free base)
+                contraction,             // displayText for UI (with apostrophe)
                 variantScore,
                 pred.confidence,
                 pred.frequency,
@@ -496,8 +498,8 @@ public class OptimizedVocabulary
 
               if (debugMode)
               {
-                String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (score=%.4f)\n",
-                  word, contraction, variantScore);
+                String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (word=%s, display=%s, score=%.4f)\n",
+                  word, contraction, word, contraction, variantScore);
                 Log.d(TAG, msg);
                 sendDebugLog(msg);
               }
@@ -512,16 +514,18 @@ public class OptimizedVocabulary
           }
         }
 
-        // Modify non-paired contractions (replace word with apostrophe version)
+        // Modify non-paired contractions (set displayText to apostrophe version)
         for (int idx : indicesToModify)
         {
           FilteredPrediction pred = validPredictions.get(idx);
           String withoutApostrophe = pred.word;
           String withApostrophe = nonPairedContractions.get(withoutApostrophe);
 
-          // Replace with apostrophe version
+          // Replace with version that has displayText set to apostrophe form
+          // word stays apostrophe-free (for insertion), displayText shows apostrophe
           validPredictions.set(idx, new FilteredPrediction(
-            withApostrophe,
+            withoutApostrophe,       // word for insertion (no apostrophe)
+            withApostrophe,          // displayText for UI (with apostrophe)
             pred.score,
             pred.confidence,
             pred.frequency,
@@ -530,8 +534,8 @@ public class OptimizedVocabulary
 
           if (debugMode)
           {
-            String msg = String.format("📝 NON-PAIRED CONTRACTION: \"%s\" → modified to \"%s\"\n",
-              withoutApostrophe, withApostrophe);
+            String msg = String.format("📝 NON-PAIRED CONTRACTION: \"%s\" → display modified to \"%s\" (word=%s)\n",
+              withoutApostrophe, withApostrophe, withoutApostrophe);
             Log.d(TAG, msg);
             sendDebugLog(msg);
           }
@@ -560,8 +564,9 @@ public class OptimizedVocabulary
       for (int i = 0; i < numToShow; i++)
       {
         FilteredPrediction pred = validPredictions.get(i);
-        ranking.append(String.format("#%d: \"%s\" (score=%.4f, NN=%.4f, freq=%.4f) [%s]\n",
-          i+1, pred.word, pred.score, pred.confidence, pred.frequency, pred.source));
+        String displayInfo = pred.word.equals(pred.displayText) ? "" : " (display=\"" + pred.displayText + "\")";
+        ranking.append(String.format("#%d: \"%s\"%s (score=%.4f, NN=%.4f, freq=%.4f) [%s]\n",
+          i+1, pred.word, displayInfo, pred.score, pred.confidence, pred.frequency, pred.source));
       }
       ranking.append("─────────────────────────────────────────────────────────\n");
       String rankingMsg = ranking.toString();
@@ -1046,15 +1051,28 @@ public class OptimizedVocabulary
    */
   public static class FilteredPrediction
   {
-    public final String word;
-    public final float score;         // Combined confidence + frequency score
-    public final float confidence;    // Original NN confidence
-    public final float frequency;     // Word frequency
-    public final String source;       // "common", "top5000", "vocabulary", "raw"
-    
+    public final String word;          // Word for insertion (apostrophe-free)
+    public final String displayText;   // Text for UI display (with apostrophes)
+    public final float score;          // Combined confidence + frequency score
+    public final float confidence;     // Original NN confidence
+    public final float frequency;      // Word frequency
+    public final String source;        // "common", "top5000", "vocabulary", "raw"
+
     public FilteredPrediction(String word, float score, float confidence, float frequency, String source)
     {
       this.word = word;
+      this.displayText = word;  // Default: display = word
+      this.score = score;
+      this.confidence = confidence;
+      this.frequency = frequency;
+      this.source = source;
+    }
+
+    // Constructor with explicit displayText
+    public FilteredPrediction(String word, String displayText, float score, float confidence, float frequency, String source)
+    {
+      this.word = word;
+      this.displayText = displayText;
       this.score = score;
       this.confidence = confidence;
       this.frequency = frequency;

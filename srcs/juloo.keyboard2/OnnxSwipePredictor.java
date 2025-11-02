@@ -1298,27 +1298,40 @@ public class OnnxSwipePredictor
 
     // Convert back to PredictionResult format with deduplication
     // v1.33.5: CRITICAL FIX - deduplicate words, keeping highest score
-    Map<String, Integer> wordScoreMap = new LinkedHashMap<>(); // Preserve insertion order
+    // v1.32.236: Use displayText for UI, but deduplicate by word (insertion text)
+
+    // Helper class for deduplication (holds display text + score)
+    class WordDisplayPair {
+      final String displayText;
+      final int score;
+      WordDisplayPair(String displayText, int score) {
+        this.displayText = displayText;
+        this.score = score;
+      }
+    }
+
+    Map<String, WordDisplayPair> wordScoreMap = new LinkedHashMap<>(); // Preserve insertion order
 
     for (OptimizedVocabulary.FilteredPrediction pred : filtered)
     {
       String wordLower = pred.word.toLowerCase();
+      String displayLower = pred.displayText.toLowerCase();
       int score = (int)(pred.score * 1000); // Convert combined score to 0-1000 range
 
-      // Keep only the highest score for each word
-      if (!wordScoreMap.containsKey(wordLower) || score > wordScoreMap.get(wordLower))
+      // Keep only the highest score for each word (deduplicate by insertion text, not display)
+      if (!wordScoreMap.containsKey(wordLower) || score > wordScoreMap.get(wordLower).score)
       {
-        wordScoreMap.put(wordLower, score);
+        wordScoreMap.put(wordLower, new WordDisplayPair(displayLower, score));
       }
     }
 
-    // Convert deduplicated map to lists
+    // Convert deduplicated map to lists (use displayText for UI)
     List<String> words = new ArrayList<>();
     List<Integer> scores = new ArrayList<>();
-    for (Map.Entry<String, Integer> entry : wordScoreMap.entrySet())
+    for (Map.Entry<String, WordDisplayPair> entry : wordScoreMap.entrySet())
     {
-      words.add(entry.getKey());
-      scores.add(entry.getValue());
+      words.add(entry.getValue().displayText);  // Use displayText for UI
+      scores.add(entry.getValue().score);
     }
 
     // Add raw beam search predictions (closest matches) AFTER filtered predictions
