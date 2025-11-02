@@ -241,7 +241,7 @@ while (finalNearestKeys.size() < 150) {
 }
 ```
 
-**Example**:
+**Example (Short Swipe - Padding)**:
 ```
 Input: 87 points, last point (0.8, 0.6), last key token = 14
 Output:
@@ -250,6 +250,83 @@ Output:
     - Keys 0-86: original detections
     - Keys 87-149: token 14 repeated 63 times
 ```
+
+**Example (Long Swipe - Truncation)**:
+```
+Input: 200 points from slow swipe of "internationalization"
+Algorithm: Takes FIRST 150 points only
+Output:
+    - Points 0-149: first 150 points of trajectory
+    - Points 150-199: DISCARDED (lost from analysis)
+
+Impact: Last ~25% of swipe trajectory is LOST
+        For long words, this may lose the final letters
+```
+
+---
+
+### ⚠️ CRITICAL LIMITATION: Long Swipe Truncation
+
+**Problem**: Swipes exceeding 150 points are truncated to the **first 150 points**.
+
+**Code**: Line 200: `for (int i = 0; i < Math.min(coordinates.size(), targetLength); i++)`
+
+**Consequences**:
+
+1. **End of Swipe Lost**: Points 151+ are completely discarded
+2. **Final Letters Missing**: For long words or slow swipes, the ending may be cut off
+3. **Accuracy Impact**: Neural network only sees the beginning and middle, not the end
+
+**When This Happens**:
+
+- **Slow Swipes**: User moves finger slowly → more points sampled
+- **Long Words**: 10+ character words like "internationalization"
+- **High Sampling Rate**: Some devices sample touch at 120-240Hz → 2-4 points per 16ms frame
+
+**Example Scenario**:
+```
+Word: "internationalization" (20 characters)
+Swipe duration: 1.5 seconds at 120Hz sampling
+Total points: ~180 points
+Truncation: First 150 points kept, last 30 points discarded
+
+Effect: Neural network may only see "internationaliz..." without the ending
+Result: Prediction might be "internationalize" (closest valid word in first 150 points)
+```
+
+**Mitigation Strategies** (Not Currently Implemented):
+
+1. **Downsampling**: Reduce 200 points → 150 by uniform sampling
+   ```
+   Keep points at indices: 0, 1.33, 2.67, 4, ... (every 200/150 = 1.33)
+   ```
+
+2. **Sliding Window**: Use last 150 points instead of first 150
+   ```
+   if (coordinates.size() > 150) {
+       startIndex = coordinates.size() - 150;
+       result = coordinates.subList(startIndex, coordinates.size());
+   }
+   ```
+
+3. **Adaptive Sampling**: Increase target length for long swipes
+   ```
+   targetLength = min(coordinates.size(), MAX_SEQUENCE_LENGTH)
+   ```
+
+4. **Ramer-Douglas-Peucker**: Simplify path while preserving shape
+   ```
+   Reduce 200 points → 150 by removing points on near-straight segments
+   ```
+
+**Current Workaround**: Users should swipe faster for long words to stay under 150 points.
+
+**Why Not Fixed Yet?**:
+- Model trained with 150-point fixed sequences
+- Changing length requires model retraining
+- Downsampling not tested (may hurt accuracy)
+
+**Recommendation**: Log warning when swipes exceed 150 points, track occurrence rate to determine if fix is needed.
 
 ---
 
@@ -702,6 +779,17 @@ for (int i = 0; i < Math.min(3, points.size()); i++) {
 
 ---
 
+#### Issue 4: Long Words Mispredicted
+**Symptom**: Long words (10+ characters) have wrong endings
+
+**Cause**: Swipe exceeded 150 points, ending was truncated
+
+**Diagnosis**: Check log for "deduplicated from XXX trajectory points" where XXX > 150
+
+**Fix**: None currently - limitation of fixed-length model. User should swipe faster.
+
+---
+
 ## Related Components
 
 ### Upstream: Touch Input Collection
@@ -762,3 +850,5 @@ Final output is three ONNX tensors:
 - `src_mask`: [1, 150] bool (padding indicator)
 
 Total preprocessing time: **2-5ms** on modern devices, dominated by nearest key detection.
+
+**⚠️ Critical Limitation**: Swipes exceeding 150 points are truncated to the **first 150**, discarding the end of the trajectory. This affects slow swipes and long words (10+ characters) where the final letters may be lost, reducing prediction accuracy.
