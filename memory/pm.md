@@ -9,11 +9,55 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.234 (284)
-**Build Status**: ✅ BUILD SUCCESSFUL - Contraction Support with Apostrophe Display
+**Latest Version**: v1.32.235 (285)
+**Build Status**: ✅ BUILD SUCCESSFUL - Contraction Deduplication and Possessive Fixes
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.234)
+### Recent Work (v1.32.235)
+
+**CONTRACTION DEDUPLICATION: Fixed possessive handling and swipe ambiguity**
+- **Problem**: Swipes ending in 's' look identical to 'ss' (gesture ambiguity)
+  - Example: Swiping "jesus's" identical to "jesus"
+  - Created spurious double-s words: "jesuss", "jamess", "chriss"
+  - 92% of "contractions" were actually possessives (1,112 of 1,213)
+  - Possessives treated as standalone contractions instead of variants
+- **Analysis**:
+  - 11 spurious 'ss' words (jesus's → jesuss, james's → jamess, etc.)
+  - 1,112 possessives (word's) incorrectly in non_paired
+  - 31 orphaned possessives (o'brien, o'clock, qur'an) with no base word
+  - Only 74 REAL contractions (don't, can't, we'll, etc.)
+- **Solution**: Proper categorization and deduplication
+  - **Removed 11 spurious 'ss' words**:
+    - jesuss, jamess, chriss, bosss, thomass, joness, rosss, lewiss, daviss, harriss, uss
+    - Base words preserved (jesus, james, chris, boss, etc.)
+  - **Removed 31 orphaned possessives**:
+    - o'brien, o'clock, qur'an, rock'n'roll, y'know, etc.
+    - No base word exists in dictionary
+  - **Reclassified 1,108 possessives**:
+    - Moved from non_paired to contraction_pairings
+    - Map to base word (e.g., "obama" → ["obama's"])
+    - Both variants shown in suggestions
+  - **Kept only 74 real contractions** in non_paired:
+    - n't (19), 'm (1), 're (6), 've (10), 'll (12), 'd (14), 's is/has (12)
+- **Implementation**:
+  - Created deduplicate_contractions.py for automated fixing
+  - Rebuilt contraction_pairings.json: 1,752 base words → 1,754 variants
+  - Rebuilt contractions_non_paired.json: 74 real contractions only
+  - Dictionary: 49,293 words (removed 42 invalid entries)
+  - Regenerated en_enhanced.txt from cleaned JSON
+- **Expected Impact**:
+  - Possessives correctly paired with base words ✅
+  - Swipe ambiguity resolved (s vs ss patterns) ✅
+  - No invalid 'ss' words in dictionary ✅
+  - Clean separation: possessives (paired) vs contractions (non-paired) ✅
+- **Files**:
+  - deduplicate_contractions.py (new automation script)
+  - assets/dictionaries/en_enhanced.json (49,293 words, -42)
+  - assets/dictionaries/en_enhanced.txt (regenerated)
+  - assets/dictionaries/contraction_pairings.json (1,752 base words)
+  - assets/dictionaries/contractions_non_paired.json (74 contractions)
+
+### Previous Work (v1.32.234)
 
 **CONTRACTION SUPPORT: Apostrophe display working within tokenizer limitations**
 - **Problem**: Dictionary contains 1,213 words with apostrophes (don't, can't, it's)
