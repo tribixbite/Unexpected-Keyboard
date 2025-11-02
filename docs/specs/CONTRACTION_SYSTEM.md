@@ -141,39 +141,41 @@ if (contractionPairings.containsKey(word)) {
 ### 2. UI Display (OnnxSwipePredictor.java)
 
 ```java
-// Lines 1299-1337: Build prediction lists
-// Use entry.getKey() which is the apostrophe-free word
+// Lines 1328-1337: Build prediction lists with displayText
+// Use displayText to show proper contractions with apostrophes
 for (Map.Entry<String, WordDisplayPair> entry : wordScoreMap.entrySet()) {
-    words.add(entry.getKey());  // apostrophe-free form
+    words.add(entry.getValue().displayText);  // Shows "who'll" not "wholl"
     scores.add(entry.getValue().score);
 }
 ```
 
-**Critical**: Must use `entry.getKey()` (word) not `entry.getValue().displayText` to avoid autocorrect issues.
+**Critical**: Use `displayText` for proper UI display with apostrophes. Keyboard2 will recognize and protect contractions from autocorrect.
 
 ### 3. Insertion (Keyboard2.java)
 
 ```java
-// Lines 930-942: Apply contraction mapping BEFORE autocorrect
+// Lines 931-960: Skip autocorrect for known contractions
 word = word.replaceAll("^raw:", "");  // Strip prefix
 
-// Apply contraction mapping
-if (_nonPairedContractions.containsKey(word.toLowerCase())) {
-    String withApostrophe = _nonPairedContractions.get(word.toLowerCase());
-    Log.d("Keyboard2", "CONTRACTION MAPPING: " + word + " → " + withApostrophe);
-    word = withApostrophe;
-}
+// Check if this is a known contraction (from _knownContractions set)
+boolean isKnownContraction = _knownContractions.contains(word.toLowerCase());
 
-// NOW run autocorrect (won't fuzzy match contractions)
-if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null) {
-    word = _wordPredictor.autoCorrect(word);
+if (isKnownContraction) {
+    // Skip autocorrect - insert contraction as-is
+    Log.d("Keyboard2", "KNOWN CONTRACTION: " + word + " - skipping autocorrect");
+} else {
+    // Run autocorrect for unknown words
+    if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null) {
+        word = _wordPredictor.autoCorrect(word);
+    }
 }
 ```
 
-**Critical Order**:
+**Critical Logic**:
 1. Strip "raw:" prefix
-2. **Apply contraction mapping** ← Prevents autocorrect bugs
-3. Run final autocorrect
+2. **Check if word is known contraction** ← Key insight
+3. If known: Skip autocorrect (insert as-is)
+4. If unknown: Run autocorrect normally
 
 ## Problem Cases Solved
 
@@ -188,14 +190,15 @@ if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null) {
 
 **Root cause**: Passing contractions with apostrophes to autocorrect caused fuzzy matching to similar dictionary words.
 
-### After Fix: Proper Mapping
+### After Fix: Skip Autocorrect for Contractions
 
-| Swipe | Prediction | Mapping | Final Insert |
-|-------|------------|---------|--------------|
-| who'll pattern | wholl | wholl → who'll | who'll ✓ |
-| don't pattern | dont | dont → don't | don't ✓ |
-| he'll pattern | hell | (no mapping - "hell" is valid) | hell ✓ |
-| i'm pattern | im | im → i'm | i'm ✓ |
+| Swipe | Prediction (UI) | Known Contraction? | Autocorrect? | Final Insert |
+|-------|-----------------|-------------------|--------------|--------------|
+| who'll pattern | who'll | YES | SKIP | who'll ✓ |
+| don't pattern | don't | YES | SKIP | don't ✓ |
+| he'll pattern | he'll | YES | SKIP | he'll ✓ |
+| i'm pattern | i'm | YES | SKIP | i'm ✓ |
+| hell pattern | hell | NO | RUN | hell ✓ |
 
 ## Swipe Gesture Ambiguity
 
@@ -314,15 +317,18 @@ This regenerates:
 ## Version History
 
 - **v1.32.235**: Initial deduplication, removed 42 words, categorized 1,213 contractions
-- **v1.32.236**: First fix attempt (FAILED - used displayText in predictions)
-- **v1.32.241**: Complete fix (apostrophe-free predictions + insertion-time mapping)
+- **v1.32.236**: First fix attempt (FAILED - displayText still passed to autocorrect)
+- **v1.32.241**: Second fix attempt (FAILED - apostrophe-free UI + autocorrect ran on mapped contractions)
+- **v1.32.245**: Final fix (displayText for UI + skip autocorrect for known contractions) ✓
 
 ## Key Insights
 
-1. **Autocorrect timing is critical**: Mapping must happen BEFORE autocorrect to prevent fuzzy matching
-2. **Swipe ambiguity requires variants**: Base word must generate both standard and apostrophe forms
-3. **Dictionary purity**: No apostrophes in main dictionary prevents conflicts
-4. **Prediction vs insertion separation**: Predictions can be apostrophe-free; apostrophes added at insertion
+1. **Autocorrect must never process contractions**: Contractions not in dictionary will fuzzy match to wrong words
+2. **Skip autocorrect for known contractions**: Check if word is in known set, bypass autocorrect entirely
+3. **Swipe ambiguity requires variants**: Base word must generate both standard and apostrophe forms
+4. **Dictionary purity**: No apostrophes in main dictionary prevents conflicts
+5. **Use displayText for UI**: Show proper contractions with apostrophes in suggestion bar
+6. **Protect contractions from autocorrect**: The fundamental solution to insertion bugs
 
 ## Related Files
 
