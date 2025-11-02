@@ -7,13 +7,61 @@
 
 ---
 
-## 🔥 Current Status (2025-11-01)
+## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.231 (281)
-**Build Status**: ✅ BUILD SUCCESSFUL - Correction Preset Functionality Implemented
+**Latest Version**: v1.32.234 (284)
+**Build Status**: ✅ BUILD SUCCESSFUL - Contraction Support with Apostrophe Display
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.231)
+### Recent Work (v1.32.234)
+
+**CONTRACTION SUPPORT: Apostrophe display working within tokenizer limitations**
+- **Problem**: Dictionary contains 1,213 words with apostrophes (don't, can't, it's)
+  - Tokenizer vocab_size=30 (4 special tokens + 26 letters a-z)
+  - NO apostrophe token exists in vocabulary
+  - Neural network physically cannot output apostrophes
+  - Result: Contractions unpredictable despite being high-frequency words
+- **Analysis**:
+  - Found 1,213 apostrophe words in original dictionary
+  - Categorized into:
+    - 646 **paired contractions** (base word exists: "we'll" → "well")
+    - 567 **non-paired contractions** (base doesn't exist: "don't" → "dont")
+- **Solution**: Modify dictionary + post-process predictions
+  - **Dictionary changes**:
+    - Removed all apostrophes from en_enhanced.json (49,981 → 49,335 words)
+    - Generated mapping files: contraction_pairings.json, contractions_non_paired.json
+    - Regenerated en_enhanced.txt from modified JSON (for calibration)
+    - Backed up original to docs/dictionaries/en_enhanced.original.json
+  - **Prediction modification** (OptimizedVocabulary.java):
+    - Paired contractions: Show BOTH variants (e.g., "well" → ["well", "we'll"])
+    - Non-paired contractions: Replace display text (e.g., "dont" → "don't")
+    - Variant scores: 0.95x of base word to preserve ordering
+  - **Calibration display** (SwipeCalibrationActivity.java):
+    - Target words show apostrophe version for clarity
+    - Scoring compares apostrophe versions consistently
+- **Implementation**:
+  - Added loadContractionMappings() to load JSON mappings
+  - Modified filterPredictions() for post-processing (lines 466-552)
+  - Added showNextWord() apostrophe display (lines 508-516)
+  - Created automation scripts:
+    - process_contractions.py (categorization)
+    - regenerate_txt_dictionary.py (JSON→TXT conversion)
+- **Expected Impact**:
+  - Contractions now predictable by neural network ✅
+  - Both "well" and "we'll" appear in suggestions ✅
+  - "don't" displays correctly (not "dont") ✅
+  - Calibration shows proper apostrophe versions ✅
+  - Works within tokenizer limitations (no model retraining) ✅
+- **Files**:
+  - OptimizedVocabulary.java (lines 51-70, 84-93, 466-552, 1127-1224)
+  - SwipeCalibrationActivity.java (lines 52-57, 184-185, 287-323, 508-516)
+  - assets/dictionaries/en_enhanced.json (modified)
+  - assets/dictionaries/en_enhanced.txt (regenerated)
+  - assets/dictionaries/contraction_pairings.json (new)
+  - assets/dictionaries/contractions_non_paired.json (new)
+  - docs/dictionaries/ (backup files)
+
+### Previous Work (v1.32.231)
 
 **CORRECTION PRESET IMPLEMENTATION: swipe_correction_preset now functional with 3 presets**
 - **Problem**: `swipe_correction_preset` toggle existed in UI but did nothing
