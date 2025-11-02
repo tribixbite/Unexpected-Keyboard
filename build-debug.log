@@ -20,13 +20,14 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :mapDebugSourceSetPaths
-> Task :createDebugCompatibleScreenManifests
 > Task :checkDebugAarMetadata
+> Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
@@ -38,7 +39,6 @@ Generated version info:  ()
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -67,5 +67,5 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 24s
+BUILD SUCCESSFUL in 37s
 39 actionable tasks: 28 executed, 11 from cache

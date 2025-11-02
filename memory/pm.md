@@ -9,11 +9,47 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.256 (306)
-**Build Status**: ✅ BUILD SUCCESSFUL - Comprehensive Contraction Mappings
+**Latest Version**: v1.32.257 (307)
+**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Cleanup
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.256)
+### Recent Work (v1.32.257)
+
+**DICTIONARY CLEANUP: Remove remaining invalid apostrophe-free forms**
+- **Problem**: Invalid apostrophe-free forms still appearing in predictions
+  - "wholl" appearing (not a valid English word)
+  - User reported: "wholl yields wholl and who'll but wholl isnt a word"
+- **Root Cause**: 16 additional invalid forms still in dictionary
+  - v1.32.253 removed 28 invalid forms (cant, dont, im, etc.)
+  - v1.32.256 added comprehensive contraction mappings
+  - But 16 more invalid forms remained: wholl, theyd, theyll, theyve, etc.
+- **Invalid forms removed** (16 words):
+  - Pronouns: hadnt, hes, howd, mustnt, shes, theyd, theyll, theyve, weve
+  - Question words: whatd, whatre, whered, whod, wholl, whove, whyd
+  - These forms only exist as contractions (with apostrophes)
+- **Valid forms kept** (9 words with different meanings):
+  - hell (place vs he'll), ill (sick vs i'll), well (adverb vs we'll)
+  - were (past tense vs we're), wed (married vs we'd), id (psychology vs i'd)
+  - shed (structure vs she'd), shell (noun vs she'll), whore (word vs who're)
+  - These stay in dictionary + have non_paired mappings for variants
+- **Solution**: Remove invalid forms from dictionary
+  - Dictionary: 49,256 → 49,240 words (-16)
+  - Keep valid words that have different meanings
+  - Contraction mappings unchanged (paired + non_paired still work)
+- **Implementation**:
+  - Python script to identify and remove 16 invalid forms
+  - en_enhanced.json: 49,256 → 49,240 words (-16)
+  - en_enhanced.txt: regenerated from cleaned JSON
+- **Result**:
+  - "wholl" no longer appears ✓
+  - "theyd", "theyll", "theyve" no longer appear ✓
+  - Only valid English words in dictionary ✓
+  - Contraction variants still created via paired/non_paired mappings ✓
+- **Files Modified**:
+  - assets/dictionaries/en_enhanced.json (49,240 words, -16)
+  - assets/dictionaries/en_enhanced.txt (regenerated)
+
+### Previous Work (v1.32.256)
 
 **COMPREHENSIVE CONTRACTION MAPPINGS: Move pronoun contractions to paired system**
 - **Problem 1**: can't and don't not working

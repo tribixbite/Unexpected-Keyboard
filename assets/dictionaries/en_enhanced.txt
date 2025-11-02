@@ -19425,7 +19425,6 @@ hadi
 hadid
 hadith
 hadley
-hadnt
 hadrian
 hadron
 hae
@@ -20344,7 +20343,6 @@ hervey
 hervé
 herzegovina
 herzog
-hes
 hesitant
 hesitate
 hesitated
@@ -20994,7 +20992,6 @@ hovers
 how
 howard
 howards
-howd
 howdy
 howe
 howell
@@ -29292,7 +29289,6 @@ mustapha
 mustard
 muster
 mustered
-mustnt
 mustve
 musty
 musée
@@ -39712,7 +39708,6 @@ sherri
 sherry
 sherwood
 sheryl
-shes
 shetland
 shew
 shh
@@ -44117,9 +44112,6 @@ thesis
 thessaloniki
 theta
 they
-theyd
-theyll
-theyve
 thi
 thiago
 thibault
@@ -47989,7 +47981,6 @@ wetlands
 wetter
 wettest
 wetting
-weve
 wexford
 wexler
 weymouth
@@ -48012,11 +48003,9 @@ wharton
 wharves
 what
 whatcha
-whatd
 whatever
 whatevers
 whatnot
-whatre
 whatsapp
 whatsoever
 wheat
@@ -48043,7 +48032,6 @@ where
 whereabouts
 whereas
 whereby
-whered
 wherefore
 wherein
 whereof
@@ -48138,7 +48126,6 @@ whiz
 whl
 who
 whoa
-whod
 whoever
 whoevers
 whole
@@ -48147,7 +48134,6 @@ wholesale
 wholesaler
 wholesalers
 wholesome
-wholl
 wholly
 whom
 whomever
@@ -48166,9 +48152,7 @@ whorl
 whorls
 whose
 whosoever
-whove
 why
-whyd
 whys
 whyte
 wi
