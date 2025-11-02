@@ -9,11 +9,46 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.245 (295)
-**Build Status**: ✅ BUILD SUCCESSFUL - Final Contraction Fix (Skip Autocorrect)
+**Latest Version**: v1.32.247 (297)
+**Build Status**: ✅ BUILD SUCCESSFUL - Paired Contractions Fix
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.245)
+### Recent Work (v1.32.247)
+
+**PAIRED CONTRACTIONS FIX: Show both base and contraction variants**
+- **Problem**: Swiping "well" only showed "we'll", not both "well" and "we'll"
+  - Paired contractions weren't appearing as separate options
+  - User should see BOTH base word and contraction variant
+- **Root Cause**: Variant prediction used wrong word field
+  - Created variant with: word="well", displayText="we'll"
+  - Both base and variant had same word field ("well")
+  - Deduplication removed one of them (keyed by word)
+  - Tapping "we'll" would insert "well" (wrong!)
+- **Solution**: Use contraction for BOTH word and displayText in variant
+  - Base: word="well", displayText="well"
+  - Variant: word="we'll", displayText="we'll" ← Fixed
+  - Different word fields → no deduplication conflict
+  - Tapping "we'll" inserts "we'll" ✓
+- **Implementation**:
+  1. **OptimizedVocabulary.java** (lines 488-493):
+     - Changed variant word field from base to contraction
+     - Now: word=contraction, displayText=contraction
+     - Both fields use "we'll" not "well"
+  2. **Keyboard2.java** (lines 1877-1902):
+     - Load paired contractions into _knownContractions set
+     - Parse contraction_pairings.json
+     - Add all 1,754 paired contractions to known set
+     - Ensures paired contractions skip autocorrect
+- **Result**:
+  - Swiping "well" shows both "well" and "we'll" ✓
+  - Swiping "its" shows both "its" and "it's" ✓
+  - Tapping "we'll" inserts "we'll" (not "well") ✓
+  - All paired contractions skip autocorrect ✓
+- **Files Modified**:
+  - OptimizedVocabulary.java (lines 488-493, 503)
+  - Keyboard2.java (lines 1844-1911)
+
+### Previous Work (v1.32.245)
 
 **FINAL CONTRACTION FIX: Skip autocorrect for known contractions**
 - **Problem**: v1.32.241 approach FAILED with TWO bugs

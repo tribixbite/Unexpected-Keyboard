@@ -485,11 +485,12 @@ public class OptimizedVocabulary
             {
               // Add contraction variant with slightly lower score (0.95x)
               // This ensures base word appears first, followed by contraction
-              // word = base (for insertion), displayText = contraction (for UI)
+              // CRITICAL: word = contraction (for insertion), displayText = contraction (for UI)
+              // Both must be the contraction so tapping "we'll" inserts "we'll" not "well"
               float variantScore = pred.score * 0.95f;
               contractionVariants.add(new FilteredPrediction(
-                word,                    // word for insertion (apostrophe-free base)
-                contraction,             // displayText for UI (with apostrophe)
+                contraction,             // word for insertion (with apostrophe: "we'll")
+                contraction,             // displayText for UI (with apostrophe: "we'll")
                 variantScore,
                 pred.confidence,
                 pred.frequency,
@@ -499,7 +500,7 @@ public class OptimizedVocabulary
               if (debugMode)
               {
                 String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (word=%s, display=%s, score=%.4f)\n",
-                  word, contraction, word, contraction, variantScore);
+                  word, contraction, contraction, contraction, variantScore);
                 Log.d(TAG, msg);
                 sendDebugLog(msg);
               }

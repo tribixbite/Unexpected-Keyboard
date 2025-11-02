@@ -1842,14 +1842,15 @@ public class Keyboard2 extends InputMethodService
   }
 
   /**
-   * Load contraction mappings from JSON file.
-   * Maps apostrophe-free forms to their proper contraction forms.
-   * Example: "dont" -> "don't", "wholl" -> "who'll"
+   * Load contraction mappings from JSON files.
+   * Loads both non-paired and paired contractions into _knownContractions set.
+   * Example: "dont" -> "don't", "well" -> "we'll"
    */
   private void loadContractionMappings()
   {
     try
     {
+      // Load non-paired contractions (dont -> don't)
       java.io.InputStream inputStream = getAssets().open("dictionaries/contractions_non_paired.json");
       java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
       StringBuilder jsonBuilder = new StringBuilder();
@@ -1871,7 +1872,37 @@ public class Keyboard2 extends InputMethodService
         _knownContractions.add(withApostrophe.toLowerCase());  // Add to set for quick lookup
       }
 
-      Log.d("Keyboard2", "Loaded " + _nonPairedContractions.size() + " contraction mappings");
+      Log.d("Keyboard2", "Loaded " + _nonPairedContractions.size() + " non-paired contractions");
+
+      // Load paired contractions (well -> we'll)
+      // Format: {"well": [{"contraction": "we'll", "frequency": 243}]}
+      inputStream = getAssets().open("dictionaries/contraction_pairings.json");
+      reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
+      jsonBuilder = new StringBuilder();
+      while ((line = reader.readLine()) != null)
+      {
+        jsonBuilder.append(line);
+      }
+      reader.close();
+
+      jsonObj = new org.json.JSONObject(jsonBuilder.toString());
+      keys = jsonObj.keys();
+      int pairedCount = 0;
+      while (keys.hasNext())
+      {
+        String baseWord = keys.next();
+        org.json.JSONArray contractions = jsonObj.getJSONArray(baseWord);
+        for (int i = 0; i < contractions.length(); i++)
+        {
+          org.json.JSONObject contractionObj = contractions.getJSONObject(i);
+          String contraction = contractionObj.getString("contraction");
+          _knownContractions.add(contraction.toLowerCase());
+          pairedCount++;
+        }
+      }
+
+      Log.d("Keyboard2", "Loaded " + pairedCount + " paired contractions");
+      Log.d("Keyboard2", "Total known contractions: " + _knownContractions.size());
     }
     catch (Exception e)
     {
