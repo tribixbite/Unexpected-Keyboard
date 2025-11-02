@@ -506,21 +506,20 @@ public class OptimizedVocabulary
             }
           }
 
-          // Check for non-paired contractions (different meaning: "its" vs "it's", "well" vs "we'll")
-          // These should create VARIANTS, not modify the original
-          // User should see BOTH "its" (possessive) and "it's" (contraction) as options
+          // Check for non-paired contractions (apostrophe-free form -> contraction)
+          // REPLACE the apostrophe-free form with the contraction
+          // Example: "cant" (not a real word) → "can't" (the actual word)
+          // Note: Valid words like "well", "were", "id" are NOT in nonPairedContractions
           if (nonPairedContractions.containsKey(word))
           {
             String contraction = nonPairedContractions.get(word);
 
-            // Create variant with slightly lower score (0.95x)
-            // This ensures base word appears first, followed by contraction
-            // CRITICAL: word = contraction (for insertion), displayText = contraction (for UI)
-            float variantScore = pred.score * 0.95f;
-            contractionVariants.add(new FilteredPrediction(
-              contraction,             // word for insertion (with apostrophe: "it's")
-              contraction,             // displayText for UI (with apostrophe: "it's")
-              variantScore,
+            // REPLACE the current prediction with the contraction (same score)
+            // This prevents invalid forms like "cant", "dont" from appearing
+            validPredictions.set(i, new FilteredPrediction(
+              contraction,             // word for insertion (with apostrophe: "can't")
+              contraction,             // displayText for UI (with apostrophe: "can't")
+              pred.score,              // Keep same score (not a variant, a replacement)
               pred.confidence,
               pred.frequency,
               pred.source + "-contraction"
@@ -528,8 +527,8 @@ public class OptimizedVocabulary
 
             if (debugMode)
             {
-              String msg = String.format("📝 NON-PAIRED CONTRACTION: \"%s\" → added variant \"%s\" (word=%s, display=%s, score=%.4f)\n",
-                word, contraction, contraction, contraction, variantScore);
+              String msg = String.format("📝 NON-PAIRED CONTRACTION: \"%s\" → REPLACED with \"%s\" (score=%.4f)\n",
+                word, contraction, pred.score);
               Log.d(TAG, msg);
               sendDebugLog(msg);
             }

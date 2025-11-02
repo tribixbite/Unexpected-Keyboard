@@ -2301,6 +2301,7 @@ areas
 aren
 arena
 arenas
+arent
 ares
 aretha
 arezzo
@@ -6489,6 +6490,7 @@ canons
 canopies
 canopy
 cans
+cant
 canteen
 canteens
 canter
@@ -9929,6 +9931,7 @@ coughs
 could
 coulda
 couldn
+couldnt
 couldve
 coulson
 coulter
@@ -12127,6 +12130,7 @@ diddy
 didi
 didier
 didn
+didnt
 dido
 didst
 die
@@ -12884,6 +12888,7 @@ doer
 doers
 does
 doesn
+doesnt
 dog
 doge
 dogfight
@@ -12997,6 +13002,7 @@ donor
 donors
 donovan
 dons
+dont
 donut
 donuts
 doo
@@ -19425,6 +19431,7 @@ hadi
 hadid
 hadith
 hadley
+hadnt
 hadrian
 hadron
 hae
@@ -19849,6 +19856,7 @@ hashtags
 haskell
 haskins
 haslam
+hasnt
 hassan
 hassle
 hast
@@ -19907,6 +19915,7 @@ have
 havel
 haven
 havens
+havent
 haves
 havilland
 havin
@@ -20109,6 +20118,7 @@ hectare
 hectares
 hectic
 hector
+hed
 hedge
 hedged
 hedgehog
@@ -20293,6 +20303,7 @@ hereford
 herefordshire
 herein
 hereinafter
+heres
 heresy
 heretic
 heretical
@@ -20343,6 +20354,7 @@ hervey
 hervé
 herzegovina
 herzog
+hes
 hesitant
 hesitate
 hesitated
@@ -20992,6 +21004,7 @@ hovers
 how
 howard
 howards
+howd
 howdy
 howe
 howell
@@ -21003,6 +21016,7 @@ howl
 howland
 howling
 howls
+hows
 howto
 hoy
 hoya
@@ -21555,6 +21569,7 @@ illustrious
 ilo
 ils
 ilya
+im
 imac
 image
 imaged
@@ -23073,6 +23088,7 @@ ism
 ismael
 ismail
 isn
+isnt
 iso
 isobel
 isola
@@ -23159,6 +23175,7 @@ ivanka
 ivanov
 ivanovic
 ivar
+ive
 iver
 iverson
 ives
@@ -25294,6 +25311,7 @@ lethargy
 lethbridge
 letitia
 leto
+lets
 letter
 letterbox
 lettered
@@ -28043,6 +28061,7 @@ might
 mightier
 mightiest
 mightily
+mightnt
 mightve
 mighty
 mignon
@@ -29289,6 +29308,7 @@ mustapha
 mustard
 muster
 mustered
+mustnt
 mustve
 musty
 musée
@@ -30412,6 +30432,7 @@ nsf
 nsfw
 nss
 nsw
+nt
 nta
 ntc
 nth
@@ -39558,6 +39579,7 @@ shank
 shankar
 shanks
 shannon
+shant
 shanti
 shanty
 shanxi
@@ -39708,6 +39730,7 @@ sherri
 sherry
 sherwood
 sheryl
+shes
 shetland
 shew
 shh
@@ -39869,6 +39892,7 @@ shoulda
 shoulder
 shouldered
 shoulders
+shouldnt
 shouldve
 shout
 shouted
@@ -44016,6 +44040,7 @@ thatched
 thatcher
 thatd
 thatll
+thats
 thaw
 thawed
 thawing
@@ -44087,6 +44112,7 @@ therell
 thereof
 thereon
 therere
+theres
 theresa
 therese
 thereto
@@ -44112,6 +44138,10 @@ thesis
 thessaloniki
 theta
 they
+theyd
+theyll
+theyre
+theyve
 thi
 thiago
 thibault
@@ -47667,6 +47697,7 @@ washout
 washroom
 washy
 wasn
+wasnt
 wasp
 wasps
 wasserman
@@ -47941,6 +47972,7 @@ wentz
 wept
 wer
 were
+werent
 werewolf
 werewolves
 werk
@@ -47981,6 +48013,7 @@ wetlands
 wetter
 wettest
 wetting
+weve
 wexford
 wexler
 weymouth
@@ -48003,11 +48036,16 @@ wharton
 wharves
 what
 whatcha
+whatd
 whatever
 whatevers
+whatll
 whatnot
+whatre
+whats
 whatsapp
 whatsoever
+whatve
 wheat
 wheatley
 wheaton
@@ -48027,14 +48065,18 @@ wheezing
 whelan
 when
 whence
+whend
 whenever
+whens
 where
 whereabouts
 whereas
 whereby
+whered
 wherefore
 wherein
 whereof
+wheres
 whereupon
 wherever
 wherewith
@@ -48126,6 +48168,7 @@ whiz
 whl
 who
 whoa
+whod
 whoever
 whoevers
 whole
@@ -48134,6 +48177,7 @@ wholesale
 wholesaler
 wholesalers
 wholesome
+wholl
 wholly
 whom
 whomever
@@ -48150,9 +48194,12 @@ whores
 whoring
 whorl
 whorls
+whos
 whose
 whosoever
+whove
 why
+whyd
 whys
 whyte
 wi
@@ -48494,6 +48541,7 @@ wondrous
 wong
 wonka
 wonky
+wont
 woo
 wood
 woodbridge
@@ -48622,6 +48670,7 @@ wot
 would
 woulda
 wouldn
+wouldnt
 wound
 wounded
 wounding
@@ -48972,6 +49021,8 @@ yoshi
 yoshida
 yost
 you
+youd
+youll
 young
 youngblood
 younger
@@ -48981,6 +49032,7 @@ youngster
 youngsters
 youngstown
 your
+youre
 yours
 yourself
 yourselves
@@ -48994,6 +49046,7 @@ youtube
 youtuber
 youtubers
 youtubes
+youve
 yow
 yoy
 ypg

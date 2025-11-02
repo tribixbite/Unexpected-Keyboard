@@ -9,11 +9,62 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.257 (307)
-**Build Status**: ✅ BUILD SUCCESSFUL - Dictionary Cleanup
+**Latest Version**: v1.32.259 (309)
+**Build Status**: ✅ BUILD SUCCESSFUL - Fix Contraction System
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.257)
+### Recent Work (v1.32.259)
+
+**FIX CONTRACTION SYSTEM: Add apostrophe-free forms to dictionary + replace instead of variant**
+- **Problem**: can't, don't, i've, i'm not generating from swipes
+  - User reported: "can't and don't fail to generate. same with i've and i'm"
+  - Root cause: Neural network predicts apostrophe-free forms ("cant", "dont", "im", "ive")
+  - But we removed them from dictionary → filtered out before contraction handling
+- **Understanding the flow**:
+  1. User swipes "can't" gesture (path: c-a-n-t, apostrophe skipped)
+  2. Neural network predicts "cant" (4-letter word, no apostrophe)
+  3. **Dictionary filter**: "cant" not in dictionary → REJECTED
+  4. Contraction system never sees "cant" → can't create "can't"
+- **Solution**: Add apostrophe-free forms back + REPLACE them instead of creating variants
+  1. **Add apostrophe-free forms to dictionary** (53 forms)
+     - cant, dont, im, ive, wholl, theyd, etc.
+     - Frequency 200 (mid-range, will be replaced anyway)
+     - Now they pass dictionary filter
+  2. **Change non_paired handling from VARIANT to REPLACEMENT**
+     - Old: Keep "cant", add "can't" as variant → both appear
+     - New: Replace "cant" with "can't" → only "can't" appears
+     - Code change in OptimizedVocabulary.java:519
+  3. **Move valid words to paired system** (9 words)
+     - well, were, wed, id, hell, ill, shed, shell, whore
+     - These have different meanings from contractions
+     - Create variants instead of replacement (both should appear)
+- **Two-tier system**:
+  - **Paired contractions** (1743 base words): Create variants
+    - "well" → both "well" and "we'll" appear
+    - "were" → "were", "we're", "weren't" all appear
+    - "can" → both "can" and "can't" appear
+  - **Non-paired contractions** (53 apostrophe-free forms): Replace
+    - "cant" → only "can't" appears (not "cant")
+    - "dont" → only "don't" appears (not "dont")
+    - "wholl" → only "who'll" appears (not "wholl")
+- **Implementation**:
+  1. **Dictionary**: Added 53 apostrophe-free forms (49,240 → 49,293 words)
+  2. **contraction_pairings.json**: Added 9 valid words (1735 → 1743 base words)
+  3. **contractions_non_paired.json**: Removed 9 valid words (62 → 53 mappings)
+  4. **OptimizedVocabulary.java**: Changed non_paired from variant to replacement
+- **Result**:
+  - "can't" and "don't" now work via swipe ✓
+  - "i'm" and "i've" now work via swipe ✓
+  - Invalid forms like "cant", "dont", "wholl" no longer appear ✓
+  - Valid words like "well", "were" still create variants ✓
+- **Files Modified**:
+  - assets/dictionaries/en_enhanced.json (49,293 words, +53)
+  - assets/dictionaries/en_enhanced.txt (regenerated)
+  - assets/dictionaries/contraction_pairings.json (1743 base words, +9)
+  - assets/dictionaries/contractions_non_paired.json (53 mappings, -9)
+  - srcs/juloo.keyboard2/OptimizedVocabulary.java (replacement logic)
+
+### Previous Work (v1.32.257)
 
 **DICTIONARY CLEANUP: Remove remaining invalid apostrophe-free forms**
 - **Problem**: Invalid apostrophe-free forms still appearing in predictions

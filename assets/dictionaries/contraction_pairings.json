@@ -10121,6 +10121,10 @@
     {
       "contraction": "weren't",
       "frequency": 148
+    },
+    {
+      "contraction": "we're",
+      "frequency": 200
     }
   ],
   "west": [
@@ -10539,6 +10543,54 @@
     {
       "contraction": "zealand's",
       "frequency": 165
+    }
+  ],
+  "well": [
+    {
+      "contraction": "we'll",
+      "frequency": 200
+    }
+  ],
+  "wed": [
+    {
+      "contraction": "we'd",
+      "frequency": 200
+    }
+  ],
+  "id": [
+    {
+      "contraction": "i'd",
+      "frequency": 200
+    }
+  ],
+  "hell": [
+    {
+      "contraction": "he'll",
+      "frequency": 200
+    }
+  ],
+  "ill": [
+    {
+      "contraction": "i'll",
+      "frequency": 200
+    }
+  ],
+  "shed": [
+    {
+      "contraction": "she'd",
+      "frequency": 200
+    }
+  ],
+  "shell": [
+    {
+      "contraction": "she'll",
+      "frequency": 200
+    }
+  ],
+  "whore": [
+    {
+      "contraction": "who're",
+      "frequency": 200
     }
   ]
 }
