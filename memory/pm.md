@@ -9,47 +9,56 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.261 (311)
-**Build Status**: ✅ BUILD SUCCESSFUL - Smart Contraction Filtering
+**Latest Version**: v1.32.263 (313)
+**Build Status**: ✅ BUILD SUCCESSFUL - NN-Based Contraction Filtering
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.261)
+### Recent Work (v1.32.263)
 
-**SMART CONTRACTION FILTERING: Use last swipe character to filter contraction variants**
-- **Problem**: All contraction variants showing for pronoun/question words
-  - User reported: "what'll" shows up when swiping "what'd"
-  - Root cause: Paired contractions create ALL variants regardless of swipe path
-  - Example: "what" → creates what'd, what'll, what're, what's, what've (all 5 appear)
-- **User's request**: Filter by last character of swipe path
-  - Swipe ending near 'd' → only show "what'd" (not what'll, what's, etc.)
-  - Swipe ending near 'l' → only show "what'll" (not what'd, what's, etc.)
-  - Swipe ending near 's' → only show "what's" (not what'd, what'll, etc.)
-- **Solution**: Extract last character from swipe path, filter contractions by ending
-  1. **Add lastChar to SwipeStats** (OptimizedVocabulary.java:1085)
-     - New field: `public final char lastChar`
-     - Stores last character from swipe keySequence
-  2. **Extract lastChar from SwipeInput** (OnnxSwipePredictor.java:1296-1299)
-     - Get last char: `input.keySequence.charAt(length - 1)`
-     - Pass to SwipeStats in createOptimizedPredictionResult
-  3. **Filter paired contractions by lastChar** (OptimizedVocabulary.java:489-507)
-     - Check contraction ending: `contraction.charAt(length - 1)`
-     - Only create variant if ending matches swipe lastChar
-     - Example: "what" + lastChar='d' → only create "what'd"
+**NN-BASED CONTRACTION FILTERING: Use raw neural network output instead of swipe path**
+- **Problem**: Swipe path filtering wasn't working
+  - User reported: "whatd is still showing what'll and other improbable predictions"
+  - v1.32.261 used swipe path lastChar, but data was unavailable
+  - User suggested: "if thats insurmountable use the raw output value"
+- **Root cause**: Swipe path data unavailable or unreliable
+  - keySequence might be empty or inaccurate
+  - Better to use what the neural network actually predicted
+- **Solution**: Use raw NN predictions to filter contraction variants
+  1. **Build set of raw predictions** (OptimizedVocabulary.java:196-200)
+     - Create `Set<String> rawPredictionWords` from all raw NN outputs
+     - Example: {"what", "whatd", "that", "thats", ...}
+  2. **Filter contractions by apostrophe-free form** (OptimizedVocabulary.java:497-513)
+     - For each contraction, get apostrophe-free form: "what'd" → "whatd"
+     - Check if apostrophe-free form in raw predictions
+     - Only create variant if NN predicted that specific form
+     - Example: Only create "what'd" if raw predictions contain "whatd"
 - **Logic**:
-  - If swipeStats is null or lastChar is '\0': Create all variants (backward compatibility)
-  - If lastChar is set: Only create contractions ending with that character
+  - If NN predicted "whatd" → only create "what'd" variant ✓
+  - If NN predicted "whatll" → only create "what'll" variant ✓
+  - If NN predicted "whats" → only create "what's" variant ✓
+  - If NN only predicted "what" (base) → create no variants (no apostrophe-free forms in raw)
 - **Implementation**:
-  1. **SwipeStats**: Added lastChar field (char)
-  2. **OnnxSwipePredictor**: Extract lastChar from input.keySequence
-  3. **OptimizedVocabulary**: Filter contractions by ending character
+  1. **Build raw prediction set**: Loop through rawPredictions, collect all words
+  2. **Filter paired contractions**: For "what" → check if "whatd", "whatll", "whats" in raw set
+  3. **Only create matching variants**: Skip contractions without matching raw prediction
+- **Advantages over swipe path**:
+  - More reliable: Uses actual NN output instead of reconstructed path
+  - Direct source: NN knows what it predicted, no need to infer from path
+  - Simpler: No need to extract lastChar or handle edge cases
 - **Result**:
-  - Swipe "what'd" (ending with 'd') → only "what'd" appears ✓
-  - Swipe "what'll" (ending with 'l') → only "what'll" appears ✓
-  - Swipe "what's" (ending with 's') → only "what's" appears ✓
-  - Same logic applies to all paired contractions (i, he, she, they, we, you, who, etc.)
+  - Swipe "whatd" → only "what'd" appears (NN predicted "whatd") ✓
+  - Swipe "whatll" → only "what'll" appears (NN predicted "whatll") ✓
+  - Swipe "whats" → only "what's" appears (NN predicted "whats") ✓
+  - No spurious contractions from base word alone ✓
 - **Files Modified**:
-  - srcs/juloo.keyboard2/OptimizedVocabulary.java (SwipeStats + filter logic)
-  - srcs/juloo.keyboard2/OnnxSwipePredictor.java (extract and pass lastChar)
+  - srcs/juloo.keyboard2/OptimizedVocabulary.java (raw prediction set + filter logic)
+
+### Previous Work (v1.32.261)
+
+**SMART CONTRACTION FILTERING: Use last swipe character** (SUPERSEDED by v1.32.263 NN-based approach)
+- Attempted to use swipe path lastChar for filtering
+- Problem: Swipe path data was unavailable/unreliable
+- Replaced with raw NN prediction filtering in v1.32.263
 
 ### Previous Work (v1.32.259)
 

@@ -190,6 +190,15 @@ public class OptimizedVocabulary
       sendDebugLog(debugMsg);
     }
 
+    // Build set of raw predictions for contraction filtering
+    // Used to determine which contraction variant to create based on NN output
+    // Example: NN predicts "whatd" → only create "what'd" (not what'll, what's, etc.)
+    Set<String> rawPredictionWords = new HashSet<>();
+    for (CandidateWord candidate : rawPredictions)
+    {
+      rawPredictionWords.add(candidate.word.toLowerCase().trim());
+    }
+
     List<FilteredPrediction> validPredictions = new ArrayList<>();
     StringBuilder detailedLog = debugMode ? new StringBuilder("\n📊 DETAILED FILTERING PROCESS:\n") : null;
     if (debugMode) detailedLog.append("─────────────────────────────────────────────────────────\n");
@@ -477,33 +486,30 @@ public class OptimizedVocabulary
           String word = pred.word;
 
           // Check for paired contractions (base word exists: "well" -> "we'll")
-          // Filter by last character of swipe path to show only relevant contractions
-          // Example: "what" + lastChar='d' → only "what'd" (not what'll, what's, etc.)
+          // Filter by raw NN predictions to show only relevant contractions
+          // Example: NN predicted "whatd" → only create "what'd" (not what'll, what's, etc.)
           if (contractionPairings.containsKey(word))
           {
             List<String> contractions = contractionPairings.get(word);
-            char lastChar = (swipeStats != null) ? swipeStats.lastChar : '\0';
 
             for (String contraction : contractions)
             {
-              // Filter by last character if available
-              // If lastChar is set, only create contraction if it ends with that character
-              // Example: swipe path ending in 'd' should only create "what'd", not "what'll"
-              if (lastChar != '\0' && !contraction.isEmpty())
+              // Get apostrophe-free form of this contraction (what'd → whatd)
+              String apostropheFree = contraction.replace("'", "").toLowerCase();
+
+              // Only create this contraction variant if NN predicted the apostrophe-free form
+              // Example: only create "what'd" if raw predictions contain "whatd"
+              if (!rawPredictionWords.contains(apostropheFree))
               {
-                char contractionEnd = contraction.charAt(contraction.length() - 1);
-                if (contractionEnd != lastChar)
+                // Skip this contraction - NN didn't predict this variant
+                if (debugMode)
                 {
-                  // Skip this contraction - doesn't match swipe path ending
-                  if (debugMode)
-                  {
-                    String msg = String.format("📝 CONTRACTION FILTERED: \"%s\" → skipped \"%s\" (ends with '%c', swipe ends with '%c')\n",
-                      word, contraction, contractionEnd, lastChar);
-                    Log.d(TAG, msg);
-                    sendDebugLog(msg);
-                  }
-                  continue;
+                  String msg = String.format("📝 CONTRACTION FILTERED: \"%s\" → skipped \"%s\" (NN didn't predict \"%s\")\n",
+                    word, contraction, apostropheFree);
+                  Log.d(TAG, msg);
+                  sendDebugLog(msg);
                 }
+                continue;
               }
 
               // Add contraction variant with slightly lower score (0.95x)
@@ -522,8 +528,8 @@ public class OptimizedVocabulary
 
               if (debugMode)
               {
-                String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (word=%s, display=%s, score=%.4f, lastChar='%c')\n",
-                  word, contraction, contraction, contraction, variantScore, lastChar);
+                String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (NN predicted \"%s\")\n",
+                  word, contraction, apostropheFree);
                 Log.d(TAG, msg);
                 sendDebugLog(msg);
               }
