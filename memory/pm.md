@@ -9,11 +9,44 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.250 (300)
-**Build Status**: ✅ BUILD SUCCESSFUL - Proper Contraction Categorization
+**Latest Version**: v1.32.252 (302)
+**Build Status**: ✅ BUILD SUCCESSFUL - Remove Invalid Apostrophe-Free Words
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.250)
+### Recent Work (v1.32.252)
+
+**CLEAN DICTIONARY: Remove invalid apostrophe-free forms**
+- **Problem**: Invalid words showing in predictions
+  - "whats" appearing (not a real word without apostrophe)
+  - "thats" appearing (not a real word without apostrophe)
+  - User correctly reported these shouldn't exist
+- **Root Cause**: Apostrophe-free forms added to dictionary
+  - When contractions removed from dict (v1.32.235), left apostrophe-free forms
+  - But words like "whats", "thats" are NOT real English words
+  - They only exist as contractions: "what's", "that's"
+- **Invalid words found**: 9 words that only exist with apostrophes
+  - whats, thats, heres, theres, wheres, hows, whens, whos, lets
+  - "its" is VALID (possessive pronoun, kept in dictionary)
+- **Solution**: Remove invalid apostrophe-free forms from dictionary
+  - Dictionary: 49,293 → 49,284 words (-9)
+  - Contractions still work (mapped in non_paired)
+  - Added missing "whens" → "when's" mapping
+- **Implementation**:
+  1. **Python script** to identify and remove invalid words
+  2. **en_enhanced.json**: removed 9 invalid entries
+  3. **en_enhanced.txt**: regenerated from cleaned JSON
+  4. **contractions_non_paired.json**: added missing "whens" → "when's"
+- **Result**:
+  - "whats" no longer appears as standalone prediction ✓
+  - "thats" no longer appears as standalone prediction ✓
+  - "what's" and "that's" still available via non-paired contractions ✓
+  - Only valid English words in dictionary ✓
+- **Files Modified**:
+  - assets/dictionaries/en_enhanced.json (49,284 words, -9)
+  - assets/dictionaries/en_enhanced.txt (regenerated)
+  - assets/dictionaries/contractions_non_paired.json (added whens)
+
+### Previous Work (v1.32.250)
 
 **PROPER CATEGORIZATION: Separate possessives from contractions + fix raw predictions**
 - **Problem 1**: Non-paired contractions showing base words incorrectly
