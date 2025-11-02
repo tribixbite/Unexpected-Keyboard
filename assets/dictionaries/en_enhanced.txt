@@ -967,7 +967,6 @@ aimlessly
 aims
 ain
 ainsworth
-aint
 aip
 air
 airbag
@@ -2302,7 +2301,6 @@ areas
 aren
 arena
 arenas
-arent
 ares
 aretha
 arezzo
@@ -6491,7 +6489,6 @@ canons
 canopies
 canopy
 cans
-cant
 canteen
 canteens
 canter
@@ -9932,7 +9929,6 @@ coughs
 could
 coulda
 couldn
-couldnt
 couldve
 coulson
 coulter
@@ -12131,7 +12127,6 @@ diddy
 didi
 didier
 didn
-didnt
 dido
 didst
 die
@@ -12889,7 +12884,6 @@ doer
 doers
 does
 doesn
-doesnt
 dog
 doge
 dogfight
@@ -13003,7 +12997,6 @@ donor
 donors
 donovan
 dons
-dont
 donut
 donuts
 doo
@@ -19857,7 +19850,6 @@ hashtags
 haskell
 haskins
 haslam
-hasnt
 hassan
 hassle
 hast
@@ -19916,7 +19908,6 @@ have
 havel
 haven
 havens
-havent
 haves
 havilland
 havin
@@ -20119,7 +20110,6 @@ hectare
 hectares
 hectic
 hector
-hed
 hedge
 hedged
 hedgehog
@@ -21568,7 +21558,6 @@ illustrious
 ilo
 ils
 ilya
-im
 imac
 image
 imaged
@@ -23087,7 +23076,6 @@ ism
 ismael
 ismail
 isn
-isnt
 iso
 isobel
 isola
@@ -23144,7 +23132,6 @@ itc
 itch
 itching
 itchy
-itd
 ite
 item
 items
@@ -23158,7 +23145,6 @@ itinerant
 itineraries
 itinerary
 itis
-itll
 ito
 its
 itself
@@ -23176,7 +23162,6 @@ ivanka
 ivanov
 ivanovic
 ivar
-ive
 iver
 iverson
 ives
@@ -30431,7 +30416,6 @@ nsf
 nsfw
 nss
 nsw
-nt
 nta
 ntc
 nth
@@ -39890,7 +39874,6 @@ shoulda
 shoulder
 shouldered
 shoulders
-shouldnt
 shouldve
 shout
 shouted
@@ -44136,7 +44119,6 @@ theta
 they
 theyd
 theyll
-theyre
 theyve
 thi
 thiago
@@ -47693,7 +47675,6 @@ washout
 washroom
 washy
 wasn
-wasnt
 wasp
 wasps
 wasserman
@@ -47968,7 +47949,6 @@ wentz
 wept
 wer
 were
-werent
 werewolf
 werewolves
 werk
@@ -48530,7 +48510,6 @@ wondrous
 wong
 wonka
 wonky
-wont
 woo
 wood
 woodbridge
@@ -48659,8 +48638,6 @@ wot
 would
 woulda
 wouldn
-wouldnt
-wouldve
 wound
 wounded
 wounding
@@ -48861,7 +48838,6 @@ yak
 yakima
 yakuza
 yale
-yall
 yalta
 yam
 yama
@@ -49012,8 +48988,6 @@ yoshi
 yoshida
 yost
 you
-youd
-youll
 young
 youngblood
 younger
@@ -49023,7 +48997,6 @@ youngster
 youngsters
 youngstown
 your
-youre
 yours
 yourself
 yourselves
@@ -49037,7 +49010,6 @@ youtube
 youtuber
 youtubers
 youtubes
-youve
 yow
 yoy
 ypg

@@ -9,11 +9,50 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.252 (302)
-**Build Status**: ✅ BUILD SUCCESSFUL - Remove Invalid Apostrophe-Free Words
+**Latest Version**: v1.32.253 (303)
+**Build Status**: ✅ BUILD SUCCESSFUL - Complete Contraction Fix
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.252)
+### Recent Work (v1.32.253)
+
+**COMPLETE CONTRACTION FIX: Remove all invalid forms + add base word mappings**
+- **Problem 1**: Invalid apostrophe-free forms still appearing
+  - "cant" and "dont" appearing (not valid English words)
+  - User correctly reported these shouldn't exist
+- **Problem 2**: Valid base words not creating contraction variants
+  - Swiping "that" only showed "that" (not "that's")
+  - Neural network predicts "that" (valid word)
+  - But "that" not mapped → no "that's" variant created
+- **Root Cause**: Incomplete dictionary cleanup + missing base word mappings
+  - Only removed 9 words in v1.32.252, but 38 invalid forms remained
+  - Non_paired only had apostrophe-free forms ("thats" → "that's")
+  - Missing valid base word mappings ("that" → "that's")
+- **Invalid words found**: 28 additional invalid apostrophe-free forms
+  - Negatives: cant, dont, wont, aint, isnt, arent, wasnt, werent, hasnt, havent, didnt, doesnt, shouldnt, wouldnt, couldnt, neednt, mustnt (18 words)
+  - Contractions: im, hed, ive, itd, itll, yall, youd, youll, youre, youve, theyre (11 words)
+  - Total removed: 28 words (kept valid: hell, ill, its, shell, shed, well, were, wed, id)
+- **Solution**: Remove all invalid forms + add base word mappings
+  1. **Remove invalid apostrophe-free forms**: 28 words
+  2. **Add base word mappings**: 25 words
+     - can → can't, do → don't, that → that's, what → what's, etc.
+     - Now both "thats" AND "that" create "that's" variant
+- **Implementation**:
+  1. **Python script** to identify and remove 28 invalid words
+  2. **en_enhanced.json**: 49,284 → 49,256 words (-28)
+  3. **contractions_non_paired.json**: 47 → 72 mappings (+25 base words)
+  4. **en_enhanced.txt**: regenerated from cleaned JSON
+- **Result**:
+  - "cant" no longer appears (only "can't") ✓
+  - "dont" no longer appears (only "don't") ✓
+  - Swiping "that" creates both "that" and "that's" ✓
+  - Swiping "can" creates both "can" and "can't" ✓
+  - All valid base words create contraction variants ✓
+- **Files Modified**:
+  - assets/dictionaries/en_enhanced.json (49,256 words, -28)
+  - assets/dictionaries/en_enhanced.txt (regenerated)
+  - assets/dictionaries/contractions_non_paired.json (72 mappings, +25)
+
+### Previous Work (v1.32.252)
 
 **CLEAN DICTIONARY: Remove invalid apostrophe-free forms**
 - **Problem**: Invalid words showing in predictions
