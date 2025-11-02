@@ -1325,12 +1325,14 @@ public class OnnxSwipePredictor
       }
     }
 
-    // Convert deduplicated map to lists (use displayText for UI)
+    // Convert deduplicated map to lists
+    // IMPORTANT: Use WORD (insertion text without apostrophe), not displayText
+    // The apostrophe will be added during insertion in Keyboard2.java based on contraction mapping
     List<String> words = new ArrayList<>();
     List<Integer> scores = new ArrayList<>();
     for (Map.Entry<String, WordDisplayPair> entry : wordScoreMap.entrySet())
     {
-      words.add(entry.getValue().displayText);  // Use displayText for UI
+      words.add(entry.getKey());  // Use word (apostrophe-free) to avoid autocorrect issues
       scores.add(entry.getValue().score);
     }
 

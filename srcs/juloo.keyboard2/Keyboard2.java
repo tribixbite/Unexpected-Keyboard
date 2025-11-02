@@ -83,6 +83,9 @@ public class Keyboard2 extends InputMethodService
   // User adaptation
   private UserAdaptationManager _adaptationManager;
 
+  // Contraction mappings for apostrophe insertion
+  private Map<String, String> _nonPairedContractions = new HashMap<>();
+
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
   private android.content.BroadcastReceiver _debugModeReceiver;
@@ -175,6 +178,9 @@ public class Keyboard2 extends InputMethodService
     
     // Initialize user adaptation manager
     _adaptationManager = UserAdaptationManager.getInstance(this);
+
+    // Load contraction mappings for apostrophe insertion
+    loadContractionMappings();
 
     // KeyboardSwipeRecognizer is now handled through SwipeTypingEngine
     
@@ -924,6 +930,16 @@ public class Keyboard2 extends InputMethodService
     // Strip "raw:" prefix before processing (v1.33.7: fixed regex to match actual prefix format)
     // Prefix format: "raw:word" not " [raw:0.08]"
     word = word.replaceAll("^raw:", "");
+
+    // Apply contraction mapping BEFORE final autocorrect
+    // This converts apostrophe-free forms (wholl, dont) to proper contractions (who'll, don't)
+    // CRITICAL: Must happen BEFORE autocorrect to prevent fuzzy matching
+    if (_nonPairedContractions.containsKey(word.toLowerCase()))
+    {
+      String withApostrophe = _nonPairedContractions.get(word.toLowerCase());
+      android.util.Log.d("Keyboard2", String.format("CONTRACTION MAPPING: \"%s\" → \"%s\"", word, withApostrophe));
+      word = withApostrophe;
+    }
 
     // v1.33.7: Final autocorrect - second chance autocorrect after beam search
     // Applies when user selects/auto-inserts a prediction (even if beam autocorrect was OFF)
@@ -1819,6 +1835,43 @@ public class Keyboard2 extends InputMethodService
     catch (Exception e)
     {
       android.util.Log.e("Keyboard2", "Error checking default IME", e);
+    }
+  }
+
+  /**
+   * Load contraction mappings from JSON file.
+   * Maps apostrophe-free forms to their proper contraction forms.
+   * Example: "dont" -> "don't", "wholl" -> "who'll"
+   */
+  private void loadContractionMappings()
+  {
+    try
+    {
+      java.io.InputStream inputStream = getAssets().open("dictionaries/contractions_non_paired.json");
+      java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
+      StringBuilder jsonBuilder = new StringBuilder();
+      String line;
+      while ((line = reader.readLine()) != null)
+      {
+        jsonBuilder.append(line);
+      }
+      reader.close();
+
+      // Parse JSON and populate map
+      org.json.JSONObject jsonObj = new org.json.JSONObject(jsonBuilder.toString());
+      java.util.Iterator<String> keys = jsonObj.keys();
+      while (keys.hasNext())
+      {
+        String withoutApostrophe = keys.next();
+        String withApostrophe = jsonObj.getString(withoutApostrophe);
+        _nonPairedContractions.put(withoutApostrophe.toLowerCase(), withApostrophe.toLowerCase());
+      }
+
+      Log.d("Keyboard2", "Loaded " + _nonPairedContractions.size() + " contraction mappings");
+    }
+    catch (Exception e)
+    {
+      Log.e("Keyboard2", "Failed to load contraction mappings", e);
     }
   }
 }
