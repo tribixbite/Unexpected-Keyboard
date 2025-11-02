@@ -85,6 +85,7 @@ public class Keyboard2 extends InputMethodService
 
   // Contraction mappings for apostrophe insertion
   private Map<String, String> _nonPairedContractions = new HashMap<>();
+  private Set<String> _knownContractions = new HashSet<>();  // Set of valid contractions (with apostrophes)
 
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
@@ -931,28 +932,30 @@ public class Keyboard2 extends InputMethodService
     // Prefix format: "raw:word" not " [raw:0.08]"
     word = word.replaceAll("^raw:", "");
 
-    // Apply contraction mapping BEFORE final autocorrect
-    // This converts apostrophe-free forms (wholl, dont) to proper contractions (who'll, don't)
-    // CRITICAL: Must happen BEFORE autocorrect to prevent fuzzy matching
-    if (_nonPairedContractions.containsKey(word.toLowerCase()))
+    // Check if this is a known contraction (already has apostrophes from displayText)
+    // If it is, skip autocorrect to prevent fuzzy matching to wrong words
+    boolean isKnownContraction = _knownContractions.contains(word.toLowerCase());
+
+    if (isKnownContraction)
     {
-      String withApostrophe = _nonPairedContractions.get(word.toLowerCase());
-      android.util.Log.d("Keyboard2", String.format("CONTRACTION MAPPING: \"%s\" → \"%s\"", word, withApostrophe));
-      word = withApostrophe;
+      android.util.Log.d("Keyboard2", String.format("KNOWN CONTRACTION: \"%s\" - skipping autocorrect", word));
     }
-
-    // v1.33.7: Final autocorrect - second chance autocorrect after beam search
-    // Applies when user selects/auto-inserts a prediction (even if beam autocorrect was OFF)
-    // Useful for correcting raw predictions or vocabulary misses
-    if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null)
+    else
     {
-      String correctedWord = _wordPredictor.autoCorrect(word);
-
-      // If autocorrect found a better match, use it
-      if (!correctedWord.equals(word))
+      // v1.33.7: Final autocorrect - second chance autocorrect after beam search
+      // Applies when user selects/auto-inserts a prediction (even if beam autocorrect was OFF)
+      // Useful for correcting raw predictions or vocabulary misses
+      // SKIP autocorrect for known contractions to prevent fuzzy matching
+      if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null)
       {
-        android.util.Log.d("Keyboard2", String.format("FINAL AUTOCORRECT: \"%s\" → \"%s\"", word, correctedWord));
-        word = correctedWord;
+        String correctedWord = _wordPredictor.autoCorrect(word);
+
+        // If autocorrect found a better match, use it
+        if (!correctedWord.equals(word))
+        {
+          android.util.Log.d("Keyboard2", String.format("FINAL AUTOCORRECT: \"%s\" → \"%s\"", word, correctedWord));
+          word = correctedWord;
+        }
       }
     }
 
@@ -1857,7 +1860,7 @@ public class Keyboard2 extends InputMethodService
       }
       reader.close();
 
-      // Parse JSON and populate map
+      // Parse JSON and populate map + set
       org.json.JSONObject jsonObj = new org.json.JSONObject(jsonBuilder.toString());
       java.util.Iterator<String> keys = jsonObj.keys();
       while (keys.hasNext())
@@ -1865,6 +1868,7 @@ public class Keyboard2 extends InputMethodService
         String withoutApostrophe = keys.next();
         String withApostrophe = jsonObj.getString(withoutApostrophe);
         _nonPairedContractions.put(withoutApostrophe.toLowerCase(), withApostrophe.toLowerCase());
+        _knownContractions.add(withApostrophe.toLowerCase());  // Add to set for quick lookup
       }
 
       Log.d("Keyboard2", "Loaded " + _nonPairedContractions.size() + " contraction mappings");

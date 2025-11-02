@@ -9,48 +9,54 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.241 (291)
-**Build Status**: ✅ BUILD SUCCESSFUL - Complete Contraction Insertion Fix
+**Latest Version**: v1.32.245 (295)
+**Build Status**: ✅ BUILD SUCCESSFUL - Final Contraction Fix (Skip Autocorrect)
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.241)
+### Recent Work (v1.32.245)
 
-**COMPLETE CONTRACTION FIX: Insertion-time mapping prevents autocorrect conflicts**
-- **Problem**: v1.32.236 displayText approach FAILED - contractions still inserting wrong words
-  - Tapping "who'll" still inserted "wholly"
-  - Tapping "don't" still inserted "donut"
-  - Root cause: Passed displayText (with apostrophe) to prediction list
-  - Final autocorrect then fuzzy-matched contractions to similar words
-- **Correct Solution**: Apply apostrophes at insertion time, NOT in predictions
-  - **Predictions**: Use apostrophe-free forms ("wholl", "dont")
-  - **Insertion**: Map to proper contractions BEFORE autocorrect runs
-  - **Order matters**: Strip prefix → Map contraction → Run autocorrect
+**FINAL CONTRACTION FIX: Skip autocorrect for known contractions**
+- **Problem**: v1.32.241 approach FAILED with TWO bugs
+  - UI showed "wholl" instead of "who'll" (apostrophe-free display)
+  - Insertion still produced "wholly" (autocorrect ran on contractions)
+  - Root cause: Used apostrophe-free forms in predictions, then mapped before autocorrect
+  - Autocorrect saw "who'll" and fuzzy-matched to "wholly"
+- **Final Solution**: Use displayText for UI, skip autocorrect for known contractions
+  - **UI Display**: Use displayText with apostrophes ("who'll", "don't")
+  - **Insertion**: Check if word is known contraction, skip autocorrect
+  - **Key insight**: Autocorrect must NEVER see contractions
 - **Implementation**:
-  1. **OnnxSwipePredictor.java** (line 1307):
-     - Use `entry.getKey()` (apostrophe-free word) in prediction list
-     - NOT `entry.getValue().displayText` (with apostrophe)
-     - Prevents autocorrect from seeing contractions
-  2. **Keyboard2.java** (lines 934-942):
-     - Load contractions_non_paired.json at startup
-     - Apply mapping BEFORE final autocorrect
-     - Example: "wholl" → "who'll" then autocorrect (won't fuzzy match)
-  3. **Keyboard2.java** (lines 1836-1866):
-     - New `loadContractionMappings()` method
-     - Loads 74 non-paired contractions from JSON
-     - Populates `_nonPairedContractions` map
+  1. **OnnxSwipePredictor.java** (line 1335):
+     - Use `entry.getValue().displayText` for proper UI display
+     - Shows "who'll" not "wholl" in suggestion bar
+  2. **Keyboard2.java** (lines 88, 1869):
+     - Added `_knownContractions` set (74 valid contractions with apostrophes)
+     - Populated from contractions_non_paired.json during load
+  3. **Keyboard2.java** (lines 935-960):
+     - Check if word is in `_knownContractions` set
+     - If YES: Skip autocorrect entirely, insert as-is
+     - If NO: Run autocorrect as normal
+     - **Order**: Strip prefix → Check if contraction → Skip/run autocorrect
 - **Why This Works**:
-  - Autocorrect never sees contractions with apostrophes
-  - No fuzzy matching to similar words (wholly, donut, shell)
-  - Contractions applied AFTER prediction, BEFORE autocorrect
-  - Clean separation: prediction → mapping → autocorrect
-- **Documentation**:
-  - Created docs/specs/CONTRACTION_SYSTEM.md
-  - Complete specification of three-component system
-  - Code flow diagrams and testing checklist
+  - UI displays proper contractions with apostrophes ✓
+  - Known contractions bypass autocorrect completely ✓
+  - No fuzzy matching to similar words (wholly, donut, shell) ✓
+  - Clean check: is word a known contraction? → skip autocorrect
+- **Removed Logic**:
+  - No longer need contraction mapping at insertion time
+  - DisplayText already has proper apostrophes from OptimizedVocabulary
+  - Just need to recognize and protect contractions from autocorrect
 - **Files Modified**:
-  - OnnxSwipePredictor.java (line 1307)
-  - Keyboard2.java (lines 87, 183, 934-942, 1836-1866)
-  - docs/specs/CONTRACTION_SYSTEM.md (new documentation)
+  - OnnxSwipePredictor.java (line 1335)
+  - Keyboard2.java (lines 88, 935-960, 1869)
+
+### Previous Work (v1.32.241)
+
+**INSERTION-TIME MAPPING ATTEMPT: FAILED - Still had UI and autocorrect bugs**
+- Attempted to use apostrophe-free forms in predictions, map at insertion
+- Problem: UI showed "wholl" instead of "who'll"
+- Problem: Autocorrect still ran on mapped contractions → "wholly"
+- Fixed in v1.32.245 by using displayText + skipping autocorrect
 
 ### Previous Work (v1.32.236)
 
