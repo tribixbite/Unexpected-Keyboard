@@ -9,11 +9,65 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.253 (303)
-**Build Status**: ✅ BUILD SUCCESSFUL - Complete Contraction Fix
+**Latest Version**: v1.32.256 (306)
+**Build Status**: ✅ BUILD SUCCESSFUL - Comprehensive Contraction Mappings
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.253)
+### Recent Work (v1.32.256)
+
+**COMPREHENSIVE CONTRACTION MAPPINGS: Move pronoun contractions to paired system**
+- **Problem 1**: can't and don't not working
+  - User reported "cant" and "dont" still appearing
+  - Apostrophe-free forms showing instead of contractions
+- **Problem 2**: what'd showing without apostrophe ("whatd")
+  - Missing 'd contractions for question words
+- **Problem 3**: Single mapping limitation
+  - Pronouns need MULTIPLE contractions (i → i'd, i'll, i'm, i've)
+  - Non_paired JSON only allows ONE value per key
+  - "i" → "i'm" worked, but prevented i'd, i'll, i've
+- **Root Cause**: Wrong system for pronoun/question word contractions
+  - Non_paired format: {"i": "i'm"} - single mapping
+  - Paired format: {"i": [{"contraction": "i'd"}, {"contraction": "i'll"}, ...]} - multiple mappings
+- **Solution**: Move all pronoun/question contractions to paired system
+  1. **Created comprehensive list**: 57 non-possessive contractions (from user's list)
+  2. **Pronoun contractions** → paired system (supports multiple):
+     - i → i'd, i'll, i'm, i've (4 variants)
+     - he → he'd, he'll, he's (3 variants)
+     - she → she'd, she'll, she's (3 variants)
+     - they → they'd, they'll, they're, they've (4 variants)
+     - we → we'd, we'll, we're, we've (4 variants)
+     - you → you'd, you'll, you're, you've (4 variants)
+  3. **Question word contractions** → paired system:
+     - what → what'd, what'll, what're, what's, what've (5 variants)
+     - who → who'd, who'll, who're, who's, who've (5 variants)
+     - where → where'd, where's (2 variants)
+     - when → when'd, when's (2 variants)
+     - why → why'd (1 variant)
+     - how → how'd, how's (2 variants)
+  4. **Verb contractions** → paired system:
+     - can → can't, do → don't, will → won't, etc.
+  5. **Non_paired** → only apostrophe-free forms (single mappings):
+     - cant → can't, dont → don't, whatd → what'd, im → i'm, etc.
+     - 62 apostrophe-free mappings
+- **Implementation**:
+  1. **contraction_pairings.json**: 1,706 → 1,735 base words (+29)
+     - Added pronoun contractions (i, he, she, they, we, you)
+     - Added question word contractions (what, who, where, when, why, how)
+     - Added verb contractions (can, do, will, etc.)
+  2. **contractions_non_paired.json**: Rebuilt with 62 apostrophe-free mappings
+     - Only apostrophe-free → contraction mappings
+     - No base words (those moved to paired)
+- **Result**:
+  - "can't" and "don't" working (both base and apostrophe-free) ✓
+  - "what'd" showing with apostrophe ✓
+  - All pronoun contractions available (i'd, i'll, i'm, i've) ✓
+  - Question word contractions complete ✓
+  - Comprehensive coverage of all 57 non-possessive contractions ✓
+- **Files Modified**:
+  - assets/dictionaries/contraction_pairings.json (1,735 base words)
+  - assets/dictionaries/contractions_non_paired.json (62 mappings)
+
+### Previous Work (v1.32.253)
 
 **COMPLETE CONTRACTION FIX: Remove all invalid forms + add base word mappings**
 - **Problem 1**: Invalid apostrophe-free forms still appearing
