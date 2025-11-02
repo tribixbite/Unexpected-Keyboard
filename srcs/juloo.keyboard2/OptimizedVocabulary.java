@@ -51,6 +51,12 @@ public class OptimizedVocabulary
   // Disabled words filter (for Dictionary Manager integration)
   private Set<String> disabledWords;
 
+  // Contraction handling (for apostrophe display)
+  // Maps base word -> list of contraction variants (e.g., "well" -> ["we'll"])
+  private Map<String, List<String>> contractionPairings;
+  // Maps apostrophe-free -> with apostrophe (e.g., "dont" -> "don't")
+  private Map<String, String> nonPairedContractions;
+
   private boolean isLoaded = false;
   private Context context;
 
@@ -60,6 +66,8 @@ public class OptimizedVocabulary
     this.vocabulary = new HashMap<>();
     this.minFrequencyByLength = new HashMap<>();
     this.disabledWords = new HashSet<>();
+    this.contractionPairings = new HashMap<>();
+    this.nonPairedContractions = new HashMap<>();
   }
   
   /**
@@ -80,6 +88,9 @@ public class OptimizedVocabulary
 
       // Load disabled words to filter from predictions
       loadDisabledWords();
+
+      // Load contraction mappings for apostrophe display
+      loadContractionMappings();
 
       // Initialize minimum frequency thresholds by word length
       initializeFrequencyThresholds();
@@ -449,6 +460,94 @@ public class OptimizedVocabulary
       catch (Exception e)
       {
         Log.e(TAG, "Failed to apply dictionary fuzzy matching", e);
+      }
+    }
+
+    // CONTRACTION HANDLING: Add paired variants and modify non-paired contractions
+    if (!contractionPairings.isEmpty() || !nonPairedContractions.isEmpty())
+    {
+      try
+      {
+        List<FilteredPrediction> contractionVariants = new ArrayList<>();
+        List<Integer> indicesToModify = new ArrayList<>();
+
+        // Process each prediction for contractions
+        for (int i = 0; i < validPredictions.size(); i++)
+        {
+          FilteredPrediction pred = validPredictions.get(i);
+          String word = pred.word;
+
+          // Check for paired contractions (base word exists: "well" -> "we'll")
+          if (contractionPairings.containsKey(word))
+          {
+            List<String> contractions = contractionPairings.get(word);
+            for (String contraction : contractions)
+            {
+              // Add contraction variant with slightly lower score (0.95x)
+              // This ensures base word appears first, followed by contraction
+              float variantScore = pred.score * 0.95f;
+              contractionVariants.add(new FilteredPrediction(
+                contraction,
+                variantScore,
+                pred.confidence,
+                pred.frequency,
+                pred.source + "-contraction"
+              ));
+
+              if (debugMode)
+              {
+                String msg = String.format("📝 CONTRACTION PAIRING: \"%s\" → added variant \"%s\" (score=%.4f)\n",
+                  word, contraction, variantScore);
+                Log.d(TAG, msg);
+                sendDebugLog(msg);
+              }
+            }
+          }
+
+          // Check for non-paired contractions (base doesn't exist: "dont" -> "don't")
+          if (nonPairedContractions.containsKey(word))
+          {
+            // Mark this index for modification
+            indicesToModify.add(i);
+          }
+        }
+
+        // Modify non-paired contractions (replace word with apostrophe version)
+        for (int idx : indicesToModify)
+        {
+          FilteredPrediction pred = validPredictions.get(idx);
+          String withoutApostrophe = pred.word;
+          String withApostrophe = nonPairedContractions.get(withoutApostrophe);
+
+          // Replace with apostrophe version
+          validPredictions.set(idx, new FilteredPrediction(
+            withApostrophe,
+            pred.score,
+            pred.confidence,
+            pred.frequency,
+            pred.source
+          ));
+
+          if (debugMode)
+          {
+            String msg = String.format("📝 NON-PAIRED CONTRACTION: \"%s\" → modified to \"%s\"\n",
+              withoutApostrophe, withApostrophe);
+            Log.d(TAG, msg);
+            sendDebugLog(msg);
+          }
+        }
+
+        // Add all contraction variants
+        if (!contractionVariants.isEmpty())
+        {
+          validPredictions.addAll(contractionVariants);
+          // Re-sort after adding variants
+          validPredictions.sort((a, b) -> Float.compare(b.score, a.score));
+        }
+      }
+      catch (Exception e)
+      {
+        Log.e(TAG, "Failed to apply contraction modifications", e);
       }
     }
 
@@ -1110,6 +1209,105 @@ public class OptimizedVocabulary
     {
       Log.e(TAG, "Failed to load disabled words", e);
       disabledWords = new HashSet<>();
+    }
+  }
+
+  /**
+   * Load contraction mappings for apostrophe display support
+   * Loads both paired contractions (base word exists: "well" -> "we'll")
+   * and non-paired contractions (base doesn't exist: "dont" -> "don't")
+   */
+  private void loadContractionMappings()
+  {
+    if (context == null)
+    {
+      contractionPairings = new HashMap<>();
+      nonPairedContractions = new HashMap<>();
+      return;
+    }
+
+    try
+    {
+      // Load paired contractions (base word -> list of contraction variants)
+      try
+      {
+        InputStream inputStream = context.getAssets().open("dictionaries/contraction_pairings.json");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder jsonBuilder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null)
+        {
+          jsonBuilder.append(line);
+        }
+        reader.close();
+
+        // Parse JSON object: { "well": [{"contraction": "we'll", "frequency": 243}], ... }
+        org.json.JSONObject jsonObj = new org.json.JSONObject(jsonBuilder.toString());
+        java.util.Iterator<String> keys = jsonObj.keys();
+        int pairingCount = 0;
+
+        while (keys.hasNext())
+        {
+          String baseWord = keys.next().toLowerCase();
+          org.json.JSONArray contractionArray = jsonObj.getJSONArray(baseWord);
+          List<String> contractionList = new ArrayList<>();
+
+          for (int i = 0; i < contractionArray.length(); i++)
+          {
+            org.json.JSONObject contractionObj = contractionArray.getJSONObject(i);
+            String contraction = contractionObj.getString("contraction").toLowerCase();
+            contractionList.add(contraction);
+          }
+
+          contractionPairings.put(baseWord, contractionList);
+          pairingCount += contractionList.size();
+        }
+
+        Log.d(TAG, "Loaded " + pairingCount + " paired contractions for " + contractionPairings.size() + " base words");
+      }
+      catch (Exception e)
+      {
+        Log.w(TAG, "Failed to load contraction pairings: " + e.getMessage());
+        contractionPairings = new HashMap<>();
+      }
+
+      // Load non-paired contractions (without apostrophe -> with apostrophe)
+      try
+      {
+        InputStream inputStream = context.getAssets().open("dictionaries/contractions_non_paired.json");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder jsonBuilder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null)
+        {
+          jsonBuilder.append(line);
+        }
+        reader.close();
+
+        // Parse JSON object: { "dont": "don't", "cant": "can't", ... }
+        org.json.JSONObject jsonObj = new org.json.JSONObject(jsonBuilder.toString());
+        java.util.Iterator<String> keys = jsonObj.keys();
+
+        while (keys.hasNext())
+        {
+          String withoutApostrophe = keys.next().toLowerCase();
+          String withApostrophe = jsonObj.getString(withoutApostrophe).toLowerCase();
+          nonPairedContractions.put(withoutApostrophe, withApostrophe);
+        }
+
+        Log.d(TAG, "Loaded " + nonPairedContractions.size() + " non-paired contractions");
+      }
+      catch (Exception e)
+      {
+        Log.w(TAG, "Failed to load non-paired contractions: " + e.getMessage());
+        nonPairedContractions = new HashMap<>();
+      }
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Error loading contraction mappings", e);
+      contractionPairings = new HashMap<>();
+      nonPairedContractions = new HashMap<>();
     }
   }
 

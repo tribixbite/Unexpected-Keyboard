@@ -52,6 +52,9 @@ public class SwipeCalibrationActivity extends Activity
   // Full vocabulary for random word selection
   private List<String> fullVocabulary = null;
   private Random random = new Random();
+
+  // Contraction mappings for apostrophe display
+  private Map<String, String> nonPairedContractions = new HashMap<>();
   
   // QWERTY layout
   private static final String[][] KEYBOARD_LAYOUT = {
@@ -178,9 +181,12 @@ public class SwipeCalibrationActivity extends Activity
     _keyVerticalMargin = prefs.getFloat("key_vertical_margin", 1.5f) / 100;
     _keyHorizontalMargin = prefs.getFloat("key_horizontal_margin", 2.0f) / 100;
     
+    // Load contraction mappings for apostrophe display
+    loadContractionMappings();
+
     // OPTIMIZATION: Prepare random session words from full vocabulary
     _sessionWords = prepareRandomSessionWords();
-    
+
     setupUI();
     setupKeyboard();
     showNextWord();
@@ -277,8 +283,46 @@ public class SwipeCalibrationActivity extends Activity
       throw new RuntimeException("Vocabulary loading failed - no fallback allowed", e);
     }
   }
-  
-  
+
+  /**
+   * Load non-paired contraction mappings for apostrophe display in calibration
+   * Loads mapping of "dont" -> "don't" for display purposes
+   */
+  private void loadContractionMappings()
+  {
+    try
+    {
+      InputStream inputStream = getAssets().open("dictionaries/contractions_non_paired.json");
+      BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+      StringBuilder jsonBuilder = new StringBuilder();
+      String line;
+      while ((line = reader.readLine()) != null)
+      {
+        jsonBuilder.append(line);
+      }
+      reader.close();
+
+      // Parse JSON object: { "dont": "don't", "cant": "can't", ... }
+      org.json.JSONObject jsonObj = new org.json.JSONObject(jsonBuilder.toString());
+      java.util.Iterator<String> keys = jsonObj.keys();
+
+      while (keys.hasNext())
+      {
+        String withoutApostrophe = keys.next().toLowerCase();
+        String withApostrophe = jsonObj.getString(withoutApostrophe).toLowerCase();
+        nonPairedContractions.put(withoutApostrophe, withApostrophe);
+      }
+
+      Log.d(TAG, "Loaded " + nonPairedContractions.size() + " non-paired contractions for calibration display");
+    }
+    catch (Exception e)
+    {
+      Log.w(TAG, "Failed to load contraction mappings: " + e.getMessage());
+      nonPairedContractions = new HashMap<>();
+    }
+  }
+
+
   private void setupUI()
   {
     // Main RelativeLayout like original
@@ -458,14 +502,25 @@ public class SwipeCalibrationActivity extends Activity
       showCompletionMessage();
       return;
     }
-    
+
     _currentWord = _sessionWords.get(_currentIndex);
+
+    // Apply contraction mapping for non-paired contractions (e.g., "dont" -> "don't")
+    // This ensures both display and scoring use the apostrophe version
+    // since OptimizedVocabulary also modifies predictions to include apostrophes
+    if (nonPairedContractions.containsKey(_currentWord))
+    {
+      String originalWord = _currentWord;
+      _currentWord = nonPairedContractions.get(_currentWord);
+      Log.d(TAG, "Modified calibration word: \"" + originalWord + "\" -> \"" + _currentWord + "\" (with apostrophe)");
+    }
+
     _currentWordText.setText(_currentWord.toUpperCase());
     _progressText.setText(String.format("Word %d of %d", _currentIndex + 1, WORDS_PER_SESSION));
     _progressBar.setProgress(_currentIndex);
-    
+
     updateBenchmarkDisplay();
-    
+
     Log.d(TAG, "Showing word: " + _currentWord);
   }
   
