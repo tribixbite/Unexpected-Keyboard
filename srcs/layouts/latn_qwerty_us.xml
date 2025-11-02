@@ -47,11 +47,11 @@ Useful links.
     <key c="y" ne="6" sw="^"/>
     <key c="u" ne="7" sw="&amp;" n="up "/>
     <key c="i" nw="*" ne="8" sw="is " w="it " s="in "/>
-    <key c="o" nw="of " ne="9" sw="(" se=")" s="on "/>
+    <key c="o" nw="of " ne="9" sw="(" se=")" s="on " w="or "/>
     <key c="p" ne="0"/>
   </row>
   <row>
-    <key shift="0.5" c="a" nw="loc tab" ne="`" e="as "/>
+    <key shift="0.5" c="a" nw="loc tab" ne="`" e="as " w="at "/>
     <key c="s" ne="so " sw="loc ß"/>
     <key c="d" ne="do "/>
     <key c="f"/>
@@ -70,6 +70,6 @@ Useful links.
     <key c="b" nw="be " ne="\?" sw="/" n="by "/>
     <key c="n" ne=":" sw=";" n="no "/>
     <key c="m" nw="me " ne="&quot;" sw="'"/>
-    <key width="1.5" c="backspace" ne="delete"/>
+    <key width="1.5" c="backspace" ne="delete" nw="delete_last_word"/>
   </row>
 </keyboard>

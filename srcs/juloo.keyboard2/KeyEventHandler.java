@@ -254,6 +254,7 @@ public final class KeyEventHandler
       case DELETE_WORD: send_key_down_up(KeyEvent.KEYCODE_DEL, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON); break;
       case FORWARD_DELETE_WORD: send_key_down_up(KeyEvent.KEYCODE_FORWARD_DEL, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON); break;
       case SELECTION_CANCEL: cancel_selection(); break;
+      case DELETE_LAST_WORD: _recv.handle_delete_last_word(); break;
     }
   }
 
@@ -500,6 +501,7 @@ public final class KeyEventHandler
     public Handler getHandler();
     public void handle_text_typed(String text);
     public default void handle_backspace() {} // Default implementation for backward compatibility
+    public default void handle_delete_last_word() {} // Delete last auto-inserted or typed word
   }
 
   class Autocapitalisation_callback implements Autocapitalisation.Callback

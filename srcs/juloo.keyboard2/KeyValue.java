@@ -79,6 +79,7 @@ public final class KeyValue implements Comparable<KeyValue>
     DELETE_WORD,
     FORWARD_DELETE_WORD,
     SELECTION_CANCEL,
+    DELETE_LAST_WORD, // Smart delete of last auto-inserted or typed word
   }
 
   public static enum Placeholder
@@ -715,6 +716,7 @@ public final class KeyValue implements Comparable<KeyValue>
       case "redo": return editingKey(0xE037, Editing.REDO);
       case "delete_word": return editingKey(0xE01B, Editing.DELETE_WORD);
       case "forward_delete_word": return editingKey(0xE01C, Editing.FORWARD_DELETE_WORD);
+      case "delete_last_word": return editingKey("word", Editing.DELETE_LAST_WORD);
       case "cursor_left": return sliderKey(Slider.Cursor_left, 1);
       case "cursor_right": return sliderKey(Slider.Cursor_right, 1);
       case "cursor_up": return sliderKey(Slider.Cursor_up, 1);

@@ -802,6 +802,11 @@ public class Keyboard2 extends InputMethodService
     {
       Keyboard2.this.handleBackspace();
     }
+
+    public void handle_delete_last_word()
+    {
+      Keyboard2.this.handleDeleteLastWord();
+    }
   }
 
   private IBinder getConnectionToken()
@@ -1313,7 +1318,103 @@ public class Keyboard2 extends InputMethodService
       }
     }
   }
-  
+
+  /**
+   * Smart delete last word - deletes the last auto-inserted word or last typed word
+   * Handles edge cases to avoid deleting too much text
+   */
+  public void handleDeleteLastWord()
+  {
+    InputConnection ic = getCurrentInputConnection();
+    if (ic == null)
+      return;
+
+    // First, try to delete the last auto-inserted word if it exists
+    if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty())
+    {
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting auto-inserted word: '" + _lastAutoInsertedWord + "'");
+
+      // Get text before cursor to verify
+      CharSequence textBefore = ic.getTextBeforeCursor(100, 0);
+      if (textBefore != null)
+      {
+        String beforeStr = textBefore.toString();
+
+        // Check if the last auto-inserted word is actually at the end
+        // Account for trailing space that swipe words have
+        boolean hasTrailingSpace = beforeStr.endsWith(" ");
+        String lastWord = hasTrailingSpace ? beforeStr.substring(0, beforeStr.length() - 1).trim() : beforeStr.trim();
+
+        // Find last word in the text
+        int lastSpaceIdx = lastWord.lastIndexOf(' ');
+        String actualLastWord = lastSpaceIdx >= 0 ? lastWord.substring(lastSpaceIdx + 1) : lastWord;
+
+        // Verify this matches our tracked word (case-insensitive to be safe)
+        if (actualLastWord.equalsIgnoreCase(_lastAutoInsertedWord))
+        {
+          // Delete the word + trailing space if present
+          int deleteCount = _lastAutoInsertedWord.length();
+          if (hasTrailingSpace)
+            deleteCount += 1;
+
+          ic.deleteSurroundingText(deleteCount, 0);
+          android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleted " + deleteCount + " characters");
+
+          // Clear tracking
+          _lastAutoInsertedWord = null;
+          _lastCommitSource = PredictionSource.UNKNOWN;
+          return;
+        }
+      }
+
+      // If verification failed, fall through to delete last word generically
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Auto-inserted word verification failed, using generic delete");
+    }
+
+    // Fallback: Delete the last word before cursor (generic approach)
+    CharSequence textBefore = ic.getTextBeforeCursor(100, 0);
+    if (textBefore == null || textBefore.length() == 0)
+    {
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: No text before cursor");
+      return;
+    }
+
+    String beforeStr = textBefore.toString();
+    int cursorPos = beforeStr.length();
+
+    // Skip trailing whitespace
+    while (cursorPos > 0 && Character.isWhitespace(beforeStr.charAt(cursorPos - 1)))
+      cursorPos--;
+
+    if (cursorPos == 0)
+    {
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Only whitespace before cursor");
+      return;
+    }
+
+    // Find the start of the last word
+    int wordStart = cursorPos;
+    while (wordStart > 0 && !Character.isWhitespace(beforeStr.charAt(wordStart - 1)))
+      wordStart--;
+
+    // Calculate delete count (word + any trailing spaces we skipped)
+    int deleteCount = beforeStr.length() - wordStart;
+
+    // Safety check: don't delete more than 50 characters at once
+    if (deleteCount > 50)
+    {
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Refusing to delete " + deleteCount + " characters (safety limit)");
+      deleteCount = 50;
+    }
+
+    android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting last word (generic), count=" + deleteCount);
+    ic.deleteSurroundingText(deleteCount, 0);
+
+    // Clear tracking
+    _lastAutoInsertedWord = null;
+    _lastCommitSource = PredictionSource.UNKNOWN;
+  }
+
   /**
    * Calculate dynamic keyboard height based on user settings (like calibration page)
    * Supports orientation, foldable devices, and user height preferences
