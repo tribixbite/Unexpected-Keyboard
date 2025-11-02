@@ -9,11 +9,62 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.249 (299)
-**Build Status**: ✅ BUILD SUCCESSFUL - Remove Duplicate Contractions
+**Latest Version**: v1.32.250 (300)
+**Build Status**: ✅ BUILD SUCCESSFUL - Proper Contraction Categorization
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.249)
+### Recent Work (v1.32.250)
+
+**PROPER CATEGORIZATION: Separate possessives from contractions + fix raw predictions**
+- **Problem 1**: Non-paired contractions showing base words incorrectly
+  - "that's" showing with "thats" (thats isn't a real word)
+  - "its" showing with "it's" (different meanings: possessive vs contraction)
+  - "well" showing with "we'll" (different meanings: adverb vs pronoun+verb)
+- **Problem 2**: Raw predictions getting autocorrected when tapped
+  - User explicitly selected neural network output
+  - Final autocorrect changed it to different word
+- **Root Cause**: Categorization based on dictionary presence, not semantic meaning
+  - ALL contractions had apostrophe-free forms in dictionary
+  - But "its" (possessive) ≠ "it's" (it is) - different words!
+  - "well" (adverb) ≠ "we'll" (we will) - different words!
+  - Script categorized by presence, not meaning
+- **Solution**: Separate by semantic relationship, not dictionary presence
+  - **Possessives** (paired): Base and contraction refer to same entity
+    - "jesus" → "jesus's" (possessive of jesus) ✓
+    - "obama" → "obama's" (possessive of obama) ✓
+    - 1,706 true possessives
+  - **Non-possessives** (non-paired): Base and contraction are different words
+    - "its" → "it's" (possessive vs contraction)
+    - "well" → "we'll" (adverb vs pronoun+verb)
+    - "dont" → "don't" (not a word vs negation)
+    - 46 non-possessive contractions
+- **Implementation**:
+  1. **Python script** to separate contractions:
+     - Identified 'LL, 'D, 'RE, 'VE, 'M, N'T patterns as non-possessive
+     - Identified specific cases: its/it's, well/we'll, hell/he'll
+     - Moved 46 contractions from paired to non-paired
+     - Kept 1,706 true possessives in paired
+  2. **OptimizedVocabulary.java** (lines 510-537):
+     - Changed non-paired to CREATE VARIANTS (not modify display)
+     - Like paired: both base and variant appear as options
+     - "its" shows both "its" and "it's" separately
+  3. **Keyboard2.java** (lines 931-974):
+     - Added raw prediction detection BEFORE stripping prefix
+     - Skip autocorrect for raw predictions OR known contractions
+     - Raw predictions insert as-is (user's explicit choice)
+- **Result**:
+  - "its" shows both "its" (possessive) and "it's" (contraction) ✓
+  - "well" shows both "well" (adverb) and "we'll" (we will) ✓
+  - "jesus" shows both "jesus" and "jesus's" (possessive pairing) ✓
+  - No spurious pairings ("thats" not shown as base for "that's") ✓
+  - Raw predictions insert without autocorrect ✓
+- **Files Modified**:
+  - assets/dictionaries/contraction_pairings.json (1,752 → 1,706 possessives)
+  - assets/dictionaries/contractions_non_paired.json (0 → 46 non-possessives)
+  - srcs/juloo.keyboard2/OptimizedVocabulary.java (lines 471, 510-537)
+  - srcs/juloo.keyboard2/Keyboard2.java (lines 931-974)
+
+### Previous Work (v1.32.249)
 
 **REMOVE DUPLICATES: Empty non_paired to eliminate duplicate predictions**
 - **Problem**: Contractions showing up twice (e.g., "we'll" appearing twice, "it's" appearing twice)

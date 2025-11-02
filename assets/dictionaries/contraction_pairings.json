@@ -107,12 +107,6 @@
       "frequency": 146
     }
   ],
-  "aint": [
-    {
-      "contraction": "ain't",
-      "frequency": 233
-    }
-  ],
   "aircraft": [
     {
       "contraction": "aircraft's",
@@ -423,12 +417,6 @@
     {
       "contraction": "area's",
       "frequency": 170
-    }
-  ],
-  "arent": [
-    {
-      "contraction": "aren't",
-      "frequency": 236
     }
   ],
   "argentina": [
@@ -1385,12 +1373,6 @@
       "frequency": 152
     }
   ],
-  "cant": [
-    {
-      "contraction": "can't",
-      "frequency": 250
-    }
-  ],
   "capital": [
     {
       "contraction": "capital's",
@@ -2177,12 +2159,6 @@
       "frequency": 158
     }
   ],
-  "couldnt": [
-    {
-      "contraction": "couldn't",
-      "frequency": 236
-    }
-  ],
   "council": [
     {
       "contraction": "council's",
@@ -2615,12 +2591,6 @@
       "frequency": 145
     }
   ],
-  "didnt": [
-    {
-      "contraction": "didn't",
-      "frequency": 248
-    }
-  ],
   "diego": [
     {
       "contraction": "diego's",
@@ -2699,12 +2669,6 @@
       "frequency": 189
     }
   ],
-  "doesnt": [
-    {
-      "contraction": "doesn't",
-      "frequency": 245
-    }
-  ],
   "dog": [
     {
       "contraction": "dog's",
@@ -2757,12 +2721,6 @@
     {
       "contraction": "don's",
       "frequency": 134
-    }
-  ],
-  "dont": [
-    {
-      "contraction": "don't",
-      "frequency": 253
     }
   ],
   "dos": [
@@ -4097,18 +4055,6 @@
       "frequency": 142
     }
   ],
-  "hasnt": [
-    {
-      "contraction": "hasn't",
-      "frequency": 226
-    }
-  ],
-  "havent": [
-    {
-      "contraction": "haven't",
-      "frequency": 237
-    }
-  ],
   "hawaii": [
     {
       "contraction": "hawaii's",
@@ -4157,12 +4103,6 @@
       "frequency": 158
     }
   ],
-  "hed": [
-    {
-      "contraction": "he'd",
-      "frequency": 222
-    }
-  ],
   "helen": [
     {
       "contraction": "helen's",
@@ -4173,16 +4113,6 @@
     {
       "contraction": "helen's",
       "frequency": 138
-    }
-  ],
-  "hell": [
-    {
-      "contraction": "hell's",
-      "frequency": 157
-    },
-    {
-      "contraction": "he'll",
-      "frequency": 222
     }
   ],
   "hells": [
@@ -4201,12 +4131,6 @@
     {
       "contraction": "henry's",
       "frequency": 165
-    }
-  ],
-  "heres": [
-    {
-      "contraction": "here's",
-      "frequency": 232
     }
   ],
   "hero": [
@@ -4407,12 +4331,6 @@
       "frequency": 157
     }
   ],
-  "hows": [
-    {
-      "contraction": "how's",
-      "frequency": 201
-    }
-  ],
   "hudson": [
     {
       "contraction": "hudson's",
@@ -4509,16 +4427,6 @@
       "frequency": 132
     }
   ],
-  "id": [
-    {
-      "contraction": "id's",
-      "frequency": 128
-    },
-    {
-      "contraction": "i'd",
-      "frequency": 243
-    }
-  ],
   "ids": [
     {
       "contraction": "id's",
@@ -4535,18 +4443,6 @@
     {
       "contraction": "ii's",
       "frequency": 139
-    }
-  ],
-  "ill": [
-    {
-      "contraction": "i'll",
-      "frequency": 244
-    }
-  ],
-  "im": [
-    {
-      "contraction": "i'm",
-      "frequency": 253
     }
   ],
   "ima": [
@@ -4693,12 +4589,6 @@
       "frequency": 177
     }
   ],
-  "isnt": [
-    {
-      "contraction": "isn't",
-      "frequency": 243
-    }
-  ],
   "israel": [
     {
       "contraction": "israel's",
@@ -4709,30 +4599,6 @@
     {
       "contraction": "italy's",
       "frequency": 165
-    }
-  ],
-  "itd": [
-    {
-      "contraction": "it'd",
-      "frequency": 210
-    }
-  ],
-  "itll": [
-    {
-      "contraction": "it'll",
-      "frequency": 223
-    }
-  ],
-  "its": [
-    {
-      "contraction": "it's",
-      "frequency": 253
-    }
-  ],
-  "ive": [
-    {
-      "contraction": "i've",
-      "frequency": 248
     }
   ],
   "j": [
@@ -5459,12 +5325,6 @@
     {
       "contraction": "leonard's",
       "frequency": 132
-    }
-  ],
-  "lets": [
-    {
-      "contraction": "let's",
-      "frequency": 239
     }
   ],
   "levi": [
@@ -6851,12 +6711,6 @@
     {
       "contraction": "now's",
       "frequency": 146
-    }
-  ],
-  "nt": [
-    {
-      "contraction": "n't",
-      "frequency": 147
     }
   ],
   "nurse": [
@@ -8449,22 +8303,10 @@
       "frequency": 154
     }
   ],
-  "shed": [
-    {
-      "contraction": "she'd",
-      "frequency": 208
-    }
-  ],
   "sheep": [
     {
       "contraction": "sheep's",
       "frequency": 144
-    }
-  ],
-  "shell": [
-    {
-      "contraction": "she'll",
-      "frequency": 209
     }
   ],
   "shepherd": [
@@ -8531,12 +8373,6 @@
     {
       "contraction": "shooter's",
       "frequency": 131
-    }
-  ],
-  "shouldnt": [
-    {
-      "contraction": "shouldn't",
-      "frequency": 230
     }
   ],
   "show": [
@@ -9265,12 +9101,6 @@
       "frequency": 142
     }
   ],
-  "thats": [
-    {
-      "contraction": "that's",
-      "frequency": 250
-    }
-  ],
   "theatre": [
     {
       "contraction": "theatre's",
@@ -9281,18 +9111,6 @@
     {
       "contraction": "theatre's",
       "frequency": 133
-    }
-  ],
-  "theres": [
-    {
-      "contraction": "there's",
-      "frequency": 246
-    }
-  ],
-  "theyre": [
-    {
-      "contraction": "they're",
-      "frequency": 245
     }
   ],
   "thing": [
@@ -10015,12 +9833,6 @@
       "frequency": 169
     }
   ],
-  "wasnt": [
-    {
-      "contraction": "wasn't",
-      "frequency": 241
-    }
-  ],
   "water": [
     {
       "contraction": "water's",
@@ -10055,12 +9867,6 @@
     {
       "contraction": "website's",
       "frequency": 150
-    }
-  ],
-  "wed": [
-    {
-      "contraction": "we'd",
-      "frequency": 217
     }
   ],
   "wednesday": [
@@ -10099,28 +9905,10 @@
       "frequency": 200
     }
   ],
-  "well": [
-    {
-      "contraction": "we'll",
-      "frequency": 231
-    }
-  ],
   "wendy": [
     {
       "contraction": "wendy's",
       "frequency": 159
-    }
-  ],
-  "were": [
-    {
-      "contraction": "we're",
-      "frequency": 243
-    }
-  ],
-  "werent": [
-    {
-      "contraction": "weren't",
-      "frequency": 226
     }
   ],
   "west": [
@@ -10141,18 +9929,6 @@
       "frequency": 138
     }
   ],
-  "whats": [
-    {
-      "contraction": "what's",
-      "frequency": 239
-    }
-  ],
-  "wheres": [
-    {
-      "contraction": "where's",
-      "frequency": 207
-    }
-  ],
   "white": [
     {
       "contraction": "white's",
@@ -10169,18 +9945,6 @@
     {
       "contraction": "whoever's",
       "frequency": 135
-    }
-  ],
-  "whore": [
-    {
-      "contraction": "who're",
-      "frequency": 139
-    }
-  ],
-  "whos": [
-    {
-      "contraction": "who's",
-      "frequency": 231
     }
   ],
   "why": [
@@ -10309,12 +10073,6 @@
       "frequency": 229
     }
   ],
-  "wont": [
-    {
-      "contraction": "won't",
-      "frequency": 242
-    }
-  ],
   "wood": [
     {
       "contraction": "wood's",
@@ -10363,18 +10121,6 @@
       "frequency": 224
     }
   ],
-  "wouldnt": [
-    {
-      "contraction": "wouldn't",
-      "frequency": 239
-    }
-  ],
-  "wouldve": [
-    {
-      "contraction": "would've",
-      "frequency": 216
-    }
-  ],
   "wright": [
     {
       "contraction": "wright's",
@@ -10409,12 +10155,6 @@
     {
       "contraction": "x's",
       "frequency": 151
-    }
-  ],
-  "yall": [
-    {
-      "contraction": "ya'll",
-      "frequency": 154
     }
   ],
   "yang": [
@@ -10459,18 +10199,6 @@
       "frequency": 137
     }
   ],
-  "youd": [
-    {
-      "contraction": "you'd",
-      "frequency": 230
-    }
-  ],
-  "youll": [
-    {
-      "contraction": "you'll",
-      "frequency": 239
-    }
-  ],
   "young": [
     {
       "contraction": "young's",
@@ -10483,12 +10211,6 @@
       "frequency": 156
     }
   ],
-  "youre": [
-    {
-      "contraction": "you're",
-      "frequency": 250
-    }
-  ],
   "yous": [
     {
       "contraction": "you's",
@@ -10499,12 +10221,6 @@
     {
       "contraction": "youtube's",
       "frequency": 134
-    }
-  ],
-  "youve": [
-    {
-      "contraction": "you've",
-      "frequency": 237
     }
   ],
   "z": [

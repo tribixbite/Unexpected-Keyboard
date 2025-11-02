@@ -928,6 +928,10 @@ public class Keyboard2 extends InputMethodService
       return;
     }
 
+    // Check if this is a raw prediction (user explicitly selected neural network output)
+    // Raw predictions should skip autocorrect
+    boolean isRawPrediction = word.startsWith("raw:");
+
     // Strip "raw:" prefix before processing (v1.33.7: fixed regex to match actual prefix format)
     // Prefix format: "raw:word" not " [raw:0.08]"
     word = word.replaceAll("^raw:", "");
@@ -936,16 +940,26 @@ public class Keyboard2 extends InputMethodService
     // If it is, skip autocorrect to prevent fuzzy matching to wrong words
     boolean isKnownContraction = _knownContractions.contains(word.toLowerCase());
 
-    if (isKnownContraction)
+    // Skip autocorrect for:
+    // 1. Known contractions (prevent fuzzy matching)
+    // 2. Raw predictions (user explicitly selected this neural output)
+    if (isKnownContraction || isRawPrediction)
     {
-      android.util.Log.d("Keyboard2", String.format("KNOWN CONTRACTION: \"%s\" - skipping autocorrect", word));
+      if (isKnownContraction)
+      {
+        android.util.Log.d("Keyboard2", String.format("KNOWN CONTRACTION: \"%s\" - skipping autocorrect", word));
+      }
+      if (isRawPrediction)
+      {
+        android.util.Log.d("Keyboard2", String.format("RAW PREDICTION: \"%s\" - skipping autocorrect", word));
+      }
     }
     else
     {
       // v1.33.7: Final autocorrect - second chance autocorrect after beam search
       // Applies when user selects/auto-inserts a prediction (even if beam autocorrect was OFF)
-      // Useful for correcting raw predictions or vocabulary misses
-      // SKIP autocorrect for known contractions to prevent fuzzy matching
+      // Useful for correcting vocabulary misses
+      // SKIP for known contractions and raw predictions
       if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null)
       {
         String correctedWord = _wordPredictor.autoCorrect(word);

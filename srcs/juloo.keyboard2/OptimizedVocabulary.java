@@ -469,7 +469,6 @@ public class OptimizedVocabulary
       try
       {
         List<FilteredPrediction> contractionVariants = new ArrayList<>();
-        List<Integer> indicesToModify = new ArrayList<>();
 
         // Process each prediction for contractions
         for (int i = 0; i < validPredictions.size(); i++)
@@ -507,38 +506,33 @@ public class OptimizedVocabulary
             }
           }
 
-          // Check for non-paired contractions (base doesn't exist: "dont" -> "don't")
+          // Check for non-paired contractions (different meaning: "its" vs "it's", "well" vs "we'll")
+          // These should create VARIANTS, not modify the original
+          // User should see BOTH "its" (possessive) and "it's" (contraction) as options
           if (nonPairedContractions.containsKey(word))
           {
-            // Mark this index for modification
-            indicesToModify.add(i);
-          }
-        }
+            String contraction = nonPairedContractions.get(word);
 
-        // Modify non-paired contractions (set displayText to apostrophe version)
-        for (int idx : indicesToModify)
-        {
-          FilteredPrediction pred = validPredictions.get(idx);
-          String withoutApostrophe = pred.word;
-          String withApostrophe = nonPairedContractions.get(withoutApostrophe);
+            // Create variant with slightly lower score (0.95x)
+            // This ensures base word appears first, followed by contraction
+            // CRITICAL: word = contraction (for insertion), displayText = contraction (for UI)
+            float variantScore = pred.score * 0.95f;
+            contractionVariants.add(new FilteredPrediction(
+              contraction,             // word for insertion (with apostrophe: "it's")
+              contraction,             // displayText for UI (with apostrophe: "it's")
+              variantScore,
+              pred.confidence,
+              pred.frequency,
+              pred.source + "-contraction"
+            ));
 
-          // Replace with version that has displayText set to apostrophe form
-          // word stays apostrophe-free (for insertion), displayText shows apostrophe
-          validPredictions.set(idx, new FilteredPrediction(
-            withoutApostrophe,       // word for insertion (no apostrophe)
-            withApostrophe,          // displayText for UI (with apostrophe)
-            pred.score,
-            pred.confidence,
-            pred.frequency,
-            pred.source
-          ));
-
-          if (debugMode)
-          {
-            String msg = String.format("📝 NON-PAIRED CONTRACTION: \"%s\" → display modified to \"%s\" (word=%s)\n",
-              withoutApostrophe, withApostrophe, withoutApostrophe);
-            Log.d(TAG, msg);
-            sendDebugLog(msg);
+            if (debugMode)
+            {
+              String msg = String.format("📝 NON-PAIRED CONTRACTION: \"%s\" → added variant \"%s\" (word=%s, display=%s, score=%.4f)\n",
+                word, contraction, contraction, contraction, variantScore);
+              Log.d(TAG, msg);
+              sendDebugLog(msg);
+            }
           }
         }
 
