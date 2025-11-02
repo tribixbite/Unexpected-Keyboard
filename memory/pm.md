@@ -9,11 +9,42 @@
 
 ## 🔥 Current Status (2025-11-02)
 
-**Latest Version**: v1.32.247 (297)
-**Build Status**: ✅ BUILD SUCCESSFUL - Paired Contractions Fix
+**Latest Version**: v1.32.249 (299)
+**Build Status**: ✅ BUILD SUCCESSFUL - Remove Duplicate Contractions
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.247)
+### Recent Work (v1.32.249)
+
+**REMOVE DUPLICATES: Empty non_paired to eliminate duplicate predictions**
+- **Problem**: Contractions showing up twice (e.g., "we'll" appearing twice, "it's" appearing twice)
+  - User swiped "well" → saw "we'll" twice
+  - User swiped "its" → saw "it's" twice
+- **Root Cause**: ALL 74 words in non_paired were ALSO in paired contractions
+  - Paired contractions created variant: "well" → "we'll" variant
+  - Non_paired modified original: "well" display → "we'll"
+  - Both systems applied → duplicate "we'll" predictions
+  - Analysis showed: 100% overlap (74/74 words duplicated)
+- **Solution**: Empty contractions_non_paired.json completely
+  - Let paired contractions handle ALL contraction generation
+  - No non_paired logic needed (all contractions have base words in dictionary)
+  - _knownContractions still populated from paired contractions (1,754 entries)
+- **Implementation**:
+  1. **contractions_non_paired.json**:
+     - Changed from 74 entries to empty: `{}`
+     - All contractions now generated via paired system only
+  2. **Keyboard2.java** (unchanged):
+     - Still loads both files (non_paired is just empty now)
+     - _knownContractions populated from paired contractions
+     - All 1,754 contractions still skip autocorrect
+- **Result**:
+  - Swiping "well" shows "well" and "we'll" (no duplicates) ✓
+  - Swiping "its" shows "its" and "it's" (no duplicates) ✓
+  - All contractions still skip autocorrect ✓
+  - Paired system handles everything ✓
+- **Files Modified**:
+  - assets/dictionaries/contractions_non_paired.json (emptied)
+
+### Previous Work (v1.32.247)
 
 **PAIRED CONTRACTIONS FIX: Show both base and contraction variants**
 - **Problem**: Swiping "well" only showed "we'll", not both "well" and "we'll"
