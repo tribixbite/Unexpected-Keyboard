@@ -1029,6 +1029,21 @@ public class Keyboard2 extends InputMethodService
     {
       try
       {
+        // Detect if we're in Termux for special handling
+        boolean inTermuxApp = false;
+        try
+        {
+          EditorInfo editorInfo = getCurrentInputEditorInfo();
+          if (editorInfo != null && editorInfo.packageName != null)
+          {
+            inTermuxApp = editorInfo.packageName.equals("com.termux");
+          }
+        }
+        catch (Exception e)
+        {
+          // Fallback: assume not Termux
+        }
+
         // IMPORTANT: _currentWord tracks typed characters, but they're already committed to input!
         // When typing normally (not swipe), each character is committed immediately via KeyEventHandler
         // So _currentWord is just for tracking - the text is already in the editor
@@ -1054,34 +1069,57 @@ public class Keyboard2 extends InputMethodService
         {
           android.util.Log.d("Keyboard2", "REPLACE: Deleting auto-inserted word: '" + _lastAutoInsertedWord + "'");
 
-          // Get text before cursor to understand what we're deleting
-          CharSequence debugBefore = ic.getTextBeforeCursor(50, 0);
-          android.util.Log.d("Keyboard2", "REPLACE: Text before cursor (50 chars): '" + debugBefore + "'");
-
-          // Calculate how many characters to delete (word + space after it)
-          // CRITICAL: Swipe words ALWAYS get a trailing space, even in Termux mode!
-          // See line 1068: "For swipe typing, we always add trailing spaces even in Termux mode"
           int deleteCount = _lastAutoInsertedWord.length() + 1; // Word + trailing space
+          boolean deletedLeadingSpace = false;
 
-          android.util.Log.d("Keyboard2", "REPLACE: Delete count = " + deleteCount);
-
-          // Delete the auto-inserted word and its space
-          ic.deleteSurroundingText(deleteCount, 0);
-
-          CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
-          android.util.Log.d("Keyboard2", "REPLACE: After deleting word, text before cursor: '" + debugAfter + "'");
-
-          // Also need to check if there was a space added before it
-          CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
-          android.util.Log.d("Keyboard2", "REPLACE: Checking for leading space, got: '" + textBefore + "'");
-          if (textBefore != null && textBefore.length() > 0 && textBefore.charAt(0) == ' ')
+          if (inTermuxApp)
           {
-            android.util.Log.d("Keyboard2", "REPLACE: Deleting leading space");
-            // Delete the leading space too
-            ic.deleteSurroundingText(1, 0);
+            // TERMUX: Use backspace key events instead of InputConnection methods
+            // Termux doesn't support deleteSurroundingText properly
+            android.util.Log.d("Keyboard2", "TERMUX: Using backspace key events to delete " + deleteCount + " chars");
 
-            CharSequence debugFinal = ic.getTextBeforeCursor(50, 0);
-            android.util.Log.d("Keyboard2", "REPLACE: After deleting leading space: '" + debugFinal + "'");
+            // Check if there's a leading space to delete
+            CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+            if (textBefore != null && textBefore.length() > 0 && textBefore.charAt(0) == ' ')
+            {
+              deleteCount++; // Include leading space
+              deletedLeadingSpace = true;
+            }
+
+            // Send backspace key events
+            if (_keyeventhandler != null)
+            {
+              for (int i = 0; i < deleteCount; i++)
+              {
+                _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, 0);
+              }
+            }
+          }
+          else
+          {
+            // NORMAL APPS: Use InputConnection methods
+            CharSequence debugBefore = ic.getTextBeforeCursor(50, 0);
+            android.util.Log.d("Keyboard2", "REPLACE: Text before cursor (50 chars): '" + debugBefore + "'");
+            android.util.Log.d("Keyboard2", "REPLACE: Delete count = " + deleteCount);
+
+            // Delete the auto-inserted word and its space
+            ic.deleteSurroundingText(deleteCount, 0);
+
+            CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
+            android.util.Log.d("Keyboard2", "REPLACE: After deleting word, text before cursor: '" + debugAfter + "'");
+
+            // Also need to check if there was a space added before it
+            CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
+            android.util.Log.d("Keyboard2", "REPLACE: Checking for leading space, got: '" + textBefore + "'");
+            if (textBefore != null && textBefore.length() > 0 && textBefore.charAt(0) == ' ')
+            {
+              android.util.Log.d("Keyboard2", "REPLACE: Deleting leading space");
+              // Delete the leading space too
+              ic.deleteSurroundingText(1, 0);
+
+              CharSequence debugFinal = ic.getTextBeforeCursor(50, 0);
+              android.util.Log.d("Keyboard2", "REPLACE: After deleting leading space: '" + debugFinal + "'");
+            }
           }
 
           // Clear the tracking variables
@@ -1094,11 +1132,26 @@ public class Keyboard2 extends InputMethodService
         {
           android.util.Log.d("Keyboard2", "TYPING PREDICTION: Deleting partial word: '" + _currentWord + "'");
 
-          // Delete the characters that were typed (they're already in the editor)
-          ic.deleteSurroundingText(_currentWord.length(), 0);
+          if (inTermuxApp)
+          {
+            // TERMUX: Use backspace key events
+            android.util.Log.d("Keyboard2", "TERMUX: Using backspace key events to delete " + _currentWord.length() + " chars");
+            if (_keyeventhandler != null)
+            {
+              for (int i = 0; i < _currentWord.length(); i++)
+              {
+                _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, 0);
+              }
+            }
+          }
+          else
+          {
+            // NORMAL APPS: Use InputConnection
+            ic.deleteSurroundingText(_currentWord.length(), 0);
 
-          CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
-          android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '" + debugAfter + "'");
+            CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
+            android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '" + debugAfter + "'");
+          }
         }
 
         // Add space before word if previous character isn't whitespace
@@ -1344,14 +1397,15 @@ public class Keyboard2 extends InputMethodService
       android.util.Log.e("Keyboard2", "DELETE_LAST_WORD: Error detecting Termux", e);
     }
 
-    // For Termux, use Ctrl+Backspace key event which Termux handles correctly
+    // For Termux, use Ctrl+W key event which Termux handles correctly
+    // Termux doesn't support InputConnection methods, but processes terminal control sequences
     if (inTermux)
     {
-      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Using Ctrl+Backspace for Termux");
-      // Send Ctrl+Backspace which Termux processes as delete-word
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Using Ctrl+W (^W) for Termux");
+      // Send Ctrl+W which is the standard terminal "delete word backward" sequence
       if (_keyeventhandler != null)
       {
-        _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON);
+        _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_W, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON);
       }
       // Clear tracking
       _lastAutoInsertedWord = null;
