@@ -1329,6 +1329,36 @@ public class Keyboard2 extends InputMethodService
     if (ic == null)
       return;
 
+    // Check if we're in Termux - if so, use Ctrl+Backspace fallback
+    boolean inTermux = false;
+    try
+    {
+      EditorInfo editorInfo = getCurrentInputEditorInfo();
+      if (editorInfo != null && editorInfo.packageName != null)
+      {
+        inTermux = editorInfo.packageName.equals("com.termux");
+      }
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("Keyboard2", "DELETE_LAST_WORD: Error detecting Termux", e);
+    }
+
+    // For Termux, use Ctrl+Backspace key event which Termux handles correctly
+    if (inTermux)
+    {
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Using Ctrl+Backspace for Termux");
+      // Send Ctrl+Backspace which Termux processes as delete-word
+      if (_keyeventhandler != null)
+      {
+        _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON);
+      }
+      // Clear tracking
+      _lastAutoInsertedWord = null;
+      _lastCommitSource = PredictionSource.UNKNOWN;
+      return;
+    }
+
     // First, try to delete the last auto-inserted word if it exists
     if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty())
     {
