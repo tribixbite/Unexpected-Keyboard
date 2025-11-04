@@ -121,8 +121,8 @@ public final class Config
   public String neural_model_version; // "v2" (builtin), "v1", "v3" (external)
   public int neural_user_max_seq_length; // User-defined max sequence length (default: model default)
   public String neural_resampling_mode; // "truncate", "discard", "merge"
-  public String neural_custom_encoder_path; // Path to custom encoder ONNX file
-  public String neural_custom_decoder_path; // Path to custom decoder ONNX file
+  public String neural_custom_encoder_path; // Path or content URI to custom encoder ONNX file
+  public String neural_custom_decoder_path; // Path or content URI to custom decoder ONNX file
 
   // Dynamically set
   public boolean shouldOfferVoiceTyping;
@@ -298,8 +298,17 @@ public final class Config
     neural_model_version = _prefs.getString("neural_model_version", "v2"); // Default to v2 (builtin, 80.6% accuracy)
     neural_user_max_seq_length = safeGetInt(_prefs, "neural_user_max_seq_length", 0); // 0 = use model default
     neural_resampling_mode = _prefs.getString("neural_resampling_mode", "discard"); // Default to discard (best quality)
-    neural_custom_encoder_path = _prefs.getString("neural_custom_encoder_path", null);
-    neural_custom_decoder_path = _prefs.getString("neural_custom_decoder_path", null);
+
+    // Support both content URIs (new) and file paths (legacy)
+    neural_custom_encoder_path = _prefs.getString("neural_custom_encoder_uri", null);
+    if (neural_custom_encoder_path == null) {
+      neural_custom_encoder_path = _prefs.getString("neural_custom_encoder_path", null);
+    }
+
+    neural_custom_decoder_path = _prefs.getString("neural_custom_decoder_uri", null);
+    if (neural_custom_decoder_path == null) {
+      neural_custom_decoder_path = _prefs.getString("neural_custom_decoder_path", null);
+    }
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;

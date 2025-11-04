@@ -779,46 +779,76 @@ public class SettingsActivity extends PreferenceActivity
   {
     try
     {
-      // Get real path from URI
-      String path = uri.getPath();
+      // Take persistent permission to access the file
+      final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+      getContentResolver().takePersistableUriPermission(uri, takeFlags);
 
-      // Validate file exists and is readable
-      java.io.File file = new java.io.File(path);
-      if (!file.exists())
+      // Validate file can be accessed via ContentResolver
+      try (java.io.InputStream inputStream = getContentResolver().openInputStream(uri))
       {
-        Toast.makeText(this, "File not found: " + path, Toast.LENGTH_LONG).show();
-        return;
+        if (inputStream == null)
+        {
+          Toast.makeText(this, "Cannot access file", Toast.LENGTH_LONG).show();
+          return;
+        }
+
+        // Read a few bytes to verify it's accessible
+        byte[] header = new byte[4];
+        int bytesRead = inputStream.read(header);
+        if (bytesRead < 4)
+        {
+          Toast.makeText(this, "File is empty or unreadable", Toast.LENGTH_LONG).show();
+          return;
+        }
       }
 
-      if (!file.canRead())
+      // Get filename from URI
+      String filename = null;
+      try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null))
       {
-        Toast.makeText(this, "Cannot read file: " + path, Toast.LENGTH_LONG).show();
-        return;
+        if (cursor != null && cursor.moveToFirst())
+        {
+          int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+          if (nameIndex >= 0)
+          {
+            filename = cursor.getString(nameIndex);
+          }
+        }
+      }
+
+      if (filename == null)
+      {
+        filename = uri.getLastPathSegment();
       }
 
       // Validate it's an ONNX file
-      if (!path.toLowerCase().endsWith(".onnx"))
+      if (filename != null && !filename.toLowerCase().endsWith(".onnx"))
       {
         Toast.makeText(this, "File must be an .onnx file", Toast.LENGTH_SHORT).show();
         return;
       }
 
-      // Save to preferences
+      // Save content URI to preferences (not file path!)
       SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
       if (isEncoder)
       {
-        editor.putString("neural_custom_encoder_path", path);
-        Toast.makeText(this, "Encoder model loaded: " + file.getName(), Toast.LENGTH_SHORT).show();
+        editor.putString("neural_custom_encoder_uri", uri.toString());
+        Toast.makeText(this, "✅ Encoder loaded: " + filename, Toast.LENGTH_SHORT).show();
       }
       else
       {
-        editor.putString("neural_custom_decoder_path", path);
-        Toast.makeText(this, "Decoder model loaded: " + file.getName(), Toast.LENGTH_SHORT).show();
+        editor.putString("neural_custom_decoder_uri", uri.toString());
+        Toast.makeText(this, "✅ Decoder loaded: " + filename, Toast.LENGTH_SHORT).show();
       }
       editor.apply();
 
       // Update model info
       updateNeuralModelInfo();
+    }
+    catch (SecurityException e)
+    {
+      Toast.makeText(this, "❌ Permission denied. Please grant access to the file.", Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Security exception loading model", e);
     }
     catch (Exception e)
     {

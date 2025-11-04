@@ -962,10 +962,32 @@ public class OnnxSwipePredictor
     {
       InputStream inputStream;
 
-      // Check if it's an external file path (starts with /)
-      if (modelPath.startsWith("/"))
+      // Check if it's a content URI (starts with content://)
+      if (modelPath.startsWith("content://"))
       {
-        Log.d(TAG, "Loading external ONNX model: " + modelPath);
+        Log.d(TAG, "Loading external ONNX model from URI: " + modelPath);
+        android.net.Uri uri = android.net.Uri.parse(modelPath);
+
+        try
+        {
+          inputStream = _context.getContentResolver().openInputStream(uri);
+          if (inputStream == null)
+          {
+            Log.e(TAG, "Cannot open input stream for URI: " + modelPath);
+            return null;
+          }
+          Log.d(TAG, "External model loaded from content URI");
+        }
+        catch (SecurityException e)
+        {
+          Log.e(TAG, "Permission denied for URI: " + modelPath, e);
+          return null;
+        }
+      }
+      // Check if it's an external file path (starts with /)
+      else if (modelPath.startsWith("/"))
+      {
+        Log.d(TAG, "Loading external ONNX model from file path: " + modelPath);
         java.io.File file = new java.io.File(modelPath);
 
         if (!file.exists())
