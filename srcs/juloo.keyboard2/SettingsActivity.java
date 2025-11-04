@@ -28,6 +28,8 @@ public class SettingsActivity extends PreferenceActivity
   // Request codes for backup/restore file picker
   private static final int REQUEST_CODE_BACKUP = 1001;
   private static final int REQUEST_CODE_RESTORE = 1002;
+  private static final int REQUEST_CODE_NEURAL_ENCODER = 1003;
+  private static final int REQUEST_CODE_NEURAL_DECODER = 1004;
 
   private BackupRestoreManager backupRestoreManager;
 
@@ -219,6 +221,65 @@ public class SettingsActivity extends PreferenceActivity
           return true;
         }
       });
+    }
+
+    // Set up neural model file pickers
+    Preference loadEncoderPref = findPreference("neural_load_encoder");
+    if (loadEncoderPref != null)
+    {
+      loadEncoderPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          openFilePicker(REQUEST_CODE_NEURAL_ENCODER);
+          return true;
+        }
+      });
+    }
+
+    Preference loadDecoderPref = findPreference("neural_load_decoder");
+    if (loadDecoderPref != null)
+    {
+      loadDecoderPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          openFilePicker(REQUEST_CODE_NEURAL_DECODER);
+          return true;
+        }
+      });
+    }
+
+    // Update neural model info display
+    updateNeuralModelInfo();
+  }
+
+  private void updateNeuralModelInfo()
+  {
+    Preference modelInfoPref = findPreference("neural_model_info");
+    if (modelInfoPref != null)
+    {
+      try
+      {
+        // Get model info from singleton predictor
+        OnnxSwipePredictor predictor = OnnxSwipePredictor.getInstance(this);
+        if (predictor != null && predictor.isAvailable())
+        {
+          String modelInfo = predictor.getModelInfo();
+          modelInfoPref.setSummary("✅ Loaded: " + modelInfo);
+        }
+        else
+        {
+          modelInfoPref.setSummary("⚠️ Model not loaded");
+        }
+      }
+      catch (Exception e)
+      {
+        modelInfoPref.setSummary("❌ Error loading model info");
+        android.util.Log.e("SettingsActivity", "Failed to get model info", e);
+      }
     }
   }
 
@@ -659,6 +720,27 @@ public class SettingsActivity extends PreferenceActivity
     }
   }
 
+  /**
+   * Open file picker for ONNX model selection
+   */
+  private void openFilePicker(int requestCode)
+  {
+    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("*/*"); // ONNX files might not have MIME type registered
+
+    try
+    {
+      startActivityForResult(intent, requestCode);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start file picker", e);
+    }
+  }
+
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data)
   {
@@ -682,6 +764,66 @@ public class SettingsActivity extends PreferenceActivity
     else if (requestCode == REQUEST_CODE_RESTORE)
     {
       performRestore(uri);
+    }
+    else if (requestCode == REQUEST_CODE_NEURAL_ENCODER)
+    {
+      handleNeuralModelFile(uri, true);
+    }
+    else if (requestCode == REQUEST_CODE_NEURAL_DECODER)
+    {
+      handleNeuralModelFile(uri, false);
+    }
+  }
+
+  private void handleNeuralModelFile(Uri uri, boolean isEncoder)
+  {
+    try
+    {
+      // Get real path from URI
+      String path = uri.getPath();
+
+      // Validate file exists and is readable
+      java.io.File file = new java.io.File(path);
+      if (!file.exists())
+      {
+        Toast.makeText(this, "File not found: " + path, Toast.LENGTH_LONG).show();
+        return;
+      }
+
+      if (!file.canRead())
+      {
+        Toast.makeText(this, "Cannot read file: " + path, Toast.LENGTH_LONG).show();
+        return;
+      }
+
+      // Validate it's an ONNX file
+      if (!path.toLowerCase().endsWith(".onnx"))
+      {
+        Toast.makeText(this, "File must be an .onnx file", Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      // Save to preferences
+      SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
+      if (isEncoder)
+      {
+        editor.putString("neural_custom_encoder_path", path);
+        Toast.makeText(this, "Encoder model loaded: " + file.getName(), Toast.LENGTH_SHORT).show();
+      }
+      else
+      {
+        editor.putString("neural_custom_decoder_path", path);
+        Toast.makeText(this, "Decoder model loaded: " + file.getName(), Toast.LENGTH_SHORT).show();
+      }
+      editor.apply();
+
+      // Update model info
+      updateNeuralModelInfo();
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Error loading model: " + e.getMessage(), Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Error loading neural model file", e);
     }
   }
 

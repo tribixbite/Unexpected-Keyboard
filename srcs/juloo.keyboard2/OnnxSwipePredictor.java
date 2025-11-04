@@ -40,8 +40,12 @@ public class OnnxSwipePredictor
   private static final float NORMALIZED_HEIGHT = 1.0f;
 
   // Model version configuration
-  private String _currentModelVersion = "v1"; // "v1", "v2", "v3"
-  private int _maxSequenceLength = DEFAULT_MAX_SEQUENCE_LENGTH; // Dynamic based on model version
+  private String _currentModelVersion = "v2"; // "v2" (builtin), "v1", "v3" (external)
+  private int _maxSequenceLength = 250; // Dynamic based on model version (v2 default)
+  private String _currentEncoderPath = null; // Track loaded model paths
+  private String _currentDecoderPath = null;
+  private String _modelAccuracy = "80.6%"; // Current model accuracy
+  private String _modelSource = "builtin"; // "builtin", "external", or "fallback"
   
   // Beam search parameters - standard defaults that respect playground settings
   // MOBILE-OPTIMIZED: Lower defaults for better performance on mobile devices
@@ -147,28 +151,81 @@ public class OnnxSwipePredictor
       // Log.d(TAG, "Loading ONNX models...");
       // logDebug("🔄 Loading ONNX transformer models...");
 
-      // Determine model paths based on version
+      // Determine model paths and parameters based on version
       String encoderPath, decoderPath;
+      boolean useExternalModels = false;
+
       switch (_currentModelVersion)
       {
         case "v2":
-          encoderPath = "latest_onnx/28/swipe_encoder_android.onnx";
-          decoderPath = "latest_onnx/28/swipe_decoder_android.onnx";
+          // Builtin model (only one in APK)
+          encoderPath = "models/swipe_encoder_android.onnx";
+          decoderPath = "models/swipe_decoder_android.onnx";
           _maxSequenceLength = 250;
-          Log.d(TAG, "Loading v2 models (epoch 28, 250-len, accuracy: 80.6%)");
+          _modelAccuracy = "80.6%";
+          _modelSource = "builtin";
+          Log.d(TAG, "Loading v2 models (builtin, 250-len, accuracy: 80.6%)");
           break;
-        case "v3":
-          encoderPath = "latest_onnx/106/swipe_encoder_android.onnx";
-          decoderPath = "latest_onnx/106/swipe_decoder_android.onnx";
-          _maxSequenceLength = 250;
-          Log.d(TAG, "Loading v3 models (epoch 106, 250-len, accuracy: 72.1%)");
-          break;
+
         case "v1":
+        case "v3":
+        case "custom":
+          // External models - require file picker
+          if (_config != null && _config.neural_custom_encoder_path != null &&
+              _config.neural_custom_decoder_path != null)
+          {
+            encoderPath = _config.neural_custom_encoder_path;
+            decoderPath = _config.neural_custom_decoder_path;
+            useExternalModels = true;
+            _modelSource = "external";
+
+            // Set parameters based on version
+            if ("v1".equals(_currentModelVersion))
+            {
+              _maxSequenceLength = 150;
+              _modelAccuracy = "~65%";
+              Log.d(TAG, "Loading v1 models from external files (150-len)");
+            }
+            else if ("v3".equals(_currentModelVersion))
+            {
+              _maxSequenceLength = 250;
+              _modelAccuracy = "72.1%";
+              Log.d(TAG, "Loading v3 models from external files (250-len)");
+            }
+            else // custom
+            {
+              _maxSequenceLength = 250; // Default, user can override
+              _modelAccuracy = "Unknown";
+              Log.d(TAG, "Loading custom models from external files");
+            }
+          }
+          else
+          {
+            // Fallback to builtin v2 if external paths not set
+            Log.w(TAG, String.format("External model %s selected but no files configured - falling back to v2",
+              _currentModelVersion));
+            android.widget.Toast.makeText(_context,
+              "External model files not configured. Using builtin v2 model.",
+              android.widget.Toast.LENGTH_LONG).show();
+
+            encoderPath = "models/swipe_encoder_android.onnx";
+            decoderPath = "models/swipe_decoder_android.onnx";
+            _maxSequenceLength = 250;
+            _modelAccuracy = "80.6%";
+            _modelSource = "fallback";
+            _currentModelVersion = "v2";
+          }
+          break;
+
         default:
-          encoderPath = "models/swipe_model_character_quant.onnx";
-          decoderPath = "models/swipe_decoder_character_quant.onnx";
-          _maxSequenceLength = 150;
-          Log.d(TAG, "Loading v1 models (150-len, legacy)");
+          // Unknown version - fallback to v2
+          Log.w(TAG, "Unknown model version: " + _currentModelVersion + " - falling back to v2");
+          encoderPath = "models/swipe_encoder_android.onnx";
+          decoderPath = "models/swipe_decoder_android.onnx";
+          _maxSequenceLength = 250;
+          _modelAccuracy = "80.6%";
+          _modelSource = "fallback";
+          _currentModelVersion = "v2";
           break;
       }
 
@@ -849,17 +906,93 @@ public class OnnxSwipePredictor
   {
     return _isModelLoaded;
   }
+
+  /**
+   * Get current model information for display
+   */
+  public String getModelInfo()
+  {
+    return String.format("%s (%s, %d-len, %s)",
+      _currentModelVersion,
+      _modelSource,
+      _maxSequenceLength,
+      _modelAccuracy);
+  }
+
+  /**
+   * Get current model version
+   */
+  public String getModelVersion()
+  {
+    return _currentModelVersion;
+  }
+
+  /**
+   * Get model accuracy
+   */
+  public String getModelAccuracy()
+  {
+    return _modelAccuracy;
+  }
+
+  /**
+   * Get model source (builtin/external/fallback)
+   */
+  public String getModelSource()
+  {
+    return _modelSource;
+  }
+
+  /**
+   * Get max sequence length
+   */
+  public int getMaxSequenceLength()
+  {
+    return _maxSequenceLength;
+  }
   
   
+  /**
+   * Load model from assets or external file path
+   * Supports both builtin models (assets) and user-provided external files
+   */
   private byte[] loadModelFromAssets(String modelPath)
   {
     try
     {
-      // Log.d(TAG, "Loading ONNX model: " + modelPath);
-      InputStream inputStream = _context.getAssets().open(modelPath);
+      InputStream inputStream;
+
+      // Check if it's an external file path (starts with /)
+      if (modelPath.startsWith("/"))
+      {
+        Log.d(TAG, "Loading external ONNX model: " + modelPath);
+        java.io.File file = new java.io.File(modelPath);
+
+        if (!file.exists())
+        {
+          Log.e(TAG, "External model file does not exist: " + modelPath);
+          return null;
+        }
+
+        if (!file.canRead())
+        {
+          Log.e(TAG, "Cannot read external model file: " + modelPath);
+          return null;
+        }
+
+        inputStream = new java.io.FileInputStream(file);
+        Log.d(TAG, "External model file size: " + file.length() + " bytes");
+      }
+      else
+      {
+        // Load from assets
+        // Log.d(TAG, "Loading ONNX model from assets: " + modelPath);
+        inputStream = _context.getAssets().open(modelPath);
+      }
+
       int available = inputStream.available();
       // Log.d(TAG, "Model file size: " + available + " bytes");
-      
+
       byte[] modelData = new byte[available];
       int totalRead = 0;
       while (totalRead < available) {
@@ -868,13 +1001,13 @@ public class OnnxSwipePredictor
         totalRead += read;
       }
       inputStream.close();
-      
+
       // Log.d(TAG, "Successfully loaded " + totalRead + " bytes from " + modelPath);
       return modelData;
     }
     catch (IOException e)
     {
-      Log.e(TAG, "Failed to load model from assets: " + modelPath, e);
+      Log.e(TAG, "Failed to load model: " + modelPath, e);
       return null;
     }
   }

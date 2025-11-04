@@ -130,8 +130,12 @@ public class SwipeTrajectoryProcessor
         processedKeys.add((int)key[0]);
       }
 
-      Log.d(TAG, String.format("🔄 Resampled trajectory: %d → %d points (mode: %s)",
-        normalizedCoords.size(), maxSequenceLength, _resamplingMode));
+      // Only log if actually resampling occurred (performance: avoid string formatting when not needed)
+      if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG))
+      {
+        Log.d(TAG, String.format("🔄 Resampled trajectory: %d → %d points (mode: %s)",
+          normalizedCoords.size(), maxSequenceLength, _resamplingMode));
+      }
     }
 
     // 5. Pad or truncate to maxSequenceLength

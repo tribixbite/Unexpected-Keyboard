@@ -18,27 +18,28 @@ Generated version info:  ()
 > Task :dataBindingMergeDependencyArtifactsDebug
 > Task :generateDebugResValues FROM-CACHE
 > Task :generateDebugResources
+> Task :mergeDebugResources
 > Task :packageDebugResources
 > Task :mapDebugSourceSetPaths
-> Task :createDebugCompatibleScreenManifests
-> Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
 > Task :checkDebugAarMetadata
+> Task :createDebugCompatibleScreenManifests
+> Task :parseDebugLocalResources
+> Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
-> Task :mergeDebugResources
 > Task :compileDebugShaders NO-SOURCE
-> Task :dataBindingGenBaseClassesDebug
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :compressDebugAssets FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
+> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -55,67 +56,49 @@ Generated version info:  ()
 
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
-> Task :compressDebugAssets
 > Task :processDebugResources
-> Task :compileDebugKotlin
-
-> Task :compileDebugJavaWithJavac
-Java compiler version 21 has deprecated support for compiling with source/target version 8.
-Try one of the following options:
-    1. [Recommended] Use Java toolchain with a lower language version
-    2. Set a higher source/target version
-    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
-For more details on how to configure these settings, see https://developer.android.com/build/jdks.
-To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
-warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target value 8 is obsolete and will be removed in a future release
-warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-3 warnings
-
+> Task :compileDebugKotlin FROM-CACHE
+> Task :compileDebugJavaWithJavac FROM-CACHE
 > Task :processDebugJavaRes
+> Task :dexBuilderDebug FROM-CACHE
+> Task :mergeProjectDexDebug FROM-CACHE
 > Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
 > Task :packageDebug
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 20s
-39 actionable tasks: 33 executed, 6 from cache
-id.com/build/jdks.
-To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
-warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target value 8 is obsolete and will be removed in a future release
-warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-3 warnings
+BUILD SUCCESSFUL in 4m 18s
+39 actionable tasks: 27 executed, 12 from cache
+vm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
+
+> Task :processDebugResources
+> Task :compileDebugKotlin FROM-CACHE
+> Task :compileDebugJavaWithJavac FROM-CACHE
 > Task :processDebugJavaRes
+> Task :dexBuilderDebug FROM-CACHE
+> Task :mergeProjectDexDebug FROM-CACHE
 > Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
 > Task :packageDebug
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 20s
-39 actionable tasks: 33 executed, 6 from cache
+BUILD SUCCESSFUL in 4m 18s
+39 actionable tasks: 27 executed, 12 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 88M Nov  4 00:24 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 58M Nov  4 06:01 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /sdcard/unexpected/ for updates...
 APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 88M Nov  4 00:24 /sdcard/unexpected/debug-kb.apk
+-rw-rw----. 1 u0_a315 media_rw 58M Nov  4 06:01 /sdcard/unexpected/debug-kb.apk
 
 Step 6: Attempting ADB connection and installation...
 No ADB device connected, attempting wireless connection...
@@ -124,7 +107,6 @@ Scanning ports 30000-50000 for ADB...
 Trying 192.168.1.247:5555... no response
 Trying 192.168.1.247:34981... no response
 Trying 192.168.1.247:35951... no response
-Trying 192.168.1.247:38285... no response
 No working ADB port found on 192.168.1.247
 ❌ Could not establish ADB connection
 Opening APK for installation...
