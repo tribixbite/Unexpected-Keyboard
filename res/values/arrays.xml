@@ -128,4 +128,28 @@
     <item>edit_distance</item>
     <item>positional</item>
   </string-array>
+
+  <!-- Neural Model Version -->
+  <string-array name="pref_neural_model_version_entries">
+    <item>@string/pref_neural_model_v1</item>
+    <item>@string/pref_neural_model_v2</item>
+    <item>@string/pref_neural_model_v3</item>
+  </string-array>
+  <string-array name="pref_neural_model_version_values">
+    <item>v1</item>
+    <item>v2</item>
+    <item>v3</item>
+  </string-array>
+
+  <!-- Neural Resampling Mode -->
+  <string-array name="pref_neural_resampling_mode_entries">
+    <item>@string/pref_neural_resampling_truncate</item>
+    <item>@string/pref_neural_resampling_discard</item>
+    <item>@string/pref_neural_resampling_merge</item>
+  </string-array>
+  <string-array name="pref_neural_resampling_mode_values">
+    <item>truncate</item>
+    <item>discard</item>
+    <item>merge</item>
+  </string-array>
 </resources>

@@ -160,4 +160,20 @@
     <string name="pref_clipboard_history_enabled_summary">Remember recently copied text</string>
     <string name="pref_clipboard_history_limit_title">History limit</string>
     <string name="pref_clipboard_history_limit_summary">Maximum number of clipboard entries to keep (%s)</string>
+
+    <!-- Neural Model Settings -->
+    <string name="pref_neural_model_version_title">Neural Model Version</string>
+    <string name="pref_neural_model_version_summary">Select which ONNX model to use (%s)</string>
+    <string name="pref_neural_model_v1">v1 (150-len, legacy)</string>
+    <string name="pref_neural_model_v2">v2 (250-len, 80.6%% accuracy)</string>
+    <string name="pref_neural_model_v3">v3 (250-len, 72.1%% accuracy)</string>
+    <string name="pref_neural_user_max_seq_length_title">Custom Max Sequence Length</string>
+    <string name="pref_neural_user_max_seq_length_summary">Override model default (0=auto, current: %s)</string>
+    <string name="pref_neural_resampling_mode_title">Trajectory Resampling</string>
+    <string name="pref_neural_resampling_mode_summary">How to handle swipes exceeding max length (%s)</string>
+    <string name="pref_neural_resampling_truncate">Truncate - Keep first N points</string>
+    <string name="pref_neural_resampling_discard">Discard - Drop points uniformly</string>
+    <string name="pref_neural_resampling_merge">Merge - Average neighboring points</string>
+    <string name="pref_neural_resampling_info_title">📖 About Resampling</string>
+    <string name="pref_neural_resampling_info_summary">When swipes exceed max length:\n\n• Truncate: Keeps first N points (fastest, may lose end)\n• Discard: Drops points evenly, preserves start/end\n• Merge: Averages neighbors, preserves shape\n\nRecommended: Discard for best accuracy</string>
 </resources>

@@ -32,12 +32,16 @@ public class OnnxSwipePredictor
   // Singleton instance for session persistence (CRITICAL OPTIMIZATION)
   private static OnnxSwipePredictor _singletonInstance;
   private static final Object _singletonLock = new Object();
-  
+
   // Model configuration matching web demo exactly
-  private static final int MAX_SEQUENCE_LENGTH = 150; // Must match web demo training
+  private static final int DEFAULT_MAX_SEQUENCE_LENGTH = 150; // Default for v1 models
   private static final int TRAJECTORY_FEATURES = 6; // x, y, vx, vy, ax, ay
   private static final float NORMALIZED_WIDTH = 1.0f;
   private static final float NORMALIZED_HEIGHT = 1.0f;
+
+  // Model version configuration
+  private String _currentModelVersion = "v1"; // "v1", "v2", "v3"
+  private int _maxSequenceLength = DEFAULT_MAX_SEQUENCE_LENGTH; // Dynamic based on model version
   
   // Beam search parameters - standard defaults that respect playground settings
   // MOBILE-OPTIMIZED: Lower defaults for better performance on mobile devices
@@ -142,9 +146,34 @@ public class OnnxSwipePredictor
     {
       // Log.d(TAG, "Loading ONNX models...");
       // logDebug("🔄 Loading ONNX transformer models...");
-      
+
+      // Determine model paths based on version
+      String encoderPath, decoderPath;
+      switch (_currentModelVersion)
+      {
+        case "v2":
+          encoderPath = "latest_onnx/28/swipe_encoder_android.onnx";
+          decoderPath = "latest_onnx/28/swipe_decoder_android.onnx";
+          _maxSequenceLength = 250;
+          Log.d(TAG, "Loading v2 models (epoch 28, 250-len, accuracy: 80.6%)");
+          break;
+        case "v3":
+          encoderPath = "latest_onnx/106/swipe_encoder_android.onnx";
+          decoderPath = "latest_onnx/106/swipe_decoder_android.onnx";
+          _maxSequenceLength = 250;
+          Log.d(TAG, "Loading v3 models (epoch 106, 250-len, accuracy: 72.1%)");
+          break;
+        case "v1":
+        default:
+          encoderPath = "models/swipe_model_character_quant.onnx";
+          decoderPath = "models/swipe_decoder_character_quant.onnx";
+          _maxSequenceLength = 150;
+          Log.d(TAG, "Loading v1 models (150-len, legacy)");
+          break;
+      }
+
       // Load encoder model (using correct name from web demo)
-      byte[] encoderModelData = loadModelFromAssets("models/swipe_model_character_quant.onnx");
+      byte[] encoderModelData = loadModelFromAssets(encoderPath);
       if (encoderModelData != null)
       {
         // logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
@@ -153,20 +182,20 @@ public class OnnxSwipePredictor
         // logDebug("✅ Encoder session created successfully");
         // logDebug("   Inputs: " + _encoderSession.getInputNames());
         // logDebug("   Outputs: " + _encoderSession.getOutputNames());
-        
+
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_encoderSession, "Encoder");
-        
-        // Log.d(TAG, "Encoder model loaded successfully");
+
+        Log.d(TAG, String.format("Encoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
       }
       else
       {
         // logDebug("❌ Failed to load encoder model data");
-        Log.e(TAG, "Failed to load encoder model data");
+        Log.e(TAG, "Failed to load encoder model data from: " + encoderPath);
       }
-      
+
       // Load decoder model (using correct name from web demo)
-      byte[] decoderModelData = loadModelFromAssets("models/swipe_decoder_character_quant.onnx");
+      byte[] decoderModelData = loadModelFromAssets(decoderPath);
       if (decoderModelData != null)
       {
         // logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
@@ -175,16 +204,16 @@ public class OnnxSwipePredictor
         // logDebug("✅ Decoder session created successfully");
         // logDebug("   Inputs: " + _decoderSession.getInputNames());
         // logDebug("   Outputs: " + _decoderSession.getOutputNames());
-        
+
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_decoderSession, "Decoder");
-        
-        // Log.d(TAG, "Decoder model loaded successfully");
+
+        Log.d(TAG, String.format("Decoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
       }
       else
       {
         // logDebug("❌ Failed to load decoder model data");
-        Log.e(TAG, "Failed to load decoder model data");
+        Log.e(TAG, "Failed to load decoder model data from: " + decoderPath);
       }
       
       // Load tokenizer configuration
@@ -263,8 +292,8 @@ public class OnnxSwipePredictor
       
       // Extract trajectory features with timing
       long preprocessStartTime = System.nanoTime();
-      SwipeTrajectoryProcessor.TrajectoryFeatures features = 
-        _trajectoryProcessor.extractFeatures(input, MAX_SEQUENCE_LENGTH);
+      SwipeTrajectoryProcessor.TrajectoryFeatures features =
+        _trajectoryProcessor.extractFeatures(input, _maxSequenceLength);
       long preprocessTime = System.nanoTime() - preprocessStartTime;
       // logDebug("⏱️ Feature extraction: " + (preprocessTime / 1_000_000.0) + "ms");
       
@@ -732,18 +761,44 @@ public class OnnxSwipePredictor
   public void setConfig(Config config)
   {
     _config = config;
-    
+
     // Update neural parameters from config
     if (config != null)
     {
       _beamWidth = config.neural_beam_width != 0 ? config.neural_beam_width : DEFAULT_BEAM_WIDTH;
       _maxLength = config.neural_max_length != 0 ? config.neural_max_length : DEFAULT_MAX_LENGTH;
-      _confidenceThreshold = config.neural_confidence_threshold != 0 ? 
+      _confidenceThreshold = config.neural_confidence_threshold != 0 ?
         config.neural_confidence_threshold : DEFAULT_CONFIDENCE_THRESHOLD;
+
+      // Handle model version changes (requires reinitialization)
+      String newModelVersion = config.neural_model_version != null ? config.neural_model_version : "v1";
+      if (!newModelVersion.equals(_currentModelVersion))
+      {
+        Log.d(TAG, String.format("Model version changed: %s → %s (requires reinitialization)",
+          _currentModelVersion, newModelVersion));
+        _currentModelVersion = newModelVersion;
+        _isInitialized = false;
+        _isModelLoaded = false;
+        // Will reinitialize on next prediction
+      }
+
+      // Update max sequence length override
+      if (config.neural_user_max_seq_length > 0)
+      {
+        _maxSequenceLength = config.neural_user_max_seq_length;
+        Log.d(TAG, String.format("Using user-defined max sequence length: %d", _maxSequenceLength));
+      }
+
+      // Update resampling mode in trajectory processor
+      if (_trajectoryProcessor != null && config.neural_resampling_mode != null)
+      {
+        SwipeResampler.ResamplingMode mode = SwipeResampler.parseMode(config.neural_resampling_mode);
+        _trajectoryProcessor.setResamplingMode(mode);
+      }
     }
-    
-    // Log.d(TAG, String.format("Neural config: beam_width=%d, max_length=%d, threshold=%.3f",
-      // _beamWidth, _maxLength, _confidenceThreshold));
+
+    // Log.d(TAG, String.format("Neural config: beam_width=%d, max_length=%d, threshold=%.3f, model=%s, seq_len=%d",
+      // _beamWidth, _maxLength, _confidenceThreshold, _currentModelVersion, _maxSequenceLength));
   }
   
   /**
@@ -824,15 +879,15 @@ public class OnnxSwipePredictor
     }
   }
   
-  private OnnxTensor createTrajectoryTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features) 
+  private OnnxTensor createTrajectoryTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
     // Create direct buffer as recommended by ONNX docs
-    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH * TRAJECTORY_FEATURES * 4); // 4 bytes per float
+    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(_maxSequenceLength * TRAJECTORY_FEATURES * 4); // 4 bytes per float
     byteBuffer.order(java.nio.ByteOrder.nativeOrder());
     java.nio.FloatBuffer buffer = byteBuffer.asFloatBuffer();
-    
-    for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
+
+    for (int i = 0; i < _maxSequenceLength; i++)
     {
       if (i < features.normalizedPoints.size())
       {
@@ -855,9 +910,9 @@ public class OnnxSwipePredictor
         buffer.put(0.0f); // ay
       }
     }
-    
+
     buffer.rewind();
-    long[] shape = {1, MAX_SEQUENCE_LENGTH, TRAJECTORY_FEATURES};
+    long[] shape = {1, _maxSequenceLength, TRAJECTORY_FEATURES};
     return OnnxTensor.createTensor(_ortEnvironment, buffer, shape);
   }
   
@@ -865,12 +920,12 @@ public class OnnxSwipePredictor
     throws OrtException
   {
     // Create direct buffer as recommended by ONNX docs
-    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH * 8); // 8 bytes per long
+    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(_maxSequenceLength * 8); // 8 bytes per long
     byteBuffer.order(java.nio.ByteOrder.nativeOrder());
     java.nio.LongBuffer buffer = byteBuffer.asLongBuffer();
 
     // CRITICAL FIX: nearestKeys is now List<Integer> (token indices), not List<Character>!
-    for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
+    for (int i = 0; i < _maxSequenceLength; i++)
     {
       if (i < features.nearestKeys.size())
       {
@@ -884,18 +939,18 @@ public class OnnxSwipePredictor
     }
 
     buffer.rewind();
-    long[] shape = {1, MAX_SEQUENCE_LENGTH};
+    long[] shape = {1, _maxSequenceLength};
     return OnnxTensor.createTensor(_ortEnvironment, buffer, shape);
   }
   
   private OnnxTensor createSourceMaskTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
-    // Create 2D boolean array for proper tensor shape [1, MAX_SEQUENCE_LENGTH]
-    boolean[][] maskData = new boolean[1][MAX_SEQUENCE_LENGTH];
-    
+    // Create 2D boolean array for proper tensor shape [1, _maxSequenceLength]
+    boolean[][] maskData = new boolean[1][_maxSequenceLength];
+
     // Mask padded positions (true = masked/padded, false = valid)
-    for (int i = 0; i < MAX_SEQUENCE_LENGTH; i++)
+    for (int i = 0; i < _maxSequenceLength; i++)
     {
       maskData[0][i] = (i >= features.actualLength);
     }
@@ -989,7 +1044,7 @@ public class OnnxSwipePredictor
           }
 
           // Create src_mask (all zeros = all valid) - matches CLI line 179
-          boolean[][] srcMask = new boolean[1][MAX_SEQUENCE_LENGTH];
+          boolean[][] srcMask = new boolean[1][_maxSequenceLength];
           Arrays.fill(srcMask[0], false); // All valid
 
           // Create tensors - matching CLI lines 180-181

@@ -16,12 +16,15 @@ import java.util.List;
 public class SwipeTrajectoryProcessor
 {
   private static final String TAG = "SwipeTrajectoryProcessor";
-  private static final int MAX_TRAJECTORY_POINTS = 150;
+  private static final int MAX_TRAJECTORY_POINTS = 150; // Default for v1 models
 
   // Keyboard layout for nearest key detection
   private java.util.Map<Character, PointF> _keyPositions;
   public float _keyboardWidth = 1.0f;
   public float _keyboardHeight = 1.0f;
+
+  // Resampling configuration
+  private SwipeResampler.ResamplingMode _resamplingMode = SwipeResampler.ResamplingMode.TRUNCATE;
 
   public SwipeTrajectoryProcessor()
   {
@@ -40,6 +43,15 @@ public class SwipeTrajectoryProcessor
 
     // Log.d(TAG, String.format("Keyboard layout set: %.0fx%.0f with %d keys",
       // width, height, keyPositions != null ? keyPositions.size() : 0));
+  }
+
+  /**
+   * Set resampling mode for trajectory processing
+   */
+  public void setResamplingMode(SwipeResampler.ResamplingMode mode)
+  {
+    _resamplingMode = mode;
+    Log.d(TAG, "Resampling mode set to: " + mode);
   }
 
   /**
@@ -72,25 +84,75 @@ public class SwipeTrajectoryProcessor
     // CRITICAL: Returns integer token indices, not characters!
     List<Integer> nearestKeys = detectNearestKeys(filteredCoords);
 
-    // 4. Pad or truncate to MAX_TRAJECTORY_POINTS
-    List<PointF> finalCoords = padOrTruncate(normalizedCoords, MAX_TRAJECTORY_POINTS);
+    // 4. Apply resampling if sequence exceeds maxSequenceLength
+    List<PointF> processedCoords = normalizedCoords;
+    List<Integer> processedKeys = nearestKeys;
 
-    // 5. FIX #36 (from cleverkeys): Pad nearest_keys by repeating last key
+    if (normalizedCoords.size() > maxSequenceLength && _resamplingMode != SwipeResampler.ResamplingMode.TRUNCATE)
+    {
+      // Convert to 2D array for resampling (only x,y for coordinate resampling)
+      float[][] coordArray = new float[normalizedCoords.size()][2];
+      for (int i = 0; i < normalizedCoords.size(); i++)
+      {
+        coordArray[i][0] = normalizedCoords.get(i).x;
+        coordArray[i][1] = normalizedCoords.get(i).y;
+      }
+
+      // Resample coordinates
+      float[][] resampledArray = SwipeResampler.resample(coordArray, maxSequenceLength, _resamplingMode);
+
+      // Convert back to PointF list
+      processedCoords = new ArrayList<>();
+      for (float[] point : resampledArray)
+      {
+        processedCoords.add(new PointF(point[0], point[1]));
+      }
+
+      // For nearest keys, use DISCARD mode (makes most sense for discrete values)
+      int[][] keyArray = new int[nearestKeys.size()][1];
+      for (int i = 0; i < nearestKeys.size(); i++)
+      {
+        keyArray[i][0] = nearestKeys.get(i);
+      }
+
+      // Convert to float for resampling, then back
+      float[][] keyFloatArray = new float[keyArray.length][1];
+      for (int i = 0; i < keyArray.length; i++)
+      {
+        keyFloatArray[i][0] = (float)keyArray[i][0];
+      }
+
+      float[][] resampledKeys = SwipeResampler.resample(keyFloatArray, maxSequenceLength, SwipeResampler.ResamplingMode.DISCARD);
+
+      processedKeys = new ArrayList<>();
+      for (float[] key : resampledKeys)
+      {
+        processedKeys.add((int)key[0]);
+      }
+
+      Log.d(TAG, String.format("🔄 Resampled trajectory: %d → %d points (mode: %s)",
+        normalizedCoords.size(), maxSequenceLength, _resamplingMode));
+    }
+
+    // 5. Pad or truncate to maxSequenceLength
+    List<PointF> finalCoords = padOrTruncate(processedCoords, maxSequenceLength);
+
+    // 6. FIX #36 (from cleverkeys): Pad nearest_keys by repeating last key
     // Model was trained expecting last key to repeat, NOT PAD tokens
     List<Integer> finalNearestKeys;
-    if (nearestKeys.size() >= MAX_TRAJECTORY_POINTS) {
-      finalNearestKeys = nearestKeys.subList(0, MAX_TRAJECTORY_POINTS);
+    if (processedKeys.size() >= maxSequenceLength) {
+      finalNearestKeys = processedKeys.subList(0, maxSequenceLength);
     } else {
-      finalNearestKeys = new ArrayList<>(nearestKeys);
-      int lastKey = nearestKeys.isEmpty() ? 0 : nearestKeys.get(nearestKeys.size() - 1);
-      while (finalNearestKeys.size() < MAX_TRAJECTORY_POINTS) {
+      finalNearestKeys = new ArrayList<>(processedKeys);
+      int lastKey = processedKeys.isEmpty() ? 0 : processedKeys.get(processedKeys.size() - 1);
+      while (finalNearestKeys.size() < maxSequenceLength) {
         finalNearestKeys.add(lastKey);
       }
     }
 
-    // 6. Calculate velocities and accelerations on normalized coords (simple deltas)
+    // 7. Calculate velocities and accelerations on normalized coords (simple deltas)
     List<TrajectoryPoint> points = new ArrayList<>();
-    for (int i = 0; i < MAX_TRAJECTORY_POINTS; i++)
+    for (int i = 0; i < maxSequenceLength; i++)
     {
       TrajectoryPoint point = new TrajectoryPoint();
       point.x = finalCoords.get(i).x;
@@ -132,10 +194,10 @@ public class SwipeTrajectoryProcessor
     TrajectoryFeatures features = new TrajectoryFeatures();
     features.normalizedPoints = points;
     features.nearestKeys = finalNearestKeys;  // Now integer token indices!
-    features.actualLength = Math.min(filteredCoords.size(), MAX_TRAJECTORY_POINTS);
+    features.actualLength = Math.min(filteredCoords.size(), maxSequenceLength);
 
-    // Log.d(TAG, String.format("✅ Extracted features: %d points, %d keys (both padded to 150)",
-      // points.size(), finalNearestKeys.size()));
+    // Log.d(TAG, String.format("✅ Extracted features: %d points, %d keys (both padded to %d)",
+      // points.size(), finalNearestKeys.size(), maxSequenceLength));
 
     return features;
   }

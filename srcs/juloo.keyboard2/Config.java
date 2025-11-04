@@ -117,6 +117,11 @@ public final class Config
   public boolean swipe_show_raw_beam_predictions; // Show raw beam outputs (labeled) at end of suggestions
   public boolean termux_mode_enabled; // Termux-compatible prediction insertion
 
+  // Neural model versioning and resampling (v1.34+)
+  public String neural_model_version; // "v1" (150-len), "v2" (250-len epoch 28), "v3" (250-len epoch 106)
+  public int neural_user_max_seq_length; // User-defined max sequence length (default: model default)
+  public String neural_resampling_mode; // "truncate", "discard", "merge"
+
   // Dynamically set
   public boolean shouldOfferVoiceTyping;
   public String actionLabel; // Might be 'null'
@@ -286,6 +291,11 @@ public final class Config
     swipe_debug_detailed_logging = _prefs.getBoolean("swipe_debug_detailed_logging", false);
     swipe_debug_show_raw_output = _prefs.getBoolean("swipe_debug_show_raw_output", true);
     swipe_show_raw_beam_predictions = _prefs.getBoolean("swipe_show_raw_beam_predictions", false);
+
+    // Neural model versioning and resampling (v1.34+)
+    neural_model_version = _prefs.getString("neural_model_version", "v1"); // Default to v1 (150-len, current model)
+    neural_user_max_seq_length = safeGetInt(_prefs, "neural_user_max_seq_length", 0); // 0 = use model default
+    neural_resampling_mode = _prefs.getString("neural_resampling_mode", "truncate"); // Default to current behavior
 
     float screen_width_dp = dm.widthPixels / dm.density;
     wide_screen = screen_width_dp >= WIDE_DEVICE_THRESHOLD;
