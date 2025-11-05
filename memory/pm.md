@@ -9,13 +9,38 @@
 
 ## 🔥 Current Status (2025-11-05)
 
-**Latest Version**: v1.32.279 (329)
-**Build Status**: ✅ BUILD SUCCESSFUL - Critical Trajectory Preprocessing Fixes
+**Latest Version**: v1.32.280 (330)
+**Build Status**: ✅ BUILD SUCCESSFUL - Corrected Trajectory Preprocessing (FINAL FIX)
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.279)
+### Recent Work (v1.32.280)
 
-**CRITICAL FIX: Trajectory preprocessing mismatches causing poor accuracy**
+**CORRECTED FIX: Calculate features BEFORE padding (matching training exactly)**
+- **User Correction**: "that value is supposed to be determined by user input / settings"
+  - `MAX_TRAJECTORY_POINTS = 250` constant was UNUSED - dynamic value comes from `OnnxSwipePredictor._maxSequenceLength`
+  - "who changed the padding last? it used to be correct, is it 0f or 0 for feature padding"
+  - "shouldnt nn be getting 6 features" - YES: (x, y, vx, vy, ax, ay)
+- **Real Issue Found**: Order of operations was wrong!
+  - **Training**: Calculate velocities on actual trajectory → then pad feature array with zeros
+  - **Production v1.32.279**: Pad coordinates → then calculate velocities (creates velocity spikes!)
+  - Example: Last point (0.5, 0.3) → padded (0.0, 0.0) → velocity = (-0.5, -0.3) NOT (0, 0)!
+- **Correct Fix**:
+  1. Calculate features (x, y, vx, vy, ax, ay) on ACTUAL trajectory (before padding)
+  2. Truncate or pad the FEATURE ARRAY with zeros: `[0, 0, 0, 0, 0, 0]`
+  3. Truncate or pad nearest_keys with PAD tokens (0)
+- **Code Changes**:
+  - Moved velocity/acceleration calculation BEFORE truncation/padding
+  - Removed `padOrTruncate()` method (was creating velocity spikes)
+  - Removed unused `MAX_TRAJECTORY_POINTS` constant
+  - Pad TrajectoryPoint objects with all zeros instead of coordinates
+- **Files Modified**:
+  - srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java (lines 141-204)
+  - build.gradle (versionCode 330, versionName 1.32.280)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.279) - INCORRECT FIX
+
+**CRITICAL FIX: Trajectory preprocessing mismatches causing poor accuracy** (PARTIALLY WRONG)
 - **Root Cause Identified**: Two major data format mismatches between training and production
   1. **Sequence Length Mismatch**:
      - Training (v2 model): Expects 250-point sequences

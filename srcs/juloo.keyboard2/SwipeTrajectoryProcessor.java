@@ -16,7 +16,6 @@ import java.util.List;
 public class SwipeTrajectoryProcessor
 {
   private static final String TAG = "SwipeTrajectoryProcessor";
-  private static final int MAX_TRAJECTORY_POINTS = 250; // v2 model expects 250 points (not 150)
 
   // Keyboard layout for nearest key detection
   private java.util.Map<Character, PointF> _keyPositions;
@@ -138,29 +137,17 @@ public class SwipeTrajectoryProcessor
       }
     }
 
-    // 5. Pad or truncate to maxSequenceLength
-    List<PointF> finalCoords = padOrTruncate(processedCoords, maxSequenceLength);
-
-    // 6. Pad nearest_keys with PAD token (0) to match training
-    // Training code: nearest_keys = nearest_keys + [self.tokenizer.pad_idx] * pad_len
-    List<Integer> finalNearestKeys;
-    if (processedKeys.size() >= maxSequenceLength) {
-      finalNearestKeys = processedKeys.subList(0, maxSequenceLength);
-    } else {
-      finalNearestKeys = new ArrayList<>(processedKeys);
-      // Pad with 0 (PAD token index) to match training
-      while (finalNearestKeys.size() < maxSequenceLength) {
-        finalNearestKeys.add(0);
-      }
-    }
-
-    // 7. Calculate velocities and accelerations on normalized coords (simple deltas)
+    // 5. Calculate velocities and accelerations on ACTUAL trajectory (before padding)
+    // CRITICAL: Training calculates features first, then pads feature array with zeros
+    // If we pad coordinates first, we get velocity spikes at padding boundary!
+    int actualLength = processedCoords.size();
     List<TrajectoryPoint> points = new ArrayList<>();
-    for (int i = 0; i < maxSequenceLength; i++)
+
+    for (int i = 0; i < actualLength; i++)
     {
       TrajectoryPoint point = new TrajectoryPoint();
-      point.x = finalCoords.get(i).x;
-      point.y = finalCoords.get(i).y;
+      point.x = processedCoords.get(i).x;
+      point.y = processedCoords.get(i).y;
 
       if (i == 0) {
         point.vx = 0.0f;
@@ -182,6 +169,37 @@ public class SwipeTrajectoryProcessor
       }
 
       points.add(point);
+    }
+
+    // 6. Truncate or pad features to maxSequenceLength
+    // Training: traj_features = np.pad(traj_features, ((0, pad_len), (0, 0)), mode="constant")
+    if (points.size() > maxSequenceLength) {
+      // Truncate
+      points = new ArrayList<>(points.subList(0, maxSequenceLength));
+    } else {
+      // Pad with zeros [0, 0, 0, 0, 0, 0]
+      while (points.size() < maxSequenceLength) {
+        TrajectoryPoint zeroPadding = new TrajectoryPoint();
+        zeroPadding.x = 0.0f;
+        zeroPadding.y = 0.0f;
+        zeroPadding.vx = 0.0f;
+        zeroPadding.vy = 0.0f;
+        zeroPadding.ax = 0.0f;
+        zeroPadding.ay = 0.0f;
+        points.add(zeroPadding);
+      }
+    }
+
+    // 7. Truncate or pad nearest_keys with PAD token (0)
+    // Training: nearest_keys = nearest_keys + [self.tokenizer.pad_idx] * pad_len
+    List<Integer> finalNearestKeys;
+    if (processedKeys.size() >= maxSequenceLength) {
+      finalNearestKeys = processedKeys.subList(0, maxSequenceLength);
+    } else {
+      finalNearestKeys = new ArrayList<>(processedKeys);
+      while (finalNearestKeys.size() < maxSequenceLength) {
+        finalNearestKeys.add(0);  // PAD token
+      }
     }
 
     // Verification logging (first 3 points)
@@ -253,27 +271,6 @@ public class SwipeTrajectoryProcessor
       normalized.add(new PointF(x, y));
     }
     return normalized;
-  }
-
-  /**
-   * Pad or truncate coordinates to exact length
-   * CRITICAL: Pads with ZEROS to match training (not last point!)
-   */
-  private List<PointF> padOrTruncate(List<PointF> coordinates, int targetLength)
-  {
-    List<PointF> result = new ArrayList<>();
-
-    // Add existing coordinates (up to targetLength)
-    for (int i = 0; i < Math.min(coordinates.size(), targetLength); i++) {
-      result.add(new PointF(coordinates.get(i).x, coordinates.get(i).y));
-    }
-
-    // Pad with ZEROS (matches training: mode="constant" with default constant_values=0)
-    while (result.size() < targetLength) {
-      result.add(new PointF(0.0f, 0.0f));
-    }
-
-    return result;
   }
 
   /**
