@@ -1198,9 +1198,12 @@ public class OnnxSwipePredictor
             tgtMask[0][i] = (i >= beam.tokens.size()); // Mark padded positions
           }
 
-          // Create src_mask (all zeros = all valid) - matches CLI line 179
+          // Create src_mask - mask padded positions in source trajectory
+          // Training: src_mask[i, seq_len:] = True (mark padded positions as masked)
           boolean[][] srcMask = new boolean[1][_maxSequenceLength];
-          Arrays.fill(srcMask[0], false); // All valid
+          for (int i = 0; i < _maxSequenceLength; i++) {
+            srcMask[0][i] = (i >= features.actualLength);  // true = masked/padded
+          }
 
           // Create tensors - matching CLI lines 180-181
           long tensorStart = System.nanoTime();

@@ -9,11 +9,42 @@
 
 ## 🔥 Current Status (2025-11-05)
 
-**Latest Version**: v1.32.280 (330)
-**Build Status**: ✅ BUILD SUCCESSFUL - Corrected Trajectory Preprocessing (FINAL FIX)
+**Latest Version**: v1.32.281 (331)
+**Build Status**: ✅ BUILD SUCCESSFUL - Fixed src_mask in beam search
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.280)
+### Recent Work (v1.32.281)
+
+**CRITICAL: Fixed src_mask in beam search decoder**
+- **User Question**: "i think pad tokens are supposed to be <PAD> or something and are you including the proper src mask"
+- **Investigation**:
+  - PAD token is `<pad>` at index 0 - CORRECT ✓
+  - Encoder src_mask was correct (line 1110): `maskData[0][i] = (i >= features.actualLength)`
+  - **Beam search src_mask was WRONG** (line 1203): `Arrays.fill(srcMask[0], false)` - all valid!
+- **Training Code** (train.py.txt:617-624):
+  ```python
+  src_mask = torch.zeros(..., dtype=torch.bool)  # Start with False (valid)
+  for i, seq_len in enumerate(seq_lens):
+      src_mask[i, seq_len:] = True  # Mark padded positions as True (masked)
+  ```
+- **Production Bug**:
+  - Encoder: Correctly masks padded positions using `features.actualLength`
+  - Beam search decoder: Was marking ALL positions as valid (no masking!)
+  - This lets the model attend to padding zeros, degrading predictions
+- **Fix**: OnnxSwipePredictor.java:1201-1206
+  ```java
+  // OLD: Arrays.fill(srcMask[0], false); // All valid - WRONG!
+  // NEW:
+  for (int i = 0; i < _maxSequenceLength; i++) {
+    srcMask[0][i] = (i >= features.actualLength);  // Mask padded positions
+  }
+  ```
+- **Files Modified**:
+  - srcs/juloo.keyboard2/OnnxSwipePredictor.java (beam search src_mask)
+  - build.gradle (versionCode 331, versionName 1.32.281)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.280)
 
 **CORRECTED FIX: Calculate features BEFORE padding (matching training exactly)**
 - **User Correction**: "that value is supposed to be determined by user input / settings"
