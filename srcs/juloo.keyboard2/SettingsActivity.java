@@ -503,121 +503,121 @@ public class SettingsActivity extends PreferenceActivity
   
   private void installUpdate()
   {
-    // Check multiple possible APK locations
-    File[] possibleLocations = new File[] {
-      new File("/sdcard/unexpected/debug-kb.apk"),
-      new File("/storage/emulated/0/unexpected/debug-kb.apk"),
-      new File("/sdcard/Download/juloo.keyboard2.debug.apk"),
-      new File("/storage/emulated/0/Download/juloo.keyboard2.debug.apk"),
-      new File(android.os.Environment.getExternalStoragePublicDirectory(
-               android.os.Environment.DIRECTORY_DOWNLOADS), "juloo.keyboard2.debug.apk"),
-      // Also check the build output location if accessible
-      new File("/data/data/com.termux/files/home/git/Unexpected-Keyboard/build/outputs/apk/debug/juloo.keyboard2.debug.apk")
-    };
-    
-    File updateApk = null;
-    for (File location : possibleLocations)
+    // Scan /sdcard/unexpected/ for APK files
+    File unexpectedDir = new File("/sdcard/unexpected");
+
+    if (!unexpectedDir.exists() || !unexpectedDir.isDirectory())
     {
-      if (location.exists() && location.canRead())
-      {
-        updateApk = location;
-        break;
-      }
-    }
-    
-    if (updateApk == null)
-    {
-      // Show helpful dialog about where to place APK
-      android.app.AlertDialog.Builder helpBuilder = new android.app.AlertDialog.Builder(this);
-      helpBuilder.setTitle("No Update APK Found");
-      helpBuilder.setMessage("Please place the APK file in one of these locations:\n\n" +
-                           "• /sdcard/Download/juloo.keyboard2.debug.apk\n" +
-                           "• /sdcard/unexpected/debug-kb.apk\n\n" +
-                           "Or build it with:\n" +
-                           "./gradlew assembleDebug");
-      helpBuilder.setPositiveButton("OK", null);
-      helpBuilder.show();
+      Toast.makeText(this, "❌ Directory not found: /sdcard/unexpected/\n\nBuild an APK first!", Toast.LENGTH_LONG).show();
       return;
     }
-    
-    final File apkFile = updateApk;
-    
-    // Show dialog with working installation methods
+
+    // Get all APK files in the directory
+    File[] apkFiles = unexpectedDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".apk"));
+
+    if (apkFiles == null || apkFiles.length == 0)
+    {
+      Toast.makeText(this, "❌ No APK files found in /sdcard/unexpected/\n\nBuild an APK first!", Toast.LENGTH_LONG).show();
+      return;
+    }
+
+    // Sort by modification time (newest first)
+    java.util.Arrays.sort(apkFiles, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+
+    // Create list of APK names with sizes and dates
+    final String[] apkNames = new String[apkFiles.length];
+    for (int i = 0; i < apkFiles.length; i++)
+    {
+      File apk = apkFiles[i];
+      long sizeMB = apk.length() / (1024 * 1024);
+      String date = new java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.US)
+                        .format(new java.util.Date(apk.lastModified()));
+      apkNames[i] = String.format("%s\n%d MB • %s", apk.getName(), sizeMB, date);
+    }
+
+    final File[] finalApkFiles = apkFiles;
+
+    // Show selection dialog
     android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-    builder.setTitle("Install Update");
-    builder.setMessage("APK found at:\n" + apkFile.getName() + "\n\nSize: " + 
-                       (apkFile.length() / 1024) + " KB");
-    
-    // Option 1: Use Android's package installer (most reliable)
-    builder.setPositiveButton("Install Now", (dialog, which) -> {
+    builder.setTitle("📦 Select APK to Install");
+    builder.setItems(apkNames, (dialog, which) -> {
+      File selectedApk = finalApkFiles[which];
+      installApkFile(selectedApk);
+    });
+    builder.setNegativeButton("Cancel", null);
+    builder.show();
+  }
+
+  private void installApkFile(File apkFile)
+  {
+    try
+    {
+      // Check if we can request package installs
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+      {
+        if (!getPackageManager().canRequestPackageInstalls())
+        {
+          // Request permission to install packages
+          Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+          intent.setData(Uri.parse("package:" + getPackageName()));
+          Toast.makeText(this, "⚠️ Please allow installing from this source", Toast.LENGTH_LONG).show();
+          startActivity(intent);
+          return;
+        }
+      }
+
+      // Use ACTION_VIEW with content URI for Android 7.0+
+      Intent intent = new Intent(Intent.ACTION_VIEW);
+      Uri apkUri = Uri.fromFile(apkFile);
+
+      // For Android 7.0+, we should use FileProvider, but for simplicity
+      // and because this is /sdcard/unexpected/ which should be world-readable,
+      // we'll try file:// URI first
+      intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+      Log.d("SettingsActivity", "Installing APK: " + apkFile.getAbsolutePath());
+      startActivity(intent);
+    }
+    catch (Exception e)
+    {
+      Log.e("SettingsActivity", "Failed to install APK", e);
+
+      // If the above fails, show alternative options
+      showInstallAlternatives(apkFile, e);
+    }
+  }
+
+  private void showInstallAlternatives(File apkFile, Exception error)
+  {
+    android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+    builder.setTitle("⚠️ Installation Failed");
+    builder.setMessage("Could not open installer:\n" + error.getMessage() + "\n\nChoose an alternative:");
+
+    // Option 1: Use file picker to select and install
+    builder.setPositiveButton("📂 Open with File Manager", (dialog, which) -> {
       try
       {
-        // Use FileProvider for Android 7.0+ (API 24+)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N)
-        {
-          // Try to use content URI with FileProvider
-          Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-          intent.setDataAndType(android.net.Uri.fromFile(apkFile), 
-                               "application/vnd.android.package-archive");
-          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-          startActivity(intent);
-        }
-        else
-        {
-          // For older Android versions
-          Intent intent = new Intent(Intent.ACTION_VIEW);
-          intent.setDataAndType(android.net.Uri.fromFile(apkFile),
-                               "application/vnd.android.package-archive");
-          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-          startActivity(intent);
-        }
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.fromFile(apkFile.getParentFile()), "resource/folder");
+        startActivity(intent);
       }
-      catch (Exception e)
+      catch (Exception e2)
       {
-        // If direct install fails, try alternative method
-        try
-        {
-          Intent intent = new Intent(Intent.ACTION_VIEW);
-          intent.setDataAndType(android.net.Uri.parse("file://" + apkFile.getAbsolutePath()),
-                               "application/vnd.android.package-archive");
-          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-          startActivity(intent);
-        }
-        catch (Exception e2)
-        {
-          Toast.makeText(this, "Install failed: " + e2.getMessage() + 
-                        "\n\nTry installing manually from file manager", Toast.LENGTH_LONG).show();
-        }
+        Toast.makeText(this, "Could not open file manager: " + e2.getMessage(), Toast.LENGTH_LONG).show();
       }
     });
-    
-    // Option 2: Copy to clipboard for manual install
-    builder.setNeutralButton("Copy Path", (dialog, which) -> {
-      android.content.ClipboardManager clipboard = 
+
+    // Option 2: Copy path to clipboard
+    builder.setNeutralButton("📋 Copy Path", (dialog, which) -> {
+      android.content.ClipboardManager clipboard =
         (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
-      android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", 
-                                                                           apkFile.getAbsolutePath());
+      android.content.ClipData clip = android.content.ClipData.newPlainText("APK Path", apkFile.getAbsolutePath());
       clipboard.setPrimaryClip(clip);
-      Toast.makeText(this, "Path copied!\nUse a file manager to navigate to:\n" + 
-                    apkFile.getParent(), Toast.LENGTH_LONG).show();
+      Toast.makeText(this, "✅ Path copied: " + apkFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
     });
-    
-    // Option 3: Share APK to other apps
-    builder.setNegativeButton("Share", (dialog, which) -> {
-      try
-      {
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType("application/vnd.android.package-archive");
-        shareIntent.putExtra(Intent.EXTRA_STREAM, android.net.Uri.fromFile(apkFile));
-        shareIntent.putExtra(Intent.EXTRA_TEXT, "Install Unexpected Keyboard update");
-        startActivity(Intent.createChooser(shareIntent, "Share APK via"));
-      }
-      catch (Exception e)
-      {
-        Toast.makeText(this, "Share failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-      }
-    });
-    
+
+    builder.setNegativeButton("Cancel", null);
     builder.show();
   }
   

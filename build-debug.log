@@ -20,11 +20,13 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
 > Task :parseDebugLocalResources
+> Task :mergeDebugResources
 > Task :processDebugMainManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
@@ -32,13 +34,11 @@ Generated version info:  ()
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :mergeDebugResources
-> Task :checkDebugDuplicateClasses
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeDebugJniLibFolders
+> Task :checkDebugDuplicateClasses
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -84,9 +84,9 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 58s
+BUILD SUCCESSFUL in 55s
 39 actionable tasks: 31 executed, 8 from cache
-id.com/build/jdks.
+droid.com/build/jdks.
 To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
 warning: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
@@ -105,24 +105,27 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 58s
+BUILD SUCCESSFUL in 55s
 39 actionable tasks: 31 executed, 8 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 58M Nov  4 18:14 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 58M Nov  4 19:54 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /sdcard/unexpected/ for updates...
-APK copied to: /sdcard/unexpected/debug-kb.apk
--rw-rw----. 1 u0_a315 media_rw 58M Nov  4 18:14 /sdcard/unexpected/debug-kb.apk
+APK copied to: /sdcard/unexpected/unexpected-keyboard-v1.32.277-327.apk
+-rw-rw----. 1 u0_a315 media_rw 58M Nov  4 19:54 /sdcard/unexpected/unexpected-keyboard-v1.32.277-327.apk
+Also copied to: /sdcard/unexpected/debug-kb.apk (latest)
 
 Step 6: Attempting ADB connection and installation...
 No ADB device connected, attempting wireless connection...
 Scanning for ADB on host: 192.168.1.247
 Scanning ports 30000-50000 for ADB...
 Trying 192.168.1.247:5555... no response
-Trying 192.168.1.247:36311... no response
+Trying 192.168.1.247:35627... no response
+Trying 192.168.1.247:36747... no response
+Trying 192.168.1.247:44319... no response
 No working ADB port found on 192.168.1.247
 ❌ Could not establish ADB connection
 Opening APK for installation...
