@@ -16,7 +16,7 @@ import java.util.List;
 public class SwipeTrajectoryProcessor
 {
   private static final String TAG = "SwipeTrajectoryProcessor";
-  private static final int MAX_TRAJECTORY_POINTS = 150; // Default for v1 models
+  private static final int MAX_TRAJECTORY_POINTS = 250; // v2 model expects 250 points (not 150)
 
   // Keyboard layout for nearest key detection
   private java.util.Map<Character, PointF> _keyPositions;
@@ -141,16 +141,16 @@ public class SwipeTrajectoryProcessor
     // 5. Pad or truncate to maxSequenceLength
     List<PointF> finalCoords = padOrTruncate(processedCoords, maxSequenceLength);
 
-    // 6. FIX #36 (from cleverkeys): Pad nearest_keys by repeating last key
-    // Model was trained expecting last key to repeat, NOT PAD tokens
+    // 6. Pad nearest_keys with PAD token (0) to match training
+    // Training code: nearest_keys = nearest_keys + [self.tokenizer.pad_idx] * pad_len
     List<Integer> finalNearestKeys;
     if (processedKeys.size() >= maxSequenceLength) {
       finalNearestKeys = processedKeys.subList(0, maxSequenceLength);
     } else {
       finalNearestKeys = new ArrayList<>(processedKeys);
-      int lastKey = processedKeys.isEmpty() ? 0 : processedKeys.get(processedKeys.size() - 1);
+      // Pad with 0 (PAD token index) to match training
       while (finalNearestKeys.size() < maxSequenceLength) {
-        finalNearestKeys.add(lastKey);
+        finalNearestKeys.add(0);
       }
     }
 
@@ -257,6 +257,7 @@ public class SwipeTrajectoryProcessor
 
   /**
    * Pad or truncate coordinates to exact length
+   * CRITICAL: Pads with ZEROS to match training (not last point!)
    */
   private List<PointF> padOrTruncate(List<PointF> coordinates, int targetLength)
   {
@@ -267,12 +268,9 @@ public class SwipeTrajectoryProcessor
       result.add(new PointF(coordinates.get(i).x, coordinates.get(i).y));
     }
 
-    // Pad with last coordinate if needed
-    if (result.size() < targetLength) {
-      PointF lastPoint = result.isEmpty() ? new PointF(0, 0) : result.get(result.size() - 1);
-      while (result.size() < targetLength) {
-        result.add(new PointF(lastPoint.x, lastPoint.y));
-      }
+    // Pad with ZEROS (matches training: mode="constant" with default constant_values=0)
+    while (result.size() < targetLength) {
+      result.add(new PointF(0.0f, 0.0f));
     }
 
     return result;

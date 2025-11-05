@@ -7,13 +7,60 @@
 
 ---
 
-## 🔥 Current Status (2025-11-02)
+## 🔥 Current Status (2025-11-05)
 
-**Latest Version**: v1.32.265 (315)
-**Build Status**: ✅ BUILD SUCCESSFUL - Complete Contraction System
+**Latest Version**: v1.32.279 (329)
+**Build Status**: ✅ BUILD SUCCESSFUL - Critical Trajectory Preprocessing Fixes
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.264-265)
+### Recent Work (v1.32.279)
+
+**CRITICAL FIX: Trajectory preprocessing mismatches causing poor accuracy**
+- **Root Cause Identified**: Two major data format mismatches between training and production
+  1. **Sequence Length Mismatch**:
+     - Training (v2 model): Expects 250-point sequences
+     - Production: Hardcoded to 150 points (v1 model size)
+     - Impact: Trajectories being incorrectly truncated/padded
+  2. **Padding Method Mismatch**:
+     - Training: Pads trajectory features with **zeros** (`mode="constant"`)
+     - Production: Pads by **repeating last point** (incorrect!)
+     - Training: Pads nearest_keys with **PAD token (0)**
+     - Production: Pads by **repeating last key** (incorrect!)
+- **Investigation Process**:
+  1. Analyzed user logs showing poor predictions (e.g., "lavrov" → "lab", "mint" → "port")
+  2. Initially misanalyzed gesture tracker data (wrong data source)
+  3. User corrected: "you are totally off mark. nn expects the duplicates. see training file"
+  4. Read actual training code (docs/nn_train/train.py.txt) line-by-line
+  5. Found dataset example (swipe_data_20250821_235946.json) showing raw 47-point traces
+  6. Discovered training pads to 250 points with zeros, not by repeating last point
+  7. Found production hardcoded to 150 points with last-point repetition
+- **Fixes Applied**:
+  1. **SwipeTrajectoryProcessor.java:19**: Changed `MAX_TRAJECTORY_POINTS = 150` → `250`
+  2. **SwipeTrajectoryProcessor.java:272-274**: Changed padding from repeating last point to zeros
+     ```java
+     // OLD: result.add(new PointF(lastPoint.x, lastPoint.y));
+     // NEW: result.add(new PointF(0.0f, 0.0f));
+     ```
+  3. **SwipeTrajectoryProcessor.java:151-154**: Changed nearest_keys padding from repeating last key to PAD token (0)
+     ```java
+     // OLD: finalNearestKeys.add(lastKey);
+     // NEW: finalNearestKeys.add(0);  // PAD token
+     ```
+- **Expected Impact**: Should dramatically improve swipe accuracy since input format now matches training
+- **Training Format (confirmed from train.py.txt:232-243)**:
+  ```python
+  # Pad or truncate to max_seq_len (250 for v2)
+  if seq_len < self.max_seq_len:
+      pad_len = self.max_seq_len - seq_len
+      traj_features = np.pad(traj_features, ((0, pad_len), (0, 0)), mode="constant")  # ZEROS!
+      nearest_keys = nearest_keys + [self.tokenizer.pad_idx] * pad_len  # PAD tokens!
+  ```
+- **Files Modified**:
+  - srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java (3 critical fixes)
+  - build.gradle (versionCode 329, versionName 1.32.279)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.264-265)
 
 **COMPLETE CONTRACTION COVERAGE: Added 9 missing contractions + comprehensive documentation**
 - **Problem**: Missing several common contractions from coverage
