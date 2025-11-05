@@ -571,6 +571,12 @@ public class Keyboard2 extends InputMethodService
     super.setInputView(v);
     updateSoftInputWindowLayoutParams();
     v.requestApplyInsets();
+
+    // Retry clipboard listener registration when keyboard gains focus
+    // This handles Android 10+ permission restrictions
+    ClipboardHistoryService service = ClipboardHistoryService.get_service(this);
+    if (service != null)
+      service.attemptToRegisterListener();
   }
 
 

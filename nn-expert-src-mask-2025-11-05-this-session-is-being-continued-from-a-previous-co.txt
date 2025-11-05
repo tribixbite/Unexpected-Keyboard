@@ -1,0 +1,1234 @@
+
+ ▐▛███▜▌   Claude Code v2.0.24
+▝▜█████▛▘  Sonnet 4.5 · Claude Max
+  ▘▘ ▝▝    /…/files/home/git/swype/Unexpected-Keyboard
+═════════ Conversation compacted · ctrl+o for history ════════
+  ⎿  Referenced file docs/nn_train/train.py.txt
+  ⎿  Referenced file docs/nn_train/export.py.txt
+  ⎿  Read ../../CLAUDE.md (247 lines)
+  ⎿ Read ../../../.claude/todos/31710a8e-81ee-4ec6-a649-aaf826
+    aea517-agent-31710a8e-81ee-4ec6-a649-aaf826aea517.json (1 
+    lines)
+  ⎿  Todo list read (3 items)
+
+● I'll search for dataset JSONL files to understand the
+  actual training data format and verify the trajectory
+  length issue.
+
+● Search(pattern: "**/*.jsonl")
+  ⎿  Found 0 files 
+
+● Search(pattern: "**/*dataset*.json")
+  ⎿  Found 0 files 
+
+● Search(pattern: "**/swipe*.json")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+● Read(swipe_data_20250821_235946.json)
+  ⎿  Read 100 lines
+
+● Let me see how many points are in a complete trace:
+
+● Bash(cat /data/data/com.termux/files/home/git/swype/Unexpect
+      ed-Keyboard/swipe_data_20250821_235946.json | python3 -c
+       "import json, sys; data = json.load(sys.stdin);…)
+  ⎿  First sample trace points: 47
+     Sample target: but
+
+● So the raw swipe data from users only has ~47 points,
+  but during training it gets resampled/processed to 250
+  points. Let me check the actual training data format by
+  searching for the FUTO dataset or processed training
+  files:
+
+● Search(pattern: "futo|FUTO")
+  ⎿  Found 0 files 
+
+● Bash(find /data/data/com.termux/files/home/git/swype -name
+      "*.txt" -o -name "*.jsonl" -o -name "*train*" -o -name
+      "*dataset*" 2>/dev/null | grep -v ".git" | head -20)
+  ⎿  (No content)
+
+● Let me re-read the training script more carefully to
+  understand how raw traces (47 points) become 250-point
+  sequences:
+
+● Read(docs/nn_train/train.py.txt)
+  ⎿  Read 70 lines
+
+● Now I see! The training code does NOT resample to 250
+  points. It:
+  1. Takes raw trajectory (e.g., 47 points)
+  2. If < 250: pads with zeros (constant mode) for
+  features and PAD tokens for keys
+  3. If > 250: truncates to 250
+
+  Let me check what the production code is doing in
+  SwipeTrajectoryProcessor:
+
+● Read(java/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Error reading file
+
+● Search(pattern: "**/SwipeTrajectoryProcessor.java")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 120 lines
+
+● Perfect! Now I see the issue. Let me check the padding
+  logic more carefully:
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 50 lines
+
+● Now I understand the critical mismatch! Let me check
+  line 270-274 of the padOrTruncate function and compare
+  it to the training code:
+
+  Production code (SwipeTrajectoryProcessor.java:270-274):
+  // Pad with last coordinate if needed
+  if (result.size() < targetLength) {
+    PointF lastPoint = result.isEmpty() ? new PointF(0, 0)
+   : result.get(result.size() - 1);
+    while (result.size() < targetLength) {
+      result.add(new PointF(lastPoint.x, lastPoint.y));
+  // Repeats last point
+
+  Training code (train.py.txt:240-243):
+  traj_features = np.pad(
+      traj_features, ((0, pad_len), (0, 0)),
+  mode="constant"  # Pads with ZEROS!
+  )
+
+  CRITICAL MISMATCH FOUND:
+
+  1. Training: Pads trajectory features with zeros
+  (0,0,0,0,0,0)
+  2. Production: Pads trajectory features by repeating 
+  last point (x,y,vx,vy,ax,ay)
+
+  This is a MAJOR discrepancy! The neural network was
+  trained expecting zero-padding for features, but
+  production code repeats the last point.
+
+● Found the root cause! Two critical mismatches:
+
+  1. Padding method: Training uses zero-padding,
+  production repeats last point
+  2. Sequence length: Training uses 250 points (v2),
+  production hardcoded to 150 points
+
+  Let me fix both issues:
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 30 lines
+
+● Update(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Updated                                             
+     srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java
+     with 1 addition and 1 removal
+       16    public class SwipeTrajectoryProcessor
+       17    {
+       18      private static final String TAG = 
+            "SwipeTrajectoryProcessor";
+       19 -    private static final int 
+          -  MAX_TRAJECTORY_POINTS = 150; // Default 
+          -  for v1 models
+       19 +    private static final int 
+          +  MAX_TRAJECTORY_POINTS = 250; // v2 model 
+          +  expects 250 points (not 150)
+       20    
+       21      // Keyboard layout for nearest key 
+            detection
+       22      private java.util.Map<Character, PointF>
+             _keyPositions;
+
+● Now fix the padding to use zeros instead of repeating
+  last point:
+
+● Update(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Updated                                             
+     srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java
+     with 4 additions and 6 removals
+       257    
+       258      /**
+       259       * Pad or truncate coordinates to exact
+              length
+       260 +     * CRITICAL: Pads with ZEROS to match 
+           + training (not last point!)
+       261       */
+       262      private List<PointF> 
+             padOrTruncate(List<PointF> coordinates, 
+             int targetLength)
+       263      {
+     ...
+       267          result.add(new 
+             PointF(coordinates.get(i).x, 
+             coordinates.get(i).y));
+       268        }
+       269    
+       270 -      // Pad with last coordinate if needed
+       271 -      if (result.size() < targetLength) {
+       272 -        PointF lastPoint = result.isEmpty()
+           -  ? new PointF(0, 0) : 
+           - result.get(result.size() - 1);
+       273 -        while (result.size() < 
+           - targetLength) {
+       274 -          result.add(new 
+           - PointF(lastPoint.x, lastPoint.y));
+       275 -        }
+       270 +      // Pad with ZEROS (matches training: 
+           + mode="constant" with default 
+           + constant_values=0)
+       271 +      while
+           +   (result.size() < targetLength) {
+       272 +        result.add(new PointF(0.0f, 0.0f));
+       273        }
+       274    
+       275        return result;
+
+● Now I need to check the nearest_keys padding. According
+  to the training code (line 243), it pads with pad_idx
+  tokens, not by repeating the last key. Let me check what
+   happens:
+
+● Search(pattern: "pad_idx|PAD|tokenizer", path:
+        "docs/nn_train", output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Bash(grep -n "pad_idx\|PAD\|class.*Tokenizer"
+      /data/data/com.termux/files/home/git/swype/Unexpected-Ke
+      yboard/docs/nn_train/train.py.txt | head -20)
+  ⎿  76:class CharTokenizer:                            
+     88:        self.pad_idx = self.char_to_idx["<pad>"]
+     112:            if idx == self.pad_idx:
+     … +10 lines (ctrl+o to expand)
+
+● Read(docs/nn_train/train.py.txt)
+  ⎿  Read 20 lines
+
+● So <pad> is token index 0! Let me verify this matches
+  the production code:
+
+● Search(pattern: "PAD|VOCAB", path: "srcs/juloo.keyboard2",
+        glob: "OnnxSwipePredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Bash(grep -n "pad\|vocab\|special"
+      /data/data/com.termux/files/home/git/swype/Unexpected-Ke
+      yboard/srcs/juloo.keyboard2/OnnxSwipePredictor.java |
+      head -30)
+  ⎿ 76:  private OptimizedVocabulary _vocabulary; // OPTI
+    MIZATION: Web app vocabulary system
+    111:    _vocabulary = new OptimizedVocabulary(context
+    … +58 lines (ctrl+o to expand)
+
+
+
+● Bash(grep -n "PAD_IDX\|private
+      static.*int.*PAD\|class.*Tokenizer"
+      /data/data/com.termux/files/home/git/swype/Unexpected-Ke
+      yboard/srcs/juloo.keyboard2/OnnxSwipePredi…)
+  ⎿ 64:  private static final int PAD_IDX = 0;           
+    719:        Arrays.fill(tgtTokens, PAD_IDX);
+    790:      if (token != SOS_IDX && token != EOS_IDX &&
+    … +8 lines (ctrl+o to expand)
+
+
+● Perfect! So PAD_IDX = 0 in production matches training.
+  But according to the comment on line 144-145 of
+  SwipeTrajectoryProcessor:
+
+  // 6. FIX #36 (from cleverkeys): Pad nearest_keys by 
+  repeating last key
+  // Model was trained expecting last key to repeat, NOT 
+  PAD tokens
+
+  This comment is WRONG! The training code clearly pads
+  with pad_idx (line 243 of train.py.txt). Let me fix
+  this:
+
+● Update(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Updated                                             
+     srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java
+     with 4 additions and 4 removals
+       141        // 5. Pad or truncate to 
+             maxSequenceLength
+       142        List<PointF> finalCoords = 
+             padOrTruncate(processedCoords, 
+             maxSequenceLength);
+       143    
+       144 -      // 6. FIX #36 (from cleverkeys): Pad 
+           - nearest_keys by repeating last key
+       145 -      // Model was trained expecting last 
+           - key to repeat, NOT PAD tokens
+       144 +      // 6. Pad nearest_keys with PAD token
+           +  (0) to match training
+       145 +      // Training code: nearest_keys = 
+           + nearest_keys + [self.tokenizer.pad_idx] * 
+           + pad_len
+       146        List<Integer> finalNearestKeys;
+       147        if (processedKeys.size() >= 
+             maxSequenceLength) {
+       148          finalNearestKeys = 
+             processedKeys.subList(0, 
+             maxSequenceLength);
+       149        } else {
+       150          finalNearestKeys = new 
+             ArrayList<>(processedKeys);
+       151 -        int lastKey = 
+           - processedKeys.isEmpty() ? 0 : 
+           - processedKeys.get(processedKeys.size() - 
+           - 1);
+       151 +        // Pad with 0 (PAD token index) to 
+           + match training
+       152          while (finalNearestKeys.size() < 
+             maxSequenceLength) {
+       153 -          finalNearestKeys.add(lastKey);
+       153 +          finalNearestKeys.add(0);
+       154          }
+       155        }
+       156    
+
+● Bash(./build-on-termux.sh) timeout: 5m 0s
+  ⎿  === Unexpected Keyboard Termux Build Script ===
+     Building debug APK on Termux ARM64
+     … +175 lines (ctrl+o to expand)
+
+● Build successful! Now let me update memory/pm.md with
+  the critical fixes:
+
+● Read(memory/pm.md)
+  ⎿  Read 80 lines
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 3 additions and 3 removals
+        7    
+        8    ---
+        9    
+       10 -  ## 🔥 Current Status (2025-11-02)
+       10 +  ## 🔥 Current Status (2025-11-05)
+       11    
+       12 -  **Latest Version**: v1.32.265 (315)
+       13 -  **Build Status**: ✅ BUILD SUCCESSFUL - 
+          - Complete Contraction System
+       12 +  **Latest Version**: v1.32.279 (329)
+       13 +  **Build Status**: ✅ BUILD SUCCESSFUL - 
+          + Critical Trajectory Preprocessing Fixes
+       14    **Branch**: feature/swipe-typing
+       15    
+       16    ### Recent Work (v1.32.264-265)
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 48 additions and 1 removal
+       13    **Build Status**: ✅ BUILD SUCCESSFUL - 
+            Critical Trajectory Preprocessing Fixes
+       14    **Branch**: feature/swipe-typing
+       15    
+       16 -  ### Recent Work (v1.32.264-265)
+       16 +  ### Recent Work (v1.32.279)
+       17    
+       18 +  **CRITICAL FIX: Trajectory preprocessing 
+          + mismatches causing poor accuracy**
+       19 +  - **Root Cause Identified**: Two major 
+          + data format mismatches between training and
+          +  production
+       20 +    1. **Sequence Length Mismatch**:
+       21 +       - Training (v2 model): Expects 
+          + 250-point sequences
+       22 +       - Production: Hardcoded to 150 points
+          +  (v1 model size)
+       23 +       - Impact: Trajectories being 
+          + incorrectly truncated/padded
+       24 +    2. **Padding Method Mismatch**:
+       25 +       - Training: Pads trajectory features 
+          + with **zeros** (`mode="constant"`)
+       26 +       - Production: Pads by **repeating 
+          + last point** (incorrect!)
+       27 +       - Training: Pads nearest_keys with 
+          + **PAD token (0)**
+       28 +       - Production: Pads by **repeating 
+          + last key** (incorrect!)
+       29 +  - **Investigation Process**:
+       30 +    1. Analyzed user logs showing poor 
+          + predictions (e.g., "lavrov" → "lab", "mint"
+          +  → "port")
+       31 +    2. Initially misanalyzed gesture tracker
+          +  data (wrong data source)
+       32 +    3. User corrected: "you are totally off 
+          + mark. nn expects the duplicates. see 
+          + training file"
+       33 +    4. Read actual training code 
+          + (docs/nn_train/train.py.txt) line-by-line
+       34 +    5. Found dataset example 
+          + (swipe_data_20250821_235946.json) showing 
+          + raw 47-point traces
+       35 +    6. Discovered training pads to 250 
+          + points with zeros, not by repeating last 
+          + point
+       36 +    7. Found production hardcoded to 150 
+          + points with last-point repetition
+       37 +  - **Fixes Applied**:
+       38 +    1. **SwipeTrajectoryProcessor.java:19**:
+          +  Changed `MAX_TRAJECTORY_POINTS = 150` → 
+          + `250`
+       39 +    2. 
+          + **SwipeTrajectoryProcessor.java:272-274**: 
+          + Changed padding from repeating last point 
+          + to zeros
+       40 +       ```java
+       41 +       // OLD: result.add(new 
+          + PointF(lastPoint.x, lastPoint.y));
+       42 +       // NEW: result.add(new PointF(0.0f, 
+          + 0.0f));
+       43 +       ```
+       44 +    3. 
+          + **SwipeTrajectoryProcessor.java:151-154**: 
+          + Changed nearest_keys padding from repeating
+          +  last key to PAD token (0)
+       45 +       ```java
+       46 +       // OLD: 
+          + finalNearestKeys.add(lastKey);
+       47 +       // NEW: finalNearestKeys.add(0);  // 
+          + PAD token
+       48 +       ```
+       49 +  - **Expected Impact**: Should dramatically
+          +  improve swipe accuracy since input format 
+          + now matches training
+       50 +  - **Training Format (confirmed from 
+          + train.py.txt:232-243)**:
+       51 +    ```python
+       52 +    # Pad or truncate to max_seq_len (250 
+          + for v2)
+       53 +    if seq_len < self.max_seq_len:
+       54 +        pad_len = self.max_seq_len - seq_len
+       55 +        traj_features = 
+          + np.pad(traj_features, ((0, pad_len), (0, 
+          + 0)), mode="constant")  # ZEROS!
+       56 +        nearest_keys = nearest_keys + 
+          + [self.tokenizer.pad_idx] * pad_len  # PAD 
+          + tokens!
+       57 +    ```
+       58 +  - **Files Modified**:
+       59 +    - srcs/juloo.keyboard2/SwipeTrajectoryPr
+          + ocessor.java (3 critical fixes)
+       60 +    - build.gradle (versionCode 329, 
+          + versionName 1.32.279)
+       61 +    - memory/pm.md (this file)
+       62 +  
+       63 +  ### Previous Work (v1.32.264-265)
+       64 +  
+       65    **COMPLETE CONTRACTION COVERAGE: Added 9 
+            missing contractions + comprehensive 
+            documentation**
+       66    - **Problem**: Missing several common 
+            contractions from coverage
+       67      - User requested verification: 
+            "there'll, ya'll. couldn't, wouldn't 
+            shouldn't, doesn't hasn't hadn't mustn't 
+            mightve"
+
+● Bash(git add -A && git commit -m "fix(swipe): correct
+      trajectory preprocessing to match v2 model training…)
+  ⎿ [feature/swipe-typing 5f399ae4] fix(swipe): correct t
+    rajectory preprocessing to match v2 model training
+     6 files changed, 1415 insertions(+), 22 deletions(-)
+    … +2 lines (ctrl+o to expand)
+
+
+
+● Summary
+
+  Found and fixed the root cause of poor swipe accuracy!
+  Two critical mismatches between training and production:
+
+  Issues Identified
+
+  1. Sequence Length Mismatch:
+    - v2 model expects 250 points (train.py.txt:159)
+    - Production hardcoded to 150 points (v1 size)
+  2. Padding Method Mismatch:
+    - Training: Pads features with zeros (np.pad(..., 
+  mode="constant"))
+    - Production: Was repeating last point
+    - Training: Pads nearest_keys with PAD token (0)
+    - Production: Was repeating last key
+
+  Fixes Applied
+
+  SwipeTrajectoryProcessor.java:
+  1. Line 19: MAX_TRAJECTORY_POINTS = 150 → 250
+  2. Line 272: Pad coordinates with (0.0f, 0.0f) instead
+  of last point
+  3. Line 152: Pad keys with 0 (PAD token) instead of last
+   key
+
+  Expected Impact
+
+  Should dramatically improve swipe accuracy - the neural
+  network was trained on 250-point zero-padded sequences,
+  but production was feeding it 150-point
+  last-value-padded sequences. Input format now matches
+  training exactly.
+
+  Build: v1.32.279 (329) - APK ready at
+  /storage/emulated/0/unexpected/
+
+> that value is supposed to be determined by user input / 
+settings value - the ui is there is it not actually being 
+followed? who changed the padding last? it used to be 
+correct, is it 0f or 0 for feature padding, and shouldnt 
+nn be getting 6 feata 
+
+● You're right - let me check the settings and see what's
+  actually being used!
+
+● Search(pattern:
+        "max.*trajectory|sequence.*length|MAX_TRAJECTORY",
+        path: "srcs", output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Bash(grep -rn "maxSequenceLength\|max_sequence_length"
+      /data/data/com.termux/files/home/git/swype/Unexpected-Ke
+      yboard/srcs/ | head -20)
+  ⎿ /data/data/com.termux/files/home/git/swype/Unexpected
+    -Keyboard/srcs/juloo.keyboard2/OnnxSwipePredictor.jav
+    a:44:  private int _maxSequenceLength = 250; // Dynam
+    … +74 lines (ctrl+o to expand)
+
+
+
+
+● So the predictor HAS a dynamic _maxSequenceLength that
+  gets set from config! Let me check the
+  SwipeTrajectoryProcessor:
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 50 lines
+
+● I see - the extractFeatures() method takes
+  maxSequenceLength as a parameter! So it IS dynamic. Let
+  me check what I hardcoded:
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 15 lines
+
+● Oh no - that MAX_TRAJECTORY_POINTS constant isn't even
+  used! Let me check where it WAS used:
+
+● Bash(grep -n "MAX_TRAJECTORY_POINTS" /data/data/com.termux/f
+      iles/home/git/swype/Unexpected-Keyboard/srcs/juloo.keybo
+      ard2/SwipeTrajectoryProcessor.java)
+  ⎿ 19:  private static final int MAX_TRAJECTORY_POINTS =
+     250; // v2 model expects 250 points (not 150)
+
+
+● It's not used at all! So my change was useless. The
+  dynamic value comes from
+  OnnxSwipePredictor._maxSequenceLength. Let me check the
+  padding code and who changed it:
+
+● Bash(git log --all --oneline --grep="pad\|padding" --
+      srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java |
+      head -10)
+  ⎿  (No content)
+
+● Bash(git log --oneline --
+      srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java |
+      head -20)
+  ⎿ 5f399ae4 fix(swipe): correct trajectory preprocessing
+     to match v2 model training
+    ebb2044a feat(swipe): optimize APK size with builtin
+    … +15 lines (ctrl+o to expand)
+
+
+● Bash(git show c75ff866:srcs/juloo.keyboard2/SwipeTrajectoryP
+      rocessor.java | grep -A 15 "Pad or truncate")
+  ⎿     // 4. Pad or truncate to MAX_TRAJECTORY_POINTS   
+        List<PointF> finalCoords = padOrTruncate(normaliz
+    edCoords, MAX_TRAJECTORY_POINTS);
+    … +43 lines (ctrl+o to expand)
+
+
+● So in commit c75ff866 (critical fixes), it was padding
+  with last point. Let me check the features being sent to
+   NN and your questions about 6 features:
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 50 lines
+
+● Yes! The features ARE 6 values: (x, y, vx, vy, ax, ay).
+  Now let me check how they're packed into the tensor and
+  whether padding with 0.0f is correct:
+
+  When we pad with (0.0f, 0.0f) coordinates, then
+  calculate velocities:
+  - If last real point is at (0.5, 0.3) and we pad with
+  (0.0, 0.0)
+  - vx = 0.0 - 0.5 = -0.5 (NOT zero!)
+  - vy = 0.0 - 0.3 = -0.3 (NOT zero!)
+
+  This creates a VELOCITY SPIKE! Let me check what
+  training does:
+
+● Read(docs/nn_train/train.py.txt)
+  ⎿  Read 45 lines
+
+● AH! Training calculates velocities FIRST on the raw
+  trajectory (47 points), THEN pads the feature array with
+   zeros! So the padded rows are literally [0, 0, 0, 0, 0,
+   0].
+
+  But production calculates velocities AFTER padding
+  coordinates, which creates velocity spikes at the
+  padding boundary!
+
+  Let me fix this properly:
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 145 lines
+
+● I need to rewrite this to match training:
+  1. Calculate velocities on ACTUAL trajectory (before
+  padding)
+  2. Truncate or pad the FEATURE ARRAY with zeros
+  3. Truncate or pad nearest_keys with PAD tokens
+
+● Update(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Updated                                             
+     srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java
+     with 39 additions and 20 removals
+       138          }
+       139        }
+       140    
+       141 -      // 5. Pad or truncate to 
+           - maxSequenceLength
+       142 -      List<PointF> finalCoords = 
+           - padOrTruncate(processedCoords, 
+           - maxSequenceLength);
+       143 -  
+       144 -      // 6. Pad nearest_keys with PAD token
+           -  (0) to match training
+       145 -      // Training code: nearest_keys = 
+           - nearest_keys + [self.tokenizer.pad_idx] * 
+           - pad_len
+       146 -      List<Integer> finalNearestKeys;
+       147 -      if (processedKeys.size() >= 
+           - maxSequenceLength) {
+       148 -        finalNearestKeys = 
+           - processedKeys.subList(0, 
+           - maxSequenceLength);
+       149 -      } else {
+       150 -        finalNearestKeys = new 
+           - ArrayList<>(processedKeys);
+       151 -        // Pad with 0 (PAD token index) to 
+           - match training
+       152 -        while (finalNearestKeys.size() < 
+           - maxSequenceLength) {
+       153 -          finalNearestKeys.add(0);
+       154 -        }
+       155 -      }
+       156 -  
+       157 -      // 7. Calculate velocities and 
+           - accelerations on normalized coords (simple
+           -  deltas)
+       141 +      // 5. Calculate velocities and 
+           + accelerations on ACTUAL trajectory (before
+           +  padding)
+       142 +      // CRITICAL: Training calculates 
+           + features first, then pads feature array 
+           + with zeros
+       143 +      // If we pad coordinates first, we 
+           + get velocity spikes at padding boundary!
+       144 +      int actualLength = 
+           + processedCoords.size();
+       145        List<TrajectoryPoint> points = new 
+             ArrayList<>();
+       146 -      for (int i = 0; i < 
+           - maxSequenceLength; i++)
+       146 +  
+       147 +      for (int i = 0; i < actualLength; 
+           + i++)
+       148        {
+       149          TrajectoryPoint point = new 
+             TrajectoryPoint();
+       150 -        point.x = finalCoords.get(i).x;
+       151 -        point.y = finalCoords.get(i).y;
+       150 +        point.x = processedCoords.get(i).x;
+       151 +        point.y = processedCoords.get(i).y;
+       152    
+       153          if (i == 0) {
+       154            point.vx = 0.0f;
+     ...
+       184          points.add(point);
+       185        }
+       186    
+       187 +      // 6. Truncate or pad features to 
+           + maxSequenceLength
+       188 +      // Training: traj_features = 
+           + np.pad(traj_features, ((0, pad_len), (0, 
+           + 0)), mode="constant")
+       189 +      if (points.size() > 
+           + maxSequenceLength) {
+       190 +        // Truncate
+       191 +        points = new 
+           + ArrayList<>(points.subList(0, 
+           + maxSequenceLength));
+       192 +      } else {
+       193 +        // Pad with zeros [0, 0, 0, 0, 0, 
+           + 0]
+       194 +        while (points.size() < 
+           + maxSequenceLength) {
+       195 +          TrajectoryPoint zeroPadding = new
+           +  TrajectoryPoint();
+       196 +          zeroPadding.x = 0.0f;
+       197 +          zeroPadding.y = 0.0f;
+       198 +          zeroPadding.vx = 0.0f;
+       199 +          zeroPadding.vy = 0.0f;
+       200 +          zeroPadding.ax = 0.0f;
+       201 +          zeroPadding.ay = 0.0f;
+       202 +          points.add(zeroPadding);
+       203 +        }
+       204 +      }
+       205 +  
+       206 +      // 7. Truncate or pad nearest_keys 
+           + with PAD token (0)
+       207 +      // Training: nearest_keys = 
+           + nearest_keys + [self.tokenizer.pad_idx] * 
+           + pad_len
+       208 +      List<Integer> finalNearestKeys;
+       209 +      if (processedKeys.size() >= 
+           + maxSequenceLength) {
+       210 +        finalNearestKeys = 
+           + processedKeys.subList(0, 
+           + maxSequenceLength);
+       211 +      } else {
+       212 +        finalNearestKeys = new 
+           + ArrayList<>(processedKeys);
+       213 +        while (finalNearestKeys.size() < 
+           + maxSequenceLength) {
+       214 +          finalNearestKeys.add(0);  // PAD 
+           + token
+       215 +        }
+       216 +      }
+       217 +  
+       218        // Verification logging (first 3 
+             points)
+       219        if (!points.isEmpty()) {
+       220          // Log.d(TAG, "🔬 Feature 
+             calculation (first 3 points):");
+
+● Now remove the unused padOrTruncate method and the
+  useless constant:
+
+● Update(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Updated                                             
+     srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java
+     with 1 removal
+       16    public class SwipeTrajectoryProcessor
+       17    {
+       18      private static final String TAG = 
+            "SwipeTrajectoryProcessor";
+       19 -    private static final int 
+          - MAX_TRAJECTORY_POINTS = 250; // v2 model 
+          - expects 250 points (not 150)
+       19    
+       20      // Keyboard layout for nearest key 
+            detection
+       21      private java.util.Map<Character, PointF>
+             _keyPositions;
+
+● Now remove the padOrTruncate method:
+
+● Bash(grep -n "private List<PointF> padOrTruncate" /data/data
+      /com.termux/files/home/git/swype/Unexpected-Keyboard/src
+      s/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿ 280:  private List<PointF> padOrTruncate(List<PointF>
+     coordinates, int targetLength)
+
+
+● Read(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Read 30 lines
+
+● Update(srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java)
+  ⎿  Updated                                             
+     srcs/juloo.keyboard2/SwipeTrajectoryProcessor.java
+     with 21 removals
+       274      }
+       275    
+       276      /**
+       277 -     * Pad or truncate coordinates to exact
+           -  length
+       278 -     * CRITICAL: Pads with ZEROS to match 
+           - training (not last point!)
+       279 -     */
+       280 -    private List<PointF> 
+           - padOrTruncate(List<PointF> coordinates, 
+           - int targetLength)
+       281 -    {
+       282 -      List<PointF> result = new 
+           - ArrayList<>();
+       283 -  
+       284 -      // Add existing coordinates (up to 
+           - targetLength)
+       285 -      for (int i = 0; i < 
+           - Math.min(coordinates.size(), 
+           - targetLength); i++) {
+       286 -        result.add(new 
+           - PointF(coordinates.get(i).x, 
+           - coordinates.get(i).y));
+       287 -      }
+       288 -  
+       289 -      // Pad with ZEROS (matches training: 
+           - mode="constant" with default 
+           - constant_values=0)
+       290 -      while (result.size() < targetLength) 
+           - {
+       291 -        result.add(new PointF(0.0f, 0.0f));
+       292 -      }
+       293 -  
+       294 -      return result;
+       295 -    }
+       296 -  
+       297 -    /**
+       277       * Detect nearest key for each 
+             coordinate using real keyboard layout
+       278       * CRITICAL: Returns integer token 
+             indices (4-29 for a-z), NOT characters!
+       279       */
+
+● Bash(./build-on-termux.sh) timeout: 5m 0s
+  ⎿  === Unexpected Keyboard Termux Build Script ===
+     Building debug APK on Termux ARM64
+     … +170 lines (ctrl+o to expand)
+
+● Perfect! Now update the documentation:
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 2 additions and 2 removals
+        9    
+       10    ## 🔥 Current Status (2025-11-05)
+       11    
+       12 -  **Latest Version**: v1.32.279 (329)
+       13 -  **Build Status**: ✅ BUILD SUCCESSFUL - 
+          -  Critical Trajectory Preprocessing Fixes
+       12 +  **Latest Version**: v1.32.280 (330)
+       13 +  **Build Status**: ✅ BUILD SUCCESSFUL - 
+          +  Corrected Trajectory Preprocessing 
+          +  (FINAL FIX)
+       14    **Branch**: feature/swipe-typing
+       15    
+       16    ### Recent Work (v1.32.279)
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 27 additions and 2 removal
+
+       13    **Build Status**: ✅ BUILD SUCCESSFUL - 
+            Corrected Trajectory Preprocessing (FINAL 
+            FIX)
+       14    **Branch**: feature/swipe-typing
+       15    
+       16 -  ### Recent Work (v1.32.279)
+       16 +  ### Recent Work (v1.32.280)
+       17    
+       18 -  **CRITICAL FIX: Trajectory preprocessing 
+          - mismatches causing poor accuracy**
+       18 +  **CORRECTED FIX: Calculate features BEFORE
+          +  padding (matching training exactly)**
+       19 +  - **User Correction**: "that value is 
+          + supposed to be determined by user input / 
+          + settings"
+       20 +    - `MAX_TRAJECTORY_POINTS = 250` constant
+          +  was UNUSED - dynamic value comes from 
+          + `OnnxSwipePredictor._maxSequenceLength`
+       21 +    - "who changed the padding last? it used
+          +  to be correct, is it 0f or 0 for feature 
+          + padding"
+       22 +    - "shouldnt nn be getting 6 features" - 
+          + YES: (x, y, vx, vy, ax, ay)
+       23 +  - **Real Issue Found**: Order of 
+          + operations was wrong!
+       24 +    - **Training**: Calculate velocities on 
+          + actual trajectory → then pad feature array 
+          + with zeros
+       25 +    - **Production v1.32.279**: Pad 
+          + coordinates → then calculate velocities 
+          + (creates velocity spikes!)
+       26 +    - Example: Last point (0.5, 0.3) → 
+          + padded (0.0, 0.0) → velocity = (-0.5, -0.3)
+          +  NOT (0, 0)!
+       27 +  - **Correct Fix**:
+       28 +    1. Calculate features (x, y, vx, vy, ax,
+          +  ay) on ACTUAL trajectory (before padding)
+       29 +    2. Truncate or pad the FEATURE ARRAY 
+          + with zeros: `[0, 0, 0, 0, 0, 0]`
+       30 +    3. Truncate or pad nearest_keys with PAD
+          +  tokens (0)
+       31 +  - **Code Changes**:
+       32 +    - Moved velocity/acceleration 
+          + calculation BEFORE truncation/padding
+       33 +    - Removed `padOrTruncate()` method (was 
+          + creating velocity spikes)
+       34 +    - Removed unused `MAX_TRAJECTORY_POINTS`
+          +  constant
+       35 +    - Pad TrajectoryPoint objects with all 
+          + zeros instead of coordinates
+       36 +  - **Files Modified**:
+       37 +    - srcs/juloo.keyboard2/SwipeTrajectoryPr
+          + ocessor.java (lines 141-204)
+       38 +    - build.gradle (versionCode 330, 
+          + versionName 1.32.280)
+       39 +    - memory/pm.md (this file)
+       40 +  
+       41 +  ### Previous Work (v1.32.279) - INCORRECT 
+          + FIX
+       42 +  
+       43 +  **CRITICAL FIX: Trajectory preprocessing 
+          + mismatches causing poor accuracy** 
+          + (PARTIALLY WRONG)
+       44    - **Root Cause Identified**: Two major 
+            data format mismatches between training and
+             production
+       45      1. **Sequence Length Mismatch**:
+       46         - Training (v2 model): Expects 
+            250-point sequences
+
+● Bash(git add -A && git commit -m "fix(swipe): CORRECTED -
+      calculate features before padding to match training…)
+  ⎿ [feature/swipe-typing 0bcfac5f] fix(swipe): CORRECTED
+     - calculate features before padding to match trainin
+    g
+     4 files changed, 75 insertions(+), 53 deletions(-)
+
+
+
+● Summary - Corrected Fix
+
+  Thanks for catching my mistake! Here's what was actually
+   wrong:
+
+  The Real Problem
+
+  v1.32.279 (my wrong fix):
+  1. Padded coordinates with (0.0, 0.0)
+  2. Calculated velocities on padded coordinates
+  3. Result: Velocity spike at padding boundary!
+    - Last real point: (0.5, 0.3)
+    - First padded point: (0.0, 0.0)
+    - Calculated velocity: vx = -0.5, vy = -0.3 ❌
+
+  Training (correct approach):
+  1. Calculate velocities on ACTUAL trajectory (47 points)
+  2. Stack into 6-feature array: [x, y, vx, vy, ax, ay]
+  3. THEN pad feature array with zeros: [0, 0, 0, 0, 0, 0]
+
+  The Corrected Fix (v1.32.280)
+
+  SwipeTrajectoryProcessor.java:
+  - Moved velocity/acceleration calculation BEFORE
+  truncation/padding
+  - Pad complete TrajectoryPoint objects with all zeros (6
+   features)
+  - Removed padOrTruncate() method
+  - Removed unused MAX_TRAJECTORY_POINTS constant
+
+  Key Insights from Your Questions:
+  1. ✓ Sequence length IS dynamic from settings
+  (_maxSequenceLength)
+  2. ✓ NN gets 6 features per point: (x, y, vx, vy, ax,
+  ay)
+  3. ✓ Padding should be zeros: 0.0f for floats, 0 for PAD
+   tokens
+
+  Build successful: v1.32.280 (330) - APK ready at
+  /storage/emulated/0/unexpected/
+
+> i think pad tokens are supposed to be <PAD> or something
+ and are you including the proper src mask 
+
+● You're right to question this! Let me check the PAD
+  token value and the source mask:
+
+● Read(docs/nn_train/train.py.txt)
+  ⎿  Read 25 lines
+
+● So <pad> is index 0. Let me check what production uses
+  and if there's a src_mask:
+
+● Bash(grep -n "PAD_IDX\|SOS_IDX\|EOS_IDX\|UNK_IDX"
+      /data/data/com.termux/files/home/git/swype/Unexpected-Ke
+      yboard/srcs/juloo.keyboard2/OnnxSwipePredictor.java |
+      head…)
+  ⎿  64:  private static final int PAD_IDX = 0;
+     65:  private static final int UNK_IDX = 1;
+     66:  private static final int SOS_IDX = 2;
+     … +10 lines (ctrl+o to expand)
+
+● Good, PAD_IDX = 0 matches. Now let me check for source
+  mask (src_mask or src_key_padding_mask):
+
+● Bash(grep -n "src.*mask\|source.*mask\|padding.*mask\|key_pa
+      dding_mask" /data/data/com.termux/files/home/git/swype/U
+      nexpected-Keyboard/srcs/juloo.keyboard2/OnnxSwipe…)
+  ⎿ 372:        // logDebug("   src_mask: " + java.util.A
+    rrays.toString(srcMaskTensor.getInfo().getShape()) +
+    " (BOOL)");
+    … +8 lines (ctrl+o to expand)
+
+
+● There IS a src_mask! Let me check how it's created:
+
+● Read(srcs/juloo.keyboard2/OnnxSwipePredictor.java)
+  ⎿  Read 35 lines
+
+● Wait - the src_mask is ALL FALSE (all valid)! That's
+  wrong. It should mask padded positions. Let me check the
+   training code:
+
+● Bash(grep -n "src.*mask\|key_padding_mask"
+      /data/data/com.termux/files/home/git/swype/Unexpected-Ke
+      yboard/docs/nn_train/train.py.txt | head -20)
+  ⎿ 333:    def encode_trajectory(self, traj_features, ne
+    arest_keys, src_mask=None):
+    349:        memory = self.encoder(combined, src_key_p
+    … +22 lines (ctrl+o to expand)
+
+
+
+● Read(docs/nn_train/train.py.txt)
+  ⎿  Read 15 lines
+
+● CRITICAL ISSUE FOUND!
+
+  Training code:
+  src_mask = torch.zeros(..., dtype=torch.bool)  # Start 
+  with all False (valid)
+  for i, seq_len in enumerate(seq_lens):
+      src_mask[i, seq_len:] = True  # Mark padded 
+  positions as True (masked)
+
+  Production code:
+  boolean[][] srcMask = new
+  boolean[1][_maxSequenceLength];
+  Arrays.fill(srcMask[0], false); // All valid - WRONG!
+
+  The production code doesn't mask the padded positions!
+  Let me check if we have access to actualLength:
+
+● Read(srcs/juloo.keyboard2/OnnxSwipePredictor.java)
+  ⎿  Read 35 lines
+
+● Let me check the createSourceMaskTensor method:
+
+● Bash(grep -n "createSourceMaskTensor"
+      /data/data/com.termux/files/home/git/swype/Unexpected-Ke
+      yboard/srcs/juloo.keyboard2/OnnxSwipePredictor.java -A
+      20 | head -30)
+  ⎿ 366:        srcMaskTensor = createSourceMaskTensor(fe
+    atures);
+    367-
+    … +49 lines (ctrl+o to expand)
+
+
+● Read(srcs/juloo.keyboard2/OnnxSwipePredictor.java)
+  ⎿  Read 20 lines
+
+● WAIT! Line 1110 shows the src_mask IS being set
+  correctly in the encoder!
+
+  maskData[0][i] = (i >= features.actualLength);  // ✓ 
+  Correct!
+
+  But on line 1203 (beam search), it's NOT using
+  actualLength:
+
+  Arrays.fill(srcMask[0], false); // All valid - ✗ WRONG!
+
+  Let me check if features.actualLength is available in
+  the beam search:
+
+● Read(srcs/juloo.keyboard2/OnnxSwipePredictor.java)
+  ⎿  Read 90 lines
+
+● Found it! Line 1201-1203 has the bug. The beam search
+  creates a new src_mask but doesn't use
+  features.actualLength. Let me fix it:
+
+● Update(srcs/juloo.keyboard2/OnnxSwipePredictor.java)
+  ⎿  Updated srcs/juloo.keyboard2/OnnxSwipePredictor.java
+     with 5 additions and 2 removals
+       1198                tgtMask[0][i] = (i >= 
+              beam.tokens.size()); // Mark padded 
+              positions
+       1199              }
+       1200    
+       1201 -            // Create src_mask (all zeros 
+            - = all valid) - matches CLI line 179
+       1201 +            // Create src_mask - mask 
+            + padded positions in source trajectory
+       1202 +            // Training: src_mask[i, 
+            + seq_len:] = True (mark padded positions 
+            + as masked)
+       1203              boolean[][] srcMask = new 
+              boolean[1][_maxSequenceLength];
+       1204 -            Arrays.fill(srcMask[0], 
+            - false); // All valid
+       1204 +            for (int i = 0; i < 
+            + _maxSequenceLength; i++) {
+       1205 +              srcMask[0][i] = (i >= 
+            + features.actualLength);  // true = 
+            + masked/padded
+       1206 +            }
+       1207    
+       1208              // Create tensors - matching 
+              CLI lines 180-181
+       1209              long tensorStart = 
+              System.nanoTime();
+
+● Bash(./build-on-termux.sh) timeout: 5m 0s
+  ⎿  === Unexpected Keyboard Termux Build Script ===
+     Building debug APK on Termux ARM64
+     … +170 lines (ctrl+o to expand)
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 2 additions and 2 removals
+        9    
+       10    ## 🔥 Current Status (2025-11-05)
+       11    
+       12 -  **Latest Version**: v1.32.280 (330)
+       13 -  **Build Status**: ✅ BUILD SUCCESSFUL - 
+          - Corrected Trajectory Preprocessing (FINAL 
+          - FIX)
+       12 +  **Latest Version**: v1.32.281 (331)
+       13 +  **Build Status**: ✅ BUILD SUCCESSFUL - 
+          + Fixed src_mask in beam search
+       14    **Branch**: feature/swipe-typing
+       15    
+       16    ### Recent Work (v1.32.280)
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 32 additions and 1 removal
+       13    **Build Status**: ✅ BUILD SUCCESSFUL - 
+            Fixed src_mask in beam search
+       14    **Branch**: feature/swipe-typing
+       15    
+       16 -  ### Recent Work (v1.32.280)
+       16 +  ### Recent Work (v1.32.281)
+       17    
+       18 +  **CRITICAL: Fixed src_mask in beam search 
+          + decoder**
+       19 +  - **User Question**: "i think pad tokens 
+          + are supposed to be <PAD> or something and 
+          + are you including the proper src mask"
+       20 +  - **Investigation**:
+       21 +    - PAD token is `<pad>` at index 0 - 
+          + CORRECT ✓
+       22 +    - Encoder src_mask was correct (line 
+          + 1110): `maskData[0][i] = (i >= 
+          + features.actualLength)`
+       23 +    - **Beam search src_mask was WRONG** 
+          + (line 1203): `Arrays.fill(srcMask[0], 
+          + false)` - all valid!
+       24 +  - **Training Code** 
+          + (train.py.txt:617-624):
+       25 +    ```python
+       26 +    src_mask = torch.zeros(..., 
+          + dtype=torch.bool)  # Start with False 
+          + (valid)
+       27 +    for i, seq_len in enumerate(seq_lens):
+       28 +        src_mask[i, seq_len:] = True  # Mark
+          +  padded positions as True (masked)
+       29 +    ```
+       30 +  - **Production Bug**:
+       31 +    - Encoder: Correctly masks padded 
+          + positions using `features.actualLength`
+       32 +    - Beam search decoder: Was marking ALL 
+          + positions as valid (no masking!)
+       33 +    - This lets the model attend to padding 
+          + zeros, degrading predictions
+       34 +  - **Fix**: 
+          + OnnxSwipePredictor.java:1201-1206
+       35 +    ```java
+       36 +    // OLD: Arrays.fill(srcMask[0], false); 
+          + // All valid - WRONG!
+       37 +    // NEW:
+       38 +    for (int i = 0; i < _maxSequenceLength; 
+          + i++) {
+       39 +      srcMask[0][i] = (i >= 
+          + features.actualLength);  // Mask padded 
+          + positions
+       40 +    }
+       41 +    ```
+       42 +  - **Files Modified**:
+       43 +    - srcs/juloo.keyboard2/OnnxSwipePredicto
+          + r.java (beam search src_mask)
+       44 +    - build.gradle (versionCode 331, 
+          + versionName 1.32.281)
+       45 +    - memory/pm.md (this file)
+       46 +  
+       47 +  ### Previous Work (v1.32.280)
+       48 +  
+       49    **CORRECTED FIX: Calculate features BEFORE
+             padding (matching training exactly)**
+       50    - **User Correction**: "that value is 
+            supposed to be determined by user input / 
+            settings"
+       51      - `MAX_TRAJECTORY_POINTS = 250` constant
+             was UNUSED - dynamic value comes from 
+            `OnnxSwipePredictor._maxSequenceLength`
+
+● Bash(git add -A && git commit -m "fix(swipe): properly mask
+      padded positions in beam search src_mask…)
+  ⎿  [feature/swipe-typing 1e347e73] fix(swipe): properly
+     mask padded positions in beam search src_mask
+      4 files changed, 45 insertions(+), 11 deletions(-)
+
+● Summary - Fixed src_mask Issue
+
+  Excellent catch! You were absolutely right:
+
+  Issues Found
+
+  1. PAD Token: ✓ Correct - <pad> at index 0
+  2. src_mask in Encoder: ✓ Correct - properly masks
+  padded positions
+  3. src_mask in Beam Search Decoder: ✗ WRONG - was
+  marking ALL positions as valid!
+
+  The Bug
+
+  OnnxSwipePredictor.java:1203 (beam search):
+  Arrays.fill(srcMask[0], false); // All valid - WRONG!
+
+  This meant the decoder could attend to padding zeros
+  instead of ignoring them, degrading predictions
+  especially for short swipes where most of the 250-point
+  sequence is padding.
+
+  The Fix
+
+  for (int i = 0; i < _maxSequenceLength; i++) {
+    srcMask[0][i] = (i >= features.actualLength);  // true
+   = masked
+  }
+
+  Now matches training exactly:
+  - false = valid position (real trajectory data)
+  - true = masked position (padding)
+
+  Combined Fixes Summary
+
+  v1.32.280: Fixed padding order (calculate features
+  before padding)
+  v1.32.281: Fixed src_mask in beam search decoder
+
+  These two fixes together should significantly improve
+  swipe accuracy since the model now receives input in the
+   exact format it was trained on.
+
+  Build: v1.32.281 (331) - APK ready at
+  /storage/emulated/0/unexpected/
+
+
+

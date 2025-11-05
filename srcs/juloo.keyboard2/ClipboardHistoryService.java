@@ -13,8 +13,12 @@ public final class ClipboardHistoryService
   /** Start the service on startup and start listening to clipboard changes. */
   public static void on_startup(Context ctx, ClipboardPasteCallback cb)
   {
-    get_service(ctx);
-    _paste_callback = cb;
+    ClipboardHistoryService service = get_service(ctx);
+    if (service != null)
+    {
+      service._paste_callback = cb;
+      service.attemptToRegisterListener();
+    }
   }
 
   /** Start the service if it hasn't been started before. Returns [null] if the
@@ -42,45 +46,118 @@ public final class ClipboardHistoryService
   /** Send the given string to the editor. */
   public static void paste(String clip)
   {
-    if (_paste_callback != null)
-      _paste_callback.paste_from_clipboard_pane(clip);
+    if (_service != null && _service._paste_callback != null)
+      _service._paste_callback.paste_from_clipboard_pane(clip);
+    else
+      android.util.Log.w("ClipboardHistory", "Cannot paste - callback not initialized");
   }
 
-  /** The maximum size limits the amount of user data stored in memory but also
-      gives a sense to the user that the history is not persisted and can be
-      forgotten as soon as the app stops. 
-      Now configurable - 0 means unlimited. */
+  /** Clipboard history is persistently stored in SQLite database and survives app restarts.
+      Entries expire after HISTORY_TTL_MS unless pinned. The configurable size limit
+      (clipboard_history_limit) controls maximum entries (0 = unlimited). */
   /** Time in ms until history entries expire. */
   public static final long HISTORY_TTL_MS = 5 * 60 * 1000;
 
   static ClipboardHistoryService _service = null;
-  static ClipboardPasteCallback _paste_callback = null;
 
+  Context _context;
   ClipboardManager _cm;
   ClipboardDatabase _database;
+  ClipboardPasteCallback _paste_callback = null;
   OnClipboardHistoryChange _listener = null;
+  boolean _isListenerRegistered = false;
 
   ClipboardHistoryService(Context ctx)
   {
-    _database = ClipboardDatabase.getInstance(ctx);
-    _cm = (ClipboardManager)ctx.getSystemService(Context.CLIPBOARD_SERVICE);
+    _context = ctx.getApplicationContext();
+    _database = ClipboardDatabase.getInstance(_context);
+    _cm = (ClipboardManager)_context.getSystemService(Context.CLIPBOARD_SERVICE);
+
+    // Clean up expired entries on startup
+    _database.cleanupExpiredEntries();
+
+    // Note: Listener registration is deferred to attemptToRegisterListener()
+    // which will be called from on_startup() and can be retried when keyboard gains focus
+  }
+
+  /**
+   * Attempt to register clipboard listener. Safe to call multiple times.
+   * On Android 10+, requires app to be default IME for clipboard access.
+   * Call this from keyboard lifecycle methods (e.g., onStartInputView) to retry.
+   */
+  public void attemptToRegisterListener()
+  {
+    if (_isListenerRegistered || _cm == null)
+      return;
+
+    // On Android 10+ (API 29+), clipboard access requires being default IME
+    if (VERSION.SDK_INT >= 29 && !isDefaultIme())
+    {
+      android.util.Log.w("ClipboardHistory", "Clipboard access requires this keyboard to be set as default input method");
+      // User notification will be handled by settings UI showing clipboard status
+      return;
+    }
 
     try
     {
       _cm.addPrimaryClipChangedListener(this.new SystemListener());
-      // Clean up expired entries on startup
-      _database.cleanupExpiredEntries();
+      _isListenerRegistered = true;
+      android.util.Log.i("ClipboardHistory", "Clipboard listener registered successfully");
+
+      // Add current clip in case it changed while listener was not active
+      add_current_clip();
     }
     catch (SecurityException e)
     {
-      // Android 10+ may deny clipboard access when app is not in focus
-      // This is expected behavior - we'll retry when app gains focus
-      android.util.Log.w("ClipboardHistory", "Clipboard access denied (app not in focus): " + e.getMessage());
+      _isListenerRegistered = false;
+      android.util.Log.w("ClipboardHistory", "Clipboard access denied - will retry when keyboard gains focus: " + e.getMessage());
     }
     catch (Exception e)
     {
-      android.util.Log.e("ClipboardHistory", "Failed to initialize clipboard listener", e);
+      _isListenerRegistered = false;
+      android.util.Log.e("ClipboardHistory", "Failed to register clipboard listener", e);
     }
+  }
+
+  /**
+   * Check if this keyboard is set as the default input method.
+   * Required for clipboard access on Android 10+.
+   */
+  private boolean isDefaultIme()
+  {
+    try
+    {
+      String defaultIme = android.provider.Settings.Secure.getString(
+          _context.getContentResolver(),
+          android.provider.Settings.Secure.DEFAULT_INPUT_METHOD
+      );
+      return defaultIme != null && defaultIme.startsWith(_context.getPackageName());
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("ClipboardHistory", "Failed to check default IME status", e);
+      return false;
+    }
+  }
+
+  /**
+   * Get clipboard feature status for user feedback.
+   * Returns status message indicating if clipboard monitoring is active.
+   */
+  public String getClipboardStatus()
+  {
+    if (!Config.globalConfig().clipboard_history_enabled)
+      return "Clipboard history disabled in settings";
+
+    if (!_isListenerRegistered)
+    {
+      if (VERSION.SDK_INT >= 29 && !isDefaultIme())
+        return "Clipboard access requires setting this keyboard as default input method";
+      return "Clipboard monitoring inactive - open keyboard to activate";
+    }
+
+    int activeEntries = _database.getActiveEntryCount();
+    return String.format("Clipboard monitoring active (%d entries)", activeEntries);
   }
 
   public List<String> clear_expired_and_get_history()
