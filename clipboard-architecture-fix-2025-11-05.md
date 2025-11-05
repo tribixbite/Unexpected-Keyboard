@@ -197,9 +197,9 @@ case SWITCH_BACK_CLIPBOARD:
 
 **Build Status:**
 - ✅ BUILD SUCCESSFUL
-- Version: v1.32.288 (338)
-- APK: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.288-338.apk
-- Commit: 55033e18
+- Version: v1.32.290 (340)
+- APK: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.290-340.apk
+- Commit: 9d8d6193
 
 ---
 
@@ -211,19 +211,51 @@ case SWITCH_BACK_CLIPBOARD:
 - **Emoji Show**: Keyboard2.java:728-740
 - **Search Mode**: Keyboard2.java:750-761 (click handler)
 - **Input Routing**: KeyEventHandler.java:219-234 (send_text routing)
+- **Settings UI**: settings.xml:133 (IntSlideBarPreference for height config)
 
 ---
 
 ## Related Commits
 
 1. `2a11f728` - Initial search box keyboard routing implementation (wrong architecture)
-2. `55033e18` - Fixed architecture using Gboard pattern (this commit)
+2. `55033e18` - Fixed architecture using Gboard pattern
+3. `9d8d6193` - Fixed Settings crash (IntSlideBarPreference)
+
+---
+
+## UX Improvements Implemented
+
+### Settings Crash Fix (Commit 9d8d6193)
+**Issue**: Settings Activity crashed with `ClassNotFoundException: SliderPreference`
+**Fix**: Changed to `IntSlideBarPreference` which exists in codebase
+- Removed invalid `unit` attribute
+- Changed summary format to `%s%%` for dynamic value display
+- Settings now accessible without crash
+
+### Height Configuration (Commit 9d8d6193)
+**Feature**: Configurable clipboard pane height via Settings
+- Default: 30% of screen height
+- Range: 10-50%
+- Setting path: Settings → Clipboard → Clipboard pane height
+- Dynamic slider shows percentage in real-time
+
+### Search Bar Styling (Commit 9d8d6193)
+**Fix**: Search bar matched History label styling
+- Text size: 14sp (matches History label)
+- Padding reduced: 4dp vertical
+- Vertical centering within shared row
+
+### Keyboard Visibility (Commit 55033e18)
+**Fix**: ABC button always visible (Gboard pattern)
+- Keyboard stays visible below content pane
+- No need to restart keyboard to close pane
+- Natural, integrated feel
 
 ---
 
 ## Future Enhancements
 
-- Consider making content pane height configurable
+- ✅ ~~Consider making content pane height configurable~~ (DONE)
 - Add smooth animations for show/hide transitions
 - Implement drag-to-resize for content pane
 - Add visual indicator when in search mode
