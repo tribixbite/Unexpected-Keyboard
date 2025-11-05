@@ -30,15 +30,15 @@ Generated version info:  ()
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugAssets
-> Task :compressDebugAssets FROM-CACHE
 > Task :mergeDebugResources
+> Task :mergeDebugAssets
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeDebugJniLibFolders
+> Task :compressDebugAssets FROM-CACHE
 > Task :checkDebugDuplicateClasses
+> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -67,5 +67,5 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 19s
+BUILD SUCCESSFUL in 28s
 39 actionable tasks: 27 executed, 12 from cache
