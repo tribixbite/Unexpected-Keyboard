@@ -250,6 +250,9 @@ public class Keyboard2 extends InputMethodService
 
     _foldStateTracker.close();
 
+    // Cleanup clipboard listener
+    ClipboardHistoryService.on_shutdown();
+
     // Cleanup async prediction handler
     if (_asyncPredictionHandler != null)
     {
@@ -571,12 +574,6 @@ public class Keyboard2 extends InputMethodService
     super.setInputView(v);
     updateSoftInputWindowLayoutParams();
     v.requestApplyInsets();
-
-    // Retry clipboard listener registration when keyboard gains focus
-    // This handles Android 10+ permission restrictions
-    ClipboardHistoryService service = ClipboardHistoryService.get_service(this);
-    if (service != null)
-      service.attemptToRegisterListener();
   }
 
 

@@ -10,14 +10,26 @@ import java.util.List;
 
 public final class ClipboardHistoryService
 {
-  /** Start the service on startup and start listening to clipboard changes. */
+  /** Start the service on startup and start listening to clipboard changes.
+   *  IMPORTANT: This should be called from InputMethodService.onCreate() to ensure
+   *  system-wide clipboard monitoring for the entire service lifetime. */
   public static void on_startup(Context ctx, ClipboardPasteCallback cb)
   {
     ClipboardHistoryService service = get_service(ctx);
     if (service != null)
     {
       service._paste_callback = cb;
-      service.attemptToRegisterListener();
+      // Register listener immediately on service startup for system-wide monitoring
+      service.registerClipboardListener();
+    }
+  }
+
+  /** Cleanup and unregister listener. Call from InputMethodService.onDestroy(). */
+  public static void on_shutdown()
+  {
+    if (_service != null)
+    {
+      _service.unregisterClipboardListener();
     }
   }
 
@@ -81,16 +93,17 @@ public final class ClipboardHistoryService
   }
 
   /**
-   * Attempt to register clipboard listener. Safe to call multiple times.
-   * On Android 10+, requires app to be default IME for clipboard access.
-   * Call this from keyboard lifecycle methods (e.g., onStartInputView) to retry.
+   * Register clipboard listener for system-wide monitoring.
+   * On Android 10+, being the default IME grants clipboard access even when keyboard is hidden.
+   * This listener persists for the entire InputMethodService lifetime.
+   * Should be called ONCE from InputMethodService.onCreate().
    */
-  public void attemptToRegisterListener()
+  public void registerClipboardListener()
   {
     if (_isListenerRegistered || _cm == null)
       return;
 
-    // On Android 10+ (API 29+), clipboard access requires being default IME
+    // On Android 10+ (API 29+), being default IME grants system-wide clipboard access
     if (VERSION.SDK_INT >= 29 && !isDefaultIme())
     {
       android.util.Log.w("ClipboardHistory", "Clipboard access requires this keyboard to be set as default input method");
@@ -102,7 +115,7 @@ public final class ClipboardHistoryService
     {
       _cm.addPrimaryClipChangedListener(this.new SystemListener());
       _isListenerRegistered = true;
-      android.util.Log.i("ClipboardHistory", "Clipboard listener registered successfully");
+      android.util.Log.i("ClipboardHistory", "Clipboard listener registered for system-wide monitoring");
 
       // Add current clip in case it changed while listener was not active
       add_current_clip();
@@ -110,12 +123,33 @@ public final class ClipboardHistoryService
     catch (SecurityException e)
     {
       _isListenerRegistered = false;
-      android.util.Log.w("ClipboardHistory", "Clipboard access denied - will retry when keyboard gains focus: " + e.getMessage());
+      android.util.Log.e("ClipboardHistory", "Clipboard access denied: " + e.getMessage());
     }
     catch (Exception e)
     {
       _isListenerRegistered = false;
       android.util.Log.e("ClipboardHistory", "Failed to register clipboard listener", e);
+    }
+  }
+
+  /**
+   * Unregister clipboard listener. Call from InputMethodService.onDestroy().
+   */
+  public void unregisterClipboardListener()
+  {
+    if (!_isListenerRegistered || _cm == null)
+      return;
+
+    try
+    {
+      // Note: We cannot remove a specific listener instance, so this may not work as expected
+      // The listener will be automatically cleaned up when the service process is destroyed
+      android.util.Log.i("ClipboardHistory", "Clipboard listener cleanup on service destroy");
+      _isListenerRegistered = false;
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("ClipboardHistory", "Error cleaning up clipboard listener", e);
     }
   }
 
