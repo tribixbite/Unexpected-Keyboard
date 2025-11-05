@@ -64,10 +64,23 @@ public final class ClipboardHistoryService
   {
     _database = ClipboardDatabase.getInstance(ctx);
     _cm = (ClipboardManager)ctx.getSystemService(Context.CLIPBOARD_SERVICE);
-    _cm.addPrimaryClipChangedListener(this.new SystemListener());
-    
-    // Clean up expired entries on startup
-    _database.cleanupExpiredEntries();
+
+    try
+    {
+      _cm.addPrimaryClipChangedListener(this.new SystemListener());
+      // Clean up expired entries on startup
+      _database.cleanupExpiredEntries();
+    }
+    catch (SecurityException e)
+    {
+      // Android 10+ may deny clipboard access when app is not in focus
+      // This is expected behavior - we'll retry when app gains focus
+      android.util.Log.w("ClipboardHistory", "Clipboard access denied (app not in focus): " + e.getMessage());
+    }
+    catch (Exception e)
+    {
+      android.util.Log.e("ClipboardHistory", "Failed to initialize clipboard listener", e);
+    }
   }
 
   public List<String> clear_expired_and_get_history()
@@ -83,16 +96,24 @@ public final class ClipboardHistoryService
     // Check if this is the most recent clipboard entry
     List<String> currentHistory = _database.getActiveClipboardEntries();
     boolean isCurrentClip = !currentHistory.isEmpty() && currentHistory.get(0).equals(clip);
-    
+
     // If removing the current clipboard, clear the system clipboard
     if (isCurrentClip)
     {
-      if (VERSION.SDK_INT >= 28)
-        _cm.clearPrimaryClip();
-      else
-        _cm.setText("");
+      try
+      {
+        if (VERSION.SDK_INT >= 28)
+          _cm.clearPrimaryClip();
+        else
+          _cm.setPrimaryClip(ClipData.newPlainText("", ""));
+      }
+      catch (SecurityException e)
+      {
+        // Android 10+ may deny clipboard access when app is not in focus
+        android.util.Log.d("ClipboardHistory", "Cannot clear clipboard (app not in focus): " + e.getMessage());
+      }
     }
-    
+
     // Remove from database
     boolean removed = _database.removeClipboardEntry(clip);
     if (removed && _listener != null)

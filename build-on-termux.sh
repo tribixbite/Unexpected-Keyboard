@@ -153,28 +153,28 @@ if [ -f "$APK_PATH" ]; then
     ls -lh "$APK_PATH"
     echo
     
-    # Copy to /sdcard/unexpected/ for easy updates with version number
+    # Copy to /storage/emulated/0/unexpected/ for easy updates with version number
     if [ "$BUILD_TYPE_LOWER" = "debug" ]; then
-        echo "Copying APK to /sdcard/unexpected/ for updates..."
-        mkdir -p /sdcard/unexpected
+        echo "Copying APK to /storage/emulated/0/unexpected/ for updates..."
+        mkdir -p /storage/emulated/0/unexpected
 
         # Extract version info from build.gradle
         VERSION_CODE=$(grep "versionCode" build.gradle | head -1 | awk '{print $2}')
         VERSION_NAME=$(grep "versionName" build.gradle | head -1 | awk -F'"' '{print $2}')
 
         # Copy with version number
-        VERSIONED_APK="/sdcard/unexpected/unexpected-keyboard-v${VERSION_NAME}-${VERSION_CODE}.apk"
+        VERSIONED_APK="/storage/emulated/0/unexpected/unexpected-keyboard-v${VERSION_NAME}-${VERSION_CODE}.apk"
         cp "$APK_PATH" "$VERSIONED_APK"
 
         # Also copy as latest/debug-kb.apk for backward compatibility
-        cp "$APK_PATH" /sdcard/unexpected/debug-kb.apk
+        cp "$APK_PATH" /storage/emulated/0/unexpected/debug-kb.apk
 
         if [ -f "$VERSIONED_APK" ]; then
             echo "APK copied to: $VERSIONED_APK"
             ls -lh "$VERSIONED_APK"
-            echo "Also copied to: /sdcard/unexpected/debug-kb.apk (latest)"
+            echo "Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)"
         else
-            echo "Warning: Failed to copy APK to /sdcard/unexpected/"
+            echo "Warning: Failed to copy APK to /storage/emulated/0/unexpected/"
         fi
     fi
     

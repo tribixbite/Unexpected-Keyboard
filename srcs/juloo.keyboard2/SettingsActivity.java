@@ -501,14 +501,18 @@ public class SettingsActivity extends PreferenceActivity
     return props;
   }
   
+  private static final int REQUEST_CODE_INSTALL_APK = 1005;
+
   private void installUpdate()
   {
-    // Scan /sdcard/unexpected/ for APK files
-    File unexpectedDir = new File("/sdcard/unexpected");
+    // Try /storage/emulated/0/unexpected/ first
+    File unexpectedDir = new File("/storage/emulated/0/unexpected");
 
     if (!unexpectedDir.exists() || !unexpectedDir.isDirectory())
     {
-      Toast.makeText(this, "❌ Directory not found: /sdcard/unexpected/\n\nBuild an APK first!", Toast.LENGTH_LONG).show();
+      // Fallback: open file picker to let user choose APK
+      Toast.makeText(this, "📂 Directory not found. Opening file picker...", Toast.LENGTH_SHORT).show();
+      openApkFilePicker();
       return;
     }
 
@@ -517,7 +521,9 @@ public class SettingsActivity extends PreferenceActivity
 
     if (apkFiles == null || apkFiles.length == 0)
     {
-      Toast.makeText(this, "❌ No APK files found in /sdcard/unexpected/\n\nBuild an APK first!", Toast.LENGTH_LONG).show();
+      // Fallback: open file picker
+      Toast.makeText(this, "📂 No APKs in /storage/emulated/0/unexpected/. Opening file picker...", Toast.LENGTH_SHORT).show();
+      openApkFilePicker();
       return;
     }
 
@@ -566,13 +572,10 @@ public class SettingsActivity extends PreferenceActivity
         }
       }
 
-      // Use ACTION_VIEW with content URI for Android 7.0+
+      // Use ACTION_VIEW with file URI
       Intent intent = new Intent(Intent.ACTION_VIEW);
       Uri apkUri = Uri.fromFile(apkFile);
 
-      // For Android 7.0+, we should use FileProvider, but for simplicity
-      // and because this is /sdcard/unexpected/ which should be world-readable,
-      // we'll try file:// URI first
       intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
       intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
@@ -585,6 +588,39 @@ public class SettingsActivity extends PreferenceActivity
 
       // If the above fails, show alternative options
       showInstallAlternatives(apkFile, e);
+    }
+  }
+
+  private void installApkFromUri(Uri apkUri, String filename)
+  {
+    try
+    {
+      // Check if we can request package installs
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+      {
+        if (!getPackageManager().canRequestPackageInstalls())
+        {
+          // Request permission to install packages
+          Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+          intent.setData(Uri.parse("package:" + getPackageName()));
+          Toast.makeText(this, "⚠️ Please allow installing from this source", Toast.LENGTH_LONG).show();
+          startActivity(intent);
+          return;
+        }
+      }
+
+      // Use ACTION_VIEW with content URI
+      Intent intent = new Intent(Intent.ACTION_VIEW);
+      intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+      Log.d("SettingsActivity", "Installing APK from URI: " + filename);
+      startActivity(intent);
+    }
+    catch (Exception e)
+    {
+      Log.e("SettingsActivity", "Failed to install APK from URI", e);
+      Toast.makeText(this, "❌ Install failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
     }
   }
 
@@ -772,6 +808,68 @@ public class SettingsActivity extends PreferenceActivity
     else if (requestCode == REQUEST_CODE_NEURAL_DECODER)
     {
       handleNeuralModelFile(uri, false);
+    }
+    else if (requestCode == REQUEST_CODE_INSTALL_APK)
+    {
+      handleApkFileSelection(uri);
+    }
+  }
+
+  private void openApkFilePicker()
+  {
+    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("application/vnd.android.package-archive");
+
+    try
+    {
+      startActivityForResult(intent, REQUEST_CODE_INSTALL_APK);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start APK file picker", e);
+    }
+  }
+
+  private void handleApkFileSelection(Uri uri)
+  {
+    try
+    {
+      // Get filename
+      String filename = null;
+      try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null))
+      {
+        if (cursor != null && cursor.moveToFirst())
+        {
+          int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+          if (nameIndex >= 0)
+          {
+            filename = cursor.getString(nameIndex);
+          }
+        }
+      }
+
+      if (filename == null)
+      {
+        filename = uri.getLastPathSegment();
+      }
+
+      // Validate it's an APK
+      if (filename != null && !filename.toLowerCase().endsWith(".apk"))
+      {
+        Toast.makeText(this, "❌ File must be an .apk file", Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      // Install directly from content URI
+      installApkFromUri(uri, filename);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Error selecting APK: " + e.getMessage(), Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Error handling APK file selection", e);
     }
   }
 
