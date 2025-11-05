@@ -22,6 +22,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +52,9 @@ public class Keyboard2 extends InputMethodService
   private KeyboardData _localeTextLayout;
   private ViewGroup _emojiPane = null;
   private ViewGroup _clipboard_pane = null;
+  private boolean _clipboardSearchMode = false;
+  private TextView _clipboardSearchBox = null;
+  private ClipboardHistoryView _clipboardHistoryView = null;
   public int actionId; // Action performed by the Action key.
   private Handler _handler;
 
@@ -715,53 +719,41 @@ public class Keyboard2 extends InputMethodService
           if (_clipboard_pane == null)
           {
             _clipboard_pane = (ViewGroup)inflate_view(R.layout.clipboard_pane);
-            // Wire up search functionality
-            final android.widget.EditText searchBox = (android.widget.EditText)_clipboard_pane.findViewById(R.id.clipboard_search);
-            final ClipboardHistoryView historyView = (ClipboardHistoryView)_clipboard_pane.findViewById(R.id.clipboard_history_view);
-            if (searchBox != null && historyView != null)
+            // Wire up search functionality - use keyboard for input (not soft keyboard)
+            _clipboardSearchBox = (TextView)_clipboard_pane.findViewById(R.id.clipboard_search);
+            _clipboardHistoryView = (ClipboardHistoryView)_clipboard_pane.findViewById(R.id.clipboard_history_view);
+
+            if (_clipboardSearchBox != null)
             {
-              // Open keyboard when search box is clicked
-              searchBox.setOnClickListener(new View.OnClickListener() {
+              // When search box is clicked, enter search mode
+              _clipboardSearchBox.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                  searchBox.requestFocus();
-                  android.view.inputmethod.InputMethodManager imm =
-                    (android.view.inputmethod.InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                  if (imm != null) {
-                    imm.showSoftInput(searchBox, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-                  }
+                  _clipboardSearchMode = true;
+                  _clipboardSearchBox.setHint("Type on keyboard, ESC to exit...");
+                  _clipboardSearchBox.requestFocus();
                 }
-              });
-
-              // Also handle focus change
-              searchBox.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                  if (hasFocus) {
-                    android.view.inputmethod.InputMethodManager imm =
-                      (android.view.inputmethod.InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                    if (imm != null) {
-                      imm.showSoftInput(searchBox, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-                    }
-                  }
-                }
-              });
-
-              // Real-time search filtering
-              searchBox.addTextChangedListener(new android.text.TextWatcher() {
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                  historyView.setSearchFilter(s.toString());
-                }
-                public void afterTextChanged(android.text.Editable s) {}
               });
             }
+          }
+          // Reset search mode when showing clipboard pane
+          _clipboardSearchMode = false;
+          if (_clipboardSearchBox != null) {
+            _clipboardSearchBox.setText("");
+            _clipboardSearchBox.setHint("Tap to search, type on keyboard...");
           }
           setInputView(_clipboard_pane);
           break;
 
         case SWITCH_BACK_EMOJI:
         case SWITCH_BACK_CLIPBOARD:
+          // Exit clipboard search mode when switching back
+          _clipboardSearchMode = false;
+          if (_clipboardSearchBox != null)
+          {
+            _clipboardSearchBox.setText("");
+            _clipboardSearchBox.setHint("Tap to search, type on keyboard...");
+          }
           setInputView(_keyboardView);
           break;
 
@@ -852,6 +844,45 @@ public class Keyboard2 extends InputMethodService
     public void handle_delete_last_word()
     {
       Keyboard2.this.handleDeleteLastWord();
+    }
+
+    @Override
+    public boolean isClipboardSearchMode()
+    {
+      return _clipboardSearchMode;
+    }
+
+    @Override
+    public void appendToClipboardSearch(String text)
+    {
+      if (_clipboardSearchBox != null && _clipboardHistoryView != null)
+      {
+        // Append text to search box
+        CharSequence current = _clipboardSearchBox.getText();
+        String newText = current + text;
+        _clipboardSearchBox.setText(newText);
+
+        // Update search filter in history view
+        _clipboardHistoryView.setSearchFilter(newText);
+      }
+    }
+
+    @Override
+    public void backspaceClipboardSearch()
+    {
+      if (_clipboardSearchBox != null && _clipboardHistoryView != null)
+      {
+        CharSequence current = _clipboardSearchBox.getText();
+        if (current.length() > 0)
+        {
+          // Remove last character
+          String newText = current.subSequence(0, current.length() - 1).toString();
+          _clipboardSearchBox.setText(newText);
+
+          // Update search filter
+          _clipboardHistoryView.setSearchFilter(newText);
+        }
+      }
     }
   }
 

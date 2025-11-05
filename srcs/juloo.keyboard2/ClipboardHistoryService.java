@@ -72,8 +72,10 @@ public final class ClipboardHistoryService
   /** Clipboard history is persistently stored in SQLite database and survives app restarts.
       Entries expire after HISTORY_TTL_MS unless pinned. The configurable size limit
       (clipboard_history_limit) controls maximum entries (0 = unlimited). */
-  /** Time in ms until history entries expire. */
-  public static final long HISTORY_TTL_MS = 5 * 60 * 1000;
+  /** Time in ms until history entries expire.
+   *  Set to 7 days to maintain useful history across app updates and restarts.
+   *  Use pinning for permanent entries. */
+  public static final long HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000L; // 7 days
 
   static ClipboardHistoryService _service = null;
 

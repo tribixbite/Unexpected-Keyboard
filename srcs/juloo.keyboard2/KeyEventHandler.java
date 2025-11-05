@@ -95,8 +95,15 @@ public final class KeyEventHandler
       case Char: send_text(String.valueOf(key.getChar())); break;
       case String: send_text(key.getString()); break;
       case Event: _recv.handle_event_key(key.getEvent()); break;
-      case Keyevent: 
-        send_key_down_up(key.getKeyevent()); 
+      case Keyevent:
+        // Handle backspace in clipboard search mode
+        if (key.getKeyevent() == KeyEvent.KEYCODE_DEL && _recv.isClipboardSearchMode())
+        {
+          _recv.backspaceClipboardSearch();
+          break;
+        }
+
+        send_key_down_up(key.getKeyevent());
         // Handle backspace for word prediction
         if (key.getKeyevent() == KeyEvent.KEYCODE_DEL)
         {
@@ -218,6 +225,13 @@ public final class KeyEventHandler
 
   void send_text(CharSequence text)
   {
+    // Route to clipboard search box if in search mode
+    if (_recv.isClipboardSearchMode())
+    {
+      _recv.appendToClipboardSearch(text.toString());
+      return;
+    }
+
     InputConnection conn = _recv.getCurrentInputConnection();
     if (conn == null)
       return;
@@ -502,6 +516,9 @@ public final class KeyEventHandler
     public void handle_text_typed(String text);
     public default void handle_backspace() {} // Default implementation for backward compatibility
     public default void handle_delete_last_word() {} // Delete last auto-inserted or typed word
+    public default boolean isClipboardSearchMode() { return false; } // Check if clipboard search mode is active
+    public default void appendToClipboardSearch(String text) {} // Append text to clipboard search box
+    public default void backspaceClipboardSearch() {} // Handle backspace in clipboard search
   }
 
   class Autocapitalisation_callback implements Autocapitalisation.Callback
