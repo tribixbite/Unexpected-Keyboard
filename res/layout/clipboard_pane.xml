@@ -5,7 +5,7 @@
 
       <!-- Pinned Section (at top, max 2 items visible with scrolling) -->
       <TextView android:text="@string/clipboard_pin_heading" style="@style/clipboardHeading" android:layout_width="fill_parent" android:layout_height="wrap_content"/>
-      <juloo.keyboard2.ClipboardPinView android:id="@+id/clipboard_pin_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="120dp" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
+      <juloo.keyboard2.ClipboardPinView android:id="@+id/clipboard_pin_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="140dp" android:scrollbars="vertical" android:fadeScrollbars="false" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
 
       <!-- History Section with Search -->
       <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="4dp" android:paddingBottom="4dp">

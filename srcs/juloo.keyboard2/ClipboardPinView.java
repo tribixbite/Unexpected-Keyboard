@@ -15,7 +15,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public final class ClipboardPinView extends NonScrollListView
+public final class ClipboardPinView extends MaxHeightListView
 {
   List<String> _entries;
   ClipboardPinEntriesAdapter _adapter;

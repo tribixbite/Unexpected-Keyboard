@@ -716,10 +716,38 @@ public class Keyboard2 extends InputMethodService
           {
             _clipboard_pane = (ViewGroup)inflate_view(R.layout.clipboard_pane);
             // Wire up search functionality
-            android.widget.EditText searchBox = (android.widget.EditText)_clipboard_pane.findViewById(R.id.clipboard_search);
+            final android.widget.EditText searchBox = (android.widget.EditText)_clipboard_pane.findViewById(R.id.clipboard_search);
             final ClipboardHistoryView historyView = (ClipboardHistoryView)_clipboard_pane.findViewById(R.id.clipboard_history_view);
             if (searchBox != null && historyView != null)
             {
+              // Open keyboard when search box is clicked
+              searchBox.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                  searchBox.requestFocus();
+                  android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                  if (imm != null) {
+                    imm.showSoftInput(searchBox, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                  }
+                }
+              });
+
+              // Also handle focus change
+              searchBox.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                  if (hasFocus) {
+                    android.view.inputmethod.InputMethodManager imm =
+                      (android.view.inputmethod.InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                      imm.showSoftInput(searchBox, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                    }
+                  }
+                }
+              });
+
+              // Real-time search filtering
               searchBox.addTextChangedListener(new android.text.TextWatcher() {
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
