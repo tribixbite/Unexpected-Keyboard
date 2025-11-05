@@ -713,7 +713,22 @@ public class Keyboard2 extends InputMethodService
 
         case SWITCH_CLIPBOARD:
           if (_clipboard_pane == null)
+          {
             _clipboard_pane = (ViewGroup)inflate_view(R.layout.clipboard_pane);
+            // Wire up search functionality
+            android.widget.EditText searchBox = (android.widget.EditText)_clipboard_pane.findViewById(R.id.clipboard_search);
+            final ClipboardHistoryView historyView = (ClipboardHistoryView)_clipboard_pane.findViewById(R.id.clipboard_history_view);
+            if (searchBox != null && historyView != null)
+            {
+              searchBox.addTextChangedListener(new android.text.TextWatcher() {
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                  historyView.setSearchFilter(s.toString());
+                }
+                public void afterTextChanged(android.text.Editable s) {}
+              });
+            }
+          }
           setInputView(_clipboard_pane);
           break;
 

@@ -16,6 +16,8 @@ public final class ClipboardHistoryView extends NonScrollListView
   implements ClipboardHistoryService.OnClipboardHistoryChange
 {
   List<String> _history;
+  List<String> _filteredHistory;
+  String _searchFilter = "";
   ClipboardHistoryService _service;
   ClipboardEntriesAdapter _adapter;
 
@@ -23,21 +25,52 @@ public final class ClipboardHistoryView extends NonScrollListView
   {
     super(ctx, attrs);
     _history = Collections.EMPTY_LIST;
+    _filteredHistory = Collections.EMPTY_LIST;
     _adapter = this.new ClipboardEntriesAdapter();
     _service = ClipboardHistoryService.get_service(ctx);
     if (_service != null)
     {
       _service.set_on_clipboard_history_change(this);
       _history = _service.clear_expired_and_get_history();
+      _filteredHistory = _history;
     }
     setAdapter(_adapter);
+  }
+
+  /** Filter clipboard history by search text */
+  public void setSearchFilter(String filter)
+  {
+    _searchFilter = filter == null ? "" : filter.toLowerCase();
+    applyFilter();
+  }
+
+  private void applyFilter()
+  {
+    if (_searchFilter.isEmpty())
+    {
+      _filteredHistory = _history;
+    }
+    else
+    {
+      List<String> filtered = new ArrayList<String>();
+      for (String item : _history)
+      {
+        if (item.toLowerCase().contains(_searchFilter))
+        {
+          filtered.add(item);
+        }
+      }
+      _filteredHistory = filtered;
+    }
+    _adapter.notifyDataSetChanged();
+    invalidate();
   }
 
   /** The history entry at index [pos] is removed from the history and added to
       the list of pinned clipboards. */
   public void pin_entry(int pos)
   {
-    String clip = _history.get(pos);
+    String clip = _filteredHistory.get(pos);
 
     // Set pinned status in database instead of removing
     _service.set_pinned_status(clip, true);
@@ -53,7 +86,7 @@ public final class ClipboardHistoryView extends NonScrollListView
   /** Send the specified entry to the editor. */
   public void paste_entry(int pos)
   {
-    ClipboardHistoryService.paste(_history.get(pos));
+    ClipboardHistoryService.paste(_filteredHistory.get(pos));
   }
 
   @Override
@@ -72,8 +105,7 @@ public final class ClipboardHistoryView extends NonScrollListView
   void update_data()
   {
     _history = _service.clear_expired_and_get_history();
-    _adapter.notifyDataSetChanged();
-    invalidate();
+    applyFilter(); // Reapply current search filter
   }
 
   class ClipboardEntriesAdapter extends BaseAdapter
@@ -81,11 +113,11 @@ public final class ClipboardHistoryView extends NonScrollListView
     public ClipboardEntriesAdapter() {}
 
     @Override
-    public int getCount() { return _history.size(); }
+    public int getCount() { return _filteredHistory.size(); }
     @Override
-    public Object getItem(int pos) { return _history.get(pos); }
+    public Object getItem(int pos) { return _filteredHistory.get(pos); }
     @Override
-    public long getItemId(int pos) { return _history.get(pos).hashCode(); }
+    public long getItemId(int pos) { return _filteredHistory.get(pos).hashCode(); }
 
     @Override
     public View getView(final int pos, View v, ViewGroup _parent)
@@ -93,7 +125,7 @@ public final class ClipboardHistoryView extends NonScrollListView
       if (v == null)
         v = View.inflate(getContext(), R.layout.clipboard_history_entry, null);
       ((TextView)v.findViewById(R.id.clipboard_entry_text))
-        .setText(_history.get(pos));
+        .setText(_filteredHistory.get(pos));
       v.findViewById(R.id.clipboard_entry_addpin).setOnClickListener(
           new View.OnClickListener()
           {

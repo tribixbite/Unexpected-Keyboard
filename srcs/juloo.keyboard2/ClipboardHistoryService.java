@@ -50,9 +50,14 @@ public final class ClipboardHistoryService
     if (_service == null)
       return;
     if (e)
+    {
+      // Re-enable: add current clip and re-register listener if needed
       _service.add_current_clip();
-    else
-      _service.clear_history();
+      _service.registerClipboardListener();
+    }
+    // NOTE: When disabling, we DO NOT clear history data
+    // This preserves user data and allows re-enabling without data loss
+    // History will simply stop recording new clipboard changes
   }
 
   /** Send the given string to the editor. */
