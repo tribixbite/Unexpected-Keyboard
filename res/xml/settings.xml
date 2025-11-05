@@ -130,6 +130,7 @@
   <PreferenceCategory android:title="@string/pref_category_clipboard">
     <CheckBoxPreference android:key="clipboard_history_enabled" android:title="@string/pref_clipboard_history_enabled_title" android:summary="@string/pref_clipboard_history_enabled_summary" android:defaultValue="false"/>
     <ListPreference android:key="clipboard_history_limit" android:title="@string/pref_clipboard_history_limit_title" android:summary="@string/pref_clipboard_history_limit_summary" android:dependency="clipboard_history_enabled" android:defaultValue="6" android:entries="@array/pref_clipboard_history_limit_entries" android:entryValues="@array/pref_clipboard_history_limit_values"/>
+    <juloo.keyboard2.prefs.SliderPreference android:key="clipboard_pane_height_percent" android:title="Clipboard pane height" android:summary="Percentage of screen height (10-50%)" android:defaultValue="30" min="10" max="50" unit="%"/>
   </PreferenceCategory>
   <PreferenceCategory android:title="Backup &amp; Restore">
     <Preference android:key="backup_config" android:title="Export Configuration" android:summary="Save all settings to kb-config.json"/>

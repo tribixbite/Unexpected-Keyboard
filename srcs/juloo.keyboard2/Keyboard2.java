@@ -529,11 +529,13 @@ public class Keyboard2 extends InputMethodService
 
         // Add content pane container (for clipboard/emoji) between suggestion bar and keyboard
         // This stays hidden until user opens clipboard or emoji pane
+        // Height is based on user config (default 30% of screen height)
         _contentPaneContainer = new FrameLayout(this);
+        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+        int paneHeight = (screenHeight * _config.clipboard_pane_height_percent) / 100;
         _contentPaneContainer.setLayoutParams(new LinearLayout.LayoutParams(
           LinearLayout.LayoutParams.MATCH_PARENT,
-          (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 200,
-            getResources().getDisplayMetrics())));
+          paneHeight));
         _contentPaneContainer.setVisibility(View.GONE); // Hidden by default
         _inputViewContainer.addView(_contentPaneContainer);
 
@@ -749,7 +751,7 @@ public class Keyboard2 extends InputMethodService
 
             if (_clipboardSearchBox != null)
             {
-              // When search box is clicked, enter search mode
+              // When search box is clicked, enter search mode and show hint
               _clipboardSearchBox.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -764,7 +766,7 @@ public class Keyboard2 extends InputMethodService
           _clipboardSearchMode = false;
           if (_clipboardSearchBox != null) {
             _clipboardSearchBox.setText("");
-            _clipboardSearchBox.setHint("Tap to search, type on keyboard...");
+            _clipboardSearchBox.setHint("Tap to search...");
           }
 
           // Show clipboard pane in content container (keyboard stays visible below)
@@ -788,7 +790,7 @@ public class Keyboard2 extends InputMethodService
           if (_clipboardSearchBox != null)
           {
             _clipboardSearchBox.setText("");
-            _clipboardSearchBox.setHint("Tap to search, type on keyboard...");
+            _clipboardSearchBox.setHint("Tap to search...");
           }
 
           // Hide content pane (keyboard remains visible)
