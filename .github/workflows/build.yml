@@ -127,30 +127,35 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --title "Unexpected Keyboard v${{ steps.version.outputs.version }} (Build ${{ steps.version.outputs.build }})" \
-            --notes "**Swipe Typing Feature Release** 🚀
+          # Create release notes in a file to avoid shell escaping issues
+          cat > release_notes.md << 'EOF'
+          **Swipe Typing Feature Release** 🚀
 
           **Version**: ${{ steps.version.outputs.version }}
           **Build**: ${{ steps.version.outputs.build }}
           **Commit**: ${{ steps.version.outputs.sha }}
 
           **Commit Message**:
-          \`\`\`
+          ```
           ${{ steps.version.outputs.commit_msg }}
-          \`\`\`
+          ```
 
           **Installation**:
-          1. Download \`juloo.keyboard2.debug.apk\`
-          2. Enable \"Install from unknown sources\" in Android settings
+          1. Download `juloo.keyboard2.debug.apk`
+          2. Enable "Install from unknown sources" in Android settings
           3. Install the APK
           4. Go to Settings → System → Languages & input → Virtual keyboard
-          5. Enable \"Unexpected Keyboard\"
+          5. Enable "Unexpected Keyboard"
 
           **APK Details**:
           - Debug build with logging enabled
           - Includes swipe typing ML/neural features
-          - Built from \`feature/swipe-typing\` branch
+          - Built from `feature/swipe-typing` branch
 
-          Built with GitHub Actions on $(date)" \
+          Built with GitHub Actions on $(date)
+          EOF
+
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "Unexpected Keyboard v${{ steps.version.outputs.version }} (Build ${{ steps.version.outputs.build }})" \
+            --notes-file release_notes.md \
             ./artifacts/juloo.keyboard2.debug.apk
