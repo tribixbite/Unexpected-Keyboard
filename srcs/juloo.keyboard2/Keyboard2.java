@@ -52,6 +52,7 @@ public class Keyboard2 extends InputMethodService
   private KeyboardData _localeTextLayout;
   private ViewGroup _emojiPane = null;
   private ViewGroup _clipboard_pane = null;
+  private FrameLayout _contentPaneContainer = null; // Container for emoji/clipboard panes
   private boolean _clipboardSearchMode = false;
   private TextView _clipboardSearchBox = null;
   private ClipboardHistoryView _clipboardHistoryView = null;
@@ -525,9 +526,20 @@ public class Keyboard2 extends InputMethodService
 
         scrollView.addView(_suggestionBar);
         _inputViewContainer.addView(scrollView);
+
+        // Add content pane container (for clipboard/emoji) between suggestion bar and keyboard
+        // This stays hidden until user opens clipboard or emoji pane
+        _contentPaneContainer = new FrameLayout(this);
+        _contentPaneContainer.setLayoutParams(new LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.MATCH_PARENT,
+          (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 200,
+            getResources().getDisplayMetrics())));
+        _contentPaneContainer.setVisibility(View.GONE); // Hidden by default
+        _inputViewContainer.addView(_contentPaneContainer);
+
         _inputViewContainer.addView(_keyboardView);
       }
-      
+
       setInputView(_inputViewContainer != null ? _inputViewContainer : _keyboardView);
       
       // CRITICAL: Set correct keyboard dimensions for CGR after view is laid out
@@ -712,7 +724,19 @@ public class Keyboard2 extends InputMethodService
         case SWITCH_EMOJI:
           if (_emojiPane == null)
             _emojiPane = (ViewGroup)inflate_view(R.layout.emoji_pane);
-          setInputView(_emojiPane);
+
+          // Show emoji pane in content container (keyboard stays visible below)
+          if (_contentPaneContainer != null)
+          {
+            _contentPaneContainer.removeAllViews();
+            _contentPaneContainer.addView(_emojiPane);
+            _contentPaneContainer.setVisibility(View.VISIBLE);
+          }
+          else
+          {
+            // Fallback for when predictions disabled (no container)
+            setInputView(_emojiPane);
+          }
           break;
 
         case SWITCH_CLIPBOARD:
@@ -730,7 +754,7 @@ public class Keyboard2 extends InputMethodService
                 @Override
                 public void onClick(View v) {
                   _clipboardSearchMode = true;
-                  _clipboardSearchBox.setHint("Type on keyboard, ESC to exit...");
+                  _clipboardSearchBox.setHint("Type on keyboard below...");
                   _clipboardSearchBox.requestFocus();
                 }
               });
@@ -742,7 +766,19 @@ public class Keyboard2 extends InputMethodService
             _clipboardSearchBox.setText("");
             _clipboardSearchBox.setHint("Tap to search, type on keyboard...");
           }
-          setInputView(_clipboard_pane);
+
+          // Show clipboard pane in content container (keyboard stays visible below)
+          if (_contentPaneContainer != null)
+          {
+            _contentPaneContainer.removeAllViews();
+            _contentPaneContainer.addView(_clipboard_pane);
+            _contentPaneContainer.setVisibility(View.VISIBLE);
+          }
+          else
+          {
+            // Fallback for when predictions disabled (no container)
+            setInputView(_clipboard_pane);
+          }
           break;
 
         case SWITCH_BACK_EMOJI:
@@ -754,7 +790,17 @@ public class Keyboard2 extends InputMethodService
             _clipboardSearchBox.setText("");
             _clipboardSearchBox.setHint("Tap to search, type on keyboard...");
           }
-          setInputView(_keyboardView);
+
+          // Hide content pane (keyboard remains visible)
+          if (_contentPaneContainer != null)
+          {
+            _contentPaneContainer.setVisibility(View.GONE);
+          }
+          else
+          {
+            // Fallback for when predictions disabled
+            setInputView(_keyboardView);
+          }
           break;
 
         case CHANGE_METHOD_PICKER:
