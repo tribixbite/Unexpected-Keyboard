@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:background="?attr/colorKeyboard" android:hardwareAccelerated="false" android:layout_width="fill_parent" android:layout_height="fill_parent">
 
-  <!-- Pinned Section (at top, max 2 items visible with its own scrolling) -->
+  <!-- Pinned Section (at top, max 140dp height with scrolling) -->
   <TextView android:text="@string/clipboard_pin_heading" style="@style/clipboardHeading" android:layout_width="fill_parent" android:layout_height="wrap_content"/>
-  <juloo.keyboard2.ClipboardPinView android:id="@+id/clipboard_pin_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="140dp" android:scrollbars="vertical" android:fadeScrollbars="false" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
+  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="140dp" android:scrollbars="vertical" android:fadeScrollbars="false">
+    <juloo.keyboard2.ClipboardPinView android:id="@+id/clipboard_pin_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
+  </ScrollView>
 
   <!-- History Section with Search (separate scrolling) -->
   <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="8dp" android:paddingBottom="4dp" android:background="?attr/colorKeyboard" android:gravity="center_vertical" android:baselineAligned="true">
