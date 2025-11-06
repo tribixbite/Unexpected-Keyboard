@@ -46,7 +46,7 @@ Useful links.
     <key c="t" ne="5" sw="%" e="to "/>
     <key c="y" ne="6" sw="^"/>
     <key c="u" ne="7" sw="&amp;" n="up "/>
-    <key c="i" nw="*" ne="8" sw="I'm " w="it " se="I'd "/>
+    <key c="i" nw="*" ne="8" sw="I'd " w="it " se="I'm "/>
     <key c="o" nw="of " ne="9" sw="(" se=")" s="on " w="or "/>
     <key c="p" ne="0"/>
   </row>
