@@ -332,19 +332,33 @@ public class Keyboard2View extends View
         }
         float rowBottom = rowTop + targetRow.height * _tc.row_height;
 
-        // Apply tolerance margin (as fraction of key dimensions)
+        // FIXED: Use radial (circular) tolerance instead of rectangular
+        // Rectangular tolerance discriminates against diagonal swipes (southeast/southwest)
+        // because vertical tolerance is smaller than horizontal on wider-than-tall keys
         float keyWidth = key.width * _keyWidth;
         float keyHeight = targetRow.height * _tc.row_height;
-        float marginX = keyWidth * tolerance;
-        float marginY = keyHeight * tolerance;
 
-        boolean result = x >= (xLeft - marginX) && x < (xRight + marginX) &&
-                        y >= (rowTop - marginY) && y < (rowBottom + marginY);
+        // Calculate key center
+        float keyCenterX = (xLeft + xRight) / 2;
+        float keyCenterY = (rowTop + rowBottom) / 2;
+
+        // Calculate distance from touch point to key center
+        float dx = x - keyCenterX;
+        float dy = y - keyCenterY;
+        float distanceFromCenter = (float)Math.sqrt(dx * dx + dy * dy);
+
+        // Calculate max allowed distance (half-diagonal plus tolerance)
+        float keyHalfDiagonal = (float)Math.sqrt(
+          (keyWidth * keyWidth + keyHeight * keyHeight) / 4);
+        float maxDistance = keyHalfDiagonal * (1.0f + tolerance);
+
+        boolean result = distanceFromCenter <= maxDistance;
 
         android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: " +
                           "point=(" + x + "," + y + ") " +
-                          "bounds=[" + (xLeft - marginX) + "," + (xRight + marginX) + "]x[" + (rowTop - marginY) + "," + (rowBottom + marginY) + "] " +
-                          "tolerance=" + tolerance + " " +
+                          "center=(" + keyCenterX + "," + keyCenterY + ") " +
+                          "distance=" + distanceFromCenter + " " +
+                          "maxDistance=" + maxDistance + " (diagonal=" + (keyHalfDiagonal * 2) + ", tolerance=" + (tolerance * 100) + "%) " +
                           "result=" + result);
 
         return result;
