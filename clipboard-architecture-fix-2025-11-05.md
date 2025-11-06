@@ -197,9 +197,9 @@ case SWITCH_BACK_CLIPBOARD:
 
 **Build Status:**
 - ✅ BUILD SUCCESSFUL
-- Version: v1.32.290 (340)
-- APK: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.290-340.apk
-- Commit: 9d8d6193
+- Version: v1.32.294 (344)
+- APK: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.294-344.apk
+- Commit: 022f9d46
 
 ---
 
@@ -212,14 +212,18 @@ case SWITCH_BACK_CLIPBOARD:
 - **Search Mode**: Keyboard2.java:750-761 (click handler)
 - **Input Routing**: KeyEventHandler.java:219-234 (send_text routing)
 - **Settings UI**: settings.xml:133 (IntSlideBarPreference for height config)
+- **Layout**: clipboard_pane.xml:3 (flexible ScrollView), line 19 (bottom row)
 
 ---
 
 ## Related Commits
 
-1. `2a11f728` - Initial search box keyboard routing implementation (wrong architecture)
+1. `2a11f728` - Initial search box keyboard routing (wrong architecture)
 2. `55033e18` - Fixed architecture using Gboard pattern
 3. `9d8d6193` - Fixed Settings crash (IntSlideBarPreference)
+4. `31d21964` - Updated documentation
+5. `5258a7bd` - Made History label visible with proper spacing
+6. `022f9d46` - ABC button visible, search box theme fixed
 
 ---
 
@@ -250,6 +254,36 @@ case SWITCH_BACK_CLIPBOARD:
 - Keyboard stays visible below content pane
 - No need to restart keyboard to close pane
 - Natural, integrated feel
+
+### History Label Visibility (Commit 5258a7bd)
+**Issue**: "History" label was invisible/cut off next to search box
+**Fix**: Proper spacing and margin overrides
+- Override marginTop to 0dp (was 14dp from clipboardHeading style)
+- Added 8dp right margin between History and search box
+- Increased parent padding top to 8dp
+- Added baselineAligned for proper text alignment
+- History label now clearly visible
+
+### ABC Button & Search Theme (Commit 022f9d46)
+**Issues**:
+1. ABC/back button not visible (bottom row clipped)
+2. Search box white background didn't respect dark theme
+3. Search text visibility concerns
+
+**Fixes**:
+1. **Bottom Row Visibility**:
+   - Changed ScrollView from fixed 300dp to flexible height (0dp weight=1)
+   - Allows bottom row with switch_back_clipboard to render
+   - Root LinearLayout uses fill_parent height
+
+2. **Search Box Theme**:
+   - Changed background from system drawable to ?attr/colorKey
+   - Matches keyboard theme colors
+   - Added textColorHint=?attr/colorSubLabel for hint text
+
+3. **Search Text Visibility**:
+   - Using ?attr/colorLabel for text color
+   - Should be clearly visible on key background
 
 ---
 
