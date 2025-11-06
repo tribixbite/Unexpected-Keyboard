@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:background="?attr/colorKeyboard" android:hardwareAccelerated="false" android:layout_width="fill_parent" android:layout_height="fill_parent">
+
+  <!-- Pinned Section (at top, max 2 items visible with its own scrolling) -->
+  <TextView android:text="@string/clipboard_pin_heading" style="@style/clipboardHeading" android:layout_width="fill_parent" android:layout_height="wrap_content"/>
+  <juloo.keyboard2.ClipboardPinView android:id="@+id/clipboard_pin_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="140dp" android:scrollbars="vertical" android:fadeScrollbars="false" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
+
+  <!-- History Section with Search (separate scrolling) -->
+  <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="8dp" android:paddingBottom="4dp" android:background="?attr/colorKeyboard" android:gravity="center_vertical" android:baselineAligned="true">
+    <TextView android:text="@string/clipboard_history_heading" style="@style/clipboardHeading" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="0" android:layout_gravity="center_vertical" android:layout_marginTop="0dp" android:layout_marginRight="8dp" android:layout_marginEnd="8dp"/>
+    <TextView android:id="@+id/clipboard_search" android:hint="Tap to search..." android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_gravity="center_vertical" android:textSize="14sp" android:textColor="?attr/colorLabel" android:textColorHint="?attr/colorSubLabel" android:paddingLeft="12dp" android:paddingRight="12dp" android:paddingTop="6dp" android:paddingBottom="6dp" android:background="?attr/colorKey" android:singleLine="true" android:ellipsize="end" android:clickable="true" android:focusable="true"/>
+  </LinearLayout>
+
   <ScrollView android:layout_width="fill_parent" android:layout_height="0dp" android:layout_weight="1">
-    <LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">
-
-      <!-- Pinned Section (at top, max 2 items visible with scrolling) -->
-      <TextView android:text="@string/clipboard_pin_heading" style="@style/clipboardHeading" android:layout_width="fill_parent" android:layout_height="wrap_content"/>
-      <juloo.keyboard2.ClipboardPinView android:id="@+id/clipboard_pin_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="140dp" android:scrollbars="vertical" android:fadeScrollbars="false" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
-
-      <!-- History Section with Search -->
-      <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="8dp" android:paddingBottom="4dp" android:background="?attr/colorKeyboard" android:gravity="center_vertical" android:baselineAligned="true">
-        <TextView android:text="@string/clipboard_history_heading" style="@style/clipboardHeading" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="0" android:layout_gravity="center_vertical" android:layout_marginTop="0dp" android:layout_marginRight="8dp" android:layout_marginEnd="8dp"/>
-        <TextView android:id="@+id/clipboard_search" android:hint="Tap to search..." android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_gravity="center_vertical" android:textSize="14sp" android:textColor="?attr/colorLabel" android:textColorHint="?attr/colorSubLabel" android:paddingLeft="12dp" android:paddingRight="12dp" android:paddingTop="6dp" android:paddingBottom="6dp" android:background="?attr/colorKey" android:singleLine="true" android:ellipsize="end" android:clickable="true" android:focusable="true"/>
-      </LinearLayout>
-
-      <juloo.keyboard2.ClipboardHistoryView android:id="@+id/clipboard_history_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
-    </LinearLayout>
+    <juloo.keyboard2.ClipboardHistoryView android:id="@+id/clipboard_history_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
   </ScrollView>
-  <juloo.keyboard2.Keyboard2View layout="@xml/clipboard_bottom_row" android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="?attr/colorKeyboard"/>
+
 </LinearLayout>
