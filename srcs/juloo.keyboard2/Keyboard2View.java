@@ -347,10 +347,14 @@ public class Keyboard2View extends View
         float dy = y - keyCenterY;
         float distanceFromCenter = (float)Math.sqrt(dx * dx + dy * dy);
 
-        // Calculate max allowed distance (half-diagonal plus tolerance)
-        float keyHalfDiagonal = (float)Math.sqrt(
-          (keyWidth * keyWidth + keyHeight * keyHeight) / 4);
-        float maxDistance = keyHalfDiagonal * (1.0f + tolerance);
+        // Calculate max allowed distance - must contain the old rectangular bounds
+        // The old rectangle extended by tolerance creates bounds of:
+        //   horizontal: keyWidth/2 + keyWidth*tolerance = keyWidth*(0.5 + tolerance)
+        //   vertical: keyHeight/2 + keyHeight*tolerance = keyHeight*(0.5 + tolerance)
+        // Our circle must reach the farthest corner of this rectangle
+        float maxHorizontal = keyWidth * (0.5f + tolerance);
+        float maxVertical = keyHeight * (0.5f + tolerance);
+        float maxDistance = (float)Math.sqrt(maxHorizontal * maxHorizontal + maxVertical * maxVertical);
 
         boolean result = distanceFromCenter <= maxDistance;
 
@@ -358,7 +362,7 @@ public class Keyboard2View extends View
                           "point=(" + x + "," + y + ") " +
                           "center=(" + keyCenterX + "," + keyCenterY + ") " +
                           "distance=" + distanceFromCenter + " " +
-                          "maxDistance=" + maxDistance + " (diagonal=" + (keyHalfDiagonal * 2) + ", tolerance=" + (tolerance * 100) + "%) " +
+                          "maxDistance=" + maxDistance + " (maxH=" + maxHorizontal + ", maxV=" + maxVertical + ", tolerance=" + (tolerance * 100) + "%) " +
                           "result=" + result);
 
         return result;
