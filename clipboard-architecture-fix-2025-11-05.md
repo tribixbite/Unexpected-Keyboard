@@ -197,9 +197,9 @@ case SWITCH_BACK_CLIPBOARD:
 
 **Build Status:**
 - ✅ BUILD SUCCESSFUL
-- Version: v1.32.294 (344)
-- APK: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.294-344.apk
-- Commit: 022f9d46
+- Version: v1.32.295 (345)
+- APK: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.295-345.apk
+- Commit: e4fabfc8
 
 ---
 
@@ -207,12 +207,13 @@ case SWITCH_BACK_CLIPBOARD:
 
 - **Container Creation**: Keyboard2.java:530-538
 - **Clipboard Show**: Keyboard2.java:770-782
-- **Clipboard Hide**: Keyboard2.java:794-804
+- **Clipboard Hide**: Keyboard2.java:786-805 (SWITCH_BACK_CLIPBOARD)
 - **Emoji Show**: Keyboard2.java:728-740
 - **Search Mode**: Keyboard2.java:750-761 (click handler)
 - **Input Routing**: KeyEventHandler.java:219-234 (send_text routing)
 - **Settings UI**: settings.xml:133 (IntSlideBarPreference for height config)
-- **Layout**: clipboard_pane.xml:3 (flexible ScrollView), line 19 (bottom row)
+- **Layout**: clipboard_pane.xml:2 (root LinearLayout), lines 14-16 (history ScrollView)
+- **Ctrl Key with ABC**: bottom_row.xml:3 (key7 southwest swipe)
 
 ---
 
@@ -224,6 +225,8 @@ case SWITCH_BACK_CLIPBOARD:
 4. `31d21964` - Updated documentation
 5. `5258a7bd` - Made History label visible with proper spacing
 6. `022f9d46` - ABC button visible, search box theme fixed
+7. `07bfa681` - Updated documentation
+8. `e4fabfc8` - Removed redundant bar, southwest swipe, independent scrolling
 
 ---
 
@@ -284,6 +287,30 @@ case SWITCH_BACK_CLIPBOARD:
 3. **Search Text Visibility**:
    - Using ?attr/colorLabel for text color
    - Should be clearly visible on key background
+
+### UX Refinements (Commit e4fabfc8)
+**Issues**:
+1. Redundant horizontal ABC button bar when keyboard is always visible
+2. Need intuitive way to close clipboard from main keyboard
+3. Lost separate scrolling for pinned vs history sections
+
+**Fixes**:
+1. **Removed Redundant Bottom Row**:
+   - Deleted `<Keyboard2View layout="@xml/clipboard_bottom_row"/>` from clipboard_pane.xml
+   - Bar was unnecessary since keyboard stays visible in Gboard pattern
+   - Cleaner, less cluttered interface
+
+2. **Added Southwest Swipe to Ctrl Key**:
+   - Added `key7="switch_back_clipboard"` to Ctrl key in bottom_row.xml
+   - Southwest swipe on Ctrl now shows "ABC" and closes clipboard
+   - More intuitive: open clipboard (southeast), close clipboard (southwest)
+   - Consistent with keyboard's gesture-based design
+
+3. **Restored Independent Scrolling**:
+   - Pinned section: Direct child with maxHeight="140dp" and scrollbars
+   - History section: Wrapped in separate ScrollView with layout_weight="1"
+   - Each section scrolls independently as originally designed
+   - Better UX when sections have many items
 
 ---
 
