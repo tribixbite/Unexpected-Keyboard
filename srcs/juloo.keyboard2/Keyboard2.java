@@ -459,6 +459,21 @@ public class Keyboard2 extends InputMethodService
   public void onStartInputView(EditorInfo info, boolean restarting)
   {
     refresh_config();
+
+    // Auto-close clipboard pane when switching to new app/field
+    // Prevents confusing UX where clipboard briefly shows then keyboard closes
+    if (_contentPaneContainer != null && _contentPaneContainer.getVisibility() == View.VISIBLE)
+    {
+      _contentPaneContainer.setVisibility(View.GONE);
+      // Also reset search mode state
+      _clipboardSearchMode = false;
+      if (_clipboardSearchBox != null)
+      {
+        _clipboardSearchBox.setText("");
+        _clipboardSearchBox.setHint("Tap to search...");
+      }
+    }
+
     refresh_action_label(info);
     _currentSpecialLayout = refresh_special_layout(info);
     _keyboardView.setKeyboard(current_layout());
