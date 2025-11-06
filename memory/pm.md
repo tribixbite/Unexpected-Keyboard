@@ -7,13 +7,33 @@
 
 ---
 
-## 🔥 Current Status (2025-11-05)
+## 🔥 Current Status (2025-11-06)
 
-**Latest Version**: v1.32.281 (331)
-**Build Status**: ✅ BUILD SUCCESSFUL - Fixed src_mask in beam search
+**Latest Version**: v1.32.299 (349)
+**Build Status**: ✅ BUILD SUCCESSFUL - Updated 'i' key contractions
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.281)
+### Recent Work (v1.32.299)
+
+**Updated 'i' key swipe contractions for better UX**
+- **User Request**: Improve contraction shortcuts on 'i' key
+- **Changes Made**:
+  - Southeast (se): Added "I'd " (new position)
+  - Southwest (sw): Changed from "is " to "I'm "
+  - South (s): Removed "in " to reduce clutter
+  - West (w): Maintained "it " (unchanged)
+  - Northwest (nw): Maintained "*" (unchanged)
+  - Northeast (ne): Maintained "8" (unchanged)
+- **Rationale**:
+  - Prioritizes common first-person contractions (I'm, I'd) over generic "is"
+  - Removes less frequently needed "in" to reduce swipe options
+  - Maintains "it" which is highly useful
+- **Files Modified**:
+  - srcs/layouts/latn_qwerty_us.xml (line 49)
+  - build.gradle (versionCode 349, versionName 1.32.299)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.281)
 
 **CRITICAL: Fixed src_mask in beam search decoder**
 - **User Question**: "i think pad tokens are supposed to be <PAD> or something and are you including the proper src mask"
