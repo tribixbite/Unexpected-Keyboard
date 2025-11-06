@@ -9,17 +9,17 @@
 
 ## 🔥 Current Status (2025-11-06)
 
-**Latest Version**: v1.32.299 (349)
+**Latest Version**: v1.32.300 (350)
 **Build Status**: ✅ BUILD SUCCESSFUL - Updated 'i' key contractions
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.299)
+### Recent Work (v1.32.300)
 
 **Updated 'i' key swipe contractions for better UX**
-- **User Request**: Improve contraction shortcuts on 'i' key
+- **User Request**: Improve contraction shortcuts on 'i' key, with I'm on southeast
 - **Changes Made**:
-  - Southeast (se): Added "I'd " (new position)
-  - Southwest (sw): Changed from "is " to "I'm "
+  - Southeast (se): Added "I'm " (new position, bottom-right)
+  - Southwest (sw): Added "I'd " (new position, bottom-left)
   - South (s): Removed "in " to reduce clutter
   - West (w): Maintained "it " (unchanged)
   - Northwest (nw): Maintained "*" (unchanged)
@@ -28,9 +28,10 @@
   - Prioritizes common first-person contractions (I'm, I'd) over generic "is"
   - Removes less frequently needed "in" to reduce swipe options
   - Maintains "it" which is highly useful
+  - I'm on southeast for better thumb ergonomics
 - **Files Modified**:
   - srcs/layouts/latn_qwerty_us.xml (line 49)
-  - build.gradle (versionCode 349, versionName 1.32.299)
+  - build.gradle (versionCode 350, versionName 1.32.300)
   - memory/pm.md (this file)
 
 ### Previous Work (v1.32.281)
