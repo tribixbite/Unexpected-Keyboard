@@ -9,11 +9,45 @@
 
 ## 🔥 Current Status (2025-11-06)
 
-**Latest Version**: v1.32.300 (350)
-**Build Status**: ✅ BUILD SUCCESSFUL - Updated 'i' key contractions
+**Latest Version**: v1.32.301 (351)
+**Build Status**: ✅ BUILD SUCCESSFUL - Fixed southeast/southwest swipe detection
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.300)
+### Recent Work (v1.32.301)
+
+**CRITICAL FIX: Radial tolerance for diagonal swipe detection**
+- **User Report**: "j and k southeast dont work fyi im swiping in a straight lind which works for all others"
+- **Deep Dive Investigation**:
+  - User reported southeast swipes on j/k (for ] and }) fail with straight-line swipes
+  - Code comment said "Expanded SE (index 4) from dirs 5-6 to 4-6 for 45° hit zone (makes ] and } easier)"
+  - But it didn't work for straight-line diagonal swipes
+- **Root Cause Identified**:
+  - `isPointWithinKeyWithTolerance()` used **rectangular tolerance** (Keyboard2View.java:335-342)
+  - Keys are wider than tall (e.g., 80px × 60px)
+  - 40% tolerance: horizontal margin = 32px, vertical margin = 24px
+  - **Vertical tolerance smaller than horizontal!**
+  - Southeast (45°) swipes hit the smaller VERTICAL boundary first
+  - This set `hasLeftStartingKey = true` in Pointers.java:448
+  - Which **disabled short gesture detection** (Pointers.java:226)
+  - Other directions (east, northeast, north) didn't hit this limit as quickly
+- **Solution Implemented**:
+  - Changed to **radial (circular) tolerance** calculation
+  - Distance from touch point to key center: `sqrt(dx² + dy²)`
+  - Max allowed distance: `keyHalfDiagonal × (1 + tolerance)`
+  - With 40% tolerance: maxDistance = halfDiagonal × 1.4
+  - Treats all directions equally - no discrimination against diagonals
+- **Technical Details**:
+  - Old logic: rectangular bounds check (x within marginX, y within marginY)
+  - New logic: radial distance check (distance ≤ maxDistance)
+  - For 80×60px key: halfDiagonal = 50px, maxDistance = 70px
+  - Southeast swipe can now go 70px from center (was ~24px vertically)
+  - This gives diagonal swipes ~40% more effective tolerance
+- **Files Modified**:
+  - srcs/juloo.keyboard2/Keyboard2View.java (lines 282-371)
+  - build.gradle (versionCode 351, versionName 1.32.301)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.300)
 
 **Updated 'i' key swipe contractions for better UX**
 - **User Request**: Improve contraction shortcuts on 'i' key, with I'm on southeast
