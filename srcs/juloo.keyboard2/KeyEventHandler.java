@@ -131,6 +131,12 @@ public final class KeyEventHandler
   @Override
   public void paste_from_clipboard_pane(String content)
   {
+    // Exit clipboard search mode before pasting to target field
+    // Otherwise send_text routes to search box instead of target
+    if (_recv.isClipboardSearchMode())
+    {
+      _recv.exitClipboardSearchMode();
+    }
     send_text(content);
   }
 
@@ -519,6 +525,7 @@ public final class KeyEventHandler
     public default boolean isClipboardSearchMode() { return false; } // Check if clipboard search mode is active
     public default void appendToClipboardSearch(String text) {} // Append text to clipboard search box
     public default void backspaceClipboardSearch() {} // Handle backspace in clipboard search
+    public default void exitClipboardSearchMode() {} // Exit clipboard search mode (clear search box and mode)
   }
 
   class Autocapitalisation_callback implements Autocapitalisation.Callback

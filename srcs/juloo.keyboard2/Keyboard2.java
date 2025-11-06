@@ -762,11 +762,15 @@ public class Keyboard2 extends InputMethodService
               });
             }
           }
-          // Reset search mode when showing clipboard pane
+          // Reset search mode and clear any previous search when showing clipboard pane
           _clipboardSearchMode = false;
           if (_clipboardSearchBox != null) {
             _clipboardSearchBox.setText("");
             _clipboardSearchBox.setHint("Tap to search...");
+          }
+          // Clear search filter to show all history items (not previous search results)
+          if (_clipboardHistoryView != null) {
+            _clipboardHistoryView.setSearchFilter("");
           }
 
           // Show clipboard pane in content container (keyboard stays visible below)
@@ -930,6 +934,22 @@ public class Keyboard2 extends InputMethodService
           // Update search filter
           _clipboardHistoryView.setSearchFilter(newText);
         }
+      }
+    }
+
+    @Override
+    public void exitClipboardSearchMode()
+    {
+      // Exit search mode and clear search
+      _clipboardSearchMode = false;
+      if (_clipboardSearchBox != null)
+      {
+        _clipboardSearchBox.setText("");
+        _clipboardSearchBox.setHint("Tap to search...");
+      }
+      if (_clipboardHistoryView != null)
+      {
+        _clipboardHistoryView.setSearchFilter("");
       }
     }
   }
