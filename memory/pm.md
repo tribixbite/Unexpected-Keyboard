@@ -9,43 +9,71 @@
 
 ## 🔥 Current Status (2025-11-06)
 
-**Latest Version**: v1.32.301 (351)
-**Build Status**: ✅ BUILD SUCCESSFUL - Fixed southeast/southwest swipe detection
+**Latest Version**: v1.32.303 (353)
+**Build Status**: ✅ BUILD SUCCESSFUL - Comprehensive short swipe documentation
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.301)
+### Recent Work (v1.32.303)
 
-**CRITICAL FIX: Radial tolerance for diagonal swipe detection**
-- **User Report**: "j and k southeast dont work fyi im swiping in a straight lind which works for all others"
-- **Deep Dive Investigation**:
-  - User reported southeast swipes on j/k (for ] and }) fail with straight-line swipes
-  - Code comment said "Expanded SE (index 4) from dirs 5-6 to 4-6 for 45° hit zone (makes ] and } easier)"
-  - But it didn't work for straight-line diagonal swipes
-- **Root Cause Identified**:
-  - `isPointWithinKeyWithTolerance()` used **rectangular tolerance** (Keyboard2View.java:335-342)
-  - Keys are wider than tall (e.g., 80px × 60px)
-  - 40% tolerance: horizontal margin = 32px, vertical margin = 24px
-  - **Vertical tolerance smaller than horizontal!**
-  - Southeast (45°) swipes hit the smaller VERTICAL boundary first
-  - This set `hasLeftStartingKey = true` in Pointers.java:448
-  - Which **disabled short gesture detection** (Pointers.java:226)
-  - Other directions (east, northeast, north) didn't hit this limit as quickly
-- **Solution Implemented**:
-  - Changed to **radial (circular) tolerance** calculation
-  - Distance from touch point to key center: `sqrt(dx² + dy²)`
-  - Max allowed distance: `keyHalfDiagonal × (1 + tolerance)`
-  - With 40% tolerance: maxDistance = halfDiagonal × 1.4
-  - Treats all directions equally - no discrimination against diagonals
-- **Technical Details**:
-  - Old logic: rectangular bounds check (x within marginX, y within marginY)
-  - New logic: radial distance check (distance ≤ maxDistance)
-  - For 80×60px key: halfDiagonal = 50px, maxDistance = 70px
-  - Southeast swipe can now go 70px from center (was ~24px vertically)
-  - This gives diagonal swipes ~40% more effective tolerance
+**Created comprehensive SHORT_SWIPE_GESTURES.md specification**
+- **User Request**: "update docs/specs to cover the short swipe system in detail"
+- **Documentation Created**:
+  - New 500+ line specification: `docs/specs/SHORT_SWIPE_GESTURES.md`
+  - Complete system architecture and data flow
+  - Tolerance system deep dive (rectangular → radial evolution)
+  - Direction calculation and mapping explained
+  - Dynamic sizing from user settings
+  - All recent fixes documented (v1.32.301, v1.32.303)
+  - Performance metrics, debugging guide, test cases
+  - Full version history with technical details
+- **README.md Updates**:
+  - Added SHORT_SWIPE_GESTURES.md to table of contents
+  - Updated SWIPE_SYMBOLS.md as "historical" reference
+  - Updated status table with v1.32.303
+  - Cross-referenced new documentation
+- **User Question Answered**: "where are you getting the dimensions?"
+  - Documented dynamic calculation from screen size + user settings
+  - `_keyWidth` from screen width and layout (Keyboard2View.java:631)
+  - `row_height` from screen height and keyboard % (Theme.java:110-112)
+  - Explained why dimensions vary per device/settings
 - **Files Modified**:
-  - srcs/juloo.keyboard2/Keyboard2View.java (lines 282-371)
-  - build.gradle (versionCode 351, versionName 1.32.301)
+  - docs/specs/SHORT_SWIPE_GESTURES.md (new, 500+ lines)
+  - docs/specs/README.md (updated references)
   - memory/pm.md (this file)
+
+**CORRECTED: Radial tolerance formula (fixing v1.32.301 regression)**
+- **Problem Found**: v1.32.301's radial fix actually **broke** east/northeast swipes
+  - Formula used: `maxDistance = keyHalfDiagonal × 1.4 = 50 × 1.4 = 70px`
+  - This was **LESS** than old horizontal tolerance (72px)
+  - User reported: "h, short swipe right (east) and top right (north east) don't work"
+- **Root Cause of Broken Fix**:
+  - My first formula reduced tolerance instead of expanding it
+  - Old east: 72px, new: 70px ❌ (2px less!)
+  - Old northeast diagonal: 90px, new: 70px ❌ (20px less!)
+- **Correct Formula** (v1.32.303):
+  ```java
+  // Circle must fully contain the extended rectangle
+  maxHorizontal = keyWidth × (0.5 + tolerance)   // e.g., 72px
+  maxVertical = keyHeight × (0.5 + tolerance)    // e.g., 54px
+  maxDistance = sqrt(maxH² + maxV²)              // e.g., 90px
+  ```
+- **Result**: Now MORE permissive than rectangular in all directions
+  - East: 90px (was 72px) - 25% more tolerant!
+  - North: 90px (was 54px) - 67% more tolerant!
+  - Diagonal: 90px (same as old diagonal)
+  - All straight-line swipes work perfectly
+- **Files Modified**:
+  - srcs/juloo.keyboard2/Keyboard2View.java (lines 350-357)
+  - build.gradle (versionCode 353, versionName 1.32.303)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.301) ❌ BROKEN - DO NOT USE
+
+**Incorrect radial tolerance implementation**
+- Attempted to fix southeast swipes but broke east/northeast
+- Wrong formula: `keyHalfDiagonal × 1.4 = 70px`
+- This was less than the old horizontal tolerance (72px)
+- **Superseded by v1.32.303 with correct formula**
 
 ### Previous Work (v1.32.300)
 

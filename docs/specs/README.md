@@ -35,13 +35,19 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
    - Logarithmic frequency scaling
    - User-configurable weights (context boost, frequency scale)
 
-5. **[Swipe Symbols](SWIPE_SYMBOLS.md)** - Short swipe gestures for quick symbol access
-   - 8-directional swipe detection
-   - 17 two-letter word shortcuts
-   - Hit zone configuration
-   - Debug logging system
+5. **[Short Swipe Gestures](SHORT_SWIPE_GESTURES.md)** - Within-key directional swipes for symbols ✨ NEW
+   - Complete system documentation with tolerance algorithm
+   - Radial tolerance for equal direction support (v1.32.303)
+   - Dynamic sizing based on user settings
+   - Direction calculation and mapping (16→9 positions)
+   - Configuration and debugging guide
 
-6. **[Auto-Correction](AUTO_CORRECTION.md)** - Fuzzy matching and auto-correction (typing + swipe)
+6. **[Swipe Symbols](SWIPE_SYMBOLS.md)** - Historical direction mapping analysis
+   - Original hit zone issues (NE/SE)
+   - Direction-to-index mapping details
+   - ⚠️ Note: Tolerance issues fixed in v1.32.303 (see SHORT_SWIPE_GESTURES.md)
+
+7. **[Auto-Correction](AUTO_CORRECTION.md)** - Fuzzy matching and auto-correction (typing + swipe)
    - Typing autocorrect: Edit distance with capitalization preservation
    - Swipe autocorrect: Custom words fuzzy matched against beam candidates
    - Shared configuration (char match threshold)
@@ -64,14 +70,15 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 4. [AUTO_CORRECTION.md](AUTO_CORRECTION.md) - Auto-correction (typing + swipe modes)
 
 **User Input:**
-1. [SWIPE_SYMBOLS.md](SWIPE_SYMBOLS.md) - Swipe gesture shortcuts
-2. [DICTIONARY_MANAGER.md](DICTIONARY_MANAGER.md) - Word management UI
+1. [SHORT_SWIPE_GESTURES.md](SHORT_SWIPE_GESTURES.md) - Short swipe gesture system (v2.0)
+2. [SWIPE_SYMBOLS.md](SWIPE_SYMBOLS.md) - Swipe gesture shortcuts (historical)
+3. [DICTIONARY_MANAGER.md](DICTIONARY_MANAGER.md) - Word management UI
 
 ### For Users
 
 **Customization:**
 - [DICTIONARY_MANAGER.md](DICTIONARY_MANAGER.md#user-workflows) - How to manage words
-- [SWIPE_SYMBOLS.md](SWIPE_SYMBOLS.md#complete-symbol-reference) - Available swipe shortcuts
+- [SHORT_SWIPE_GESTURES.md](SHORT_SWIPE_GESTURES.md#common-layout-patterns) - Available swipe shortcuts and configuration
 
 **Understanding Predictions:**
 - [SWIPE_PREDICTION_PIPELINE.md](SWIPE_PREDICTION_PIPELINE.md#pipeline-architecture) - How swipe predictions work
@@ -89,7 +96,8 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 | Swipe Prediction | ✅ Complete | v1.32.207 | Autocorrect + debug logging |
 | Beam Search | ✅ Complete | v1.32.207 | 50k vocab, autocorrect, prefix indexing |
 | Typing Prediction | ⚠️ Partial | v1.0 | Implemented, bigram not validated |
-| Swipe Symbols | ✅ Complete | v1.32.133 | 17 word shortcuts |
+| Short Swipe Gestures | ✅ Complete | v1.32.303 | Radial tolerance, equal direction support |
+| Swipe Symbols | 📚 Historical | v1.32.133 | See SHORT_SWIPE_GESTURES.md for current |
 | Auto-Correction | ✅ Complete | v1.32.207 | Typing + swipe modes |
 | Neural Network | ✅ Complete | v1.20.0 | ONNX Runtime 1.20.0 |
 
