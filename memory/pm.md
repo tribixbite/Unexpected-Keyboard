@@ -7,13 +7,40 @@
 
 ---
 
-## 🔥 Current Status (2025-11-06)
+## 🔥 Current Status (2025-11-11)
 
-**Latest Version**: v1.32.303 (353)
-**Build Status**: ✅ BUILD SUCCESSFUL - Comprehensive short swipe documentation
+**Latest Version**: v1.32.304 (354)
+**Build Status**: ✅ BUILD SUCCESSFUL - Custom Dictionary Export Feature
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.303)
+### Recent Work (v1.32.304)
+
+**Added Export Custom Dictionary Settings Button**
+- **Feature**: New export button in Settings → Backup & Restore category
+- **Location**: res/xml/settings.xml line 138 (next to Export/Import Configuration)
+- **Implementation**:
+  - Added `export_custom_dictionary` preference button
+  - SettingsActivity.java:33 - New REQUEST_CODE_EXPORT_CUSTOM_DICT (1006)
+  - SettingsActivity.java:710-723 - Preference click handler
+  - SettingsActivity.java:1021-1046 - startExportCustomDictionary() method
+  - SettingsActivity.java:1048-1094 - performExportCustomDictionary() method
+  - SettingsActivity.java:820-823 - onActivityResult() handler
+- **Functionality**:
+  - Uses Storage Access Framework (SAF) file picker
+  - Filename format: `custom-dictionary-YYYYMMDD_HHMMSS.json`
+  - Reads custom_words from SharedPreferences
+  - Exports as formatted JSON (2-space indent)
+  - Shows count: "Successfully exported N custom word(s)"
+  - Handles empty dictionary gracefully
+- **Format**: Same JSON format as CustomDictionarySource uses
+  - `{"word": frequency, ...}`
+  - Example: `{"hello": 150, "world": 200}`
+- **Files Modified**:
+  - res/xml/settings.xml (+1 line)
+  - srcs/juloo.keyboard2/SettingsActivity.java (+86 lines)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.303)
 
 **Created comprehensive SHORT_SWIPE_GESTURES.md specification**
 - **User Request**: "update docs/specs to cover the short swipe system in detail"

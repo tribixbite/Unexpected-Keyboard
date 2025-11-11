@@ -30,6 +30,7 @@ public class SettingsActivity extends PreferenceActivity
   private static final int REQUEST_CODE_RESTORE = 1002;
   private static final int REQUEST_CODE_NEURAL_ENCODER = 1003;
   private static final int REQUEST_CODE_NEURAL_DECODER = 1004;
+  private static final int REQUEST_CODE_EXPORT_CUSTOM_DICT = 1006;
 
   private BackupRestoreManager backupRestoreManager;
 
@@ -705,6 +706,21 @@ public class SettingsActivity extends PreferenceActivity
         }
       });
     }
+
+    // Export custom dictionary
+    Preference exportCustomDictPref = findPreference("export_custom_dictionary");
+    if (exportCustomDictPref != null)
+    {
+      exportCustomDictPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          startExportCustomDictionary();
+          return true;
+        }
+      });
+    }
   }
 
   /**
@@ -800,6 +816,10 @@ public class SettingsActivity extends PreferenceActivity
     else if (requestCode == REQUEST_CODE_RESTORE)
     {
       performRestore(uri);
+    }
+    else if (requestCode == REQUEST_CODE_EXPORT_CUSTOM_DICT)
+    {
+      performExportCustomDictionary(uri);
     }
     else if (requestCode == REQUEST_CODE_NEURAL_ENCODER)
     {
@@ -999,6 +1019,81 @@ public class SettingsActivity extends PreferenceActivity
       Toast.makeText(this, "Restore failed: " + e.getMessage(),
                      Toast.LENGTH_LONG).show();
       Log.e("SettingsActivity", "Restore failed", e);
+    }
+  }
+
+  /**
+   * Start export custom dictionary process using Storage Access Framework
+   */
+  private void startExportCustomDictionary()
+  {
+    // Create filename with timestamp
+    String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+    String fileName = "custom-dictionary-" + timestamp + ".json";
+
+    // Use Storage Access Framework to let user choose location
+    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("application/json");
+    intent.putExtra(Intent.EXTRA_TITLE, fileName);
+
+    try
+    {
+      startActivityForResult(intent, REQUEST_CODE_EXPORT_CUSTOM_DICT);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start custom dictionary export", e);
+    }
+  }
+
+  /**
+   * Perform custom dictionary export to the selected URI
+   */
+  private void performExportCustomDictionary(Uri uri)
+  {
+    try
+    {
+      SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+      String customWordsJson = prefs.getString("custom_words", "{}");
+
+      // Parse to get count
+      org.json.JSONObject jsonDict = new org.json.JSONObject(customWordsJson);
+      int wordCount = jsonDict.length();
+
+      if (wordCount == 0)
+      {
+        Toast.makeText(this, "No custom words to export", Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      // Write to file using ContentResolver
+      try (java.io.OutputStream outputStream = getContentResolver().openOutputStream(uri))
+      {
+        if (outputStream == null)
+        {
+          throw new java.io.IOException("Failed to open output stream");
+        }
+
+        // Write formatted JSON
+        org.json.JSONObject formattedJson = new org.json.JSONObject(customWordsJson);
+        String prettyJson = formattedJson.toString(2); // Indent with 2 spaces
+        outputStream.write(prettyJson.getBytes());
+      }
+
+      // Show success message
+      String message = "Successfully exported " + wordCount + " custom word" +
+                      (wordCount == 1 ? "" : "s");
+      Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+      Log.d("SettingsActivity", "Exported " + wordCount + " custom words");
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Export failed: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Custom dictionary export failed", e);
     }
   }
 

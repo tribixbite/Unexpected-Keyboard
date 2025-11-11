@@ -135,6 +135,7 @@
   <PreferenceCategory android:title="Backup &amp; Restore">
     <Preference android:key="backup_config" android:title="Export Configuration" android:summary="Save all settings to kb-config.json"/>
     <Preference android:key="restore_config" android:title="Import Configuration" android:summary="Restore settings from kb-config.json"/>
+    <Preference android:key="export_custom_dictionary" android:title="Export Custom Dictionary" android:summary="Save custom words and frequencies to JSON file"/>
   </PreferenceCategory>
   <PreferenceCategory android:title="About">
     <Preference android:key="version_info" android:title="Version Info" android:summary="Loading version info..."/>
