@@ -9,36 +9,65 @@
 
 ## 🔥 Current Status (2025-11-11)
 
-**Latest Version**: v1.32.304 (354)
-**Build Status**: ✅ BUILD SUCCESSFUL - Custom Dictionary Export Feature
+**Latest Version**: v1.32.305 (355)
+**Build Status**: ✅ BUILD SUCCESSFUL - Complete Custom Dictionary Import/Export
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.304)
+### Recent Work (v1.32.305)
+
+**Fixed and Enhanced Custom Dictionary Import/Export**
+- **Bug Fixes**:
+  - **Fixed**: "No custom words to export" error even when custom words exist
+    - Root cause: Using wrong SharedPreferences instance
+    - Was using: `getPreferenceManager().getSharedPreferences()`
+    - Now using: `DirectBootAwarePreferences.get_shared_preferences(this)`
+    - This matches how CustomDictionarySource and DisabledDictionarySource access data
+  - **Fixed**: Export now includes disabled words (previously only custom words)
+  - **Fixed**: Import now prevents duplicates and merges intelligently
+
+- **Export Enhancements**:
+  - Exports both custom words AND disabled words
+  - New structured JSON format with metadata:
+    ```json
+    {
+      "custom_words": {"hello": 150, "world": 200},
+      "disabled_words": ["the", "of"],
+      "export_version": 1,
+      "export_date": "2025-11-11 16:56:00"
+    }
+    ```
+  - Shows detailed count: "Successfully exported:\n• N custom word(s)\n• M disabled word(s)"
+  - Handles empty dictionaries gracefully
+
+- **Import Implementation** (NEW):
+  - Added "Import Custom Dictionary" button in Settings → Backup & Restore
+  - Smart merge logic without duplicates:
+    - **Custom words**: Adds new words, updates existing if imported frequency is higher
+    - **Disabled words**: Adds new disabled words, skips existing (Set handles duplicates)
+  - Detailed result message:
+    - "• Custom words: N added, M updated"
+    - "• Disabled words: K added"
+    - "• No new words (all already exist)" if nothing changed
+  - Uses Storage Access Framework file picker
+
+- **Implementation Details**:
+  - SettingsActivity.java:34 - Added REQUEST_CODE_IMPORT_CUSTOM_DICT (1007)
+  - SettingsActivity.java:726-739 - Import preference click handler
+  - SettingsActivity.java:1071-1128 - Updated performExportCustomDictionary() to use DirectBootAwarePreferences and export both dictionaries
+  - SettingsActivity.java:1133-1150 - startImportCustomDictionary() method
+  - SettingsActivity.java:1155-1279 - performImportCustomDictionary() method with smart merge
+  - SettingsActivity.java:840-843 - onActivityResult() handler for import
+
+- **Files Modified**:
+  - res/xml/settings.xml (+1 line: import button)
+  - srcs/juloo.keyboard2/SettingsActivity.java (+208 lines total, replaced export implementation)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.304) ❌ PARTIALLY BROKEN
 
 **Added Export Custom Dictionary Settings Button**
-- **Feature**: New export button in Settings → Backup & Restore category
-- **Location**: res/xml/settings.xml line 138 (next to Export/Import Configuration)
-- **Implementation**:
-  - Added `export_custom_dictionary` preference button
-  - SettingsActivity.java:33 - New REQUEST_CODE_EXPORT_CUSTOM_DICT (1006)
-  - SettingsActivity.java:710-723 - Preference click handler
-  - SettingsActivity.java:1021-1046 - startExportCustomDictionary() method
-  - SettingsActivity.java:1048-1094 - performExportCustomDictionary() method
-  - SettingsActivity.java:820-823 - onActivityResult() handler
-- **Functionality**:
-  - Uses Storage Access Framework (SAF) file picker
-  - Filename format: `custom-dictionary-YYYYMMDD_HHMMSS.json`
-  - Reads custom_words from SharedPreferences
-  - Exports as formatted JSON (2-space indent)
-  - Shows count: "Successfully exported N custom word(s)"
-  - Handles empty dictionary gracefully
-- **Format**: Same JSON format as CustomDictionarySource uses
-  - `{"word": frequency, ...}`
-  - Example: `{"hello": 150, "world": 200}`
-- **Files Modified**:
-  - res/xml/settings.xml (+1 line)
-  - srcs/juloo.keyboard2/SettingsActivity.java (+86 lines)
-  - memory/pm.md (this file)
+- Fixed in v1.32.305 - export didn't work due to wrong SharedPreferences instance
+- Also missing: disabled words export and import functionality
 
 ### Previous Work (v1.32.303)
 

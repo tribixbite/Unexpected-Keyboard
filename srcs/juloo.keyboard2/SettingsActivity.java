@@ -31,6 +31,7 @@ public class SettingsActivity extends PreferenceActivity
   private static final int REQUEST_CODE_NEURAL_ENCODER = 1003;
   private static final int REQUEST_CODE_NEURAL_DECODER = 1004;
   private static final int REQUEST_CODE_EXPORT_CUSTOM_DICT = 1006;
+  private static final int REQUEST_CODE_IMPORT_CUSTOM_DICT = 1007;
 
   private BackupRestoreManager backupRestoreManager;
 
@@ -721,6 +722,21 @@ public class SettingsActivity extends PreferenceActivity
         }
       });
     }
+
+    // Import custom dictionary
+    Preference importCustomDictPref = findPreference("import_custom_dictionary");
+    if (importCustomDictPref != null)
+    {
+      importCustomDictPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          startImportCustomDictionary();
+          return true;
+        }
+      });
+    }
   }
 
   /**
@@ -820,6 +836,10 @@ public class SettingsActivity extends PreferenceActivity
     else if (requestCode == REQUEST_CODE_EXPORT_CUSTOM_DICT)
     {
       performExportCustomDictionary(uri);
+    }
+    else if (requestCode == REQUEST_CODE_IMPORT_CUSTOM_DICT)
+    {
+      performImportCustomDictionary(uri);
     }
     else if (requestCode == REQUEST_CODE_NEURAL_ENCODER)
     {
@@ -1056,18 +1076,31 @@ public class SettingsActivity extends PreferenceActivity
   {
     try
     {
-      SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+      // Use DirectBootAwarePreferences (same as DictionaryDataSource)
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+
+      // Get custom words
       String customWordsJson = prefs.getString("custom_words", "{}");
+      org.json.JSONObject customWords = new org.json.JSONObject(customWordsJson);
+      int customWordCount = customWords.length();
 
-      // Parse to get count
-      org.json.JSONObject jsonDict = new org.json.JSONObject(customWordsJson);
-      int wordCount = jsonDict.length();
+      // Get disabled words
+      java.util.Set<String> disabledWordsSet = prefs.getStringSet("disabled_words", new java.util.HashSet<>());
+      org.json.JSONArray disabledWords = new org.json.JSONArray(disabledWordsSet);
+      int disabledWordCount = disabledWordsSet.size();
 
-      if (wordCount == 0)
+      if (customWordCount == 0 && disabledWordCount == 0)
       {
-        Toast.makeText(this, "No custom words to export", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "No custom or disabled words to export", Toast.LENGTH_SHORT).show();
         return;
       }
+
+      // Create combined export format
+      org.json.JSONObject exportData = new org.json.JSONObject();
+      exportData.put("custom_words", customWords);
+      exportData.put("disabled_words", disabledWords);
+      exportData.put("export_version", 1);
+      exportData.put("export_date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date()));
 
       // Write to file using ContentResolver
       try (java.io.OutputStream outputStream = getContentResolver().openOutputStream(uri))
@@ -1078,22 +1111,174 @@ public class SettingsActivity extends PreferenceActivity
         }
 
         // Write formatted JSON
-        org.json.JSONObject formattedJson = new org.json.JSONObject(customWordsJson);
-        String prettyJson = formattedJson.toString(2); // Indent with 2 spaces
+        String prettyJson = exportData.toString(2); // Indent with 2 spaces
         outputStream.write(prettyJson.getBytes());
       }
 
       // Show success message
-      String message = "Successfully exported " + wordCount + " custom word" +
-                      (wordCount == 1 ? "" : "s");
+      String message = "Successfully exported:\n" +
+                      "• " + customWordCount + " custom word" + (customWordCount == 1 ? "" : "s") + "\n" +
+                      "• " + disabledWordCount + " disabled word" + (disabledWordCount == 1 ? "" : "s");
       Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-      Log.d("SettingsActivity", "Exported " + wordCount + " custom words");
+      Log.d("SettingsActivity", "Exported " + customWordCount + " custom words and " +
+            disabledWordCount + " disabled words");
     }
     catch (Exception e)
     {
       Toast.makeText(this, "Export failed: " + e.getMessage(),
                      Toast.LENGTH_LONG).show();
       Log.e("SettingsActivity", "Custom dictionary export failed", e);
+    }
+  }
+
+  /**
+   * Start import custom dictionary process using Storage Access Framework
+   */
+  private void startImportCustomDictionary()
+  {
+    // Use Storage Access Framework to let user choose file
+    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("application/json");
+
+    try
+    {
+      startActivityForResult(intent, REQUEST_CODE_IMPORT_CUSTOM_DICT);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start custom dictionary import", e);
+    }
+  }
+
+  /**
+   * Perform custom dictionary import from the selected URI
+   */
+  private void performImportCustomDictionary(Uri uri)
+  {
+    try
+    {
+      // Read file content
+      StringBuilder jsonContent = new StringBuilder();
+      try (java.io.InputStream inputStream = getContentResolver().openInputStream(uri))
+      {
+        if (inputStream == null)
+        {
+          throw new java.io.IOException("Failed to open input stream");
+        }
+
+        java.io.BufferedReader reader = new java.io.BufferedReader(
+          new java.io.InputStreamReader(inputStream));
+        String line;
+        while ((line = reader.readLine()) != null)
+        {
+          jsonContent.append(line);
+        }
+      }
+
+      // Parse JSON
+      org.json.JSONObject importData = new org.json.JSONObject(jsonContent.toString());
+
+      // Use DirectBootAwarePreferences (same as DictionaryDataSource)
+      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+      SharedPreferences.Editor editor = prefs.edit();
+
+      // Import custom words (merge without duplicates, keep higher frequency)
+      int customWordsAdded = 0;
+      int customWordsUpdated = 0;
+      if (importData.has("custom_words"))
+      {
+        org.json.JSONObject importCustomWords = importData.getJSONObject("custom_words");
+
+        // Get existing custom words
+        String existingJson = prefs.getString("custom_words", "{}");
+        org.json.JSONObject existingCustomWords = new org.json.JSONObject(existingJson);
+
+        // Merge: add new words, update if imported frequency is higher
+        java.util.Iterator<String> keys = importCustomWords.keys();
+        while (keys.hasNext())
+        {
+          String word = keys.next();
+          int importedFreq = importCustomWords.getInt(word);
+
+          if (existingCustomWords.has(word))
+          {
+            int existingFreq = existingCustomWords.getInt(word);
+            if (importedFreq > existingFreq)
+            {
+              existingCustomWords.put(word, importedFreq);
+              customWordsUpdated++;
+            }
+            // If existing freq is higher or equal, keep existing
+          }
+          else
+          {
+            existingCustomWords.put(word, importedFreq);
+            customWordsAdded++;
+          }
+        }
+
+        // Save merged custom words
+        editor.putString("custom_words", existingCustomWords.toString());
+      }
+
+      // Import disabled words (merge without duplicates)
+      int disabledWordsAdded = 0;
+      if (importData.has("disabled_words"))
+      {
+        org.json.JSONArray importDisabledWords = importData.getJSONArray("disabled_words");
+
+        // Get existing disabled words
+        java.util.Set<String> existingDisabled = new java.util.HashSet<>(
+          prefs.getStringSet("disabled_words", new java.util.HashSet<>()));
+        int initialSize = existingDisabled.size();
+
+        // Add imported words (Set automatically handles duplicates)
+        for (int i = 0; i < importDisabledWords.length(); i++)
+        {
+          existingDisabled.add(importDisabledWords.getString(i));
+        }
+
+        disabledWordsAdded = existingDisabled.size() - initialSize;
+
+        // Save merged disabled words
+        editor.putStringSet("disabled_words", existingDisabled);
+      }
+
+      editor.apply();
+
+      // Show results
+      StringBuilder message = new StringBuilder("Import complete:\n");
+      if (customWordsAdded > 0 || customWordsUpdated > 0)
+      {
+        message.append("• Custom words: ")
+               .append(customWordsAdded).append(" added");
+        if (customWordsUpdated > 0)
+        {
+          message.append(", ").append(customWordsUpdated).append(" updated");
+        }
+        message.append("\n");
+      }
+      if (disabledWordsAdded > 0)
+      {
+        message.append("• Disabled words: ").append(disabledWordsAdded).append(" added\n");
+      }
+      if (customWordsAdded == 0 && customWordsUpdated == 0 && disabledWordsAdded == 0)
+      {
+        message.append("• No new words (all already exist)");
+      }
+
+      Toast.makeText(this, message.toString(), Toast.LENGTH_LONG).show();
+      Log.d("SettingsActivity", "Imported: " + customWordsAdded + " custom words added, " +
+            customWordsUpdated + " updated, " + disabledWordsAdded + " disabled words added");
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Import failed: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Custom dictionary import failed", e);
     }
   }
 
