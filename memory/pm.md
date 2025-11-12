@@ -9,11 +9,26 @@
 
 ## 🔥 Current Status (2025-11-12)
 
-**Latest Version**: v1.32.310 (360)
-**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard Spacing Improved
+**Latest Version**: v1.32.311 (361)
+**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard Button Alignment Fixed
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.310)
+### Recent Work (v1.32.311)
+
+**Fixed Clipboard Button Vertical Alignment**
+- **Issue**: Icon buttons were misaligned - tops aligned with middle of text instead of text top
+- **Root Cause**: Button container had 14dp top margin while text now has 7dp vertical margin
+- **Fix**: Reduced button container top margin from 14dp to 7dp to match text margin
+- **Implementation**:
+  - res/layout/clipboard_history_entry.xml:4 - Changed layout_marginTop from 14dp to 7dp
+  - res/layout/clipboard_pin_entry.xml:4 - Changed layout_marginTop from 14dp to 7dp
+- **Result**: Buttons now properly align with text top (both have 7dp top margin)
+- **Files Modified**:
+  - res/layout/clipboard_history_entry.xml (1 attribute changed)
+  - res/layout/clipboard_pin_entry.xml (1 attribute changed)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.310)
 
 **Reduced Clipboard Entry Spacing by 50%**
 - **Issue**: Too much empty space between clipboard entries
