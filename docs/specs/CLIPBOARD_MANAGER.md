@@ -585,16 +585,18 @@ _service.remove_history_entry(clip);      // Delete entirely
 **Location**: ClipboardPinView.java:58
 **Reason**: User expectation - delete should remove completely, not move to history
 
-**Dynamic Height (v1.32.319-324)**:
+**Dynamic Height (v1.32.319-325)**:
 
-#### updateParentMinHeight() - Show 2 Entries When Present
+#### updateParentMinHeight() - User-Configurable Pinned Section Size
 ```java
 private void updateParentMinHeight()
 {
   if (_entries.size() >= 2)
   {
-    // Set minHeight on this ListView to show 2 entries (~50dp per entry)
-    int minHeightPx = (int)(100 * getResources().getDisplayMetrics().density);
+    // Read user preference for pinned section size (default 100dp = 2-3 rows)
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(getContext());
+    int minHeightDp = Integer.parseInt(prefs.getString("clipboard_pinned_rows", "100"));
+    int minHeightPx = (int)(minHeightDp * getResources().getDisplayMetrics().density);
     setMinimumHeight(minHeightPx);
   }
   else
@@ -605,10 +607,15 @@ private void updateParentMinHeight()
 }
 ```
 
-**Location**: ClipboardPinView.java:52-65
+**Location**: ClipboardPinView.java:52-67
 **Called From**: refresh_pinned_items() after updating _entries
-**Purpose**: Ensure pinned section displays 2 entries when available, without requiring scroll
-**Note**: 100dp value is being tuned based on actual entry heights (v1.32.324 current value)
+**Purpose**: Ensure pinned section displays user-preferred number of entries without requiring scroll
+**User Setting**: Settings → Clipboard → "Pinned section size" (v1.32.325)
+**Options**:
+- 70dp: 1-2 rows (compact)
+- 100dp: 2-3 rows (default)
+- 140dp: 3-4 rows (comfortable)
+- 200dp: 4-5 rows (expanded)
 
 ### MaxHeightListView
 
@@ -814,25 +821,32 @@ if (minHeight > 0)
 **Fix**: Use stable IDs (content hash) instead of position
 - **Complexity**: Medium - requires adapter changes
 
-#### 4. Pinned Section minHeight Tuning (v1.32.324)
+#### 4. Pinned Section minHeight Tuning (RESOLVED v1.32.325)
 
 **Severity**: Low
 
-**Status**: Work in Progress
+**Status**: Resolved - Made User-Configurable
 
-**Description**: Dynamic minHeight for pinned section showing more/fewer than target 2 entries
+**Description**: Dynamic minHeight for pinned section needed tuning for different user preferences
 
 **History**:
-- 400dp → 5.5 entries visible
-- 200dp → 5.5 entries visible
-- 140dp → 4 entries visible
-- 100dp → Currently testing (v1.32.324)
+- 400dp → 5.5 entries visible (too large)
+- 200dp → 5.5 entries visible (too large)
+- 140dp → 4 entries visible (still too large)
+- 100dp → 2-3 entries visible (good for most users)
 
-**Target**: Show exactly 2 pinned entries without scrolling when 2+ items exist
+**Solution (v1.32.325)**: Added user-configurable setting in Settings → Clipboard → "Pinned section size"
+- 70dp: 1-2 rows (compact)
+- 100dp: 2-3 rows (default)
+- 140dp: 3-4 rows (comfortable)
+- 200dp: 4-5 rows (expanded)
 
-**Complexity**: Low - tuning single dp value in ClipboardPinView.java:57
+**Implementation**:
+- `res/xml/settings.xml:134` - ListPreference with dependency on clipboard_history_enabled
+- `res/values/arrays.xml:113-124` - Options and values arrays
+- `ClipboardPinView.java:57-58` - Reads SharedPreferences value dynamically
 
-**Note**: Entry heights vary with content (single-line vs expanded multi-line), making exact sizing difficult
+**Note**: Entry heights still vary with content (single-line vs expanded), but users can now choose their preferred size
 
 ### Future Enhancements
 

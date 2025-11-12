@@ -48,13 +48,15 @@ public final class ClipboardPinView extends MaxHeightListView
     }
   }
 
-  /** Update parent ScrollView minHeight based on item count */
+  /** Update parent ScrollView minHeight based on item count and user preference */
   private void updateParentMinHeight()
   {
     if (_entries.size() >= 2)
     {
-      // Set minHeight on this ListView to show 2 entries (approximately 50dp per entry)
-      int minHeightPx = (int)(100 * getResources().getDisplayMetrics().density);
+      // Read user preference for pinned section size (default 100dp = 2-3 rows)
+      android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(getContext());
+      int minHeightDp = Integer.parseInt(prefs.getString("clipboard_pinned_rows", "100"));
+      int minHeightPx = (int)(minHeightDp * getResources().getDisplayMetrics().density);
       setMinimumHeight(minHeightPx);
     }
     else

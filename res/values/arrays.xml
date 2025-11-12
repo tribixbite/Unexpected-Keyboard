@@ -110,6 +110,18 @@
     <item>50</item>
     <item>100</item>
   </string-array>
+  <string-array name="pref_clipboard_pinned_rows_entries">
+    <item>1-2 rows (compact)</item>
+    <item>2-3 rows (default)</item>
+    <item>3-4 rows (comfortable)</item>
+    <item>4-5 rows (expanded)</item>
+  </string-array>
+  <string-array name="pref_clipboard_pinned_rows_values">
+    <item>70</item>
+    <item>100</item>
+    <item>140</item>
+    <item>200</item>
+  </string-array>
   <string-array name="swipe_correction_preset_entries">
     <item>Strict (High Accuracy)</item>
     <item>Balanced (Default)</item>
