@@ -101,26 +101,25 @@ public final class ClipboardPinView extends MaxHeightListView
       final boolean isMultiLine = text.contains("\n");
       final boolean isExpanded = _expandedStates.containsKey(pos) && _expandedStates.get(pos);
 
+      // Set maxLines based on expanded state (applies to all entries)
+      if (isExpanded)
+      {
+        textView.setMaxLines(Integer.MAX_VALUE);
+        textView.setEllipsize(null);
+      }
+      else
+      {
+        textView.setMaxLines(1);
+        textView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+      }
+
+      // Show expand button only for multi-line entries
       if (isMultiLine)
       {
-        // Show expand button for multi-line entries
         expandButton.setVisibility(View.VISIBLE);
+        expandButton.setRotation(isExpanded ? 180 : 0);
 
-        // Set maxLines based on expanded state
-        if (isExpanded)
-        {
-          textView.setMaxLines(Integer.MAX_VALUE);
-          textView.setEllipsize(null);
-          expandButton.setRotation(180); // Rotate to indicate "collapse"
-        }
-        else
-        {
-          textView.setMaxLines(1);
-          textView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-          expandButton.setRotation(0); // Normal position for "expand"
-        }
-
-        // Handle expand/collapse click
+        // Handle expand button click for multi-line entries
         expandButton.setOnClickListener(new View.OnClickListener()
         {
           @Override
@@ -133,11 +132,19 @@ public final class ClipboardPinView extends MaxHeightListView
       }
       else
       {
-        // Hide expand button for single-line entries
         expandButton.setVisibility(View.GONE);
-        textView.setMaxLines(1);
-        textView.setEllipsize(android.text.TextUtils.TruncateAt.END);
       }
+
+      // Make text clickable to expand/collapse (all entries)
+      textView.setOnClickListener(new View.OnClickListener()
+      {
+        @Override
+        public void onClick(View v)
+        {
+          _expandedStates.put(pos, !isExpanded);
+          notifyDataSetChanged();
+        }
+      });
 
       v.findViewById(R.id.clipboard_pin_paste).setOnClickListener(
           new View.OnClickListener()

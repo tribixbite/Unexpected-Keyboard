@@ -9,11 +9,44 @@
 
 ## 🔥 Current Status (2025-11-12)
 
-**Latest Version**: v1.32.311 (361)
-**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard Button Alignment Fixed
+**Latest Version**: v1.32.312 (362)
+**Build Status**: ✅ BUILD SUCCESSFUL - Tap-to-Expand Clipboard Entries
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.311)
+### Recent Work (v1.32.312)
+
+**Added Tap-to-Expand for All Clipboard Entries**
+- **Feature**: Users can now tap on any clipboard text to expand/collapse it
+- **Applies To**:
+  - Single-line entries truncated with ellipses (too long to display)
+  - Multi-line entries (containing \n characters)
+- **Behavior**:
+  - Tap text: toggles between 1 line (collapsed) and full text (expanded)
+  - Multi-line entries still show expand button chevron for visual indication
+  - Single-line entries: no button, just tap text to expand
+  - State preserved in _expandedStates HashMap (same as before)
+- **UX Benefits**:
+  - More discoverable - text itself is clickable target
+  - Works for truncated single-line entries (previously no way to expand)
+  - Consistent behavior across all entry types
+  - Mobile-friendly touch target (entire text area)
+- **Implementation**:
+  - ClipboardHistoryView.java:175-183 - Added text OnClickListener
+  - ClipboardPinView.java:139-147 - Added text OnClickListener
+  - Refactored expand logic to apply to ALL entries (not just multi-line)
+  - Reuses existing _expandedStates HashMap infrastructure
+  - Expand button still shown for multi-line entries (both work)
+- **Decision Rationale**: Chose tap-to-expand over horizontal scroll because:
+  - More robust (no gesture conflicts with vertical scrolling)
+  - Reuses existing tested expand/collapse code
+  - Better touch UX on mobile
+  - Less room for bugs
+- **Files Modified**:
+  - srcs/juloo.keyboard2/ClipboardHistoryView.java (~10 lines refactored + 9 added)
+  - srcs/juloo.keyboard2/ClipboardPinView.java (~10 lines refactored + 9 added)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.311)
 
 **Fixed Clipboard Button Vertical Alignment**
 - **Issue**: Icon buttons were misaligned - tops aligned with middle of text instead of text top
