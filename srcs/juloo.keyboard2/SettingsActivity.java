@@ -32,6 +32,8 @@ public class SettingsActivity extends PreferenceActivity
   private static final int REQUEST_CODE_NEURAL_DECODER = 1004;
   private static final int REQUEST_CODE_EXPORT_CUSTOM_DICT = 1006;
   private static final int REQUEST_CODE_IMPORT_CUSTOM_DICT = 1007;
+  private static final int REQUEST_CODE_EXPORT_CLIPBOARD = 1008;
+  private static final int REQUEST_CODE_IMPORT_CLIPBOARD = 1009;
 
   private BackupRestoreManager backupRestoreManager;
 
@@ -737,6 +739,36 @@ public class SettingsActivity extends PreferenceActivity
         }
       });
     }
+
+    // Export clipboard history
+    Preference exportClipboardPref = findPreference("export_clipboard_history");
+    if (exportClipboardPref != null)
+    {
+      exportClipboardPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          startExportClipboardHistory();
+          return true;
+        }
+      });
+    }
+
+    // Import clipboard history
+    Preference importClipboardPref = findPreference("import_clipboard_history");
+    if (importClipboardPref != null)
+    {
+      importClipboardPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
+      {
+        @Override
+        public boolean onPreferenceClick(Preference preference)
+        {
+          startImportClipboardHistory();
+          return true;
+        }
+      });
+    }
   }
 
   /**
@@ -840,6 +872,14 @@ public class SettingsActivity extends PreferenceActivity
     else if (requestCode == REQUEST_CODE_IMPORT_CUSTOM_DICT)
     {
       performImportCustomDictionary(uri);
+    }
+    else if (requestCode == REQUEST_CODE_EXPORT_CLIPBOARD)
+    {
+      performExportClipboardHistory(uri);
+    }
+    else if (requestCode == REQUEST_CODE_IMPORT_CLIPBOARD)
+    {
+      performImportClipboardHistory(uri);
     }
     else if (requestCode == REQUEST_CODE_NEURAL_ENCODER)
     {
@@ -1279,6 +1319,179 @@ public class SettingsActivity extends PreferenceActivity
       Toast.makeText(this, "Import failed: " + e.getMessage(),
                      Toast.LENGTH_LONG).show();
       Log.e("SettingsActivity", "Custom dictionary import failed", e);
+    }
+  }
+
+  /**
+   * Start export clipboard history process using Storage Access Framework
+   */
+  private void startExportClipboardHistory()
+  {
+    // Create filename with timestamp
+    String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+    String fileName = "clipboard-history-" + timestamp + ".json";
+
+    // Use Storage Access Framework to let user choose location
+    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("application/json");
+    intent.putExtra(Intent.EXTRA_TITLE, fileName);
+
+    try
+    {
+      startActivityForResult(intent, REQUEST_CODE_EXPORT_CLIPBOARD);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start clipboard export", e);
+    }
+  }
+
+  /**
+   * Perform clipboard history export to the selected URI
+   */
+  private void performExportClipboardHistory(Uri uri)
+  {
+    try
+    {
+      ClipboardDatabase db = ClipboardDatabase.getInstance(this);
+      org.json.JSONObject exportData = db.exportToJSON();
+
+      if (exportData == null)
+      {
+        Toast.makeText(this, "Failed to export clipboard history", Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      int activeCount = exportData.getInt("total_active");
+      int pinnedCount = exportData.getInt("total_pinned");
+
+      if (activeCount == 0 && pinnedCount == 0)
+      {
+        Toast.makeText(this, "No clipboard entries to export", Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      // Write to file using ContentResolver
+      try (java.io.OutputStream outputStream = getContentResolver().openOutputStream(uri))
+      {
+        if (outputStream == null)
+        {
+          throw new java.io.IOException("Failed to open output stream");
+        }
+
+        // Write formatted JSON
+        String prettyJson = exportData.toString(2); // Indent with 2 spaces
+        outputStream.write(prettyJson.getBytes());
+      }
+
+      // Show success message
+      String message = "Successfully exported:\n" +
+                      "• " + activeCount + " active entr" + (activeCount == 1 ? "y" : "ies") + "\n" +
+                      "• " + pinnedCount + " pinned entr" + (pinnedCount == 1 ? "y" : "ies");
+      Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+      Log.d("SettingsActivity", "Exported " + activeCount + " active and " +
+            pinnedCount + " pinned clipboard entries");
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Export failed: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Clipboard export failed", e);
+    }
+  }
+
+  /**
+   * Start import clipboard history process using Storage Access Framework
+   */
+  private void startImportClipboardHistory()
+  {
+    // Use Storage Access Framework to let user choose file
+    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.setType("application/json");
+
+    try
+    {
+      startActivityForResult(intent, REQUEST_CODE_IMPORT_CLIPBOARD);
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Failed to open file picker: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Failed to start clipboard import", e);
+    }
+  }
+
+  /**
+   * Perform clipboard history import from the selected URI
+   */
+  private void performImportClipboardHistory(Uri uri)
+  {
+    try
+    {
+      // Read file content
+      StringBuilder jsonContent = new StringBuilder();
+      try (java.io.InputStream inputStream = getContentResolver().openInputStream(uri))
+      {
+        if (inputStream == null)
+        {
+          throw new java.io.IOException("Failed to open input stream");
+        }
+
+        java.io.BufferedReader reader = new java.io.BufferedReader(
+          new java.io.InputStreamReader(inputStream));
+        String line;
+        while ((line = reader.readLine()) != null)
+        {
+          jsonContent.append(line);
+        }
+      }
+
+      // Parse JSON
+      org.json.JSONObject importData = new org.json.JSONObject(jsonContent.toString());
+
+      // Import using ClipboardDatabase
+      ClipboardDatabase db = ClipboardDatabase.getInstance(this);
+      int[] results = db.importFromJSON(importData);
+
+      int activeAdded = results[0];
+      int pinnedAdded = results[1];
+      int duplicatesSkipped = results[2];
+
+      // Show results
+      StringBuilder message = new StringBuilder("Import complete:\n");
+      if (activeAdded > 0)
+      {
+        message.append("• ").append(activeAdded).append(" active entr")
+               .append(activeAdded == 1 ? "y" : "ies").append(" added\n");
+      }
+      if (pinnedAdded > 0)
+      {
+        message.append("• ").append(pinnedAdded).append(" pinned entr")
+               .append(pinnedAdded == 1 ? "y" : "ies").append(" added\n");
+      }
+      if (duplicatesSkipped > 0)
+      {
+        message.append("• ").append(duplicatesSkipped).append(" duplicate")
+               .append(duplicatesSkipped == 1 ? "" : "s").append(" skipped\n");
+      }
+      if (activeAdded == 0 && pinnedAdded == 0)
+      {
+        message.append("• No new entries (all already exist)");
+      }
+
+      Toast.makeText(this, message.toString(), Toast.LENGTH_LONG).show();
+      Log.d("SettingsActivity", "Imported: " + activeAdded + " active, " +
+            pinnedAdded + " pinned, " + duplicatesSkipped + " duplicates skipped");
+    }
+    catch (Exception e)
+    {
+      Toast.makeText(this, "Import failed: " + e.getMessage(),
+                     Toast.LENGTH_LONG).show();
+      Log.e("SettingsActivity", "Clipboard import failed", e);
     }
   }
 

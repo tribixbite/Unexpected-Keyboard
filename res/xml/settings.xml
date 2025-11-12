@@ -137,6 +137,8 @@
     <Preference android:key="restore_config" android:title="Import Configuration" android:summary="Restore settings from kb-config.json"/>
     <Preference android:key="export_custom_dictionary" android:title="Export Custom Dictionary" android:summary="Save custom words, frequencies, and disabled words to JSON"/>
     <Preference android:key="import_custom_dictionary" android:title="Import Custom Dictionary" android:summary="Import custom words and disabled words (merges without duplicates)"/>
+    <Preference android:key="export_clipboard_history" android:title="Export Clipboard History" android:summary="Save clipboard entries (active and pinned) to JSON"/>
+    <Preference android:key="import_clipboard_history" android:title="Import Clipboard History" android:summary="Import clipboard entries (merges without duplicates)"/>
   </PreferenceCategory>
   <PreferenceCategory android:title="About">
     <Preference android:key="version_info" android:title="Version Info" android:summary="Loading version info..."/>

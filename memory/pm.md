@@ -9,11 +9,70 @@
 
 ## 🔥 Current Status (2025-11-11)
 
-**Latest Version**: v1.32.305 (355)
-**Build Status**: ✅ BUILD SUCCESSFUL - Complete Custom Dictionary Import/Export
+**Latest Version**: v1.32.306 (356)
+**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard History Import/Export
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.305)
+### Recent Work (v1.32.306)
+
+**Added Clipboard History Import/Export with Full Functionality**
+- **Feature**: Complete clipboard backup and restore system
+- **Location**: Settings → Backup & Restore category (lines 140-141 in settings.xml)
+- **Buttons Added**:
+  - "Export Clipboard History" - Save all clipboard entries to JSON
+  - "Import Clipboard History" - Restore clipboard entries with duplicate prevention
+
+- **Export Functionality**:
+  - Exports **both** active and pinned clipboard entries
+  - Includes all data: content, timestamp, expiry_timestamp, pinned status
+  - JSON format with metadata:
+    ```json
+    {
+      "active_entries": [
+        {"content": "text", "timestamp": 123, "expiry_timestamp": 456}
+      ],
+      "pinned_entries": [
+        {"content": "pinned text", "timestamp": 789, "expiry_timestamp": 1011}
+      ],
+      "export_version": 1,
+      "export_date": "2025-11-11 20:31:00",
+      "total_active": 5,
+      "total_pinned": 2
+    }
+    ```
+  - Filename format: `clipboard-history-YYYYMMDD_HHMMSS.json`
+  - Shows detailed count: "Successfully exported:\n• N active entry/ies\n• M pinned entry/ies"
+  - Handles empty clipboard gracefully
+
+- **Import Functionality**:
+  - Smart merge without duplicates:
+    - Uses content hash for duplicate detection
+    - Skips entries that already exist (same content)
+    - Preserves original timestamps and expiry dates
+    - Maintains pinned status from import
+  - Detailed result message:
+    - "• N active entry/ies added"
+    - "• M pinned entry/ies added"
+    - "• K duplicate(s) skipped"
+    - "• No new entries (all already exist)" if nothing added
+  - Uses Storage Access Framework file picker
+
+- **Implementation**:
+  - ClipboardDatabase.java:413-491 - exportToJSON() method
+  - ClipboardDatabase.java:493-602 - importFromJSON() method with duplicate prevention
+  - SettingsActivity.java:35-36 - REQUEST_CODE_EXPORT_CLIPBOARD (1008), REQUEST_CODE_IMPORT_CLIPBOARD (1009)
+  - SettingsActivity.java:743-771 - Preference click handlers
+  - SettingsActivity.java:1317-1396 - Export implementation
+  - SettingsActivity.java:1398-1488 - Import implementation with smart merge
+  - SettingsActivity.java:876-883 - onActivityResult() handlers
+
+- **Files Modified**:
+  - res/xml/settings.xml (+2 lines: export and import buttons)
+  - srcs/juloo.keyboard2/ClipboardDatabase.java (+192 lines: export/import methods)
+  - srcs/juloo.keyboard2/SettingsActivity.java (+186 lines: handlers and implementation)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.305)
 
 **Fixed and Enhanced Custom Dictionary Import/Export**
 - **Bug Fixes**:

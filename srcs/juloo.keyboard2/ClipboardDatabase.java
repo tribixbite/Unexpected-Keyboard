@@ -409,4 +409,194 @@ public class ClipboardDatabase extends SQLiteOpenHelper
             return 0;
         }
     }
+
+    /**
+     * Export all clipboard entries (active and pinned) to JSON format
+     */
+    public org.json.JSONObject exportToJSON()
+    {
+        try
+        {
+            SQLiteDatabase db = this.getReadableDatabase();
+            long currentTime = System.currentTimeMillis();
+
+            // Get all entries (expired and non-expired)
+            String query = "SELECT " + COLUMN_CONTENT + ", " + COLUMN_TIMESTAMP + ", " +
+                COLUMN_IS_PINNED + ", " + COLUMN_EXPIRY_TIMESTAMP +
+                " FROM " + TABLE_CLIPBOARD +
+                " ORDER BY " + COLUMN_TIMESTAMP + " DESC";
+
+            Cursor cursor = db.rawQuery(query, null);
+
+            org.json.JSONArray activeEntries = new org.json.JSONArray();
+            org.json.JSONArray pinnedEntries = new org.json.JSONArray();
+
+            int activeCount = 0;
+            int pinnedCount = 0;
+
+            try
+            {
+                if (cursor.moveToFirst())
+                {
+                    do
+                    {
+                        String content = cursor.getString(0);
+                        long timestamp = cursor.getLong(1);
+                        boolean isPinned = cursor.getInt(2) == 1;
+                        long expiryTimestamp = cursor.getLong(3);
+
+                        org.json.JSONObject entry = new org.json.JSONObject();
+                        entry.put("content", content);
+                        entry.put("timestamp", timestamp);
+                        entry.put("expiry_timestamp", expiryTimestamp);
+
+                        if (isPinned)
+                        {
+                            pinnedEntries.put(entry);
+                            pinnedCount++;
+                        }
+                        else
+                        {
+                            activeEntries.put(entry);
+                            activeCount++;
+                        }
+                    } while (cursor.moveToNext());
+                }
+            }
+            finally
+            {
+                cursor.close();
+            }
+
+            // Create export object with metadata
+            org.json.JSONObject exportData = new org.json.JSONObject();
+            exportData.put("active_entries", activeEntries);
+            exportData.put("pinned_entries", pinnedEntries);
+            exportData.put("export_version", 1);
+            exportData.put("export_date", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+                .format(new java.util.Date()));
+            exportData.put("total_active", activeCount);
+            exportData.put("total_pinned", pinnedCount);
+
+            android.util.Log.d("ClipboardDatabase", "Exported " + activeCount + " active and " +
+                pinnedCount + " pinned clipboard entries");
+
+            return exportData;
+        }
+        catch (Exception e)
+        {
+            android.util.Log.e("ClipboardDatabase", "Error exporting clipboard data: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Import clipboard entries from JSON with duplicate prevention
+     * Returns array: [activeAdded, pinnedAdded, duplicatesSkipped]
+     */
+    public int[] importFromJSON(org.json.JSONObject importData)
+    {
+        int activeAdded = 0;
+        int pinnedAdded = 0;
+        int duplicatesSkipped = 0;
+
+        try
+        {
+            SQLiteDatabase db = this.getWritableDatabase();
+
+            // Import active entries
+            if (importData.has("active_entries"))
+            {
+                org.json.JSONArray activeEntries = importData.getJSONArray("active_entries");
+
+                for (int i = 0; i < activeEntries.length(); i++)
+                {
+                    org.json.JSONObject entry = activeEntries.getJSONObject(i);
+                    String content = entry.getString("content");
+                    long timestamp = entry.getLong("timestamp");
+                    long expiryTimestamp = entry.getLong("expiry_timestamp");
+
+                    // Check for duplicates (same content)
+                    String contentHash = String.valueOf(content.hashCode());
+                    String duplicateQuery = "SELECT " + COLUMN_ID + " FROM " + TABLE_CLIPBOARD +
+                        " WHERE " + COLUMN_CONTENT_HASH + " = ? AND " + COLUMN_CONTENT + " = ?";
+
+                    Cursor cursor = db.rawQuery(duplicateQuery, new String[]{contentHash, content});
+
+                    if (cursor.getCount() > 0)
+                    {
+                        cursor.close();
+                        duplicatesSkipped++;
+                        continue; // Skip duplicate
+                    }
+                    cursor.close();
+
+                    // Insert entry
+                    ContentValues values = new ContentValues();
+                    values.put(COLUMN_CONTENT, content);
+                    values.put(COLUMN_TIMESTAMP, timestamp);
+                    values.put(COLUMN_EXPIRY_TIMESTAMP, expiryTimestamp);
+                    values.put(COLUMN_IS_PINNED, 0);
+                    values.put(COLUMN_CONTENT_HASH, contentHash);
+
+                    long result = db.insert(TABLE_CLIPBOARD, null, values);
+                    if (result != -1) activeAdded++;
+                }
+            }
+
+            // Import pinned entries
+            if (importData.has("pinned_entries"))
+            {
+                org.json.JSONArray pinnedEntries = importData.getJSONArray("pinned_entries");
+
+                for (int i = 0; i < pinnedEntries.length(); i++)
+                {
+                    org.json.JSONObject entry = pinnedEntries.getJSONObject(i);
+                    String content = entry.getString("content");
+                    long timestamp = entry.getLong("timestamp");
+                    long expiryTimestamp = entry.has("expiry_timestamp") ?
+                        entry.getLong("expiry_timestamp") :
+                        System.currentTimeMillis() + HISTORY_TTL_MS;
+
+                    // Check for duplicates
+                    String contentHash = String.valueOf(content.hashCode());
+                    String duplicateQuery = "SELECT " + COLUMN_ID + " FROM " + TABLE_CLIPBOARD +
+                        " WHERE " + COLUMN_CONTENT_HASH + " = ? AND " + COLUMN_CONTENT + " = ?";
+
+                    Cursor cursor = db.rawQuery(duplicateQuery, new String[]{contentHash, content});
+
+                    if (cursor.getCount() > 0)
+                    {
+                        cursor.close();
+                        duplicatesSkipped++;
+                        continue; // Skip duplicate
+                    }
+                    cursor.close();
+
+                    // Insert pinned entry
+                    ContentValues values = new ContentValues();
+                    values.put(COLUMN_CONTENT, content);
+                    values.put(COLUMN_TIMESTAMP, timestamp);
+                    values.put(COLUMN_EXPIRY_TIMESTAMP, expiryTimestamp);
+                    values.put(COLUMN_IS_PINNED, 1);
+                    values.put(COLUMN_CONTENT_HASH, contentHash);
+
+                    long result = db.insert(TABLE_CLIPBOARD, null, values);
+                    if (result != -1) pinnedAdded++;
+                }
+            }
+
+            android.util.Log.d("ClipboardDatabase", "Import complete: " + activeAdded + " active, " +
+                pinnedAdded + " pinned added, " + duplicatesSkipped + " duplicates skipped");
+        }
+        catch (Exception e)
+        {
+            android.util.Log.e("ClipboardDatabase", "Error importing clipboard data: " + e.getMessage());
+        }
+
+        return new int[]{activeAdded, pinnedAdded, duplicatesSkipped};
+    }
+
+    // Use the same TTL as ClipboardHistoryService
+    private static final long HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000L; // 7 days
 }
