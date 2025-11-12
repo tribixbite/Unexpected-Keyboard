@@ -67,11 +67,9 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 31s
+BUILD SUCCESSFUL in 29s
 39 actionable tasks: 27 executed, 12 from cache
-n/llvm-strip: 1: Syntax error: "(" unexpected
-
-/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
@@ -90,22 +88,20 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 31s
+BUILD SUCCESSFUL in 29s
 39 actionable tasks: 27 executed, 12 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 58M Nov 12 06:15 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 58M Nov 12 06:17 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /storage/emulated/0/unexpected/ for updates...
-APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.317-367.apk
--rw-rw----. 1 u0_a315 media_rw 58M Nov 12 06:15 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.317-367.apk
+APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.318-368.apk
+-rw-rw----. 1 u0_a315 media_rw 58M Nov 12 06:17 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.318-368.apk
 Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
 
 Step 6: Attempting ADB connection and installation...
-* daemon not running; starting now at tcp:5037
-* daemon started successfully
 No ADB device connected, attempting wireless connection...
 Scanning for ADB on host: 192.168.1.247
 Scanning ports 30000-50000 for ADB...
