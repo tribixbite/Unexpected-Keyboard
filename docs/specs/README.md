@@ -11,8 +11,16 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 1. **[Dictionary Manager](DICTIONARY_MANAGER.md)** - Dictionary management UI with search, filtering, and word control
    - Multi-source dictionary management (Main 50k, User, Custom)
    - Real-time search with prefix indexing
+   - Import/export custom words and disabled words (v1.32.306)
    - Performance optimizations for large datasets
    - Tab-based interface with result counts
+
+1a. **[Clipboard Manager](CLIPBOARD_MANAGER.md)** - Clipboard history with pinning and backup
+   - Persistent SQLite-based clipboard history
+   - Pin important entries (never expire)
+   - Expand/collapse multi-line entries (v1.32.308)
+   - Import/export for backup and device migration (v1.32.306)
+   - Search and filtering (partial implementation)
 
 2. **[Swipe Typing](SWIPE_PREDICTION_PIPELINE.md)** - Neural network-based swipe prediction system
    - Complete pipeline: Input → Encoder → Beam Search → Vocabulary → Autocorrect
@@ -73,11 +81,13 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 1. [SHORT_SWIPE_GESTURES.md](SHORT_SWIPE_GESTURES.md) - Short swipe gesture system (v2.0)
 2. [SWIPE_SYMBOLS.md](SWIPE_SYMBOLS.md) - Swipe gesture shortcuts (historical)
 3. [DICTIONARY_MANAGER.md](DICTIONARY_MANAGER.md) - Word management UI
+4. [CLIPBOARD_MANAGER.md](CLIPBOARD_MANAGER.md) - Clipboard history and backup
 
 ### For Users
 
 **Customization:**
 - [DICTIONARY_MANAGER.md](DICTIONARY_MANAGER.md#user-workflows) - How to manage words
+- [CLIPBOARD_MANAGER.md](CLIPBOARD_MANAGER.md#user-workflows) - How to use clipboard history and backup
 - [SHORT_SWIPE_GESTURES.md](SHORT_SWIPE_GESTURES.md#common-layout-patterns) - Available swipe shortcuts and configuration
 
 **Understanding Predictions:**
@@ -92,7 +102,8 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 
 | Feature | Status | Version | Notes |
 |---------|--------|---------|-------|
-| Dictionary Manager | ✅ Complete | v1.32.200 | Tab counts, instant search |
+| Dictionary Manager | ✅ Complete | v1.32.306 | Tab counts, instant search, import/export |
+| Clipboard Manager | ⚠️ Partial | v1.32.309 | History, pinning, import/export, expand/collapse; search TODO |
 | Swipe Prediction | ✅ Complete | v1.32.207 | Autocorrect + debug logging |
 | Beam Search | ✅ Complete | v1.32.207 | 50k vocab, autocorrect, prefix indexing |
 | Typing Prediction | ⚠️ Partial | v1.0 | Implemented, bigram not validated |
@@ -250,6 +261,6 @@ For new specifications, follow this structure:
 
 ---
 
-**Last Updated**: 2025-10-22
+**Last Updated**: 2025-11-11
 **Project**: Unexpected Keyboard
 **Repository**: https://github.com/Julow/Unexpected-Keyboard

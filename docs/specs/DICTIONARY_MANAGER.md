@@ -39,7 +39,7 @@ The Dictionary Manager provides a comprehensive UI for managing dictionary words
 
 - Editing main BigramModel dictionary words
 - Modifying word frequencies for main dictionary
-- Bulk import/export of custom dictionaries
+- ~~Bulk import/export of custom dictionaries~~ ✅ IMPLEMENTED v1.32.306
 - Spell checking or word validation
 
 ---
@@ -61,6 +61,8 @@ The Dictionary Manager provides a comprehensive UI for managing dictionary words
 11. **FR-11**: User must be able to filter words by source (MAIN/USER/CUSTOM)
 12. **FR-12**: ~~UI must auto-switch tabs when current tab has no search results~~ **(REMOVED v1.32.200)**
 13. **FR-13**: UI must show result counts under each tab name (added v1.32.200)
+14. **FR-14**: User must be able to export custom words and disabled words to JSON file (added v1.32.305-306)
+15. **FR-15**: User must be able to import custom words and disabled words from JSON file with smart merge (added v1.32.305-306)
 
 ### Non-Functional Requirements
 
@@ -350,6 +352,70 @@ updateTabCounts() [Show (451) result counts]
 4. User taps "Delete"
 5. CustomDictionarySource.deleteWord(word)
 6. Fragment calls loadWords() to refresh
+
+### Workflow 7: Export Custom Dictionary (v1.32.305-306)
+
+1. User navigates to Settings → Backup & Restore
+2. User taps "Export Custom Dictionary" preference
+3. System shows Storage Access Framework file picker
+4. User selects save location
+5. SettingsActivity.performExportCustomDictionary():
+   - Reads custom_words from DirectBootAwarePreferences.get_shared_preferences()
+   - Reads disabled_words StringSet
+   - Creates structured JSON with metadata
+6. File saved with name: `custom-dictionary-YYYYMMDD_HHMMSS.json`
+7. Toast shows: "Successfully exported:\n• N custom word(s)\n• M disabled word(s)"
+
+**File Structure**:
+- res/xml/settings.xml:138 - Export button preference
+- srcs/juloo.keyboard2/SettingsActivity.java:33 - REQUEST_CODE_EXPORT_CUSTOM_DICT
+- srcs/juloo.keyboard2/SettingsActivity.java:1142-1220 - performExportCustomDictionary()
+
+**SharedPreferences Access**:
+- Must use `DirectBootAwarePreferences.get_shared_preferences(context)`
+- NOT `getPreferenceManager().getSharedPreferences()` (wrong storage)
+
+**JSON Format**:
+```json
+{
+  "custom_words": {"hello": 150, "world": 200},
+  "disabled_words": ["the", "of"],
+  "export_version": 1,
+  "export_date": "2025-11-11 16:56:00"
+}
+```
+
+### Workflow 8: Import Custom Dictionary (v1.32.305-306)
+
+1. User navigates to Settings → Backup & Restore
+2. User taps "Import Custom Dictionary" preference
+3. System shows Storage Access Framework file picker
+4. User selects JSON file
+5. SettingsActivity.performImportCustomDictionary():
+   - Parses JSON from file
+   - Validates structure (custom_words object, disabled_words array)
+   - Smart merge for custom words:
+     - Add new words
+     - Update existing words only if imported frequency is higher
+   - Smart merge for disabled words:
+     - StringSet automatically handles duplicates
+   - Saves to SharedPreferences
+6. Toast shows: "Successfully imported:\n• N custom word(s) added\n• M disabled word(s) added\n• K duplicate(s) skipped (not updated)"
+
+**File Structure**:
+- res/xml/settings.xml:139 - Import button preference
+- srcs/juloo.keyboard2/SettingsActivity.java:34 - REQUEST_CODE_IMPORT_CUSTOM_DICT
+- srcs/juloo.keyboard2/SettingsActivity.java:1222-1315 - performImportCustomDictionary()
+
+**Duplicate Prevention**:
+- Custom words: Compare by word key, update only if new frequency > existing frequency
+- Disabled words: StringSet naturally prevents duplicates
+
+**Error Handling**:
+- Invalid JSON format: Show error toast
+- Missing required fields: Show error toast
+- File read failure: Show error toast
+- Empty dictionary: Show "No words to import" message
 
 ---
 
@@ -804,6 +870,29 @@ AndroidManifest.xml                  # Activity + permission
 ---
 
 ## Changelog
+
+### v1.32.305-306 (2025-11-11)
+- **FEATURE**: Added export custom dictionary to JSON
+  - Button in Settings → Backup & Restore
+  - Exports both custom_words and disabled_words
+  - Structured JSON format with metadata (version, date, counts)
+  - Filename: `custom-dictionary-YYYYMMDD_HHMMSS.json`
+  - Toast shows export summary with counts
+- **FEATURE**: Added import custom dictionary from JSON
+  - Button in Settings → Backup & Restore
+  - Smart merge: adds new words, updates only if higher frequency
+  - Duplicate prevention for both custom and disabled words
+  - Validates JSON structure and shows error messages
+  - Toast shows import summary with added/skipped counts
+- **BUGFIX**: Fixed SharedPreferences access
+  - Changed from getPreferenceManager().getSharedPreferences()
+  - Now uses DirectBootAwarePreferences.get_shared_preferences()
+  - Matches how CustomDictionarySource and DisabledDictionarySource access data
+- **Files Modified**:
+  - res/xml/settings.xml: Added export/import preference buttons
+  - srcs/juloo.keyboard2/SettingsActivity.java: Added export/import implementation
+- **Integration**: Uses Storage Access Framework for file picker
+- **Known Issues**: None - feature working as designed
 
 ### v1.32.200 (2025-10-22)
 - **UX**: Removed automatic tab switching after search (disorienting)
