@@ -141,31 +141,40 @@ JSON file with active and pinned entries
 
 ### Clipboard Pane Layout
 
-**File**: `res/layout/pane_clipboard.xml`
+**File**: `res/layout/clipboard_pane.xml`
 
+**Layout Structure** (v1.32.313+):
 ```xml
 ┌────────────────────────────────────────────────────┐
-│  [Search Input]                                     │
+│  PINNED (scrollable, dynamic minHeight)             │
+│  ┌──────────────────────────────────────────────┐  │
+│  │ Pinned entry 1...      [↓] [📋] [🗑]        │  │
+│  │ Pinned entry 2...      [↓] [📋] [🗑]        │  │
+│  └──────────────────────────────────────────────┘  │
 ├────────────────────────────────────────────────────┤
-│  CLIPBOARD HISTORY                                  │
+│  [↑Pinned ↓Unpinned] │ [Tap to search...]         │
+├────────────────────────────────────────────────────┤
+│  HISTORY (scrollable, remaining space)              │
 │  ┌──────────────────────────────────────────────┐  │
 │  │ Entry text...          [↓] [📋] [📌]        │  │
 │  │ Multi-line expanded... [↑] [📋] [📌]        │  │
 │  │ ...                                          │  │
 │  └──────────────────────────────────────────────┘  │
-├────────────────────────────────────────────────────┤
-│  PINNED                                             │
-│  ┌──────────────────────────────────────────────┐  │
-│  │ Pinned entry...        [↓] [📋] [🗑]        │  │
-│  │ ...                                          │  │
-│  └──────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────┘
 ```
 
+**Key Changes** (v1.32.313-324):
+- **Removed**: "Pinned" heading row (allows pinned section to expand upward)
+- **Changed**: "History" heading to "↑Pinned ↓Unpinned" using Unicode arrows (U+2191, U+2193)
+- **Split**: Heading/search bar now 50/50 horizontal layout (layout_weight="0.5" each)
+- **Dynamic Height**: Pinned section uses minHeight when 2+ items exist (currently 100dp, being tuned)
+
 **Components**:
-- `EditText clipboard_input`: Search filter (not currently hooked up)
+- `ScrollView`: Pinned section wrapper with maxHeight="600dp", dynamic minHeight
+- `MaxHeightListView clipboard_pin_view`: Pinned clipboard entries (extends with minHeight logic)
+- `TextView clipboard_history_heading`: "↑Pinned ↓Unpinned" label (left 50%)
+- `TextView clipboard_search`: Search input (right 50%, hint="Tap to search...")
 - `MaxHeightListView clipboard_history_view`: Active clipboard entries
-- `MaxHeightListView clipboard_pin_view`: Pinned clipboard entries
 
 ### Clipboard History Entry Layout
 
@@ -552,7 +561,7 @@ public void setSearchFilter(String filter)
 
 **File**: `srcs/juloo.keyboard2/ClipboardPinView.java`
 
-**Purpose**: ListView for pinned clipboard entries with expand/collapse
+**Purpose**: ListView for pinned clipboard entries with expand/collapse and dynamic height
 
 **Key Features**:
 
@@ -575,6 +584,68 @@ _service.remove_history_entry(clip);      // Delete entirely
 
 **Location**: ClipboardPinView.java:58
 **Reason**: User expectation - delete should remove completely, not move to history
+
+**Dynamic Height (v1.32.319-324)**:
+
+#### updateParentMinHeight() - Show 2 Entries When Present
+```java
+private void updateParentMinHeight()
+{
+  if (_entries.size() >= 2)
+  {
+    // Set minHeight on this ListView to show 2 entries (~50dp per entry)
+    int minHeightPx = (int)(100 * getResources().getDisplayMetrics().density);
+    setMinimumHeight(minHeightPx);
+  }
+  else
+  {
+    // Clear minHeight when less than 2 items
+    setMinimumHeight(0);
+  }
+}
+```
+
+**Location**: ClipboardPinView.java:52-65
+**Called From**: refresh_pinned_items() after updating _entries
+**Purpose**: Ensure pinned section displays 2 entries when available, without requiring scroll
+**Note**: 100dp value is being tuned based on actual entry heights (v1.32.324 current value)
+
+### MaxHeightListView
+
+**File**: `srcs/juloo.keyboard2/MaxHeightListView.java`
+
+**Purpose**: Custom ListView that enforces both maxHeight and minHeight constraints
+
+**Key Features**:
+
+#### maxHeight Enforcement (Original)
+```java
+if (_maxHeight > 0)
+{
+  heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(_maxHeight, View.MeasureSpec.AT_MOST);
+}
+```
+
+**Location**: MaxHeightListView.java:59-69
+
+#### minHeight Enforcement (v1.32.322)
+```java
+// Respect minHeight if set
+int minHeight = getSuggestedMinimumHeight();
+if (minHeight > 0)
+{
+  int measuredHeight = getMeasuredHeight();
+  if (measuredHeight < minHeight)
+  {
+    // Enforce minHeight
+    setMeasuredDimension(getMeasuredWidth(), minHeight);
+  }
+}
+```
+
+**Location**: MaxHeightListView.java:73-83
+**Reason**: Default onMeasure() only handled maxHeight, ignored minHeight set by setMinimumHeight()
+**Impact**: Allows ClipboardPinView to expand to minimum size even when content wraps smaller
 
 ---
 
@@ -743,6 +814,26 @@ _service.remove_history_entry(clip);      // Delete entirely
 **Fix**: Use stable IDs (content hash) instead of position
 - **Complexity**: Medium - requires adapter changes
 
+#### 4. Pinned Section minHeight Tuning (v1.32.324)
+
+**Severity**: Low
+
+**Status**: Work in Progress
+
+**Description**: Dynamic minHeight for pinned section showing more/fewer than target 2 entries
+
+**History**:
+- 400dp → 5.5 entries visible
+- 200dp → 5.5 entries visible
+- 140dp → 4 entries visible
+- 100dp → Currently testing (v1.32.324)
+
+**Target**: Show exactly 2 pinned entries without scrolling when 2+ items exist
+
+**Complexity**: Low - tuning single dp value in ClipboardPinView.java:57
+
+**Note**: Entry heights vary with content (single-line vs expanded multi-line), making exact sizing difficult
+
 ### Future Enhancements
 
 #### 1. Rich Text Support
@@ -797,13 +888,18 @@ srcs/juloo.keyboard2/
 ├── ClipboardDatabase.java           # SQLite storage (604 lines)
 ├── ClipboardHistoryService.java     # Service layer (342 lines)
 ├── ClipboardHistoryView.java        # Active entries list (194 lines)
-├── ClipboardPinView.java            # Pinned entries list (171 lines)
+├── ClipboardPinView.java            # Pinned entries list + dynamic height (178 lines)
+├── MaxHeightListView.java           # Custom ListView with min/max height (86 lines)
 └── SettingsActivity.java            # Import/export handlers (partial)
 
 res/layout/
-├── pane_clipboard.xml               # Main clipboard pane
+├── clipboard_pane.xml               # Main clipboard pane (v1.32.313+ reorganized)
 ├── clipboard_history_entry.xml      # Active entry item (horizontal)
 └── clipboard_pin_entry.xml          # Pinned entry item (horizontal)
+
+res/values/
+├── strings.xml                      # Contains "↑Pinned ↓Unpinned" heading (line 153)
+└── styles.xml                       # clipboardEntry style with 7dp margins
 
 res/drawable/
 └── ic_expand_more.xml               # Chevron icon for expand/collapse
