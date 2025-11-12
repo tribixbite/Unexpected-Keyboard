@@ -54,7 +54,7 @@ The Clipboard Manager provides persistent clipboard history with pinning, search
 3. **FR-3**: User must be able to view all pinned entries
 4. **FR-4**: User must be able to paste any entry from history or pinned
 5. **FR-5**: User must be able to delete pinned entries entirely (v1.32.309)
-6. **FR-6**: User must be able to search clipboard history
+6. **FR-6**: User must be able to search clipboard history (implemented)
 7. **FR-7**: User must be able to expand/collapse multi-line entries (v1.32.308)
 8. **FR-8**: User must be able to export all clipboard data to JSON (v1.32.306)
 9. **FR-9**: User must be able to import clipboard data from JSON with duplicate prevention (v1.32.306)
@@ -315,6 +315,25 @@ CREATE INDEX idx_expiry ON clipboard_entries (expiry_timestamp);
 4. Calls getActiveClipboardEntries() to load active entries
 5. ClipboardPinView calls getPinnedEntries() to load pinned entries
 6. Both views display in separate sections
+
+### Workflow 1a: Search Clipboard History
+
+1. User taps the search box (clipboard_search TextView)
+2. Keyboard2.java sets _clipboardSearchMode = true
+3. Search box hint changes to "Type on keyboard below..."
+4. User types on physical keyboard below clipboard pane
+5. Keyboard2.java intercepts keypresses in search mode
+6. For each keypress, calls _clipboardHistoryView.setSearchFilter(searchText)
+7. ClipboardHistoryView.applyFilter() filters entries by search text (case-insensitive contains)
+8. Both history and pinned lists update to show only matching entries
+9. User can clear search by tapping back or switching panes
+
+**Implementation**:
+- Keyboard2.java:56 - _clipboardSearchMode flag
+- Keyboard2.java:764-778 - Search box click handler
+- Keyboard2.java:919 - isInClipboardSearchMode() method
+- ClipboardHistoryView.java:43-69 - setSearchFilter() and applyFilter()
+- Uses database-level filtering for performance
 
 ### Workflow 2: Pin Clipboard Entry
 
@@ -693,20 +712,7 @@ _service.remove_history_entry(clip);      // Delete entirely
 
 ### Known Issues
 
-#### 1. Search Input Not Functional
-
-**Severity**: Medium
-
-**Description**: Search EditText exists in layout but not connected to filtering logic
-
-**Workaround**: None - search not available
-
-**Fix**: Implement setSearchFilter() integration
-- **Location**: ClipboardHistoryView.java:43-47 (method exists)
-- **TODO**: Hook up EditText TextWatcher to call setSearchFilter()
-- **Complexity**: Low - ~20 lines of code
-
-#### 2. No Import Validation Feedback
+#### 1. No Import Validation Feedback
 
 **Severity**: Low
 
@@ -716,7 +722,7 @@ _service.remove_history_entry(clip);      // Delete entirely
 
 **Enhancement**: Show list of skipped entries for user review
 
-#### 3. No Clipboard Size Limit
+#### 2. No Clipboard Size Limit
 
 **Severity**: Low
 
@@ -726,7 +732,7 @@ _service.remove_history_entry(clip);      // Delete entirely
 
 **Future**: Add max entry count setting (e.g., keep last 1000 entries)
 
-#### 4. Expand State Lost on Refresh
+#### 3. Expand State Lost on Refresh
 
 **Severity**: Low
 
@@ -920,14 +926,7 @@ res/xml/
 
 ### High Priority
 
-1. **Search Not Implemented**
-   - **Issue**: EditText exists in UI but not functional
-   - **Impact**: Users cannot search large clipboard histories
-   - **Fix**: Connect EditText to setSearchFilter()
-   - **Effort**: Low (~20 lines)
-   - **Files**: res/layout/pane_clipboard.xml, ClipboardHistoryView.java
-
-2. **No Clipboard Size Limit**
+1. **No Clipboard Size Limit**
    - **Issue**: Database can grow indefinitely
    - **Impact**: Potential performance degradation over time
    - **Fix**: Add max entry count setting, implement in cleanupExpiredEntries()
@@ -936,21 +935,21 @@ res/xml/
 
 ### Medium Priority
 
-3. **Expand State Lost on Refresh**
+2. **Expand State Lost on Refresh**
    - **Issue**: _expandedStates uses position, lost when list updates
    - **Impact**: User must re-expand entries after clipboard changes
    - **Fix**: Use content hash as stable ID instead of position
    - **Effort**: Medium (~40 lines)
    - **Files**: ClipboardHistoryView.java, ClipboardPinView.java
 
-4. **No Import Validation Details**
+3. **No Import Validation Details**
    - **Issue**: Import shows counts but not which entries were skipped
    - **Impact**: User doesn't know what was skipped
    - **Fix**: Build list of skipped entries, show in dialog
    - **Effort**: Low (~30 lines)
    - **Files**: SettingsActivity.java
 
-5. **Silent Database Errors**
+4. **Silent Database Errors**
    - **Issue**: Database failures logged but not shown to user
    - **Impact**: User unaware of data loss
    - **Fix**: Show toast on database errors
@@ -959,14 +958,14 @@ res/xml/
 
 ### Low Priority
 
-6. **No Bulk Operations**
+5. **No Bulk Operations**
    - **Issue**: Cannot select multiple entries for deletion/pinning
    - **Impact**: Tedious for cleanup
    - **Fix**: Add selection mode with checkboxes
    - **Effort**: High (~200 lines)
    - **Files**: All clipboard view files
 
-7. **No Rich Text Support**
+6. **No Rich Text Support**
    - **Issue**: Only plain text stored
    - **Impact**: Formatting lost
    - **Fix**: Store ClipData.Item with HTML
