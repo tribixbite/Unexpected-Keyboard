@@ -51,20 +51,16 @@ public final class ClipboardPinView extends MaxHeightListView
   /** Update parent ScrollView minHeight based on item count */
   private void updateParentMinHeight()
   {
-    ViewGroup parent = (ViewGroup)getParent();
-    if (parent != null)
+    if (_entries.size() >= 2)
     {
-      if (_entries.size() >= 2)
-      {
-        // Set minHeight to show 2 entries (approximately 100dp per entry)
-        int minHeightPx = (int)(200 * getResources().getDisplayMetrics().density);
-        parent.setMinimumHeight(minHeightPx);
-      }
-      else
-      {
-        // Clear minHeight when less than 2 items
-        parent.setMinimumHeight(0);
-      }
+      // Set minHeight on this ListView to show 2 entries (approximately 100dp per entry)
+      int minHeightPx = (int)(200 * getResources().getDisplayMetrics().density);
+      setMinimumHeight(minHeightPx);
+    }
+    else
+    {
+      // Clear minHeight when less than 2 items
+      setMinimumHeight(0);
     }
   }
 

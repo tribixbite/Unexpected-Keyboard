@@ -25,18 +25,18 @@ Generated version info:  ()
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
-> Task :mergeDebugResources
 > Task :processDebugManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeDebugResources
 > Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
@@ -84,9 +84,9 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 14s
+BUILD SUCCESSFUL in 49s
 39 actionable tasks: 31 executed, 8 from cache
-id.com/build/jdks.
+droid.com/build/jdks.
 To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
 warning: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
@@ -105,17 +105,17 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 14s
+BUILD SUCCESSFUL in 49s
 39 actionable tasks: 31 executed, 8 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 58M Nov 12 06:39 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 58M Nov 12 06:57 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /storage/emulated/0/unexpected/ for updates...
-APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.320-370.apk
--rw-rw----. 1 u0_a315 media_rw 58M Nov 12 06:39 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.320-370.apk
+APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.321-371.apk
+-rw-rw----. 1 u0_a315 media_rw 58M Nov 12 06:57 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.321-371.apk
 Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
 
 Step 6: Attempting ADB connection and installation...
