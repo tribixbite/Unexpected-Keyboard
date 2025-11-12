@@ -9,11 +9,30 @@
 
 ## 🔥 Current Status (2025-11-11)
 
-**Latest Version**: v1.32.308 (358)
-**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard UI Improvements (Corrected Layout)
+**Latest Version**: v1.32.309 (359)
+**Build Status**: ✅ BUILD SUCCESSFUL - Pinned Clipboard Deletion Fix
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.308)
+### Recent Work (v1.32.309)
+
+**Fixed Pinned Clipboard Deletion to Delete Entirely**
+- **Issue**: Deleting an entry from pinned clipboard only unpinned it, moving it back to regular history
+- **Fix**: Changed ClipboardPinView.java to delete entries entirely from database when delete button pressed
+- **Behavior**:
+  - Delete button in pinned view now completely removes entry from database
+  - Entry is removed from both pinned and regular history
+  - Uses ClipboardHistoryService.remove_history_entry() which:
+    - Clears system clipboard if removing current entry
+    - Deletes from SQLite database
+    - Notifies listeners to update UI
+- **Implementation**:
+  - srcs/juloo.keyboard2/ClipboardPinView.java:48-62
+  - Changed from `_service.set_pinned_status(clip, false)` to `_service.remove_history_entry(clip)`
+- **Files Modified**:
+  - srcs/juloo.keyboard2/ClipboardPinView.java (1 line changed)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.308)
 
 **Improved Clipboard UI: Buttons Top-Aligned, Collapse/Expand for Multi-Line**
 - **UI Changes**: Complete redesign of clipboard entry layout for better UX

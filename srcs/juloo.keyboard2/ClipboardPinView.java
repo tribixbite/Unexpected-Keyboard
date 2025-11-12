@@ -44,7 +44,7 @@ public final class ClipboardPinView extends MaxHeightListView
     }
   }
 
-  /** Remove the entry at index [pos] and unpin in database. */
+  /** Remove the entry at index [pos] entirely from database. */
   public void remove_entry(int pos)
   {
     if (pos < 0 || pos >= _entries.size())
@@ -52,10 +52,10 @@ public final class ClipboardPinView extends MaxHeightListView
 
     String clip = _entries.get(pos);
 
-    // Unpin in database
+    // Delete entirely from database
     if (_service != null)
     {
-      _service.set_pinned_status(clip, false);
+      _service.remove_history_entry(clip);
     }
 
     refresh_pinned_items();
