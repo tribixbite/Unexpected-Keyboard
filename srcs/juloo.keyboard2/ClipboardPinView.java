@@ -53,8 +53,8 @@ public final class ClipboardPinView extends MaxHeightListView
   {
     if (_entries.size() >= 2)
     {
-      // Set minHeight on this ListView to show 2 entries (approximately 70dp per entry)
-      int minHeightPx = (int)(140 * getResources().getDisplayMetrics().density);
+      // Set minHeight on this ListView to show 2 entries (approximately 50dp per entry)
+      int minHeightPx = (int)(100 * getResources().getDisplayMetrics().density);
       setMinimumHeight(minHeightPx);
     }
     else
