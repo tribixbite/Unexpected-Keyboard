@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:background="?attr/colorKeyboard" android:hardwareAccelerated="false" android:layout_width="fill_parent" android:layout_height="fill_parent">
 
-  <!-- Pinned Section (at top, max 240dp height with scrolling, no heading) -->
-  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="240dp" android:scrollbars="vertical" android:fadeScrollbars="false">
+  <!-- Pinned Section (at top, max 400dp height with scrolling, no heading) -->
+  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="400dp" android:scrollbars="vertical" android:fadeScrollbars="false">
     <juloo.keyboard2.ClipboardPinView android:id="@+id/clipboard_pin_view" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:divider="?attr/clipboard_divider_color" android:dividerHeight="?attr/clipboard_divider_height"/>
   </ScrollView>
 

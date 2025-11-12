@@ -20,21 +20,22 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :mergeDebugResources
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
@@ -42,7 +43,6 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -94,11 +94,11 @@ BUILD SUCCESSFUL in 31s
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 58M Nov 12 03:52 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 58M Nov 12 03:58 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /storage/emulated/0/unexpected/ for updates...
-APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.315-365.apk
--rw-rw----. 1 u0_a315 media_rw 58M Nov 12 03:52 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.315-365.apk
+APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.316-366.apk
+-rw-rw----. 1 u0_a315 media_rw 58M Nov 12 03:58 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.316-366.apk
 Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
 
 Step 6: Attempting ADB connection and installation...
