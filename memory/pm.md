@@ -9,11 +9,39 @@
 
 ## 🔥 Current Status (2025-11-12)
 
-**Latest Version**: v1.32.312 (362)
-**Build Status**: ✅ BUILD SUCCESSFUL - Tap-to-Expand Clipboard Entries
+**Latest Version**: v1.32.313 (363)
+**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard UI Reorganization
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.312)
+### Recent Work (v1.32.313)
+
+**Reorganized Clipboard UI - Better Space Usage**
+- **Changes**:
+  1. **Removed "Pinned" heading row** - Deleted the separate heading text for pinned section
+  2. **Changed "History" to "↑Pinned ↓Unpinned"** - Using Unicode arrows (U+2191 ↑, U+2193 ↓)
+  3. **Moved search bar to 50% width** - Search now starts at screen midpoint
+- **Benefits**:
+  - Pinned section can expand upward (no heading taking space)
+  - More pinned entries visible without scrolling
+  - Clearer visual separation with arrows in label
+  - Search bar more balanced with 50/50 split
+- **Layout Changes**:
+  - res/layout/clipboard_pane.xml:5 - Removed Pinned heading TextView entirely
+  - res/layout/clipboard_pane.xml:11 - Changed heading to layout_width="0dp" layout_weight="0.5"
+  - res/layout/clipboard_pane.xml:12 - Changed search to layout_weight="0.5" (was "1")
+- **String Changes**:
+  - res/values/strings.xml:153 - Changed "History" to "↑Pinned ↓Unpinned"
+- **Result**:
+  - Pinned section ScrollView starts immediately (no heading row)
+  - Heading shows "↑Pinned ↓Unpinned" on left 50%
+  - Search box on right 50%
+  - More vertical space for pinned clipboard entries
+- **Files Modified**:
+  - res/layout/clipboard_pane.xml (removed 1 line, modified 2 attributes)
+  - res/values/strings.xml (1 string changed)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.312)
 
 **Added Tap-to-Expand for All Clipboard Entries**
 - **Feature**: Users can now tap on any clipboard text to expand/collapse it
