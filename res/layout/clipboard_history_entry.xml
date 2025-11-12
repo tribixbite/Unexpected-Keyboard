@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content">
-  <TextView android:id="@+id/clipboard_entry_text" style="@style/clipboardEntry"/>
-  <LinearLayout style="@style/clipboardEntryButtons">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">
+  <!-- Top row: buttons aligned to top -->
+  <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:layout_marginHorizontal="14dp">
+    <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+    <View android:id="@+id/clipboard_entry_expand" style="@style/clipboardEntryButton" android:background="@drawable/ic_expand_more" android:visibility="gone" android:layout_marginRight="4dp"/>
     <View android:id="@+id/clipboard_entry_paste" style="@style/clipboardEntryButton" android:background="@drawable/ic_clipboard_paste"/>
-    <View android:id="@+id/clipboard_entry_addpin" style="@style/clipboardEntryButton" android:background="@drawable/ic_clipboard_save"/>
+    <View android:id="@+id/clipboard_entry_addpin" style="@style/clipboardEntryButton" android:background="@drawable/ic_clipboard_save" android:layout_marginRight="12dp"/>
   </LinearLayout>
+  <!-- Text content below -->
+  <TextView android:id="@+id/clipboard_entry_text" style="@style/clipboardEntry" android:layout_marginTop="0dp" android:maxLines="1" android:ellipsize="end"/>
 </LinearLayout>

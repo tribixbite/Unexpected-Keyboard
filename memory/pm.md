@@ -9,11 +9,57 @@
 
 ## 🔥 Current Status (2025-11-11)
 
-**Latest Version**: v1.32.306 (356)
-**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard History Import/Export
+**Latest Version**: v1.32.307 (357)
+**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard UI Improvements
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.306)
+### Recent Work (v1.32.307)
+
+**Improved Clipboard UI: Buttons Top-Aligned, Collapse/Expand for Multi-Line**
+- **UI Changes**: Complete redesign of clipboard entry layout for better UX
+- **Buttons Repositioned**: Moved action buttons to top-right corner instead of centered vertically
+- **Multi-Line Handling**:
+  - All entries collapsed to 1 line by default
+  - Multi-line entries show expand/contract toggle button
+  - Expand button appears before insert/paste button
+  - Button rotates 180° when expanded (visual feedback)
+
+- **Layout Changes**:
+  - Changed from horizontal to vertical LinearLayout
+  - Top row contains: [spacer] [expand button] [paste] [pin/delete]
+  - Text appears below buttons
+  - Buttons aligned to top-right, not center-vertical
+  - Adjusted margins/padding for cleaner spacing
+
+- **Expand/Collapse Functionality**:
+  - **Detection**: Automatically detects multi-line entries (contains "\n")
+  - **Default State**: Collapsed (maxLines=1, ellipsize=end)
+  - **Expanded State**: Shows all lines (maxLines=Integer.MAX_VALUE)
+  - **Visual Indicator**: Expand button rotates 180° when expanded
+  - **State Tracking**: HashMap tracks expanded state per position
+  - **Performance**: Efficient state management, no lag
+
+- **Implementation Details**:
+  - res/layout/clipboard_history_entry.xml - Vertical layout with top button row
+  - res/layout/clipboard_pin_entry.xml - Same vertical layout for consistency
+  - res/drawable/ic_expand_more.xml - New down chevron icon (Material Design)
+  - srcs/juloo.keyboard2/ClipboardHistoryView.java:
+    - Added _expandedStates HashMap for state tracking
+    - Modified getView() to detect multi-line, show/hide expand button
+    - Expand click handler toggles state and refreshes view
+  - srcs/juloo.keyboard2/ClipboardPinView.java:
+    - Same expand/collapse implementation for pinned entries
+    - Consistent behavior across history and pinned lists
+
+- **Files Modified**:
+  - res/layout/clipboard_history_entry.xml (restructured)
+  - res/layout/clipboard_pin_entry.xml (restructured)
+  - res/drawable/ic_expand_more.xml (new icon)
+  - srcs/juloo.keyboard2/ClipboardHistoryView.java (+15 lines, state management)
+  - srcs/juloo.keyboard2/ClipboardPinView.java (+15 lines, state management)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.306)
 
 **Added Clipboard History Import/Export with Full Functionality**
 - **Feature**: Complete clipboard backup and restore system

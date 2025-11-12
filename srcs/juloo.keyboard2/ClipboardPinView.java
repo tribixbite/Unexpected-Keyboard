@@ -20,6 +20,8 @@ public final class ClipboardPinView extends MaxHeightListView
   List<String> _entries;
   ClipboardPinEntriesAdapter _adapter;
   ClipboardHistoryService _service;
+  // Track expanded state: position -> isExpanded
+  java.util.Map<Integer, Boolean> _expandedStates = new java.util.HashMap<>();
 
   public ClipboardPinView(Context ctx, AttributeSet attrs)
   {
@@ -88,8 +90,55 @@ public final class ClipboardPinView extends MaxHeightListView
     {
       if (v == null)
         v = View.inflate(getContext(), R.layout.clipboard_pin_entry, null);
-      ((TextView)v.findViewById(R.id.clipboard_pin_text))
-        .setText(_entries.get(pos));
+
+      final String text = _entries.get(pos);
+      final TextView textView = (TextView)v.findViewById(R.id.clipboard_pin_text);
+      final View expandButton = v.findViewById(R.id.clipboard_pin_expand);
+
+      textView.setText(text);
+
+      // Check if text contains newlines (multi-line)
+      final boolean isMultiLine = text.contains("\n");
+      final boolean isExpanded = _expandedStates.containsKey(pos) && _expandedStates.get(pos);
+
+      if (isMultiLine)
+      {
+        // Show expand button for multi-line entries
+        expandButton.setVisibility(View.VISIBLE);
+
+        // Set maxLines based on expanded state
+        if (isExpanded)
+        {
+          textView.setMaxLines(Integer.MAX_VALUE);
+          textView.setEllipsize(null);
+          expandButton.setRotation(180); // Rotate to indicate "collapse"
+        }
+        else
+        {
+          textView.setMaxLines(1);
+          textView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+          expandButton.setRotation(0); // Normal position for "expand"
+        }
+
+        // Handle expand/collapse click
+        expandButton.setOnClickListener(new View.OnClickListener()
+        {
+          @Override
+          public void onClick(View v)
+          {
+            _expandedStates.put(pos, !isExpanded);
+            notifyDataSetChanged();
+          }
+        });
+      }
+      else
+      {
+        // Hide expand button for single-line entries
+        expandButton.setVisibility(View.GONE);
+        textView.setMaxLines(1);
+        textView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+      }
+
       v.findViewById(R.id.clipboard_pin_paste).setOnClickListener(
           new View.OnClickListener()
           {
