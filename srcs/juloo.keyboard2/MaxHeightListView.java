@@ -69,5 +69,17 @@ public class MaxHeightListView extends ListView
     }
 
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+    // Respect minHeight if set
+    int minHeight = getSuggestedMinimumHeight();
+    if (minHeight > 0)
+    {
+      int measuredHeight = getMeasuredHeight();
+      if (measuredHeight < minHeight)
+      {
+        // Enforce minHeight
+        setMeasuredDimension(getMeasuredWidth(), minHeight);
+      }
+    }
   }
 }
