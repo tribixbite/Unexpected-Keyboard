@@ -9,13 +9,60 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.362 (412)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 started!
+**Latest Version**: v1.32.364 (414)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues!
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,350 lines, target: <700)
-**Refactoring Progress**: 8/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 1/? ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,382 lines, target: <700)
+**Refactoring Progress**: 9/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 2/? ✅)
 
-### Recent Work (v1.32.362) - Phase 4 Started!
+### Recent Work (v1.32.362-364) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract LayoutManager (Phase 4, 2/? Complete! ✅)**
+- **Goal**: Extract keyboard layout selection, switching, and loading logic
+- **Created**: LayoutManager.java (249 lines)
+  - Extracted 9 methods from Keyboard2.java:
+    * current_layout_unmodified() - Gets current layout without modifiers
+    * current_layout() - Gets current layout with modifiers applied
+    * setTextLayout() - Sets text layout by index
+    * incrTextLayout() - Cycles to next/previous text layout
+    * setSpecialLayout() - Sets special layout (numeric, emoji, etc.)
+    * clearSpecialLayout() - Returns to text layout
+    * loadLayout() - Loads layout from resources
+    * loadNumpad() - Loads numpad layout with modifications
+    * loadPinentry() - Loads pinentry layout with modifications
+    * refresh_special_layout() - Determines special layout from input type
+  - Manages layout state (_currentSpecialLayout, _localeTextLayout)
+  - Handles layout switching and navigation
+  - Applies layout modifiers (numpad, pinentry)
+  - Determines special layouts based on EditorInfo input type
+- **Modified**: Keyboard2.java (1,350 → 1,382 lines, +32)
+  - Removed _currentSpecialLayout and _localeTextLayout fields (moved to LayoutManager)
+  - Added _layoutManager field with lazy initialization in refreshSubtypeImm()
+  - Updated onConfigChanged() to propagate config to LayoutManager
+  - Delegated all 9 methods to LayoutManager
+  - Updated Receiver.SWITCH_TEXT to use clearSpecialLayout()
+  - Updated onStartInputView() to use setSpecialLayout() properly
+  - Kept view updates (setKeyboard) in Keyboard2
+- **Architecture**:
+  - LayoutManager is pure layout logic (no InputMethodService dependency)
+  - Accepts Context for resource access
+  - Provides focused API for layout operations
+  - Clean separation: layout selection in manager, view updates in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,350 → 1,382 lines (+32 due to delegation boilerplate)
+  - Created LayoutManager: +249 lines
+  - Total complexity reduced (logic is now centralized and testable)
+  - Build successful ✅ (v1.32.364, build 414)
+  - Zero behavioral changes (all layout operations work identically)
+- **Benefits**:
+  - Centralized layout management (single source of truth)
+  - Improved testability (can test LayoutManager independently)
+  - Better encapsulation (layout state hidden from Keyboard2)
+  - Clearer API (focused interface for layout operations)
+  - Easier to add new layout types
+- **Note**: Line count increased slightly due to delegation wrappers, but logic is now better organized and more maintainable
+- **Phase 4 Progress**: 2/? complete ✅ (NeuralLayoutHelper + LayoutManager done!)
+- **Next**: Continue Phase 4 extractions (IME Subtype Manager, Event Receiver, etc.)
 
 **REFACTORING PHASE 4: Extract NeuralLayoutHelper (Phase 4, 1/? Complete! ✅)**
 - **Goal**: Extract neural engine and layout helper utilities

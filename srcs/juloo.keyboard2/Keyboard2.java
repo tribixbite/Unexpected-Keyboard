@@ -47,10 +47,10 @@ public class Keyboard2 extends InputMethodService
   // to match SwipeCalibrationActivity behavior and eliminate premature predictions
   private Keyboard2View _keyboardView;
   private KeyEventHandler _keyeventhandler;
-  /** If not 'null', the layout to use instead of [_config.current_layout]. */
-  private KeyboardData _currentSpecialLayout;
-  /** Layout associated with the currently selected locale. Not 'null'. */
-  private KeyboardData _localeTextLayout;
+
+  // Layout management (v1.32.363: extracted to LayoutManager)
+  private LayoutManager _layoutManager;
+
   private ViewGroup _emojiPane = null;
   private FrameLayout _contentPaneContainer = null; // Container for emoji/clipboard panes
   public int actionId; // Action performed by the Action key.
@@ -90,65 +90,79 @@ public class Keyboard2 extends InputMethodService
   private boolean _debugMode = false;
   private android.content.BroadcastReceiver _debugModeReceiver;
 
-  /** Layout currently visible before it has been modified. */
+  /**
+   * Layout currently visible before it has been modified.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   KeyboardData current_layout_unmodified()
   {
-    if (_currentSpecialLayout != null)
-      return _currentSpecialLayout;
-    KeyboardData layout = null;
-    int layout_i = _config.get_current_layout();
-    if (layout_i >= _config.layouts.size())
-      layout_i = 0;
-    if (layout_i < _config.layouts.size())
-      layout = _config.layouts.get(layout_i);
-    if (layout == null)
-      layout = _localeTextLayout;
-    return layout;
+    return _layoutManager.current_layout_unmodified();
   }
 
-  /** Layout currently visible. */
+  /**
+   * Layout currently visible.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   KeyboardData current_layout()
   {
-    if (_currentSpecialLayout != null)
-      return _currentSpecialLayout;
-    return LayoutModifier.modify_layout(current_layout_unmodified());
+    return _layoutManager.current_layout();
   }
 
+  /**
+   * Set text layout by index.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   void setTextLayout(int l)
   {
-    _config.set_current_layout(l);
-    _currentSpecialLayout = null;
-    _keyboardView.setKeyboard(current_layout());
+    KeyboardData layout = _layoutManager.setTextLayout(l);
+    _keyboardView.setKeyboard(layout);
   }
 
+  /**
+   * Cycle to next/previous text layout.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   void incrTextLayout(int delta)
   {
-    int s = _config.layouts.size();
-    setTextLayout((_config.get_current_layout() + delta + s) % s);
+    KeyboardData layout = _layoutManager.incrTextLayout(delta);
+    _keyboardView.setKeyboard(layout);
   }
 
+  /**
+   * Set special layout (numeric, emoji, etc.).
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   void setSpecialLayout(KeyboardData l)
   {
-    _currentSpecialLayout = l;
-    _keyboardView.setKeyboard(l);
+    KeyboardData layout = _layoutManager.setSpecialLayout(l);
+    _keyboardView.setKeyboard(layout);
   }
 
+  /**
+   * Load a layout from resources.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   KeyboardData loadLayout(int layout_id)
   {
-    return KeyboardData.load(getResources(), layout_id);
+    return _layoutManager.loadLayout(layout_id);
   }
 
-  /** Load a layout that contains a numpad. */
+  /**
+   * Load a layout that contains a numpad.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   KeyboardData loadNumpad(int layout_id)
   {
-    return LayoutModifier.modify_numpad(KeyboardData.load(getResources(), layout_id),
-        current_layout_unmodified());
+    return _layoutManager.loadNumpad(layout_id);
   }
 
+  /**
+   * Load a pinentry layout.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   KeyboardData loadPinentry(int layout_id)
   {
-    return LayoutModifier.modify_pinentry(KeyboardData.load(getResources(), layout_id),
-        current_layout_unmodified());
+    return _layoutManager.loadPinentry(layout_id);
   }
 
   @Override
@@ -424,8 +438,18 @@ public class Keyboard2 extends InputMethodService
       }
     }
     if (default_layout == null)
-      default_layout = loadLayout(R.xml.latn_qwerty_us);
-    _localeTextLayout = default_layout;
+      default_layout = KeyboardData.load(getResources(), R.xml.latn_qwerty_us);
+
+    // Set locale layout on LayoutManager (v1.32.363)
+    if (_layoutManager != null)
+    {
+      _layoutManager.setLocaleTextLayout(default_layout);
+    }
+    else
+    {
+      // First call - initialize LayoutManager with default layout
+      _layoutManager = new LayoutManager(this, _config, default_layout);
+    }
   }
 
   private String actionLabel_of_imeAction(int action)
@@ -519,6 +543,12 @@ public class Keyboard2 extends InputMethodService
       _neuralLayoutHelper.setConfig(_config);
     }
 
+    // Update layout manager config (v1.32.363)
+    if (_layoutManager != null)
+    {
+      _layoutManager.setConfig(_config);
+    }
+
     // Reset keyboard view
     if (_keyboardView != null)
     {
@@ -546,21 +576,13 @@ public class Keyboard2 extends InputMethodService
     setInputView(_keyboardView);
   }
 
+  /**
+   * Determine special layout based on input type.
+   * (v1.32.363: Delegated to LayoutManager)
+   */
   private KeyboardData refresh_special_layout(EditorInfo info)
   {
-    switch (info.inputType & InputType.TYPE_MASK_CLASS)
-    {
-      case InputType.TYPE_CLASS_NUMBER:
-      case InputType.TYPE_CLASS_PHONE:
-      case InputType.TYPE_CLASS_DATETIME:
-        if (_config.selected_number_layout == NumberLayout.PIN)
-          return loadPinentry(R.xml.pin);
-        else if (_config.selected_number_layout == NumberLayout.NUMBER)
-          return loadNumpad(R.xml.numeric);
-      default:
-        break;
-    }
-    return null;
+    return _layoutManager.refresh_special_layout(info);
   }
 
   @Override
@@ -578,7 +600,18 @@ public class Keyboard2 extends InputMethodService
     }
 
     refresh_action_label(info);
-    _currentSpecialLayout = refresh_special_layout(info);
+
+    // Set special layout if needed (v1.32.363: use LayoutManager)
+    KeyboardData specialLayout = refresh_special_layout(info);
+    if (specialLayout != null)
+    {
+      _layoutManager.setSpecialLayout(specialLayout);
+    }
+    else
+    {
+      _layoutManager.clearSpecialLayout();
+    }
+
     _keyboardView.setKeyboard(current_layout());
     _keyeventhandler.started(info);
     
@@ -853,8 +886,7 @@ public class Keyboard2 extends InputMethodService
           break;
 
         case SWITCH_TEXT:
-          _currentSpecialLayout = null;
-          _keyboardView.setKeyboard(current_layout());
+          _keyboardView.setKeyboard(_layoutManager.clearSpecialLayout());
           break;
 
         case SWITCH_NUMERIC:
