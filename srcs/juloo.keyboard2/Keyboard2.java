@@ -63,24 +63,19 @@ public class Keyboard2 extends InputMethodService
   private ConfigurationManager _configManager;
   private Config _config; // Cached reference from _configManager, updated by ConfigChangeListener
 
-  // Swipe typing components
-  private DictionaryManager _dictionaryManager;
-  private WordPredictor _wordPredictor;
-  private NeuralSwipeTypingEngine _neuralEngine;
-  private AsyncPredictionHandler _asyncPredictionHandler;
+  // Prediction coordination (v1.32.346: extracted to PredictionCoordinator)
+  private PredictionCoordinator _predictionCoordinator;
+
+  // UI components (remain in Keyboard2 for view integration)
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
   private BufferedWriter _logWriter = null;
 
   // ML data collection
-  private SwipeMLDataStore _mlDataStore;
   private SwipeMLData _currentSwipeData;
 
   // Prediction context tracking (v1.32.342: extracted to PredictionContextTracker)
   private PredictionContextTracker _contextTracker;
-
-  // User adaptation
-  private UserAdaptationManager _adaptationManager;
 
   // Contraction mappings for apostrophe insertion (v1.32.341: extracted to ContractionManager)
   private ContractionManager _contractionManager;
@@ -181,14 +176,6 @@ public class Keyboard2 extends InputMethodService
 
     // Fold state change callback is handled by ConfigurationManager
 
-    // Initialize ML data store
-    _mlDataStore = SwipeMLDataStore.getInstance(this);
-    
-    // CGR parameter reloading will be handled through existing preference listener
-    
-    // Initialize user adaptation manager
-    _adaptationManager = UserAdaptationManager.getInstance(this);
-
     // Load contraction mappings for apostrophe insertion (v1.32.341: extracted to ContractionManager)
     _contractionManager = new ContractionManager(this);
     _contractionManager.loadMappings();
@@ -196,8 +183,20 @@ public class Keyboard2 extends InputMethodService
     // Initialize prediction context tracker (v1.32.342: extracted to PredictionContextTracker)
     _contextTracker = new PredictionContextTracker();
 
-    // KeyboardSwipeRecognizer is now handled through SwipeTypingEngine
-    
+    // Initialize prediction coordinator (v1.32.346: extracted prediction engine management)
+    _predictionCoordinator = new PredictionCoordinator(this, _config);
+    if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
+    {
+      _predictionCoordinator.initialize();
+
+      // Set swipe typing components on keyboard view if swipe is enabled
+      if (_config.swipe_typing_enabled && _predictionCoordinator.isSwipeTypingAvailable())
+      {
+        android.util.Log.d("Keyboard2", "Neural engine initialized - dimensions and key positions will be set after layout");
+        _keyboardView.setSwipeTypingComponents(_predictionCoordinator.getWordPredictor(), this);
+      }
+    }
+
     // Initialize log writer for swipe analysis
     try
     {
@@ -207,34 +206,6 @@ public class Keyboard2 extends InputMethodService
     }
     catch (IOException e)
     {
-    }
-    
-    // Initialize word prediction components (for both swipe and regular typing)
-    if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
-    {
-      _dictionaryManager = new DictionaryManager(this);
-      _dictionaryManager.setLanguage("en");
-      _wordPredictor = new WordPredictor();
-      _wordPredictor.setContext(this); // Enable disabled words filtering
-      _wordPredictor.setConfig(_config);
-      _wordPredictor.setUserAdaptationManager(_adaptationManager);
-      _wordPredictor.loadDictionary(this, "en");
-      
-      // Initialize neural predictor for swipe typing only
-      if (_config.swipe_typing_enabled)
-      {
-        _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
-        
-        // Initialize async prediction handler
-        _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
-        
-        // CGR recognizer doesn't need separate calibration data loading
-        
-        // Note: Key positions will be set in onStartInputView after layout is complete
-        android.util.Log.d("Keyboard2", "Neural engine initialized - dimensions and key positions will be set after layout");
-
-        _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
-      }
     }
 
     // Register broadcast receiver for debug mode control
@@ -266,11 +237,10 @@ public class Keyboard2 extends InputMethodService
     // Cleanup clipboard listener
     ClipboardHistoryService.on_shutdown();
 
-    // Cleanup async prediction handler
-    if (_asyncPredictionHandler != null)
+    // Cleanup prediction coordinator
+    if (_predictionCoordinator != null)
     {
-      _asyncPredictionHandler.shutdown();
-      _asyncPredictionHandler = null;
+      _predictionCoordinator.shutdown();
     }
 
     // Unregister debug mode receiver
@@ -441,14 +411,10 @@ public class Keyboard2 extends InputMethodService
     // Refresh subtitle IME
     refreshSubtypeImm();
 
-    // Update swipe engine config if it exists
-    if (_neuralEngine != null)
+    // Update prediction coordinator config
+    if (_predictionCoordinator != null)
     {
-      _neuralEngine.setConfig(_config);
-    }
-    if (_wordPredictor != null)
-    {
-      _wordPredictor.setConfig(_config);
+      _predictionCoordinator.setConfig(_config);
     }
 
     // Reset keyboard view
@@ -516,33 +482,14 @@ public class Keyboard2 extends InputMethodService
     // Re-initialize word prediction components if settings have changed
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
-      // Initialize predictors if not already initialized
-      if (_wordPredictor == null)
+      // Ensure prediction engines are initialized (lazy initialization)
+      _predictionCoordinator.ensureInitialized();
+
+      // Set keyboard dimensions for neural engine if available
+      if (_config.swipe_typing_enabled && _predictionCoordinator.getNeuralEngine() != null && _keyboardView != null)
       {
-        _dictionaryManager = new DictionaryManager(this);
-        _dictionaryManager.setLanguage("en");
-        _wordPredictor = new WordPredictor();
-        _wordPredictor.setContext(this); // Enable disabled words filtering
-        _wordPredictor.setConfig(_config);
-        _wordPredictor.loadDictionary(this, "en");
-      }
-      
-      if (_config.swipe_typing_enabled && _neuralEngine == null)
-      {
-        _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
-        
-        // Initialize async prediction handler
-        _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
-        
-        // CGR recognizer doesn't need separate calibration data loading
-        
-        // Set keyboard dimensions
-        if (_keyboardView != null)
-        {
-          _neuralEngine.setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
-        }
-        
-        _keyboardView.setSwipeTypingComponents(_wordPredictor, this);
+        _predictionCoordinator.getNeuralEngine().setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
+        _keyboardView.setSwipeTypingComponents(_predictionCoordinator.getWordPredictor(), this);
       }
       
       // Create suggestion bar if needed
@@ -592,9 +539,9 @@ public class Keyboard2 extends InputMethodService
       }
 
       setInputView(_inputViewContainer != null ? _inputViewContainer : _keyboardView);
-      
+
       // CRITICAL: Set correct keyboard dimensions for CGR after view is laid out
-      if (_neuralEngine != null && _keyboardView != null) {
+      if (_predictionCoordinator.getNeuralEngine() != null && _keyboardView != null) {
         _keyboardView.getViewTreeObserver().addOnGlobalLayoutListener(
           new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -606,7 +553,7 @@ public class Keyboard2 extends InputMethodService
                 float keyboardWidth = _keyboardView.getWidth();
                 float keyboardHeight = calculateDynamicKeyboardHeight();
                 
-                _neuralEngine.setKeyboardDimensions(keyboardWidth, keyboardHeight);
+                _predictionCoordinator.getNeuralEngine().setKeyboardDimensions(keyboardWidth, keyboardHeight);
 
                 // CRITICAL: Set real key positions for 100% accurate coordinate mapping
                 setNeuralKeyboardLayout();
@@ -622,7 +569,7 @@ public class Keyboard2 extends InputMethodService
     else
     {
       // Clean up if predictions are disabled
-      _wordPredictor = null;
+      // Note: _wordPredictor is managed by PredictionCoordinator
       // CGR recognizer cleanup handled by SwipeTypingEngine
       _suggestionBar = null;
       _inputViewContainer = null;
@@ -756,9 +703,9 @@ public class Keyboard2 extends InputMethodService
                         _key.equals("neural_model_version") ||
                         _key.equals("neural_user_max_seq_length")))
     {
-      if (_neuralEngine != null)
+      if (_predictionCoordinator.getNeuralEngine() != null)
       {
-        _neuralEngine.setConfig(_config);
+        _predictionCoordinator.getNeuralEngine().setConfig(_config);
         Log.d("Keyboard2", "Neural model setting changed: " + _key + " - engine config updated");
       }
     }
@@ -1165,9 +1112,9 @@ public class Keyboard2 extends InputMethodService
     _contextTracker.commitWord(word, source, false);
 
     // Add word to WordPredictor for language detection
-    if (_wordPredictor != null)
+    if (_predictionCoordinator.getWordPredictor() != null)
     {
-      _wordPredictor.addWordToContext(word);
+      _predictionCoordinator.getWordPredictor().addWordToContext(word);
     }
   }
   
@@ -1297,9 +1244,9 @@ public class Keyboard2 extends InputMethodService
       // Applies when user selects/auto-inserts a prediction (even if beam autocorrect was OFF)
       // Useful for correcting vocabulary misses
       // SKIP for known contractions and raw predictions
-      if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null)
+      if (_config.swipe_final_autocorrect_enabled && _predictionCoordinator.getWordPredictor() != null)
       {
-        String correctedWord = _wordPredictor.autoCorrect(word);
+        String correctedWord = _predictionCoordinator.getWordPredictor().autoCorrect(word);
 
         // If autocorrect found a better match, use it
         if (!correctedWord.equals(word))
@@ -1311,16 +1258,16 @@ public class Keyboard2 extends InputMethodService
     }
 
     // Record user selection for adaptation learning
-    if (_adaptationManager != null)
+    if (_predictionCoordinator.getAdaptationManager() != null)
     {
-      _adaptationManager.recordSelection(word.trim());
+      _predictionCoordinator.getAdaptationManager().recordSelection(word.trim());
     }
 
     // CRITICAL: Save swipe flag before resetting for use in spacing logic below
     boolean isSwipeAutoInsert = _contextTracker.wasLastInputSwipe();
 
     // Store ML data if this was a swipe prediction selection
-    if (isSwipeAutoInsert && _currentSwipeData != null && _mlDataStore != null)
+    if (isSwipeAutoInsert && _currentSwipeData != null && _predictionCoordinator.getMlDataStore() != null)
     {
       // Create a new ML data object with the selected word
       android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -1346,10 +1293,10 @@ public class Keyboard2 extends InputMethodService
       {
         mlData.addRegisteredKey(key);
       }
-      
+
       // Store the ML data
-      _mlDataStore.storeSwipeData(mlData);
-      
+      _predictionCoordinator.getMlDataStore().storeSwipeData(mlData);
+
     }
     
     // Reset swipe tracking
@@ -1548,7 +1495,7 @@ public class Keyboard2 extends InputMethodService
    */
   public void handleRegularTyping(String text)
   {
-    if (!_config.word_prediction_enabled || _wordPredictor == null || _suggestionBar == null)
+    if (!_config.word_prediction_enabled || _predictionCoordinator.getWordPredictor() == null || _suggestionBar == null)
     {
       return;
     }
@@ -1585,9 +1532,9 @@ public class Keyboard2 extends InputMethodService
           // Fallback: assume not Termux if detection fails
         }
 
-        if (_config.autocorrect_enabled && _wordPredictor != null && text.equals(" ") && !inTermuxApp)
+        if (_config.autocorrect_enabled && _predictionCoordinator.getWordPredictor() != null && text.equals(" ") && !inTermuxApp)
         {
-          String correctedWord = _wordPredictor.autoCorrect(completedWord);
+          String correctedWord = _predictionCoordinator.getWordPredictor().autoCorrect(completedWord);
 
           // If correction was made, replace the typed word
           if (!correctedWord.equals(completedWord))
@@ -1626,9 +1573,9 @@ public class Keyboard2 extends InputMethodService
               }
 
               // Reset prediction state
-              if (_wordPredictor != null)
+              if (_predictionCoordinator.getWordPredictor() != null)
               {
-                _wordPredictor.reset();
+                _predictionCoordinator.getWordPredictor().reset();
               }
 
               return; // Skip normal text processing - we've handled everything
@@ -1641,9 +1588,9 @@ public class Keyboard2 extends InputMethodService
 
       // Reset current word
       _contextTracker.clearCurrentWord();
-      if (_wordPredictor != null)
+      if (_predictionCoordinator.getWordPredictor() != null)
       {
-        _wordPredictor.reset();
+        _predictionCoordinator.getWordPredictor().reset();
       }
       if (_suggestionBar != null)
       {
@@ -1654,9 +1601,9 @@ public class Keyboard2 extends InputMethodService
     {
       // Multi-character input (paste, etc) - reset
       _contextTracker.clearCurrentWord();
-      if (_wordPredictor != null)
+      if (_predictionCoordinator.getWordPredictor() != null)
       {
-        _wordPredictor.reset();
+        _predictionCoordinator.getWordPredictor().reset();
       }
       if (_suggestionBar != null)
       {
@@ -1694,7 +1641,7 @@ public class Keyboard2 extends InputMethodService
       String partial = _contextTracker.getCurrentWord();
 
       // Use contextual prediction
-      WordPredictor.PredictionResult result = _wordPredictor.predictWordsWithContext(partial, _contextTracker.getContextWords());
+      WordPredictor.PredictionResult result = _predictionCoordinator.getWordPredictor().predictWordsWithContext(partial, _contextTracker.getContextWords());
       
       if (!result.words.isEmpty() && _suggestionBar != null)
       {
@@ -1939,21 +1886,16 @@ public class Keyboard2 extends InputMethodService
       return;
     }
     
-    if (_neuralEngine == null)
+    if (_predictionCoordinator.getNeuralEngine() == null)
     {
       // Fallback to word predictor if engine not initialized
-      if (_wordPredictor == null)
+      if (_predictionCoordinator.getWordPredictor() == null)
       {
         return;
       }
-      // Initialize engine on the fly
-      _neuralEngine = new NeuralSwipeTypingEngine(this, _config);
 
-      // Initialize async handler if not already done
-      if (_asyncPredictionHandler == null)
-      {
-        _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
-      }
+      // Ensure prediction engines are initialized (lazy initialization)
+      _predictionCoordinator.ensureInitialized();
 
       // Neural engine dimensions and key positions already set in onStartInputView
     }
@@ -2029,16 +1971,16 @@ public class Keyboard2 extends InputMethodService
       // This matches SwipeCalibrationActivity behavior and eliminates premature predictions
 
       // Cancel any pending predictions first
-      if (_asyncPredictionHandler != null)
+      if (_predictionCoordinator.getAsyncPredictionHandler() != null)
       {
-        _asyncPredictionHandler.cancelPendingPredictions();
+        _predictionCoordinator.getAsyncPredictionHandler().cancelPendingPredictions();
       }
       
       // Request predictions asynchronously - always done on gesture completion
       // which matches the calibration activity's ACTION_UP behavior
-      if (_asyncPredictionHandler != null)
+      if (_predictionCoordinator.getAsyncPredictionHandler() != null)
       {
-        _asyncPredictionHandler.requestPredictions(swipeInput, new AsyncPredictionHandler.PredictionCallback()
+        _predictionCoordinator.getAsyncPredictionHandler().requestPredictions(swipeInput, new AsyncPredictionHandler.PredictionCallback()
         {
           @Override
           public void onPredictionsReady(List<String> predictions, List<Integer> scores)
@@ -2062,7 +2004,7 @@ public class Keyboard2 extends InputMethodService
       {
         // Fallback to synchronous prediction if async handler not available
         long startTime = System.currentTimeMillis();
-        PredictionResult result = _neuralEngine.predict(swipeInput);
+        PredictionResult result = _predictionCoordinator.getNeuralEngine().predict(swipeInput);
       long predictionTime = System.currentTimeMillis() - startTime;
       List<String> predictions = result.words;
       
@@ -2203,7 +2145,7 @@ public class Keyboard2 extends InputMethodService
    */
   private void setNeuralKeyboardLayout()
   {
-    if (_neuralEngine == null || _keyboardView == null)
+    if (_predictionCoordinator.getNeuralEngine() == null || _keyboardView == null)
     {
       android.util.Log.w("Keyboard2", "Cannot set neural layout - engine or view is null");
       return;
@@ -2213,7 +2155,7 @@ public class Keyboard2 extends InputMethodService
 
     if (keyPositions != null && !keyPositions.isEmpty())
     {
-      _neuralEngine.setRealKeyPositions(keyPositions);
+      _predictionCoordinator.getNeuralEngine().setRealKeyPositions(keyPositions);
       android.util.Log.d("Keyboard2", "Set " + keyPositions.size() + " key positions on neural engine");
 
       // Debug output only when debug mode is active

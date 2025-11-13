@@ -1,0 +1,165 @@
+=== Unexpected Keyboard Termux Build Script ===
+Building debug APK on Termux ARM64
+
+Step 1: Checking prerequisites...
+Step 2: Auto-incrementing version...
+  Current: versionCode 396, versionName 1.32.346
+  New:     versionCode 397, versionName 1.32.347
+  ✅ Version updated in build.gradle
+
+Step 3: Preparing layout resources...
+Step 4: Cleaning previous builds...
+> Task :clean
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 9s
+1 actionable task: 1 executed
+Step 5: Building Debug APK...
+This may take a few minutes on first run...
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termux/files/home/git/Unexpected-Keyboard/tools/aapt2-arm64/aapt2' is experimental.
+
+> Task :copyLayoutDefinitions UP-TO-DATE
+> Task :copyRawQwertyUS UP-TO-DATE
+
+> Task :generateVersionInfo
+Generated version info:  ()
+
+> Task :initDebugKeystore UP-TO-DATE
+> Task :preBuild
+> Task :preDebugBuild
+> Task :mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :checkKotlinGradlePluginConfigurationErrors
+> Task :dataBindingMergeDependencyArtifactsDebug
+> Task :generateDebugResValues FROM-CACHE
+> Task :generateDebugResources
+> Task :mergeDebugResources
+> Task :packageDebugResources
+> Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
+> Task :createDebugCompatibleScreenManifests
+> Task :parseDebugLocalResources
+> Task :extractDeepLinksDebug FROM-CACHE
+> Task :processDebugMainManifest
+> Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :javaPreCompileDebug FROM-CACHE
+> Task :mergeDebugShaders
+> Task :compileDebugShaders NO-SOURCE
+> Task :generateDebugAssets UP-TO-DATE
+> Task :mergeDebugAssets
+> Task :processDebugManifestForPackage
+> Task :compressDebugAssets FROM-CACHE
+> Task :checkDebugDuplicateClasses
+> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
+> Task :validateSigningDebug
+> Task :writeDebugAppMetadata
+> Task :writeDebugSigningConfigVersions
+> Task :mergeDebugNativeLibs
+
+> Task :stripDebugDebugSymbols
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
+
+> Task :processDebugResources
+> Task :compileDebugKotlin
+
+> Task :compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionCoordinator.java:6: error: cannot find symbol
+import juloo.keyboard2.prefs.UserAdaptationManager;
+                            ^
+  symbol:   class UserAdaptationManager
+  location: package juloo.keyboard2.prefs
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.java:1247: error: cannot find symbol
+      if (_config.swipe_final_autocorrect_enabled && _wordPredictor != null)
+                                                     ^
+  symbol:   variable _wordPredictor
+  location: class Keyboard2
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.java:1261: error: cannot find symbol
+    if (_adaptationManager != null)
+        ^
+  symbol:   variable _adaptationManager
+  location: class Keyboard2
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.java:1263: error: cannot find symbol
+      _adaptationManager.recordSelection(word.trim());
+      ^
+  symbol:   variable _adaptationManager
+  location: class Keyboard2
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.java:1270: error: cannot find symbol
+    if (isSwipeAutoInsert && _currentSwipeData != null && _mlDataStore != null)
+                                                          ^
+  symbol:   variable _mlDataStore
+  location: class Keyboard2
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.java:1298: error: cannot find symbol
+      _mlDataStore.storeSwipeData(mlData);
+      ^
+  symbol:   variable _mlDataStore
+  location: class Keyboard2
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.java:1498: error: cannot find symbol
+    if (!_config.word_prediction_enabled || _wordPredictor == null || _suggestionBar == null)
+                                            ^
+  symbol:   variable _wordPredictor
+  location: class Keyboard2
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.java:1535: error: cannot find symbol
+        if (_config.autocorrect_enabled && _wordPredictor != null && text.equals(" ") && !inTermuxApp)
+                                           ^
+  symbol:   variable _wordPredictor
+  location: class Keyboard2
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+8 errors
+3 warnings
+
+> Task :compileDebugJavaWithJavac FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 5m 9s
+33 actionable tasks: 25 executed, 8 from cache
+
+=== BUILD FAILED ===
+Check build-debug.log for details
+
+Common issues:
+1. AAPT2 compatibility - ensure qemu-x86_64 is installed
+2. Memory issues - try closing other apps
+3. Missing layouts - check if srcs/layouts/*.xml exist
+4. SDK version mismatch - check Android SDK installation
