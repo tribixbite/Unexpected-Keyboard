@@ -9,11 +9,73 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.337 (387)
-**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard Date Filter Feature Complete
+**Latest Version**: v1.32.339 (389)
+**Build Status**: ✅ BUILD SUCCESSFUL - External ONNX Model File Picker Fixed
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.331-337)
+### Recent Work (v1.32.339)
+
+**CRITICAL FIX: External ONNX model file pickers now work correctly**
+- **Root Cause Analysis** (by Gemini 2.5 Pro):
+  1. **Stale Configuration**: Config object in keyboard service not updated when SharedPreferences changed
+  2. **Flawed Re-initialization**: OnnxSwipePredictor only re-initialized on model version change, NOT on path changes
+  3. **Missing Change Notification**: No mechanism to notify service of setting changes
+  4. **Poor UX**: Users didn't know they needed to select files AND change model version
+
+- **Fixes Applied**:
+  1. **OnnxSwipePredictor.java:831-847**: Improved setConfig() to detect path changes
+     ```java
+     // Now tracks BOTH version and path changes
+     boolean versionChanged = !newModelVersion.equals(_currentModelVersion);
+     boolean pathsChanged = !Objects.equals(newEncoderPath, _currentEncoderPath) ||
+                            !Objects.equals(newDecoderPath, _currentDecoderPath);
+     if (versionChanged || pathsChanged) { reinitialize(); }
+     ```
+
+  2. **OnnxSwipePredictor.java:286-297**: Track successfully loaded paths
+     ```java
+     if (_isModelLoaded) {
+       _currentEncoderPath = encoderPath;  // Save for change detection
+       _currentDecoderPath = decoderPath;
+     }
+     ```
+
+  3. **Keyboard2.java:711-722**: Added config reload on preference change
+     ```java
+     if (_key.equals("neural_custom_encoder_uri") || /* ... */) {
+       _neuralEngine.setConfig(_config);  // Notify engine of changes
+     }
+     ```
+
+  4. **SettingsActivity.java:1026-1035**: Improved user guidance
+     ```java
+     // After both files loaded, prompt user to change model version
+     if (encoderUri != null && decoderUri != null && modelVersion.equals("v2")) {
+       Toast: "✅ Files loaded. Now, change 'Model Version' to 'custom' to use them."
+     }
+     ```
+
+- **Technical Details**:
+  - Fixes stale configuration issue across keyboard service process boundary
+  - Proper change detection using java.util.Objects.equals() for null-safe comparison
+  - Leverages existing OnSharedPreferenceChangeListener in Keyboard2.java
+  - User workflow now explicit: (1) Load encoder, (2) Load decoder, (3) Change version to "custom"
+
+- **Testing Required**:
+  1. Select encoder/decoder files via file picker
+  2. Change model version to "custom"
+  3. Perform swipe typing
+  4. Verify external models load successfully (check logcat)
+  5. Verify no "External model files not configured" fallback message
+
+- **Files Modified**:
+  - OnnxSwipePredictor.java (path change detection + tracking)
+  - Keyboard2.java (config reload notification)
+  - SettingsActivity.java (user guidance toast)
+  - build.gradle (versionCode 389, versionName 1.32.339)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.331-337)
 
 **Added Clipboard Timestamps and Date Filter (6 builds)**
 

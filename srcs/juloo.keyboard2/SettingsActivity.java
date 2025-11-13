@@ -1023,6 +1023,17 @@ public class SettingsActivity extends PreferenceActivity
       }
       editor.apply();
 
+      // Check if both files are now set and prompt user to change model version if needed
+      SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+      String encoderUri = prefs.getString("neural_custom_encoder_uri", null);
+      String decoderUri = prefs.getString("neural_custom_decoder_uri", null);
+      String modelVersion = prefs.getString("neural_model_version", "v2");
+
+      if (encoderUri != null && decoderUri != null && modelVersion.equals("v2"))
+      {
+        Toast.makeText(this, "✅ Files loaded. Now, change 'Model Version' to 'custom' to use them.", Toast.LENGTH_LONG).show();
+      }
+
       // Update model info
       updateNeuralModelInfo();
     }

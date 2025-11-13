@@ -707,6 +707,19 @@ public class Keyboard2 extends InputMethodService
     {
       _suggestionBar.setOpacity(_config.suggestion_bar_opacity);
     }
+
+    // Update neural predictor when model-related settings change
+    if (_key != null && (_key.equals("neural_custom_encoder_uri") ||
+                        _key.equals("neural_custom_decoder_uri") ||
+                        _key.equals("neural_model_version") ||
+                        _key.equals("neural_user_max_seq_length")))
+    {
+      if (_neuralEngine != null)
+      {
+        _neuralEngine.setConfig(_config);
+        Log.d("Keyboard2", "Neural model setting changed: " + _key + " - engine config updated");
+      }
+    }
   }
 
   @Override

@@ -282,7 +282,20 @@ public class OnnxSwipePredictor
       // logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getStats().totalWords + ")");
       
       _isModelLoaded = (_encoderSession != null && _decoderSession != null);
-      
+
+      if (_isModelLoaded)
+      {
+        // Track successfully loaded paths for change detection
+        _currentEncoderPath = encoderPath;
+        _currentDecoderPath = decoderPath;
+      }
+      else
+      {
+        // Clear paths if loading failed to allow for retry
+        _currentEncoderPath = null;
+        _currentDecoderPath = null;
+      }
+
       // OPTIMIZATION: Pre-allocate reusable buffers for beam search
       if (_isModelLoaded)
       {
@@ -827,12 +840,19 @@ public class OnnxSwipePredictor
       _confidenceThreshold = config.neural_confidence_threshold != 0 ?
         config.neural_confidence_threshold : DEFAULT_CONFIDENCE_THRESHOLD;
 
-      // Handle model version changes (requires reinitialization)
-      String newModelVersion = config.neural_model_version != null ? config.neural_model_version : "v1";
-      if (!newModelVersion.equals(_currentModelVersion))
+      // Handle model version or path changes (requires reinitialization)
+      String newModelVersion = config.neural_model_version != null ? config.neural_model_version : "v2";
+      String newEncoderPath = config.neural_custom_encoder_path;
+      String newDecoderPath = config.neural_custom_decoder_path;
+
+      boolean versionChanged = !newModelVersion.equals(_currentModelVersion);
+      boolean pathsChanged = !java.util.Objects.equals(newEncoderPath, _currentEncoderPath) ||
+                             !java.util.Objects.equals(newDecoderPath, _currentDecoderPath);
+
+      if (versionChanged || pathsChanged)
       {
-        Log.d(TAG, String.format("Model version changed: %s → %s (requires reinitialization)",
-          _currentModelVersion, newModelVersion));
+        Log.d(TAG, String.format("Model config changed: versionChanged=%b, pathsChanged=%b. Re-initialization required.",
+          versionChanged, pathsChanged));
         _currentModelVersion = newModelVersion;
         _isInitialized = false;
         _isModelLoaded = false;
