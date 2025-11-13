@@ -9,14 +9,62 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.383 (433)
+**Latest Version**: v1.32.385 (435)
 **Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues! (Tested on device ✅)
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → ~1,020 lines, target: <700)
-**Refactoring Progress**: 16/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 9/? ✅)
-**Test Coverage**: 130 test cases across 6 comprehensive Kotlin test suites
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,022 lines, target: <700)
+**Refactoring Progress**: 17/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 10/? ✅)
+**Test Coverage**: 155 test cases across 7 comprehensive Kotlin test suites
 
-### Recent Work (v1.32.362-383) - Phase 4 Continues!
+### Recent Work (v1.32.362-385) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract DebugLoggingManager (Phase 4, 10/? Complete! ✅)**
+- **Goal**: Extract debug logging and debug mode management into Kotlin utility
+- **Created**: DebugLoggingManager.kt (246 lines, Kotlin)
+  - initializeLogWriter() - Initialize swipe analysis log file
+  - registerDebugModeReceiver() - Register broadcast receiver for debug mode control
+  - unregisterDebugModeReceiver() - Cleanup receiver on destroy
+  - sendDebugLog(...) - Send debug messages to SwipeDebugActivity
+  - writeToLogFile(...) - Write to persistent log file
+  - DebugModeListener interface - Callback for debug mode changes
+  - All methods for managing debug infrastructure lifecycle
+- **Created**: DebugLoggingManagerTest.kt (390 lines)
+  - 25 comprehensive test cases with AAA pattern
+  - Tests log writer initialization
+  - Tests debug mode receiver registration/unregistration
+  - Tests debug mode listener management (register, unregister, duplicate prevention)
+  - Tests debug mode state management (enable, disable, default values)
+  - Tests debug log broadcasting (when enabled/disabled, message content)
+  - Tests log file writing (graceful failure handling)
+  - Tests resource cleanup
+  - Full lifecycle integration test
+- **Modified**: Keyboard2.java (1,055 → 1,022 lines, -33)
+  - Replaced log writer initialization with DebugLoggingManager
+  - Replaced broadcast receiver registration with listener pattern
+  - Replaced sendDebugLog() method with delegation
+  - Removed 3 debug-related field declarations
+  - Simplified debug mode propagation to managers
+- **Architecture**:
+  - Kotlin class with dependency injection (context, package name)
+  - Listener pattern for debug mode propagation
+  - Centralized debug infrastructure management
+  - Clean separation: debug logic in manager, lifecycle in Keyboard2
+  - Handles both file logging and broadcast logging
+- **Impact**:
+  - Keyboard2.java: 1,055 → 1,022 lines (-33 net reduction) 🎉
+  - Created DebugLoggingManager.kt: +246 lines (Kotlin)
+  - Created DebugLoggingManagerTest.kt: +390 lines
+  - Total Keyboard2 reduction: 2,397 → 1,022 lines (-1,375 total, 57% reduction!)
+  - Build successful ✅ (v1.32.385, build 435)
+- **Benefits**:
+  - Centralized debug logging infrastructure
+  - Listener pattern for flexible debug mode propagation
+  - Improved testability (can test debug logging independently)
+  - Better resource management (cleanup in one place)
+  - Foundation for more lifecycle management utilities
+  - Demonstrates Kotlin lifecycle management patterns
+- **Phase 4 Progress**: 10/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager + KeyboardReceiver + MLDataCollector + WindowLayoutUtils + IMEStatusHelper + EditorInfoHelper + SuggestionBarInitializer + DebugLoggingManager done!)
+- **Next**: Continue Phase 4 extractions (only ~322 lines remaining to reach <700 target!)
 
 **REFACTORING PHASE 4: Extract SuggestionBarInitializer (Phase 4, 9/? Complete! ✅)**
 - **Goal**: Extract suggestion bar and input view initialization into Kotlin utility

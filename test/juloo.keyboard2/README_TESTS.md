@@ -83,6 +83,20 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Data class equality and field accessibility
 - **Total**: 28 test cases
 
+### DebugLoggingManagerTest.kt (390 lines)
+**Coverage**: ~95% of DebugLoggingManager.kt (file I/O limited in test environment)
+- ✅ Log writer initialization (graceful failure handling)
+- ✅ Debug mode receiver registration with correct action filter
+- ✅ Debug mode receiver unregistration and duplicate prevention
+- ✅ Debug mode listener management (register, unregister, duplicate prevention)
+- ✅ Debug mode state management (enable, disable, default values)
+- ✅ Debug log broadcasting (when enabled/disabled, message content, explicit package)
+- ✅ Debug mode enabled message on activation
+- ✅ Log file writing (graceful failure when writer not initialized)
+- ✅ Resource cleanup (close log writer, unregister receiver)
+- ✅ Full lifecycle integration test (register → enable → log → disable → unregister)
+- **Total**: 25 test cases
+
 ## Testing Methodology
 
 ### Frameworks Used
@@ -186,6 +200,13 @@ fun testMethodName_scenario_expectedBehavior() {
 - **Mock Usage**: Extensive (Context, Resources, DisplayMetrics, Theme)
 - **Edge Cases**: 4 (0% height, 100% height, 0 opacity, full opacity)
 - **Screen Sizes Tested**: 3 (small 800px, standard 1920px, large 3840px)
+
+### DebugLoggingManagerTest
+- **Lines of Code**: 390
+- **Test Cases**: 25
+- **Mock Usage**: Extensive (Context, BroadcastReceiver, Intent, IntentFilter)
+- **Edge Cases**: 5 (unregister without register, exception handling, missing extras, duplicate registration, lifecycle integration)
+- **Lifecycle Tests**: Full integration test covering register → enable → log → disable → unregister
 
 ## Continuous Improvement
 
