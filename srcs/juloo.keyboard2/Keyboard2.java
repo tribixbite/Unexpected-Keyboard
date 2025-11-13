@@ -69,7 +69,6 @@ public class Keyboard2 extends InputMethodService
   // UI components (remain in Keyboard2 for view integration)
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
-  private BufferedWriter _logWriter = null;
 
   // Prediction context tracking (v1.32.342: extracted to PredictionContextTracker)
   private PredictionContextTracker _contextTracker;
@@ -95,9 +94,8 @@ public class Keyboard2 extends InputMethodService
   // ML data collection (v1.32.370: extracted to MLDataCollector)
   private MLDataCollector _mlDataCollector;
 
-  // Debug mode for swipe pipeline logging
-  private boolean _debugMode = false;
-  private android.content.BroadcastReceiver _debugModeReceiver;
+  // Debug logging management (v1.32.384: extracted to DebugLoggingManager)
+  private DebugLoggingManager _debugLoggingManager;
 
   /**
    * Layout currently visible before it has been modified.
@@ -282,54 +280,39 @@ public class Keyboard2 extends InputMethodService
       }
     }
 
-    // Initialize log writer for swipe analysis
-    try
-    {
-      _logWriter = new BufferedWriter(new FileWriter("/data/data/com.termux/files/home/swipe_log.txt", true));
-      _logWriter.write("\n=== Keyboard2 Started: " + new java.util.Date() + " ===\n");
-      _logWriter.flush();
-    }
-    catch (IOException e)
-    {
-    }
+    // Initialize debug logging manager (v1.32.384)
+    _debugLoggingManager = new DebugLoggingManager(this, getPackageName());
+    _debugLoggingManager.initializeLogWriter();
 
-    // Register broadcast receiver for debug mode control
-    _debugModeReceiver = new android.content.BroadcastReceiver()
+    // Register debug mode change listener to propagate to managers (v1.32.384)
+    _debugLoggingManager.registerDebugModeListener(new DebugLoggingManager.DebugModeListener()
     {
       @Override
-      public void onReceive(android.content.Context context, android.content.Intent intent)
+      public void onDebugModeChanged(boolean enabled)
       {
-        if ("juloo.keyboard2.SET_DEBUG_MODE".equals(intent.getAction()))
+        // Propagate debug mode to SuggestionHandler (v1.32.361)
+        if (_suggestionHandler != null)
         {
-          _debugMode = intent.getBooleanExtra("debug_enabled", false);
-          if (_debugMode)
-          {
-            sendDebugLog("=== Debug mode enabled ===\n");
-          }
+          _suggestionHandler.setDebugMode(enabled, _debugLoggerImpl);
+        }
 
-          // Propagate debug mode to SuggestionHandler (v1.32.361)
-          if (_suggestionHandler != null)
+        // Propagate debug mode to NeuralLayoutHelper (v1.32.362)
+        if (_neuralLayoutHelper != null)
+        {
+          _neuralLayoutHelper.setDebugMode(enabled, new NeuralLayoutHelper.DebugLogger()
           {
-            _suggestionHandler.setDebugMode(_debugMode, _debugLoggerImpl);
-          }
-
-          // Propagate debug mode to NeuralLayoutHelper (v1.32.362)
-          if (_neuralLayoutHelper != null)
-          {
-            _neuralLayoutHelper.setDebugMode(_debugMode, new NeuralLayoutHelper.DebugLogger()
+            @Override
+            public void sendDebugLog(String message)
             {
-              @Override
-              public void sendDebugLog(String message)
-              {
-                Keyboard2.this.sendDebugLog(message);
-              }
-            });
-          }
+              _debugLoggingManager.sendDebugLog(message);
+            }
+          });
         }
       }
-    };
-    android.content.IntentFilter debugFilter = new android.content.IntentFilter("juloo.keyboard2.SET_DEBUG_MODE");
-    registerReceiver(_debugModeReceiver, debugFilter, android.content.Context.RECEIVER_NOT_EXPORTED);
+    });
+
+    // Register broadcast receiver for debug mode control (v1.32.384: delegated to DebugLoggingManager)
+    _debugLoggingManager.registerDebugModeReceiver(this);
   }
 
   @Override
@@ -353,39 +336,23 @@ public class Keyboard2 extends InputMethodService
       _predictionCoordinator.shutdown();
     }
 
-    // Unregister debug mode receiver
-    if (_debugModeReceiver != null)
+    // Unregister debug mode receiver and close log writer (v1.32.384: delegated to DebugLoggingManager)
+    if (_debugLoggingManager != null)
     {
-      try
-      {
-        unregisterReceiver(_debugModeReceiver);
-      }
-      catch (Exception e)
-      {
-        // Already unregistered
-      }
-      _debugModeReceiver = null;
+      _debugLoggingManager.unregisterDebugModeReceiver(this);
+      _debugLoggingManager.close();
     }
   }
 
   /**
    * Send debug log message to SwipeDebugActivity if debug mode is enabled.
-   * Only logs when debug mode is active (SwipeDebugActivity is open).
+   * (v1.32.384: Delegated to DebugLoggingManager)
    */
   private void sendDebugLog(String message)
   {
-    if (!_debugMode) return;
-
-    try
+    if (_debugLoggingManager != null)
     {
-      android.content.Intent intent = new android.content.Intent(SwipeDebugActivity.ACTION_DEBUG_LOG);
-      intent.setPackage(getPackageName());  // Explicit package for broadcast
-      intent.putExtra(SwipeDebugActivity.EXTRA_LOG_MESSAGE, message);
-      sendBroadcast(intent);
-    }
-    catch (Exception e)
-    {
-      // Silently fail if debug activity is not available
+      _debugLoggingManager.sendDebugLog(message);
     }
   }
 
