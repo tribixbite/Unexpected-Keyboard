@@ -470,85 +470,26 @@ public class Keyboard2 extends InputMethodService
 
     _keyboardView.setKeyboard(current_layout());
     _keyeventhandler.started(info);
-    
-    // Re-initialize word prediction components if settings have changed
-    if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
-    {
-      // Ensure prediction engines are initialized (lazy initialization)
-      _predictionCoordinator.ensureInitialized();
 
-      // Set keyboard dimensions for neural engine if available
-      if (_config.swipe_typing_enabled && _predictionCoordinator.getNeuralEngine() != null && _keyboardView != null)
-      {
-        _predictionCoordinator.getNeuralEngine().setKeyboardDimensions(_keyboardView.getWidth(), _keyboardView.getHeight());
-        _keyboardView.setSwipeTypingComponents(_predictionCoordinator.getWordPredictor(), this);
-      }
-      
-      // Create suggestion bar if needed
-      if (_suggestionBar == null)
-      {
-        // Initialize suggestion bar and input view hierarchy (v1.32.381)
-        Theme theme = _keyboardView != null ? _keyboardView.getTheme() : null;
-        SuggestionBarInitializer.InitializationResult result =
-          SuggestionBarInitializer.initialize(this, theme, _config.suggestion_bar_opacity,
-            _config.clipboard_pane_height_percent);
+    // Setup prediction views (v1.32.400: extracted prediction/swipe setup logic)
+    // Handles initialization, suggestion bar creation, neural engine dimensions, and cleanup
+    PredictionViewSetup.SetupResult predictionSetup = PredictionViewSetup.create(
+      this,
+      _config,
+      _keyboardView,
+      _predictionCoordinator,
+      _inputCoordinator,
+      _suggestionHandler,
+      _neuralLayoutHelper,
+      _receiver,
+      _emojiPane
+    ).setupPredictionViews(_suggestionBar, _inputViewContainer, _contentPaneContainer);
 
-        _inputViewContainer = result.getInputViewContainer();
-        _suggestionBar = result.getSuggestionBar();
-        _contentPaneContainer = result.getContentPaneContainer();
-
-        // Register suggestion selection listener (v1.32.381)
-        _suggestionBar.setOnSuggestionSelectedListener(this);
-
-        // Propagate suggestion bar and view references to managers (v1.32.394)
-        SuggestionBarPropagator suggestionBarPropagator = SuggestionBarPropagator.create(
-          _inputCoordinator,
-          _suggestionHandler,
-          _neuralLayoutHelper,
-          _receiver
-        );
-        suggestionBarPropagator.propagateAll(_suggestionBar, _emojiPane, _contentPaneContainer);
-
-        _inputViewContainer.addView(_keyboardView);
-      }
-
-      setInputView(_inputViewContainer != null ? _inputViewContainer : _keyboardView);
-
-      // CRITICAL: Set correct keyboard dimensions for CGR after view is laid out
-      if (_predictionCoordinator.getNeuralEngine() != null && _keyboardView != null) {
-        _keyboardView.getViewTreeObserver().addOnGlobalLayoutListener(
-          new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-              // Ensure we have valid dimensions
-              if (_keyboardView.getWidth() > 0 && _keyboardView.getHeight() > 0) {
-                
-                // Use dynamic keyboard dimensions based on user settings (like calibration)
-                float keyboardWidth = _keyboardView.getWidth();
-                float keyboardHeight = calculateDynamicKeyboardHeight();
-                
-                _predictionCoordinator.getNeuralEngine().setKeyboardDimensions(keyboardWidth, keyboardHeight);
-
-                // CRITICAL: Set real key positions for 100% accurate coordinate mapping
-                setNeuralKeyboardLayout();
-
-                // Remove the listener to avoid repeated calls
-                _keyboardView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-              }
-            }
-          }
-        );
-      }
-    }
-    else
-    {
-      // Clean up if predictions are disabled
-      // Note: _wordPredictor is managed by PredictionCoordinator
-      // CGR recognizer cleanup handled by SwipeTypingEngine
-      _suggestionBar = null;
-      _inputViewContainer = null;
-      setInputView(_keyboardView);
-    }
+    // Update components from setup result
+    _suggestionBar = predictionSetup.getSuggestionBar();
+    _inputViewContainer = predictionSetup.getInputViewContainer();
+    _contentPaneContainer = predictionSetup.getContentPaneContainer();
+    setInputView(predictionSetup.getInputView());
     
     Logs.debug_startup_input_view(info, _config);
   }
