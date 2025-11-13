@@ -69,20 +69,14 @@ public class Keyboard2 extends InputMethodService
   private AsyncPredictionHandler _asyncPredictionHandler;
   private SuggestionBar _suggestionBar;
   private LinearLayout _inputViewContainer;
-  private StringBuilder _currentWord = new StringBuilder();
-  private List<String> _contextWords = new ArrayList<>(); // Track previous words for context
   private BufferedWriter _logWriter = null;
-  
+
   // ML data collection
   private SwipeMLDataStore _mlDataStore;
   private SwipeMLData _currentSwipeData;
-  private boolean _wasLastInputSwipe = false;
 
-  // Track auto-inserted word for replacement
-  private String _lastAutoInsertedWord = null;
-
-  // Track source of last committed text for context-aware deletion
-  private PredictionSource _lastCommitSource = PredictionSource.UNKNOWN;
+  // Prediction context tracking (v1.32.342: extracted to PredictionContextTracker)
+  private PredictionContextTracker _contextTracker;
 
   // User adaptation
   private UserAdaptationManager _adaptationManager;
@@ -186,6 +180,9 @@ public class Keyboard2 extends InputMethodService
     // Load contraction mappings for apostrophe insertion (v1.32.341: extracted to ContractionManager)
     _contractionManager = new ContractionManager(this);
     _contractionManager.loadMappings();
+
+    // Initialize prediction context tracker (v1.32.342: extracted to PredictionContextTracker)
+    _contextTracker = new PredictionContextTracker();
 
     // KeyboardSwipeRecognizer is now handled through SwipeTypingEngine
     
@@ -922,7 +919,7 @@ public class Keyboard2 extends InputMethodService
     public void handle_text_typed(String text)
     {
       // Reset swipe tracking when regular typing occurs
-      _wasLastInputSwipe = false;
+      _contextTracker.setWasLastInputSwipe(false);
       _currentSwipeData = null;
       handleRegularTyping(text);
     }
@@ -1102,27 +1099,30 @@ public class Keyboard2 extends InputMethodService
   // SuggestionBar.OnSuggestionSelectedListener implementation
   /**
    * Update context with a completed word
+   *
+   * NOTE: This is a legacy helper method. New code should use
+   * _contextTracker.commitWord() directly with appropriate PredictionSource.
    */
   private void updateContext(String word)
   {
     if (word == null || word.isEmpty())
       return;
-    
-    // Add word to context
-    _contextWords.add(word.toLowerCase());
-    
-    // Keep only last 2 words for bigram context
-    while (_contextWords.size() > 2)
+
+    // Use the current source from tracker, or UNKNOWN if not set
+    PredictionSource source = _contextTracker.getLastCommitSource();
+    if (source == null)
     {
-      _contextWords.remove(0);
+      source = PredictionSource.UNKNOWN;
     }
-    
+
+    // Commit word to context tracker (not auto-inserted since this is manual update)
+    _contextTracker.commitWord(word, source, false);
+
     // Add word to WordPredictor for language detection
     if (_wordPredictor != null)
     {
       _wordPredictor.addWordToContext(word);
     }
-    
   }
   
   /**
@@ -1165,19 +1165,19 @@ public class Keyboard2 extends InputMethodService
         InputConnection ic = getCurrentInputConnection();
 
         // If manual typing in progress, add space after it (don't re-commit the text!)
-        if (_currentWord.length() > 0 && ic != null)
+        if (_contextTracker.getCurrentWordLength() > 0 && ic != null)
         {
-          sendDebugLog(String.format("Manual typing in progress before swipe: \"%s\"\n", _currentWord));
+          sendDebugLog(String.format("Manual typing in progress before swipe: \"%s\"\n", _contextTracker.getCurrentWord()));
 
           // IMPORTANT: Characters from manual typing are already committed via KeyEventHandler.send_text()
           // _currentWord is just a tracking buffer - the text is already in the editor!
           // We only need to add a space after the manually typed word and clear the tracking buffer
           ic.commitText(" ", 1);
-          _currentWord = new StringBuilder();
+          _contextTracker.clearCurrentWord();
 
           // Clear any previous auto-inserted word tracking since user was manually typing
-          _lastAutoInsertedWord = null;
-          _lastCommitSource = PredictionSource.USER_TYPED_TAP;
+          _contextTracker.clearLastAutoInsertedWord();
+          _contextTracker.setLastCommitSource(PredictionSource.USER_TYPED_TAP);
         }
 
         // DEBUG: Log auto-insertion
@@ -1186,8 +1186,8 @@ public class Keyboard2 extends InputMethodService
         // CRITICAL: Clear auto-inserted tracking BEFORE calling onSuggestionSelected
         // This prevents the deletion logic from removing the previous auto-inserted word
         // For consecutive swipes, we want to APPEND words, not replace them
-        _lastAutoInsertedWord = null;
-        _lastCommitSource = PredictionSource.UNKNOWN; // Temporarily clear
+        _contextTracker.clearLastAutoInsertedWord();
+        _contextTracker.setLastCommitSource(PredictionSource.UNKNOWN); // Temporarily clear
 
         // onSuggestionSelected handles spacing logic (no space if first text, space otherwise)
         onSuggestionSelected(topPrediction);
@@ -1195,8 +1195,8 @@ public class Keyboard2 extends InputMethodService
         // NOW track this as auto-inserted so tapping another suggestion will replace ONLY this word
         // CRITICAL: Strip "raw:" prefix BEFORE storing (v1.33.7: fixed regex to match actual prefix format)
         String cleanPrediction = topPrediction.replaceAll("^raw:", "");
-        _lastAutoInsertedWord = cleanPrediction;
-        _lastCommitSource = PredictionSource.NEURAL_SWIPE;
+        _contextTracker.setLastAutoInsertedWord(cleanPrediction);
+        _contextTracker.setLastCommitSource(PredictionSource.NEURAL_SWIPE);
 
         // CRITICAL: Re-display suggestions after auto-insertion
         // User can still tap a different prediction if the auto-inserted one was wrong
@@ -1271,7 +1271,7 @@ public class Keyboard2 extends InputMethodService
     }
 
     // CRITICAL: Save swipe flag before resetting for use in spacing logic below
-    boolean isSwipeAutoInsert = _wasLastInputSwipe;
+    boolean isSwipeAutoInsert = _contextTracker.wasLastInputSwipe();
 
     // Store ML data if this was a swipe prediction selection
     if (isSwipeAutoInsert && _currentSwipeData != null && _mlDataStore != null)
@@ -1307,7 +1307,7 @@ public class Keyboard2 extends InputMethodService
     }
     
     // Reset swipe tracking
-    _wasLastInputSwipe = false;
+    _contextTracker.setWasLastInputSwipe(false);
     _currentSwipeData = null;
     
     InputConnection ic = getCurrentInputConnection();
@@ -1350,12 +1350,12 @@ public class Keyboard2 extends InputMethodService
         // CRITICAL: If we just auto-inserted a word from neural swipe, delete it for replacement
         // This allows user to tap a different prediction instead of appending
         // Only delete if the last commit was from neural swipe (not from other sources)
-        if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty() &&
-            _lastCommitSource == PredictionSource.NEURAL_SWIPE)
+        if (_contextTracker.getLastAutoInsertedWord() != null && !_contextTracker.getLastAutoInsertedWord().isEmpty() &&
+            _contextTracker.getLastCommitSource() ==PredictionSource.NEURAL_SWIPE)
         {
-          android.util.Log.d("Keyboard2", "REPLACE: Deleting auto-inserted word: '" + _lastAutoInsertedWord + "'");
+          android.util.Log.d("Keyboard2", "REPLACE: Deleting auto-inserted word: '" + _contextTracker.getLastAutoInsertedWord() +"'");
 
-          int deleteCount = _lastAutoInsertedWord.length() + 1; // Word + trailing space
+          int deleteCount = _contextTracker.getLastAutoInsertedWord().length() + 1; // Word + trailing space
           boolean deletedLeadingSpace = false;
 
           if (inTermuxApp)
@@ -1409,22 +1409,22 @@ public class Keyboard2 extends InputMethodService
           }
 
           // Clear the tracking variables
-          _lastAutoInsertedWord = null;
-          _lastCommitSource = PredictionSource.UNKNOWN;
+          _contextTracker.clearLastAutoInsertedWord();
+          _contextTracker.setLastCommitSource(PredictionSource.UNKNOWN);
         }
         // ALSO: If user is selecting a prediction during regular typing, delete the partial word
         // This handles typing "hel" then selecting "hello" - we need to delete "hel" first
-        else if (_currentWord.length() > 0 && !isSwipeAutoInsert)
+        else if (_contextTracker.getCurrentWordLength() > 0 && !isSwipeAutoInsert)
         {
-          android.util.Log.d("Keyboard2", "TYPING PREDICTION: Deleting partial word: '" + _currentWord + "'");
+          android.util.Log.d("Keyboard2", "TYPING PREDICTION: Deleting partial word: '" + _contextTracker.getCurrentWord() + "'");
 
           if (inTermuxApp)
           {
             // TERMUX: Use backspace key events
-            android.util.Log.d("Keyboard2", "TERMUX: Using backspace key events to delete " + _currentWord.length() + " chars");
+            android.util.Log.d("Keyboard2", "TERMUX: Using backspace key events to delete " + _contextTracker.getCurrentWordLength() + " chars");
             if (_keyeventhandler != null)
             {
-              for (int i = 0; i < _currentWord.length(); i++)
+              for (int i = 0; i < _contextTracker.getCurrentWordLength(); i++)
               {
                 _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, 0);
               }
@@ -1433,7 +1433,7 @@ public class Keyboard2 extends InputMethodService
           else
           {
             // NORMAL APPS: Use InputConnection
-            ic.deleteSurroundingText(_currentWord.length(), 0);
+            ic.deleteSurroundingText(_contextTracker.getCurrentWordLength(), 0);
 
             CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
             android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '" + debugAfter + "'");
@@ -1479,9 +1479,9 @@ public class Keyboard2 extends InputMethodService
 
         // Track that this commit was from candidate selection (manual tap)
         // Note: Auto-insertions set this separately to NEURAL_SWIPE
-        if (_lastCommitSource != PredictionSource.NEURAL_SWIPE)
+        if (_contextTracker.getLastCommitSource() !=PredictionSource.NEURAL_SWIPE)
         {
-          _lastCommitSource = PredictionSource.CANDIDATE_SELECTION;
+          _contextTracker.setLastCommitSource(PredictionSource.CANDIDATE_SELECTION);
         }
       }
       catch (Exception e)
@@ -1493,7 +1493,7 @@ public class Keyboard2 extends InputMethodService
 
       // Clear current word
       // NOTE: Don't clear suggestions here - they're re-displayed after auto-insertion
-      _currentWord.setLength(0);
+      _contextTracker.clearCurrentWord();
     }
   }
   
@@ -1511,7 +1511,7 @@ public class Keyboard2 extends InputMethodService
     // Track current word being typed
     if (text.length() == 1 && Character.isLetter(text.charAt(0)))
     {
-      _currentWord.append(text);
+      _contextTracker.appendToCurrentWord(text);
       updatePredictionsForCurrentWord();
     }
     else if (text.length() == 1 && !Character.isLetter(text.charAt(0)))
@@ -1519,9 +1519,9 @@ public class Keyboard2 extends InputMethodService
       // Any non-letter character - update context and reset current word
 
       // If we had a word being typed, add it to context before clearing
-      if (_currentWord.length() > 0)
+      if (_contextTracker.getCurrentWordLength() > 0)
       {
-        String completedWord = _currentWord.toString();
+        String completedWord = _contextTracker.getCurrentWord();
 
         // Auto-correct the typed word if feature is enabled
         // DISABLED in Termux app due to erratic behavior with terminal input
@@ -1565,7 +1565,7 @@ public class Keyboard2 extends InputMethodService
               updateContext(correctedWord);
 
               // Clear current word
-              _currentWord.setLength(0);
+              _contextTracker.clearCurrentWord();
 
               // Show corrected word as first suggestion for easy undo
               if (_suggestionBar != null)
@@ -1594,7 +1594,7 @@ public class Keyboard2 extends InputMethodService
       }
 
       // Reset current word
-      _currentWord.setLength(0);
+      _contextTracker.clearCurrentWord();
       if (_wordPredictor != null)
       {
         _wordPredictor.reset();
@@ -1607,7 +1607,7 @@ public class Keyboard2 extends InputMethodService
     else if (text.length() > 1)
     {
       // Multi-character input (paste, etc) - reset
-      _currentWord.setLength(0);
+      _contextTracker.clearCurrentWord();
       if (_wordPredictor != null)
       {
         _wordPredictor.reset();
@@ -1624,10 +1624,10 @@ public class Keyboard2 extends InputMethodService
    */
   public void handleBackspace()
   {
-    if (_currentWord.length() > 0)
+    if (_contextTracker.getCurrentWordLength() > 0)
     {
-      _currentWord.deleteCharAt(_currentWord.length() - 1);
-      if (_currentWord.length() > 0)
+      _contextTracker.deleteLastChar();
+      if (_contextTracker.getCurrentWordLength() > 0)
       {
         updatePredictionsForCurrentWord();
       }
@@ -1643,12 +1643,12 @@ public class Keyboard2 extends InputMethodService
    */
   private void updatePredictionsForCurrentWord()
   {
-    if (_currentWord.length() > 0)
+    if (_contextTracker.getCurrentWordLength() > 0)
     {
-      String partial = _currentWord.toString();
-      
+      String partial = _contextTracker.getCurrentWord();
+
       // Use contextual prediction
-      WordPredictor.PredictionResult result = _wordPredictor.predictWordsWithContext(partial, _contextWords);
+      WordPredictor.PredictionResult result = _wordPredictor.predictWordsWithContext(partial, _contextTracker.getContextWords());
       
       if (!result.words.isEmpty() && _suggestionBar != null)
       {
@@ -1694,15 +1694,15 @@ public class Keyboard2 extends InputMethodService
         _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_W, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON);
       }
       // Clear tracking
-      _lastAutoInsertedWord = null;
-      _lastCommitSource = PredictionSource.UNKNOWN;
+      _contextTracker.clearLastAutoInsertedWord();
+      _contextTracker.setLastCommitSource(PredictionSource.UNKNOWN);
       return;
     }
 
     // First, try to delete the last auto-inserted word if it exists
-    if (_lastAutoInsertedWord != null && !_lastAutoInsertedWord.isEmpty())
+    if (_contextTracker.getLastAutoInsertedWord() != null && !_contextTracker.getLastAutoInsertedWord().isEmpty())
     {
-      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting auto-inserted word: '" + _lastAutoInsertedWord + "'");
+      android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting auto-inserted word: '" + _contextTracker.getLastAutoInsertedWord() +"'");
 
       // Get text before cursor to verify
       CharSequence textBefore = ic.getTextBeforeCursor(100, 0);
@@ -1720,10 +1720,10 @@ public class Keyboard2 extends InputMethodService
         String actualLastWord = lastSpaceIdx >= 0 ? lastWord.substring(lastSpaceIdx + 1) : lastWord;
 
         // Verify this matches our tracked word (case-insensitive to be safe)
-        if (actualLastWord.equalsIgnoreCase(_lastAutoInsertedWord))
+        if (actualLastWord.equalsIgnoreCase(_contextTracker.getLastAutoInsertedWord()))
         {
           // Delete the word + trailing space if present
-          int deleteCount = _lastAutoInsertedWord.length();
+          int deleteCount = _contextTracker.getLastAutoInsertedWord().length();
           if (hasTrailingSpace)
             deleteCount += 1;
 
@@ -1731,8 +1731,8 @@ public class Keyboard2 extends InputMethodService
           android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleted " + deleteCount + " characters");
 
           // Clear tracking
-          _lastAutoInsertedWord = null;
-          _lastCommitSource = PredictionSource.UNKNOWN;
+          _contextTracker.clearLastAutoInsertedWord();
+          _contextTracker.setLastCommitSource(PredictionSource.UNKNOWN);
           return;
         }
       }
@@ -1781,8 +1781,8 @@ public class Keyboard2 extends InputMethodService
     ic.deleteSurroundingText(deleteCount, 0);
 
     // Clear tracking
-    _lastAutoInsertedWord = null;
-    _lastCommitSource = PredictionSource.UNKNOWN;
+    _contextTracker.clearLastAutoInsertedWord();
+    _contextTracker.setLastCommitSource(PredictionSource.UNKNOWN);
   }
 
   /**
@@ -1860,7 +1860,7 @@ public class Keyboard2 extends InputMethodService
                                 List<Long> timestamps)
   {
     // Clear auto-inserted word tracking when new swipe starts
-    _lastAutoInsertedWord = null;
+    _contextTracker.clearLastAutoInsertedWord();
 
     // DEBUG: Log swipe start
     sendDebugLog("\n========== NEW SWIPE ==========\n");
@@ -1913,7 +1913,7 @@ public class Keyboard2 extends InputMethodService
     }
     
     // Mark that last input was a swipe for ML data collection
-    _wasLastInputSwipe = true;
+    _contextTracker.setWasLastInputSwipe(true);
     
     // Prepare ML data (will be saved if user selects a prediction)
     android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
