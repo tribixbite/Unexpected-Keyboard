@@ -83,6 +83,9 @@ public class Keyboard2 extends InputMethodService
   // Suggestion handling (v1.32.361: extracted to SuggestionHandler)
   private SuggestionHandler _suggestionHandler;
 
+  // Neural layout helper (v1.32.362: extracted to NeuralLayoutHelper)
+  private NeuralLayoutHelper _neuralLayoutHelper;
+
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
   private android.content.BroadcastReceiver _debugModeReceiver;
@@ -215,6 +218,14 @@ public class Keyboard2 extends InputMethodService
       _keyeventhandler
     );
 
+    // Initialize neural layout helper (v1.32.362: extracted neural/layout utility methods)
+    _neuralLayoutHelper = new NeuralLayoutHelper(
+      this,
+      _config,
+      _predictionCoordinator
+    );
+    _neuralLayoutHelper.setKeyboardView(_keyboardView);
+
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
       _predictionCoordinator.initialize();
@@ -256,6 +267,19 @@ public class Keyboard2 extends InputMethodService
           if (_suggestionHandler != null)
           {
             _suggestionHandler.setDebugMode(_debugMode, _debugLoggerImpl);
+          }
+
+          // Propagate debug mode to NeuralLayoutHelper (v1.32.362)
+          if (_neuralLayoutHelper != null)
+          {
+            _neuralLayoutHelper.setDebugMode(_debugMode, new NeuralLayoutHelper.DebugLogger()
+            {
+              @Override
+              public void sendDebugLog(String message)
+              {
+                Keyboard2.this.sendDebugLog(message);
+              }
+            });
           }
         }
       }
@@ -489,6 +513,12 @@ public class Keyboard2 extends InputMethodService
       _suggestionHandler.setConfig(_config);
     }
 
+    // Update neural layout helper config (v1.32.362)
+    if (_neuralLayoutHelper != null)
+    {
+      _neuralLayoutHelper.setConfig(_config);
+    }
+
     // Reset keyboard view
     if (_keyboardView != null)
     {
@@ -587,6 +617,12 @@ public class Keyboard2 extends InputMethodService
         if (_suggestionHandler != null)
         {
           _suggestionHandler.setSuggestionBar(_suggestionBar);
+        }
+
+        // Update NeuralLayoutHelper with suggestion bar reference (v1.32.362)
+        if (_neuralLayoutHelper != null)
+        {
+          _neuralLayoutHelper.setSuggestionBar(_suggestionBar);
         }
 
         // Wrap SuggestionBar in HorizontalScrollView for scrollable predictions
@@ -1133,72 +1169,29 @@ public class Keyboard2 extends InputMethodService
   }
 
   /**
-   * Calculate dynamic keyboard height based on user settings (like calibration page)
-   * Supports orientation, foldable devices, and user height preferences
+   * Calculate dynamic keyboard height based on user settings.
+   * (v1.32.362: Delegated to NeuralLayoutHelper)
    */
   private float calculateDynamicKeyboardHeight()
   {
-    try {
-      // Get screen dimensions
-      android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
-      android.view.WindowManager wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
-      wm.getDefaultDisplay().getMetrics(metrics);
-      
-      // Check foldable state
-      FoldStateTracker foldTracker = new FoldStateTracker(this);
-      boolean foldableUnfolded = foldTracker.isUnfolded();
-      
-      // Check orientation
-      boolean isLandscape = getResources().getConfiguration().orientation == 
-                            android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-      
-      // Get user height preference (same logic as calibration)
-      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-      int keyboardHeightPref;
-      
-      if (isLandscape) {
-        String key = foldableUnfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape";
-        keyboardHeightPref = prefs.getInt(key, 50);
-      } else {
-        String key = foldableUnfolded ? "keyboard_height_unfolded" : "keyboard_height";
-        keyboardHeightPref = prefs.getInt(key, 35);
-      }
-      
-      // Calculate dynamic height
-      float keyboardHeightPercent = keyboardHeightPref / 100.0f;
-      float calculatedHeight = metrics.heightPixels * keyboardHeightPercent;
-
-      return calculatedHeight;
-      
-    } catch (Exception e) {
-      // Fallback to view height
-      return _keyboardView.getHeight();
+    if (_neuralLayoutHelper != null)
+    {
+      return _neuralLayoutHelper.calculateDynamicKeyboardHeight();
     }
+    return _keyboardView != null ? _keyboardView.getHeight() : 0;
   }
-  
+
   /**
-   * Get user keyboard height percentage for logging
+   * Get user keyboard height percentage for logging.
+   * (v1.32.362: Delegated to NeuralLayoutHelper)
    */
   private int getUserKeyboardHeightPercent()
   {
-    try {
-      FoldStateTracker foldTracker = new FoldStateTracker(this);
-      boolean foldableUnfolded = foldTracker.isUnfolded();
-      boolean isLandscape = getResources().getConfiguration().orientation == 
-                            android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-      
-      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-      
-      if (isLandscape) {
-        String key = foldableUnfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape";
-        return prefs.getInt(key, 50);
-      } else {
-        String key = foldableUnfolded ? "keyboard_height_unfolded" : "keyboard_height";
-        return prefs.getInt(key, 35);
-      }
-    } catch (Exception e) {
-      return 35; // Default
+    if (_neuralLayoutHelper != null)
+    {
+      return _neuralLayoutHelper.getUserKeyboardHeightPercent();
     }
+    return 35; // Default
   }
   
   // Called by Keyboard2View when swipe typing completes
@@ -1220,200 +1213,78 @@ public class Keyboard2 extends InputMethodService
   
   /**
    * CGR Prediction Integration Methods
-   * These methods are called by the EnhancedSwipeGestureRecognizer to display predictions
+   * (v1.32.362: Delegated to NeuralLayoutHelper)
    */
-  
+
   /**
-   * Update swipe predictions by checking keyboard view for CGR results
+   * Update swipe predictions by checking keyboard view for CGR results.
    */
   public void updateCGRPredictions()
   {
-    if (_suggestionBar != null && _keyboardView != null)
+    if (_neuralLayoutHelper != null)
     {
-      List<String> cgrPredictions = _keyboardView.getCGRPredictions();
-      if (!cgrPredictions.isEmpty())
-      {
-        _suggestionBar.setSuggestions(cgrPredictions);
-      }
+      _neuralLayoutHelper.updateCGRPredictions();
     }
   }
-  
+
   /**
-   * Check and update CGR predictions (call this periodically or on swipe events)
+   * Check and update CGR predictions (call this periodically or on swipe events).
    */
   public void checkCGRPredictions()
   {
-    if (_keyboardView != null && _suggestionBar != null)
+    if (_neuralLayoutHelper != null)
     {
-      // Enable always visible mode to prevent UI flickering
-      _suggestionBar.setAlwaysVisible(true);
-      
-      List<String> cgrPredictions = _keyboardView.getCGRPredictions();
-      boolean areFinal = _keyboardView.areCGRPredictionsFinal();
-      
-      if (!cgrPredictions.isEmpty())
-      {
-        _suggestionBar.setSuggestions(cgrPredictions);
-      }
-      else
-      {
-        // Show empty suggestions but keep bar visible
-        _suggestionBar.setSuggestions(new ArrayList<>());
-      }
+      _neuralLayoutHelper.checkCGRPredictions();
     }
   }
-  
+
   /**
-   * Update swipe predictions in real-time during gesture (legacy method)
+   * Update swipe predictions in real-time during gesture (legacy method).
    */
   public void updateSwipePredictions(List<String> predictions)
   {
-    if (_suggestionBar != null && predictions != null && !predictions.isEmpty())
+    if (_neuralLayoutHelper != null)
     {
-      _suggestionBar.setSuggestions(predictions);
+      _neuralLayoutHelper.updateSwipePredictions(predictions);
     }
   }
-  
+
   /**
-   * Complete swipe predictions after gesture ends (legacy method)
+   * Complete swipe predictions after gesture ends (legacy method).
    */
   public void completeSwipePredictions(List<String> finalPredictions)
   {
-    if (_suggestionBar != null && finalPredictions != null && !finalPredictions.isEmpty())
+    if (_neuralLayoutHelper != null)
     {
-      _suggestionBar.setSuggestions(finalPredictions);
-    }
-    else
-    {
+      _neuralLayoutHelper.completeSwipePredictions(finalPredictions);
     }
   }
-  
+
   /**
-   * Clear swipe predictions (legacy method)
+   * Clear swipe predictions (legacy method).
    */
   public void clearSwipePredictions()
   {
-    if (_suggestionBar != null)
+    if (_neuralLayoutHelper != null)
     {
-      // Don't actually clear - just show empty suggestions to keep bar visible
-      _suggestionBar.setSuggestions(new ArrayList<>());
+      _neuralLayoutHelper.clearSwipePredictions();
     }
   }
 
   /**
    * Extract key positions from keyboard layout and set them on neural engine.
    * CRITICAL for neural swipe typing - without this, key detection fails completely!
+   * (v1.32.362: Delegated to NeuralLayoutHelper)
    */
   private void setNeuralKeyboardLayout()
   {
-    if (_predictionCoordinator.getNeuralEngine() == null || _keyboardView == null)
+    if (_neuralLayoutHelper != null)
     {
-      android.util.Log.w("Keyboard2", "Cannot set neural layout - engine or view is null");
-      return;
-    }
-
-    java.util.Map<Character, android.graphics.PointF> keyPositions = extractKeyPositionsFromLayout();
-
-    if (keyPositions != null && !keyPositions.isEmpty())
-    {
-      _predictionCoordinator.getNeuralEngine().setRealKeyPositions(keyPositions);
-      android.util.Log.d("Keyboard2", "Set " + keyPositions.size() + " key positions on neural engine");
-
-      // Debug output only when debug mode is active
-      if (_debugMode)
-      {
-        sendDebugLog(String.format(">>> Neural engine: %d key positions set\n", keyPositions.size()));
-
-        // Log sample positions
-        if (keyPositions.containsKey('q') && keyPositions.containsKey('a') && keyPositions.containsKey('z'))
-        {
-          android.graphics.PointF qPos = keyPositions.get('q');
-          android.graphics.PointF aPos = keyPositions.get('a');
-          android.graphics.PointF zPos = keyPositions.get('z');
-          sendDebugLog(String.format(">>> Samples: q=(%.0f,%.0f) a=(%.0f,%.0f) z=(%.0f,%.0f)\n",
-            qPos.x, qPos.y, aPos.x, aPos.y, zPos.x, zPos.y));
-        }
-      }
-    }
-    else
-    {
-      android.util.Log.e("Keyboard2", "Failed to extract key positions from layout");
+      _neuralLayoutHelper.setNeuralKeyboardLayout();
     }
   }
 
-  /**
-   * Extract character key positions from the keyboard layout using reflection.
-   * Returns a map of character -> center point (in pixels), or null on error.
-   */
-  private java.util.Map<Character, android.graphics.PointF> extractKeyPositionsFromLayout()
-  {
-    try
-    {
-      // Use reflection to access keyboard data from view
-      java.lang.reflect.Field keyboardField = _keyboardView.getClass().getDeclaredField("_keyboard");
-      keyboardField.setAccessible(true);
-      KeyboardData keyboard = (KeyboardData) keyboardField.get(_keyboardView);
-
-      if (keyboard == null)
-      {
-        android.util.Log.w("Keyboard2", "Keyboard data is null after reflection");
-        return null;
-      }
-
-      // Get view dimensions
-      float keyboardWidth = _keyboardView.getWidth();
-      float keyboardHeight = _keyboardView.getHeight();
-
-      if (keyboardWidth == 0 || keyboardHeight == 0)
-      {
-        android.util.Log.w("Keyboard2", "Keyboard dimensions are zero");
-        return null;
-      }
-
-      // Calculate scale factors (layout units -> pixels)
-      float scaleX = keyboardWidth / keyboard.keysWidth;
-      float scaleY = keyboardHeight / keyboard.keysHeight;
-
-      // Extract center positions of all character keys
-      java.util.Map<Character, android.graphics.PointF> keyPositions = new java.util.HashMap<>();
-      float currentY = 0;
-
-      for (KeyboardData.Row row : keyboard.rows)
-      {
-        currentY += row.shift * scaleY;
-        float centerY = currentY + (row.height * scaleY / 2.0f);
-        float currentX = 0;
-
-        for (KeyboardData.Key key : row.keys)
-        {
-          currentX += key.shift * scaleX;
-
-          // Only process character keys
-          if (key.keys != null && key.keys.length > 0 && key.keys[0] != null)
-          {
-            KeyValue kv = key.keys[0];
-            if (kv.getKind() == KeyValue.Kind.Char)
-            {
-              char c = kv.getChar();
-              float centerX = currentX + (key.width * scaleX / 2.0f);
-              keyPositions.put(c, new android.graphics.PointF(centerX, centerY));
-            }
-          }
-
-          currentX += key.width * scaleX;
-        }
-
-        currentY += row.height * scaleY;
-      }
-
-      return keyPositions;
-    }
-    catch (Exception e)
-    {
-      android.util.Log.e("Keyboard2", "Failed to extract key positions", e);
-      return null;
-    }
-  }
+  // v1.32.362: extractKeyPositionsFromLayout() method removed - functionality moved to NeuralLayoutHelper class
 
   // Removed reloadCGRParameters method - causing crashes
 

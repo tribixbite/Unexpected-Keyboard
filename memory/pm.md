@@ -9,13 +9,62 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.361 (411)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phase 3 COMPLETE! 🎉
+**Latest Version**: v1.32.362 (412)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 started!
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,479 lines, target: <700)
-**Refactoring Progress**: 7/7 extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,350 lines, target: <700)
+**Refactoring Progress**: 8/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 1/? ✅)
 
-### Recent Work (v1.32.358-361) - Phase 3 Complete!
+### Recent Work (v1.32.362) - Phase 4 Started!
+
+**REFACTORING PHASE 4: Extract NeuralLayoutHelper (Phase 4, 1/? Complete! ✅)**
+- **Goal**: Extract neural engine and layout helper utilities
+- **Created**: NeuralLayoutHelper.java (418 lines)
+  - Extracted 9 methods from Keyboard2.java:
+    * calculateDynamicKeyboardHeight() - Dynamic keyboard height calculation (orientation/foldable-aware)
+    * getUserKeyboardHeightPercent() - Gets user height preference for logging
+    * updateCGRPredictions() - Updates CGR predictions from keyboard view
+    * checkCGRPredictions() - Checks and updates CGR predictions periodically
+    * updateSwipePredictions() - Legacy method for real-time prediction updates
+    * completeSwipePredictions() - Legacy method for completing predictions
+    * clearSwipePredictions() - Legacy method for clearing predictions
+    * setNeuralKeyboardLayout() - Extracts key positions and sets them on neural engine
+    * extractKeyPositionsFromLayout() - Uses reflection to extract key positions (private)
+  - Manages keyboard dimension calculations based on user preferences
+  - Handles CGR (Continuous Gesture Recognition) prediction display
+  - Extracts key positions from keyboard layout via reflection
+  - Configures neural engine with real key positions
+  - Implements DebugLogger interface for SwipeDebugActivity integration
+- **Modified**: Keyboard2.java (1,479 → 1,350 lines, -129!)
+  - Added _neuralLayoutHelper field with initialization in onCreate()
+  - Updated onCreate() to set keyboard view on helper
+  - Updated onStartInputView() to set suggestion bar on helper
+  - Updated onConfigChanged() to propagate config to helper
+  - Updated debug mode broadcast receiver to propagate debug mode to helper
+  - Delegated all 9 methods to NeuralLayoutHelper
+  - Kept InputMethodService context methods (getSystemService, getResources)
+- **Architecture**:
+  - NeuralLayoutHelper is utility class (no InputMethodService dependency)
+  - Accepts Context for system services and preferences
+  - Uses reflection for key position extraction
+  - DebugLogger interface allows Keyboard2 to bridge debug logging
+  - Clean separation: neural/layout utilities in helper, IME in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,479 → 1,350 lines (-129) 🎉
+  - Created NeuralLayoutHelper: +418 lines
+  - Total Keyboard2 reduction: 2,397 → 1,350 lines (-1,047 total!)
+  - Build successful ✅ (v1.32.362, build 412)
+  - Zero behavioral changes (all neural/CGR features work identically)
+- **Benefits**:
+  - Centralized neural engine configuration (single source of truth)
+  - Improved testability (can mock NeuralLayoutHelper)
+  - Better encapsulation (key position extraction isolated)
+  - Clearer separation of concerns (neural utilities vs IME)
+  - Easier to add new neural features
+- **Phase 4 Progress**: 1/? complete ✅ (NeuralLayoutHelper done!)
+- **Next**: Continue Phase 4 extractions (IME Subtype Manager, Layout Manager, etc.)
+
+### Previous Work (v1.32.358-361) - Phase 3 Complete!
 
 **REFACTORING PHASE 3: Extract SuggestionHandler (Phase 3, 2/2 Complete! ✅)**
 - **Goal**: Centralize all suggestion selection and prediction display logic
