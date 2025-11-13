@@ -9,13 +9,67 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.360 (410)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phase 3 (1/2) Complete!
+**Latest Version**: v1.32.361 (411)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phase 3 COMPLETE! 🎉
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,996 lines, target: <700)
-**Refactoring Progress**: 6/7 extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 1/2 ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,479 lines, target: <700)
+**Refactoring Progress**: 7/7 extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅)
 
-### Recent Work (v1.32.358-360) - Phase 3 InputCoordinator
+### Recent Work (v1.32.358-361) - Phase 3 Complete!
+
+**REFACTORING PHASE 3: Extract SuggestionHandler (Phase 3, 2/2 Complete! ✅)**
+- **Goal**: Centralize all suggestion selection and prediction display logic
+- **Created**: SuggestionHandler.java (816 lines)
+  - Extracted 7 methods from Keyboard2.java:
+    * handlePredictionResults(List, List, InputConnection, EditorInfo, Resources)
+    * onSuggestionSelected(String, InputConnection, EditorInfo, Resources)
+    * handleRegularTyping(String, InputConnection, EditorInfo)
+    * handleBackspace()
+    * handleDeleteLastWord(InputConnection, EditorInfo)
+    * updateContext(String)
+    * updatePredictionsForCurrentWord() (private)
+  - Manages auto-insertion of top predictions after swipe
+  - Handles autocorrect for both typing and swipe predictions
+  - Implements Termux-aware text deletion (key events vs InputConnection)
+  - Manages suggestion bar updates for real-time predictions
+  - Implements DebugLogger interface for SwipeDebugActivity integration
+  - Smart word replacement (auto-inserted words vs partial typed words)
+  - Context tracking updates with PredictionSource management
+- **Modified**: Keyboard2.java (1,996 → 1,479 lines, -517!)
+  - Added _suggestionHandler field with initialization in onCreate()
+  - Added DebugLogger interface implementation for debug mode
+  - Updated debug mode broadcast receiver to propagate to SuggestionHandler
+  - Updated onStartInputView() to set suggestion bar on handler
+  - Updated onConfigChanged() to propagate config to handler
+  - Delegated all 7 methods to SuggestionHandler
+  - Kept ML data collection in Keyboard2 (needs view metrics)
+  - Kept InputMethodService-specific methods (getCurrentInputConnection, etc.)
+- **Architecture**:
+  - SuggestionHandler is pure logic (no InputMethodService dependency)
+  - Accepts InputConnection/EditorInfo/Resources as parameters
+  - DebugLogger interface allows Keyboard2 to bridge debug logging
+  - Clean separation: suggestion logic in handler, UI/IME in Keyboard2
+- **ViewManager Extraction Cancelled**:
+  - Analyzed view methods in Keyboard2.java
+  - Found setInputView(), updateFullscreenMode(), etc. call super.*
+  - These methods MUST remain in Keyboard2 (override InputMethodService)
+  - Cannot extract due to Android IME contract requirements
+  - Pivoted to SuggestionHandler extraction instead (better ROI)
+- **Impact**:
+  - Keyboard2.java: 1,996 → 1,479 lines (-517) 🎉
+  - Created SuggestionHandler: +816 lines
+  - Total Phase 3 extraction: 1,050 + 816 = 1,866 lines
+  - Total Keyboard2 reduction: 2,397 → 1,479 lines (-918 total!)
+  - Build successful ✅ (v1.32.361, build 411)
+  - Zero behavioral changes (all suggestions work identically)
+- **Benefits**:
+  - Centralized suggestion/prediction logic (single responsibility)
+  - Improved testability (can mock SuggestionHandler)
+  - Clear separation of concerns (UI vs logic)
+  - Easier to add new prediction modes
+  - Better debugging (DebugLogger interface)
+- **Phase 3 Progress**: 2/2 complete ✅ (InputCoordinator + SuggestionHandler done!)
+- **Next**: Phase 4 planning or focus on other features
 
 **REFACTORING PHASE 3: Extract InputCoordinator (Phase 3, 1/2 Complete!)**
 - **Goal**: Centralize all text input operations (typing, backspace, swipe, suggestions)
