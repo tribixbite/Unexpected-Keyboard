@@ -92,6 +92,9 @@ public class Keyboard2 extends InputMethodService
   // Event handling (v1.32.368: extracted to KeyboardReceiver)
   private KeyboardReceiver _receiver;
 
+  // ML data collection (v1.32.370: extracted to MLDataCollector)
+  private MLDataCollector _mlDataCollector;
+
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
   private android.content.BroadcastReceiver _debugModeReceiver;
@@ -179,14 +182,15 @@ public class Keyboard2 extends InputMethodService
     _handler = new Handler(getMainLooper());
 
     // NOTE: Receiver will be initialized after managers are created (line ~250)
-    // Using a temporary inner class that delegates to _receiver field
+    // Using a temporary inner class that delegates to _receiver field (v1.32.368)
+    // Some methods bypass _receiver to avoid null pointer exceptions during initialization
     _keyeventhandler = new KeyEventHandler(new KeyEventHandler.IReceiver() {
       public void handle_event_key(KeyValue.Event ev) { _receiver.handle_event_key(ev); }
       public void set_shift_state(boolean state, boolean lock) { _receiver.set_shift_state(state, lock); }
       public void set_compose_pending(boolean pending) { _receiver.set_compose_pending(pending); }
       public void selection_state_changed(boolean selection_is_ongoing) { _receiver.selection_state_changed(selection_is_ongoing); }
-      public InputConnection getCurrentInputConnection() { return _receiver.getCurrentInputConnection(); }
-      public Handler getHandler() { return _receiver.getHandler(); }
+      public InputConnection getCurrentInputConnection() { return Keyboard2.this.getCurrentInputConnection(); }
+      public Handler getHandler() { return _handler; }
       public void handle_text_typed(String text) { _receiver.handle_text_typed(text); }
       public void handle_backspace() { _receiver.handle_backspace(); }
       public void handle_delete_last_word() { _receiver.handle_delete_last_word(); }
@@ -262,6 +266,9 @@ public class Keyboard2 extends InputMethodService
       _predictionCoordinator
     );
     _neuralLayoutHelper.setKeyboardView(_keyboardView);
+
+    // Initialize ML data collector (v1.32.370: extracted ML data collection logic)
+    _mlDataCollector = new MLDataCollector(this);
 
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
@@ -930,46 +937,19 @@ public class Keyboard2 extends InputMethodService
   
   /**
    * Called when user selects a suggestion from suggestion bar.
-   * (v1.32.361: Delegated to SuggestionHandler, but handles ML data collection here)
+   * (v1.32.370: ML data collection delegated to MLDataCollector)
    */
   @Override
   public void onSuggestionSelected(String word)
   {
-    // Store ML data if this was a swipe prediction selection (done in Keyboard2 not SuggestionHandler)
+    // Store ML data if this was a swipe prediction selection (v1.32.370: delegated to MLDataCollector)
     boolean isSwipeAutoInsert = _contextTracker.wasLastInputSwipe();
     SwipeMLData currentSwipeData = _inputCoordinator.getCurrentSwipeData();
     if (isSwipeAutoInsert && currentSwipeData != null && _predictionCoordinator.getMlDataStore() != null)
     {
-      // Strip "raw:" prefix before storing ML data
-      String cleanWord = word.replaceAll("^raw:", "");
-
-      // Create a new ML data object with the selected word
-      android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
-      SwipeMLData mlData = new SwipeMLData(cleanWord, "user_selection",
-                                           metrics.widthPixels, metrics.heightPixels,
-                                           _keyboardView.getHeight());
-
-      // Copy trace points from the temporary data
-      for (SwipeMLData.TracePoint point : currentSwipeData.getTracePoints())
-      {
-        // Add points with their original normalized values and timestamps
-        // Since they're already normalized, we need to denormalize then renormalize
-        // to ensure proper storage
-        float rawX = point.x * metrics.widthPixels;
-        float rawY = point.y * metrics.heightPixels;
-        // Reconstruct approximate timestamp (this is a limitation of the current design)
-        long timestamp = System.currentTimeMillis() - 1000 + point.tDeltaMs;
-        mlData.addRawPoint(rawX, rawY, timestamp);
-      }
-
-      // Copy registered keys
-      for (String key : currentSwipeData.getRegisteredKeys())
-      {
-        mlData.addRegisteredKey(key);
-      }
-
-      // Store the ML data
-      _predictionCoordinator.getMlDataStore().storeSwipeData(mlData);
+      _mlDataCollector.collectAndStoreSwipeData(word, currentSwipeData,
+                                                _keyboardView.getHeight(),
+                                                _predictionCoordinator.getMlDataStore());
     }
 
     // Reset swipe data after ML collection

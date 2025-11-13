@@ -9,13 +9,51 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.369 (419)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues!
+**Latest Version**: v1.32.374 (424)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues! (Tested on device ✅)
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,213 lines, target: <700)
-**Refactoring Progress**: 11/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 4/? ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,193 lines, target: <700)
+**Refactoring Progress**: 12/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 5/? ✅)
 
-### Recent Work (v1.32.362-369) - Phase 4 Continues!
+### Recent Work (v1.32.362-374) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract MLDataCollector (Phase 4, 5/? Complete! ✅)**
+- **Goal**: Extract ML data collection logic for swipe gesture training data
+- **Created**: MLDataCollector.java (104 lines)
+  - Extracted ML data collection from onSuggestionSelected()
+  - Collects trace points from swipe gestures
+  - Copies registered keys from swipe data
+  - Handles coordinate normalization/denormalization
+  - Stores ML data in SwipeMLDataStore
+  - Includes error handling for robust data collection
+- **Modified**: Keyboard2.java (1,213 → 1,193 lines, -20)
+  - Added _mlDataCollector field with initialization in onCreate()
+  - Simplified onSuggestionSelected() to delegate ML collection
+  - Reduced ML data collection from ~48 lines to ~3 lines
+- **Bug Fixed** (v1.32.374):
+  - **Issue**: NullPointerException crash on keyboard open due to _receiver being null in onCreate()
+  - **Root Cause**: Anonymous inner class in onCreate() called _receiver.getHandler() before _receiver was initialized
+  - **Fix**: Changed getHandler() to return _handler directly, getCurrentInputConnection() to call Keyboard2.this method
+  - **Testing**: Verified fix with ADB logcat - keyboard now opens without crashes ✅
+- **Architecture**:
+  - MLDataCollector is standalone utility class
+  - Accepts Context for accessing resources
+  - Pure data collection logic (no UI dependencies)
+  - Clean separation: ML collection in collector, orchestration in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,213 → 1,193 lines (-20) 🎉
+  - Created MLDataCollector: +104 lines
+  - Total Keyboard2 reduction: 2,397 → 1,193 lines (-1,204 total!)
+  - Build successful ✅ (v1.32.374, build 424)
+  - Tested on device ✅ - No crashes, keyboard fully functional
+- **Benefits**:
+  - Centralized ML data collection logic
+  - Improved testability (can mock MLDataCollector)
+  - Better error handling for data collection
+  - Clearer separation between ML and keyboard logic
+  - Easier to modify ML data collection format
+- **Phase 4 Progress**: 5/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager + KeyboardReceiver + MLDataCollector done!)
+- **Next**: Continue Phase 4 extractions (only ~493 lines remaining to reach <700 target!)
 
 **REFACTORING PHASE 4: Extract KeyboardReceiver (Phase 4, 4/? Complete! ✅)**
 - **Goal**: Extract keyboard event handling from inner Receiver class to standalone KeyboardReceiver
