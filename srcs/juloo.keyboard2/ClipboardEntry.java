@@ -61,8 +61,27 @@ public class ClipboardEntry
 
     android.text.SpannableString spannable = new android.text.SpannableString(fullText);
 
-    // Apply secondary text color to timestamp portion
-    int secondaryColor = context.getResources().getColor(android.R.color.secondary_text_dark);
+    // Get theme-aware colors using context theme
+    android.util.TypedValue typedValue = new android.util.TypedValue();
+    android.content.res.Resources.Theme theme = context.getTheme();
+
+    // Get colorLabel for main text (theme-aware)
+    theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
+    int primaryColor = typedValue.data;
+
+    // Get colorSubLabel for timestamp (theme-aware)
+    theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true);
+    int secondaryColor = typedValue.data;
+
+    // Apply primary color to content portion
+    spannable.setSpan(
+      new android.text.style.ForegroundColorSpan(primaryColor),
+      0,
+      content.length(),
+      android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+    );
+
+    // Apply secondary color to timestamp portion
     spannable.setSpan(
       new android.text.style.ForegroundColorSpan(secondaryColor),
       content.length(),
