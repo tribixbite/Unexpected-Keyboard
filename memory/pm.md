@@ -9,13 +9,63 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.344 (394)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phase 1 Refactoring In Progress!
+**Latest Version**: v1.32.345 (395)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phase 2 Refactoring Started!
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 2,330 lines, target: <700)
-**Refactoring Progress**: 2/7 extractions complete (ContractionManager ✅, PredictionContextTracker ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 2,376 lines, target: <700)
+**Refactoring Progress**: 3/7 extractions complete (Phase 1: 2/3, Phase 2: 1/2)
 
-### Recent Work (v1.32.344)
+### Recent Work (v1.32.345)
+
+**REFACTORING PHASE 2: Extract ConfigurationManager with Observer Pattern**
+- **Goal**: Decouple configuration management from configuration propagation
+- **Created**: ConfigChangeListener.java (29 lines)
+  - Interface for config change notifications
+  - Methods: onConfigChanged(Config newConfig), onThemeChanged(int oldTheme, int newTheme)
+  - Enables observer pattern for config changes
+- **Created**: ConfigurationManager.java (164 lines)
+  - Centralizes configuration lifecycle management
+  - Owns Config and FoldStateTracker instances
+  - Implements SharedPreferences.OnSharedPreferenceChangeListener
+  - Maintains list of ConfigChangeListeners
+  - Methods: registerConfigChangeListener(), refresh(), onSharedPreferenceChanged()
+  - Handles config refresh and notifies all registered listeners
+  - Separates config management (reading prefs) from propagation (updating components)
+- **Modified**: Keyboard2.java (2,330 → 2,376 lines, +46)
+  - Implements ConfigChangeListener interface
+  - Removed _foldStateTracker field (managed by ConfigurationManager)
+  - Added _configManager field
+  - Kept _config as cached reference (updated by onConfigChanged listener)
+  - Updated onCreate() to initialize ConfigurationManager with Config and FoldStateTracker
+  - Simplified refresh_config() to delegate to ConfigurationManager.refresh()
+  - Implemented onConfigChanged() - updates _config reference, engines, keyboard view
+  - Implemented onThemeChanged() - recreates views with new theme
+  - Updated onSharedPreferenceChanged() - removed config refresh (handled by manager), kept UI updates
+  - Updated onDestroy() to access FoldStateTracker via ConfigurationManager
+- **Architecture**:
+  - ConfigurationManager is primary SharedPreferences listener
+  - Keyboard2 is secondary listener for UI-specific updates
+  - Config refresh triggers observer callbacks to all registered listeners
+  - Theme changes handled separately (requires view recreation)
+  - Uses global Config singleton pattern (Config.globalConfig())
+  - Clean separation: manager reads prefs, listeners handle propagation
+- **Impact**:
+  - Keyboard2.java: 2,330 → 2,376 lines (+46 for listener methods)
+  - Created ConfigurationManager: +164 lines
+  - Created ConfigChangeListener: +29 lines
+  - Net extracted: 193 lines
+  - Build successful ✅ (v1.32.345, build 395)
+  - Zero behavioral changes (config refresh works identically)
+- **Benefits**:
+  - Clear separation of concerns (config management vs propagation)
+  - Observer pattern enables multiple independent listeners
+  - Easier to test config change logic in isolation
+  - Reduced coupling between config and view layers
+  - Flexible architecture for adding new config listeners
+  - Keyboard2 no longer responsible for config refresh orchestration
+- **Next**: PredictionCoordinator extraction (Phase 2, item 2/2)
+
+### Previous Work (v1.32.344)
 
 **REFACTORING PHASE 1: Extract PredictionContextTracker**
 - **Goal**: Isolate prediction context state management from Keyboard2.java
