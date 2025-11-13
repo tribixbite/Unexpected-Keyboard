@@ -103,6 +103,9 @@ public class Keyboard2 extends InputMethodService
   // Config propagation (v1.32.386: extracted to ConfigPropagator)
   private ConfigPropagator _configPropagator;
 
+  // Suggestion/prediction bridge (v1.32.406: extracted to SuggestionBridge)
+  private SuggestionBridge _suggestionBridge;
+
   /**
    * Layout currently visible before it has been modified.
    * (v1.32.363: Delegated to LayoutManager)
@@ -225,6 +228,17 @@ public class Keyboard2 extends InputMethodService
     _suggestionHandler = managers.getSuggestionHandler();
     _neuralLayoutHelper = managers.getNeuralLayoutHelper();
     _mlDataCollector = managers.getMlDataCollector();
+
+    // Initialize suggestion bridge (v1.32.406: extracted to SuggestionBridge)
+    _suggestionBridge = SuggestionBridge.create(
+      this,
+      _suggestionHandler,
+      _mlDataCollector,
+      _inputCoordinator,
+      _contextTracker,
+      _predictionCoordinator,
+      _keyboardView
+    );
 
     // Initialize prediction components if enabled (v1.32.405: extracted to PredictionInitializer)
     PredictionInitializer.create(_config, _predictionCoordinator, _keyboardView, this)
@@ -606,72 +620,42 @@ public class Keyboard2 extends InputMethodService
   /**
    * Handle prediction results from async prediction handler
    * (v1.32.361: Delegated to SuggestionHandler)
+   * (v1.32.406: Delegated to SuggestionBridge)
    */
   private void handlePredictionResults(List<String> predictions, List<Integer> scores)
   {
-    if (_suggestionHandler != null)
-    {
-      InputConnection ic = getCurrentInputConnection();
-      EditorInfo editorInfo = getCurrentInputEditorInfo();
-      Resources resources = getResources();
-      _suggestionHandler.handlePredictionResults(predictions, scores, ic, editorInfo, resources);
-    }
+    _suggestionBridge.handlePredictionResults(predictions, scores);
   }
   
   /**
    * Called when user selects a suggestion from suggestion bar.
    * (v1.32.370: ML data collection delegated to MLDataCollector)
+   * (v1.32.406: Delegated to SuggestionBridge)
    */
   @Override
   public void onSuggestionSelected(String word)
   {
-    // Store ML data if this was a swipe prediction selection (v1.32.370: delegated to MLDataCollector)
-    boolean isSwipeAutoInsert = _contextTracker.wasLastInputSwipe();
-    SwipeMLData currentSwipeData = _inputCoordinator.getCurrentSwipeData();
-    if (isSwipeAutoInsert && currentSwipeData != null && _predictionCoordinator.getMlDataStore() != null)
-    {
-      _mlDataCollector.collectAndStoreSwipeData(word, currentSwipeData,
-                                                _keyboardView.getHeight(),
-                                                _predictionCoordinator.getMlDataStore());
-    }
-
-    // Reset swipe data after ML collection
-    _inputCoordinator.resetSwipeData();
-
-    // Delegate to SuggestionHandler
-    if (_suggestionHandler != null)
-    {
-      InputConnection ic = getCurrentInputConnection();
-      EditorInfo editorInfo = getCurrentInputEditorInfo();
-      Resources resources = getResources();
-      _suggestionHandler.onSuggestionSelected(word, ic, editorInfo, resources);
-    }
+    _suggestionBridge.onSuggestionSelected(word);
   }
   
   /**
    * Handle regular typing predictions (non-swipe)
    * (v1.32.361: Delegated to SuggestionHandler)
+   * (v1.32.406: Delegated to SuggestionBridge)
    */
   public void handleRegularTyping(String text)
   {
-    if (_suggestionHandler != null)
-    {
-      InputConnection ic = getCurrentInputConnection();
-      EditorInfo editorInfo = getCurrentInputEditorInfo();
-      _suggestionHandler.handleRegularTyping(text, ic, editorInfo);
-    }
+    _suggestionBridge.handleRegularTyping(text);
   }
   
   /**
    * Handle backspace for prediction tracking
    * (v1.32.361: Delegated to SuggestionHandler)
+   * (v1.32.406: Delegated to SuggestionBridge)
    */
   public void handleBackspace()
   {
-    if (_suggestionHandler != null)
-    {
-      _suggestionHandler.handleBackspace();
-    }
+    _suggestionBridge.handleBackspace();
   }
   
   // v1.32.361: updatePredictionsForCurrentWord() method removed - functionality moved to SuggestionHandler class
@@ -679,15 +663,11 @@ public class Keyboard2 extends InputMethodService
   /**
    * Smart delete last word - deletes the last auto-inserted word or last typed word.
    * (v1.32.361: Delegated to SuggestionHandler)
+   * (v1.32.406: Delegated to SuggestionBridge)
    */
   public void handleDeleteLastWord()
   {
-    if (_suggestionHandler != null)
-    {
-      InputConnection ic = getCurrentInputConnection();
-      EditorInfo editorInfo = getCurrentInputEditorInfo();
-      _suggestionHandler.handleDeleteLastWord(ic, editorInfo);
-    }
+    _suggestionBridge.handleDeleteLastWord();
   }
 
   /**
