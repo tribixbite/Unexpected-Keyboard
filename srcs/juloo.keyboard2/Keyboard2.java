@@ -224,52 +224,18 @@ public class Keyboard2 extends InputMethodService
 
     // Fold state change callback is handled by ConfigurationManager
 
-    // Load contraction mappings for apostrophe insertion (v1.32.341: extracted to ContractionManager)
-    _contractionManager = new ContractionManager(this);
-    _contractionManager.loadMappings();
+    // Initialize all managers (v1.32.388: extracted to ManagerInitializer)
+    ManagerInitializer.InitializationResult managers =
+        ManagerInitializer.create(this, _config, _keyboardView, _keyeventhandler).initialize();
 
-    // Initialize clipboard manager (v1.32.349: extracted to ClipboardManager)
-    _clipboardManager = new ClipboardManager(this, _config);
-
-    // Initialize prediction context tracker (v1.32.342: extracted to PredictionContextTracker)
-    _contextTracker = new PredictionContextTracker();
-
-    // Initialize prediction coordinator (v1.32.346: extracted prediction engine management)
-    _predictionCoordinator = new PredictionCoordinator(this, _config);
-
-    // Initialize input coordinator (v1.32.350: extracted input handling logic)
-    // Note: _suggestionBar will be set later in onStartInputView
-    _inputCoordinator = new InputCoordinator(
-      this,
-      _config,
-      _contextTracker,
-      _predictionCoordinator,
-      _contractionManager,
-      null, // _suggestionBar created later in onStartInputView
-      _keyboardView,
-      _keyeventhandler
-    );
-
-    // Initialize suggestion handler (v1.32.361: extracted suggestion/prediction logic)
-    _suggestionHandler = new SuggestionHandler(
-      this,
-      _config,
-      _contextTracker,
-      _predictionCoordinator,
-      _contractionManager,
-      _keyeventhandler
-    );
-
-    // Initialize neural layout helper (v1.32.362: extracted neural/layout utility methods)
-    _neuralLayoutHelper = new NeuralLayoutHelper(
-      this,
-      _config,
-      _predictionCoordinator
-    );
-    _neuralLayoutHelper.setKeyboardView(_keyboardView);
-
-    // Initialize ML data collector (v1.32.370: extracted ML data collection logic)
-    _mlDataCollector = new MLDataCollector(this);
+    _contractionManager = managers.getContractionManager();
+    _clipboardManager = managers.getClipboardManager();
+    _contextTracker = managers.getContextTracker();
+    _predictionCoordinator = managers.getPredictionCoordinator();
+    _inputCoordinator = managers.getInputCoordinator();
+    _suggestionHandler = managers.getSuggestionHandler();
+    _neuralLayoutHelper = managers.getNeuralLayoutHelper();
+    _mlDataCollector = managers.getMlDataCollector();
 
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
