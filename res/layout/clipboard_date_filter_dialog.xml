@@ -17,7 +17,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="16sp"/>
+        android:textSize="16sp"
+        android:textColor="?android:attr/textColorPrimary"/>
     <Switch
         android:id="@+id/date_filter_enabled"
         android:layout_width="wrap_content"
@@ -38,6 +39,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
+        android:textColor="?android:attr/textColorPrimary"
         android:layout_marginRight="8dp"/>
     <RadioGroup
         android:id="@+id/date_filter_mode"
@@ -49,12 +51,14 @@
           android:text="Before"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
+          android:textColor="?android:attr/textColorPrimary"
           android:layout_marginRight="8dp"/>
       <RadioButton
           android:id="@+id/date_filter_after"
           android:text="After"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
+          android:textColor="?android:attr/textColorPrimary"
           android:checked="true"/>
     </RadioGroup>
   </LinearLayout>
@@ -70,13 +74,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
+        android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="8dp"/>
     <DatePicker
         android:id="@+id/date_picker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:calendarViewShown="false"
-        android:datePickerMode="spinner"/>
+        android:datePickerMode="spinner"
+        android:theme="@android:style/Theme.DeviceDefault.Dialog"/>
   </LinearLayout>
 
   <!-- Action Buttons -->
