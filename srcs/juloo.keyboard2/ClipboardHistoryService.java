@@ -244,13 +244,41 @@ public final class ClipboardHistoryService
   {
     if (!Config.globalConfig().clipboard_history_enabled)
       return;
-    
+
     if (clip == null || clip.trim().isEmpty())
       return;
-    
+
+    // Check maximum item size limit
+    int maxSizeKb = Config.globalConfig().clipboard_max_item_size_kb;
+    if (maxSizeKb > 0)
+    {
+      try
+      {
+        int sizeBytes = clip.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        int maxSizeBytes = maxSizeKb * 1024;
+
+        if (sizeBytes > maxSizeBytes)
+        {
+          // Item exceeds size limit - reject and notify user
+          android.util.Log.w("ClipboardHistory", "Clipboard item too large: " + sizeBytes + " bytes (limit: " + maxSizeBytes + " bytes)");
+
+          // Show toast notification to user
+          String message = String.format("Clipboard item too large (%d KB). Limit is %d KB.",
+              sizeBytes / 1024, maxSizeKb);
+          android.widget.Toast.makeText(_context, message, android.widget.Toast.LENGTH_LONG).show();
+          return; // Don't add to clipboard history
+        }
+      }
+      catch (Exception e)
+      {
+        android.util.Log.e("ClipboardHistory", "Error checking clipboard item size: " + e.getMessage());
+        // Continue with add if size check fails
+      }
+    }
+
     // Calculate expiry time
     long expiryTime = System.currentTimeMillis() + HISTORY_TTL_MS;
-    
+
     // Add to database (handles duplicate detection automatically)
     boolean added = _database.addClipboardEntry(clip, expiryTime);
     

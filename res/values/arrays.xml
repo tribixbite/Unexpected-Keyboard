@@ -122,6 +122,22 @@
     <item>140</item>
     <item>200</item>
   </string-array>
+  <string-array name="pref_clipboard_max_item_size_entries">
+    <item>100 KB</item>
+    <item>250 KB</item>
+    <item>500 KB (recommended)</item>
+    <item>1 MB</item>
+    <item>5 MB</item>
+    <item>Unlimited</item>
+  </string-array>
+  <string-array name="pref_clipboard_max_item_size_values">
+    <item>100</item>
+    <item>250</item>
+    <item>500</item>
+    <item>1024</item>
+    <item>5120</item>
+    <item>0</item>
+  </string-array>
   <string-array name="swipe_correction_preset_entries">
     <item>Strict (High Accuracy)</item>
     <item>Balanced (Default)</item>

@@ -58,8 +58,9 @@ The Clipboard Manager provides persistent clipboard history with pinning, search
 7. **FR-7**: User must be able to expand/collapse multi-line entries (v1.32.308)
 8. **FR-8**: User must be able to export all clipboard data to JSON (v1.32.306)
 9. **FR-9**: User must be able to import clipboard data from JSON with duplicate prevention (v1.32.306)
-10. **FR-10**: Clipboard entries must expire after configurable period (default 24h)
+10. **FR-10**: Clipboard entries must expire after configurable period (default 7 days)
 11. **FR-11**: Pinned entries must never expire
+12. **FR-12**: User must be able to configure maximum size per clipboard item to prevent system overload (v1.32.327)
 
 ### Non-Functional Requirements
 
@@ -517,6 +518,61 @@ private final ClipboardManager.OnPrimaryClipChangedListener _listener =
 - Sends ACTION_PASTE broadcast
 - Used by both ClipboardHistoryView and ClipboardPinView
 
+#### Maximum Item Size Enforcement (v1.32.327)
+
+**Purpose**: Prevent system overload from accidentally copying massive text (entire files, large documents)
+
+**Implementation** (ClipboardHistoryService.java:251-277):
+```java
+// Check maximum item size limit
+int maxSizeKb = Config.globalConfig().clipboard_max_item_size_kb;
+if (maxSizeKb > 0)
+{
+  try
+  {
+    int sizeBytes = clip.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+    int maxSizeBytes = maxSizeKb * 1024;
+
+    if (sizeBytes > maxSizeBytes)
+    {
+      // Item exceeds size limit - reject and notify user
+      android.util.Log.w("ClipboardHistory", "Clipboard item too large: " + sizeBytes + " bytes");
+
+      // Show toast notification to user
+      String message = String.format("Clipboard item too large (%d KB). Limit is %d KB.",
+          sizeBytes / 1024, maxSizeKb);
+      android.widget.Toast.makeText(_context, message, android.widget.Toast.LENGTH_LONG).show();
+      return; // Don't add to clipboard history
+    }
+  }
+  catch (Exception e)
+  {
+    android.util.Log.e("ClipboardHistory", "Error checking clipboard item size: " + e.getMessage());
+    // Continue with add if size check fails
+  }
+}
+```
+
+**User Setting**: Settings → Clipboard → "Maximum size per item"
+**Options** (res/values/arrays.xml:125-140):
+- 100 KB (restrictive)
+- 250 KB
+- 500 KB (recommended default)
+- 1 MB
+- 5 MB
+- Unlimited (maxSizeKb = 0, bypasses check)
+
+**Behavior**:
+- Calculates UTF-8 byte size of clipboard content
+- Compares against user-configured limit
+- If exceeded:
+  - Rejects item (doesn't add to clipboard history)
+  - Shows Toast notification with actual and limit sizes
+  - Logs warning to logcat
+- If check fails (exception):
+  - Continues with add (fail-open for reliability)
+  - Logs error to logcat
+
 ### ClipboardHistoryView
 
 **File**: `srcs/juloo.keyboard2/ClipboardHistoryView.java`
@@ -800,13 +856,15 @@ if (minHeight > 0)
 
 **Enhancement**: Show list of skipped entries for user review
 
-#### 2. No Clipboard Size Limit
+#### 2. No Clipboard History Count Limit
 
 **Severity**: Low
 
-**Description**: Clipboard history can grow indefinitely (only expired entries cleaned up)
+**Description**: Clipboard history entry count can grow indefinitely (only expired entries cleaned up)
 
-**Risk**: Database size growth over time
+**Risk**: Database size growth over time (mitigated by max item size limit in v1.32.327)
+
+**Note**: Max item size limit (v1.32.327) prevents individual large items, but total entry count still unlimited
 
 **Future**: Add max entry count setting (e.g., keep last 1000 entries)
 
@@ -978,6 +1036,30 @@ res/xml/
 
 ## Changelog
 
+### v1.32.327 (2025-11-12)
+- **FEATURE**: Added maximum item size limit for clipboard entries
+  - Prevents system overload from accidentally copying massive text (entire files, large documents)
+  - User-configurable in Settings → Clipboard → "Maximum size per item"
+  - Options: 100 KB, 250 KB, 500 KB (default), 1 MB, 5 MB, Unlimited
+  - Rejects items exceeding limit with Toast notification showing actual and limit sizes
+  - Calculates UTF-8 byte size for accurate measurement
+  - Fail-open design: continues with add if size check fails
+- **Files Modified**:
+  - res/values/arrays.xml: Added size limit options and values arrays
+  - res/xml/settings.xml: Added "Maximum size per item" ListPreference
+  - srcs/juloo.keyboard2/Config.java: Added clipboard_max_item_size_kb field
+  - srcs/juloo.keyboard2/ClipboardHistoryService.java: Added size check in add_clip()
+
+### v1.32.325 (2025-11-12)
+- **FEATURE**: Made pinned section size user-configurable
+  - Settings → Clipboard → "Pinned section size"
+  - Options: 70dp (1-2 rows), 100dp (2-3 rows, default), 140dp (3-4 rows), 200dp (4-5 rows)
+  - Allows users to customize how many pinned entries display without scrolling
+- **Files Modified**:
+  - res/values/arrays.xml: Added pinned section size options
+  - res/xml/settings.xml: Added "Pinned section size" ListPreference
+  - srcs/juloo.keyboard2/ClipboardPinView.java: Added updateParentMinHeight() with SharedPreferences integration
+
 ### v1.32.309 (2025-11-11)
 - **BUGFIX**: Fixed pinned clipboard deletion to delete entirely
   - Changed ClipboardPinView.remove_entry() from set_pinned_status(false) to remove_history_entry()
@@ -1036,12 +1118,14 @@ res/xml/
 
 ### High Priority
 
-1. **No Clipboard Size Limit**
-   - **Issue**: Database can grow indefinitely
+1. **No Clipboard Entry Count Limit** (partially addressed v1.32.327)
+   - **Issue**: Database can grow indefinitely (entry count)
    - **Impact**: Potential performance degradation over time
-   - **Fix**: Add max entry count setting, implement in cleanupExpiredEntries()
+   - **Mitigation**: Max item size limit (v1.32.327) prevents individual large items
+   - **Remaining**: Need max entry count setting
+   - **Fix**: Add max entry count setting (e.g., 100, 500, 1000), implement in applySizeLimit()
    - **Effort**: Medium (~50 lines)
-   - **Files**: ClipboardDatabase.java, Config.java, res/xml/settings.xml
+   - **Files**: ClipboardDatabase.java (applySizeLimit method exists, needs count variant), Config.java, res/xml/settings.xml
 
 ### Medium Priority
 

@@ -72,6 +72,7 @@ public final class Config
   public boolean clipboard_history_enabled;
   public int clipboard_history_limit;
   public int clipboard_pane_height_percent; // 10-50, default 30 (percentage of screen height)
+  public int clipboard_max_item_size_kb; // Maximum size per clipboard item in KB, 0 = unlimited
   public boolean swipe_typing_enabled;
   public boolean swipe_show_debug_scores;
   public boolean word_prediction_enabled;
@@ -244,6 +245,11 @@ public final class Config
       android.util.Log.w("Config", "Fixed clipboard_history_limit type mismatch: " + stringValue);
     }
     clipboard_pane_height_percent = Math.min(50, Math.max(10, _prefs.getInt("clipboard_pane_height_percent", 30)));
+    try {
+      clipboard_max_item_size_kb = Integer.parseInt(_prefs.getString("clipboard_max_item_size_kb", "500"));
+    } catch (NumberFormatException e) {
+      clipboard_max_item_size_kb = 500; // Default 500KB
+    }
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);
     word_prediction_enabled = _prefs.getBoolean("word_prediction_enabled", false);
