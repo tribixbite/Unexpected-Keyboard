@@ -109,79 +109,87 @@ public class Keyboard2 extends InputMethodService
   // Neural layout bridge (v1.32.407: extracted to NeuralLayoutBridge)
   private NeuralLayoutBridge _neuralLayoutBridge;
 
+  // Layout bridge (v1.32.408: extracted to LayoutBridge)
+  private LayoutBridge _layoutBridge;
+
   /**
    * Layout currently visible before it has been modified.
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   KeyboardData current_layout_unmodified()
   {
-    return _layoutManager.current_layout_unmodified();
+    return _layoutBridge.getCurrentLayoutUnmodified();
   }
 
   /**
    * Layout currently visible.
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   KeyboardData current_layout()
   {
-    return _layoutManager.current_layout();
+    return _layoutBridge.getCurrentLayout();
   }
 
   /**
    * Set text layout by index.
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   void setTextLayout(int l)
   {
-    KeyboardData layout = _layoutManager.setTextLayout(l);
-    _keyboardView.setKeyboard(layout);
+    _layoutBridge.setTextLayout(l);
   }
 
   /**
    * Cycle to next/previous text layout.
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   void incrTextLayout(int delta)
   {
-    KeyboardData layout = _layoutManager.incrTextLayout(delta);
-    _keyboardView.setKeyboard(layout);
+    _layoutBridge.incrTextLayout(delta);
   }
 
   /**
    * Set special layout (numeric, emoji, etc.).
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   void setSpecialLayout(KeyboardData l)
   {
-    KeyboardData layout = _layoutManager.setSpecialLayout(l);
-    _keyboardView.setKeyboard(layout);
+    _layoutBridge.setSpecialLayout(l);
   }
 
   /**
    * Load a layout from resources.
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   KeyboardData loadLayout(int layout_id)
   {
-    return _layoutManager.loadLayout(layout_id);
+    return _layoutBridge.loadLayout(layout_id);
   }
 
   /**
    * Load a layout that contains a numpad.
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   KeyboardData loadNumpad(int layout_id)
   {
-    return _layoutManager.loadNumpad(layout_id);
+    return _layoutBridge.loadNumpad(layout_id);
   }
 
   /**
    * Load a pinentry layout.
    * (v1.32.363: Delegated to LayoutManager)
+   * (v1.32.408: Delegated to LayoutBridge)
    */
   KeyboardData loadPinentry(int layout_id)
   {
-    return _layoutManager.loadPinentry(layout_id);
+    return _layoutBridge.loadPinentry(layout_id);
   }
 
   @Override
@@ -348,6 +356,9 @@ public class Keyboard2 extends InputMethodService
     {
       // First call - initialize LayoutManager with default layout
       _layoutManager = new LayoutManager(this, _config, default_layout);
+
+      // Initialize LayoutBridge (v1.32.408: extracted to LayoutBridge)
+      _layoutBridge = LayoutBridge.create(_layoutManager, _keyboardView);
     }
   }
 
