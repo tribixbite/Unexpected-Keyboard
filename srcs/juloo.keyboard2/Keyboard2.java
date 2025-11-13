@@ -51,13 +51,12 @@ public class Keyboard2 extends InputMethodService
   /** Layout associated with the currently selected locale. Not 'null'. */
   private KeyboardData _localeTextLayout;
   private ViewGroup _emojiPane = null;
-  private ViewGroup _clipboard_pane = null;
   private FrameLayout _contentPaneContainer = null; // Container for emoji/clipboard panes
-  private boolean _clipboardSearchMode = false;
-  private TextView _clipboardSearchBox = null;
-  private ClipboardHistoryView _clipboardHistoryView = null;
   public int actionId; // Action performed by the Action key.
   private Handler _handler;
+
+  // Clipboard management (v1.32.349: extracted to ClipboardManager)
+  private ClipboardManager _clipboardManager;
 
   // Configuration management (v1.32.345: extracted to ConfigurationManager)
   private ConfigurationManager _configManager;
@@ -180,6 +179,9 @@ public class Keyboard2 extends InputMethodService
     _contractionManager = new ContractionManager(this);
     _contractionManager.loadMappings();
 
+    // Initialize clipboard manager (v1.32.349: extracted to ClipboardManager)
+    _clipboardManager = new ClipboardManager(this, _config);
+
     // Initialize prediction context tracker (v1.32.342: extracted to PredictionContextTracker)
     _contextTracker = new PredictionContextTracker();
 
@@ -236,6 +238,12 @@ public class Keyboard2 extends InputMethodService
 
     // Cleanup clipboard listener
     ClipboardHistoryService.on_shutdown();
+
+    // Cleanup clipboard manager
+    if (_clipboardManager != null)
+    {
+      _clipboardManager.cleanup();
+    }
 
     // Cleanup prediction coordinator
     if (_predictionCoordinator != null)
@@ -411,6 +419,12 @@ public class Keyboard2 extends InputMethodService
     // Refresh subtitle IME
     refreshSubtypeImm();
 
+    // Update clipboard manager config
+    if (_clipboardManager != null)
+    {
+      _clipboardManager.setConfig(_config);
+    }
+
     // Update prediction coordinator config
     if (_predictionCoordinator != null)
     {
@@ -434,7 +448,13 @@ public class Keyboard2 extends InputMethodService
     // Recreate views with new theme
     _keyboardView = (Keyboard2View)inflate_view(R.layout.keyboard);
     _emojiPane = null;
-    _clipboard_pane = null;
+
+    // Clean up clipboard manager views for theme change
+    if (_clipboardManager != null)
+    {
+      _clipboardManager.cleanup();
+    }
+
     setInputView(_keyboardView);
   }
 
@@ -466,12 +486,7 @@ public class Keyboard2 extends InputMethodService
     {
       _contentPaneContainer.setVisibility(View.GONE);
       // Also reset search mode state
-      _clipboardSearchMode = false;
-      if (_clipboardSearchBox != null)
-      {
-        _clipboardSearchBox.setText("");
-        _clipboardSearchBox.setHint("Tap to search...");
-      }
+      _clipboardManager.resetSearchOnHide();
     }
 
     refresh_action_label(info);
@@ -759,72 +774,30 @@ public class Keyboard2 extends InputMethodService
           break;
 
         case SWITCH_CLIPBOARD:
-          if (_clipboard_pane == null)
-          {
-            _clipboard_pane = (ViewGroup)inflate_view(R.layout.clipboard_pane);
-            // Wire up search functionality - use keyboard for input (not soft keyboard)
-            _clipboardSearchBox = (TextView)_clipboard_pane.findViewById(R.id.clipboard_search);
-            _clipboardHistoryView = (ClipboardHistoryView)_clipboard_pane.findViewById(R.id.clipboard_history_view);
+          // Get clipboard pane from manager (lazy initialization)
+          ViewGroup clipboardPane = _clipboardManager.getClipboardPane(getLayoutInflater());
 
-            if (_clipboardSearchBox != null)
-            {
-              // When search box is clicked, enter search mode and show hint
-              _clipboardSearchBox.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                  _clipboardSearchMode = true;
-                  _clipboardSearchBox.setHint("Type on keyboard below...");
-                  _clipboardSearchBox.requestFocus();
-                }
-              });
-            }
-
-            // Wire up date filter icon
-            View dateFilterIcon = _clipboard_pane.findViewById(R.id.clipboard_date_filter);
-            if (dateFilterIcon != null)
-            {
-              dateFilterIcon.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                  showDateFilterDialog(v);
-                }
-              });
-            }
-          }
           // Reset search mode and clear any previous search when showing clipboard pane
-          _clipboardSearchMode = false;
-          if (_clipboardSearchBox != null) {
-            _clipboardSearchBox.setText("");
-            _clipboardSearchBox.setHint("Tap to search...");
-          }
-          // Clear search filter to show all history items (not previous search results)
-          if (_clipboardHistoryView != null) {
-            _clipboardHistoryView.setSearchFilter("");
-          }
+          _clipboardManager.resetSearchOnShow();
 
           // Show clipboard pane in content container (keyboard stays visible below)
           if (_contentPaneContainer != null)
           {
             _contentPaneContainer.removeAllViews();
-            _contentPaneContainer.addView(_clipboard_pane);
+            _contentPaneContainer.addView(clipboardPane);
             _contentPaneContainer.setVisibility(View.VISIBLE);
           }
           else
           {
             // Fallback for when predictions disabled (no container)
-            setInputView(_clipboard_pane);
+            setInputView(clipboardPane);
           }
           break;
 
         case SWITCH_BACK_EMOJI:
         case SWITCH_BACK_CLIPBOARD:
           // Exit clipboard search mode when switching back
-          _clipboardSearchMode = false;
-          if (_clipboardSearchBox != null)
-          {
-            _clipboardSearchBox.setText("");
-            _clipboardSearchBox.setHint("Tap to search...");
-          }
+          _clipboardManager.resetSearchOnHide();
 
           // Hide content pane (keyboard remains visible)
           if (_contentPaneContainer != null)
@@ -930,56 +903,25 @@ public class Keyboard2 extends InputMethodService
     @Override
     public boolean isClipboardSearchMode()
     {
-      return _clipboardSearchMode;
+      return _clipboardManager.isInSearchMode();
     }
 
     @Override
     public void appendToClipboardSearch(String text)
     {
-      if (_clipboardSearchBox != null && _clipboardHistoryView != null)
-      {
-        // Append text to search box
-        CharSequence current = _clipboardSearchBox.getText();
-        String newText = current + text;
-        _clipboardSearchBox.setText(newText);
-
-        // Update search filter in history view
-        _clipboardHistoryView.setSearchFilter(newText);
-      }
+      _clipboardManager.appendToSearch(text);
     }
 
     @Override
     public void backspaceClipboardSearch()
     {
-      if (_clipboardSearchBox != null && _clipboardHistoryView != null)
-      {
-        CharSequence current = _clipboardSearchBox.getText();
-        if (current.length() > 0)
-        {
-          // Remove last character
-          String newText = current.subSequence(0, current.length() - 1).toString();
-          _clipboardSearchBox.setText(newText);
-
-          // Update search filter
-          _clipboardHistoryView.setSearchFilter(newText);
-        }
-      }
+      _clipboardManager.deleteFromSearch();
     }
 
     @Override
     public void exitClipboardSearchMode()
     {
-      // Exit search mode and clear search
-      _clipboardSearchMode = false;
-      if (_clipboardSearchBox != null)
-      {
-        _clipboardSearchBox.setText("");
-        _clipboardSearchBox.setHint("Tap to search...");
-      }
-      if (_clipboardHistoryView != null)
-      {
-        _clipboardHistoryView.setSearchFilter("");
-      }
+      _clipboardManager.clearSearch();
     }
   }
 
@@ -988,106 +930,7 @@ public class Keyboard2 extends InputMethodService
     return getWindow().getWindow().getAttributes().token;
   }
 
-  /**
-   * Show date filter dialog for clipboard entries
-   */
-  private void showDateFilterDialog(View clickedView)
-  {
-    // Use dark theme for dialog to match keyboard theme
-    android.view.ContextThemeWrapper themedContext = new android.view.ContextThemeWrapper(
-      this, android.R.style.Theme_DeviceDefault_Dialog);
-
-    final View dialogView = getLayoutInflater().inflate(R.layout.clipboard_date_filter_dialog, null);
-
-    final android.widget.Switch enabledSwitch = dialogView.findViewById(R.id.date_filter_enabled);
-    final android.widget.RadioGroup modeGroup = dialogView.findViewById(R.id.date_filter_mode);
-    final android.widget.RadioButton beforeRadio = dialogView.findViewById(R.id.date_filter_before);
-    final android.widget.RadioButton afterRadio = dialogView.findViewById(R.id.date_filter_after);
-    final android.widget.DatePicker datePicker = dialogView.findViewById(R.id.date_picker);
-    final View modeContainer = dialogView.findViewById(R.id.date_filter_mode_container);
-    final View pickerContainer = dialogView.findViewById(R.id.date_picker_container);
-
-    // Get current filter state from ClipboardHistoryView
-    final boolean isFilterEnabled = _clipboardHistoryView != null && _clipboardHistoryView.isDateFilterEnabled();
-    final boolean isBeforeMode = _clipboardHistoryView != null && _clipboardHistoryView.isDateFilterBefore();
-
-    enabledSwitch.setChecked(isFilterEnabled);
-    if (isBeforeMode) {
-      beforeRadio.setChecked(true);
-    } else {
-      afterRadio.setChecked(true);
-    }
-
-    // Set initial visibility based on enabled state
-    modeContainer.setVisibility(isFilterEnabled ? View.VISIBLE : View.GONE);
-    pickerContainer.setVisibility(isFilterEnabled ? View.VISIBLE : View.GONE);
-
-    // Toggle visibility when enable switch changes
-    enabledSwitch.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
-      @Override
-      public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
-        modeContainer.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-        pickerContainer.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-      }
-    });
-
-    // Get current filter date or default to today
-    java.util.Calendar cal = java.util.Calendar.getInstance();
-    if (_clipboardHistoryView != null && _clipboardHistoryView.getDateFilterTimestamp() > 0) {
-      cal.setTimeInMillis(_clipboardHistoryView.getDateFilterTimestamp());
-    }
-    datePicker.updateDate(cal.get(java.util.Calendar.YEAR),
-                          cal.get(java.util.Calendar.MONTH),
-                          cal.get(java.util.Calendar.DAY_OF_MONTH));
-
-    android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(themedContext)
-      .setTitle("Filter by Date")
-      .setView(dialogView)
-      .create();
-
-    // Set up button click handlers
-    dialogView.findViewById(R.id.date_filter_clear).setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if (_clipboardHistoryView != null) {
-          _clipboardHistoryView.clearDateFilter();
-        }
-        dialog.dismiss();
-      }
-    });
-
-    dialogView.findViewById(R.id.date_filter_cancel).setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        dialog.dismiss();
-      }
-    });
-
-    dialogView.findViewById(R.id.date_filter_apply).setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if (_clipboardHistoryView != null) {
-          boolean enabled = enabledSwitch.isChecked();
-          boolean isBefore = beforeRadio.isChecked();
-
-          if (enabled) {
-            // Get selected date at start of day (00:00:00)
-            java.util.Calendar selectedCal = java.util.Calendar.getInstance();
-            selectedCal.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), 0, 0, 0);
-            selectedCal.set(java.util.Calendar.MILLISECOND, 0);
-            long timestamp = selectedCal.getTimeInMillis();
-
-            _clipboardHistoryView.setDateFilter(timestamp, isBefore);
-          } else {
-            _clipboardHistoryView.clearDateFilter();
-          }
-        }
-        dialog.dismiss();
-      }
-    });
-
-    Utils.show_dialog_on_ime(dialog, clickedView.getWindowToken());
-  }
+  // v1.32.349: showDateFilterDialog() method removed - functionality moved to ClipboardManager class
 
   // SuggestionBar.OnSuggestionSelectedListener implementation
   /**
