@@ -91,6 +91,9 @@ public class Keyboard2 extends InputMethodService
   // Event handling (v1.32.368: extracted to KeyboardReceiver)
   private KeyboardReceiver _receiver;
 
+  // KeyEventHandler bridge (v1.32.390: extracted to KeyEventReceiverBridge)
+  private KeyEventReceiverBridge _receiverBridge;
+
   // ML data collection (v1.32.370: extracted to MLDataCollector)
   private MLDataCollector _mlDataCollector;
 
@@ -182,24 +185,10 @@ public class Keyboard2 extends InputMethodService
     SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     _handler = new Handler(getMainLooper());
 
-    // NOTE: Receiver will be initialized after managers are created (line ~250)
-    // Using a temporary inner class that delegates to _receiver field (v1.32.368)
-    // Some methods bypass _receiver to avoid null pointer exceptions during initialization
-    _keyeventhandler = new KeyEventHandler(new KeyEventHandler.IReceiver() {
-      public void handle_event_key(KeyValue.Event ev) { _receiver.handle_event_key(ev); }
-      public void set_shift_state(boolean state, boolean lock) { _receiver.set_shift_state(state, lock); }
-      public void set_compose_pending(boolean pending) { _receiver.set_compose_pending(pending); }
-      public void selection_state_changed(boolean selection_is_ongoing) { _receiver.selection_state_changed(selection_is_ongoing); }
-      public InputConnection getCurrentInputConnection() { return Keyboard2.this.getCurrentInputConnection(); }
-      public Handler getHandler() { return _handler; }
-      public void handle_text_typed(String text) { _receiver.handle_text_typed(text); }
-      public void handle_backspace() { _receiver.handle_backspace(); }
-      public void handle_delete_last_word() { _receiver.handle_delete_last_word(); }
-      public boolean isClipboardSearchMode() { return _receiver.isClipboardSearchMode(); }
-      public void appendToClipboardSearch(String text) { _receiver.appendToClipboardSearch(text); }
-      public void backspaceClipboardSearch() { _receiver.backspaceClipboardSearch(); }
-      public void exitClipboardSearchMode() { _receiver.exitClipboardSearchMode(); }
-    });
+    // Create bridge for KeyEventHandler to KeyboardReceiver delegation (v1.32.390)
+    // Receiver will be initialized later and set on the bridge
+    _receiverBridge = KeyEventReceiverBridge.create(this, _handler);
+    _keyeventhandler = new KeyEventHandler(_receiverBridge);
 
     // Create FoldStateTracker for device fold state monitoring
     FoldStateTracker foldStateTracker = new FoldStateTracker(this);
@@ -479,6 +468,12 @@ public class Keyboard2 extends InputMethodService
         _subtypeManager,
         _handler
       );
+
+      // Set receiver on bridge (v1.32.390: KeyEventReceiverBridge)
+      if (_receiverBridge != null)
+      {
+        _receiverBridge.setReceiver(_receiver);
+      }
     }
 
     // Auto-close clipboard pane when switching to new app/field
