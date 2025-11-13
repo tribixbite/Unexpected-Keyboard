@@ -22,6 +22,10 @@ public final class ClipboardHistoryView extends NonScrollListView
   ClipboardEntriesAdapter _adapter;
   // Track expanded state: position -> isExpanded
   java.util.Map<Integer, Boolean> _expandedStates = new java.util.HashMap<>();
+  // Date filter state
+  boolean _dateFilterEnabled = false;
+  boolean _dateFilterBefore = false; // true = before date, false = after date
+  long _dateFilterTimestamp = 0;
 
   public ClipboardHistoryView(Context ctx, AttributeSet attrs)
   {
@@ -48,22 +52,45 @@ public final class ClipboardHistoryView extends NonScrollListView
 
   private void applyFilter()
   {
-    if (_searchFilter.isEmpty())
+    List<ClipboardEntry> filtered = new ArrayList<ClipboardEntry>();
+
+    // Apply both search and date filters
+    for (ClipboardEntry item : _history)
+    {
+      // Apply search filter
+      if (!_searchFilter.isEmpty() && !item.content.toLowerCase().contains(_searchFilter))
+        continue;
+
+      // Apply date filter
+      if (_dateFilterEnabled)
+      {
+        if (_dateFilterBefore)
+        {
+          // Show entries before the selected date
+          if (item.timestamp >= _dateFilterTimestamp)
+            continue;
+        }
+        else
+        {
+          // Show entries after the selected date
+          if (item.timestamp < _dateFilterTimestamp)
+            continue;
+        }
+      }
+
+      filtered.add(item);
+    }
+
+    // If no filters are active, show all history
+    if (_searchFilter.isEmpty() && !_dateFilterEnabled)
     {
       _filteredHistory = _history;
     }
     else
     {
-      List<ClipboardEntry> filtered = new ArrayList<ClipboardEntry>();
-      for (ClipboardEntry item : _history)
-      {
-        if (item.content.toLowerCase().contains(_searchFilter))
-        {
-          filtered.add(item);
-        }
-      }
       _filteredHistory = filtered;
     }
+
     _adapter.notifyDataSetChanged();
     invalidate();
   }
@@ -108,6 +135,38 @@ public final class ClipboardHistoryView extends NonScrollListView
   {
     _history = _service.clear_expired_and_get_history();
     applyFilter(); // Reapply current search filter
+  }
+
+  /** Date filter methods */
+  public boolean isDateFilterEnabled()
+  {
+    return _dateFilterEnabled;
+  }
+
+  public boolean isDateFilterBefore()
+  {
+    return _dateFilterBefore;
+  }
+
+  public long getDateFilterTimestamp()
+  {
+    return _dateFilterTimestamp;
+  }
+
+  public void setDateFilter(long timestamp, boolean isBefore)
+  {
+    _dateFilterEnabled = true;
+    _dateFilterTimestamp = timestamp;
+    _dateFilterBefore = isBefore;
+    applyFilter();
+  }
+
+  public void clearDateFilter()
+  {
+    _dateFilterEnabled = false;
+    _dateFilterTimestamp = 0;
+    _dateFilterBefore = false;
+    applyFilter();
   }
 
   class ClipboardEntriesAdapter extends BaseAdapter

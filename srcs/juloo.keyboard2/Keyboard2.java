@@ -776,6 +776,18 @@ public class Keyboard2 extends InputMethodService
                 }
               });
             }
+
+            // Wire up date filter icon
+            View dateFilterIcon = _clipboard_pane.findViewById(R.id.clipboard_date_filter);
+            if (dateFilterIcon != null)
+            {
+              dateFilterIcon.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                  showDateFilterDialog(v);
+                }
+              });
+            }
           }
           // Reset search mode and clear any previous search when showing clipboard pane
           _clipboardSearchMode = false;
@@ -973,7 +985,108 @@ public class Keyboard2 extends InputMethodService
   {
     return getWindow().getWindow().getAttributes().token;
   }
-  
+
+  /**
+   * Show date filter dialog for clipboard entries
+   */
+  private void showDateFilterDialog(View clickedView)
+  {
+    // Use dark theme for dialog to match keyboard theme
+    android.view.ContextThemeWrapper themedContext = new android.view.ContextThemeWrapper(
+      this, android.R.style.Theme_DeviceDefault_Dialog);
+
+    final View dialogView = getLayoutInflater().inflate(R.layout.clipboard_date_filter_dialog, null);
+
+    final android.widget.Switch enabledSwitch = dialogView.findViewById(R.id.date_filter_enabled);
+    final android.widget.RadioGroup modeGroup = dialogView.findViewById(R.id.date_filter_mode);
+    final android.widget.RadioButton beforeRadio = dialogView.findViewById(R.id.date_filter_before);
+    final android.widget.RadioButton afterRadio = dialogView.findViewById(R.id.date_filter_after);
+    final android.widget.DatePicker datePicker = dialogView.findViewById(R.id.date_picker);
+    final View modeContainer = dialogView.findViewById(R.id.date_filter_mode_container);
+    final View pickerContainer = dialogView.findViewById(R.id.date_picker_container);
+
+    // Get current filter state from ClipboardHistoryView
+    final boolean isFilterEnabled = _clipboardHistoryView != null && _clipboardHistoryView.isDateFilterEnabled();
+    final boolean isBeforeMode = _clipboardHistoryView != null && _clipboardHistoryView.isDateFilterBefore();
+
+    enabledSwitch.setChecked(isFilterEnabled);
+    if (isBeforeMode) {
+      beforeRadio.setChecked(true);
+    } else {
+      afterRadio.setChecked(true);
+    }
+
+    // Set initial visibility based on enabled state
+    modeContainer.setVisibility(isFilterEnabled ? View.VISIBLE : View.GONE);
+    pickerContainer.setVisibility(isFilterEnabled ? View.VISIBLE : View.GONE);
+
+    // Toggle visibility when enable switch changes
+    enabledSwitch.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
+        modeContainer.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        pickerContainer.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+      }
+    });
+
+    // Get current filter date or default to today
+    java.util.Calendar cal = java.util.Calendar.getInstance();
+    if (_clipboardHistoryView != null && _clipboardHistoryView.getDateFilterTimestamp() > 0) {
+      cal.setTimeInMillis(_clipboardHistoryView.getDateFilterTimestamp());
+    }
+    datePicker.updateDate(cal.get(java.util.Calendar.YEAR),
+                          cal.get(java.util.Calendar.MONTH),
+                          cal.get(java.util.Calendar.DAY_OF_MONTH));
+
+    android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(themedContext)
+      .setTitle("Filter by Date")
+      .setView(dialogView)
+      .create();
+
+    // Set up button click handlers
+    dialogView.findViewById(R.id.date_filter_clear).setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (_clipboardHistoryView != null) {
+          _clipboardHistoryView.clearDateFilter();
+        }
+        dialog.dismiss();
+      }
+    });
+
+    dialogView.findViewById(R.id.date_filter_cancel).setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        dialog.dismiss();
+      }
+    });
+
+    dialogView.findViewById(R.id.date_filter_apply).setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (_clipboardHistoryView != null) {
+          boolean enabled = enabledSwitch.isChecked();
+          boolean isBefore = beforeRadio.isChecked();
+
+          if (enabled) {
+            // Get selected date at start of day (00:00:00)
+            java.util.Calendar selectedCal = java.util.Calendar.getInstance();
+            selectedCal.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth(), 0, 0, 0);
+            selectedCal.set(java.util.Calendar.MILLISECOND, 0);
+            long timestamp = selectedCal.getTimeInMillis();
+
+            _clipboardHistoryView.setDateFilter(timestamp, isBefore);
+          } else {
+            _clipboardHistoryView.clearDateFilter();
+          }
+        }
+        dialog.dismiss();
+      }
+    });
+
+    Utils.show_dialog_on_ime(dialog, clickedView.getWindowToken());
+  }
+
   // SuggestionBar.OnSuggestionSelectedListener implementation
   /**
    * Update context with a completed word
