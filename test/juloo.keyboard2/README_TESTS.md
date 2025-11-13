@@ -4,9 +4,9 @@
 
 Comprehensive Kotlin test suites have been created for all Phase 4 extractions following professional testing standards.
 
-**Current Status (v1.32.389):**
-- **9 comprehensive test suites** (2,917 lines total)
-- **203 test cases** covering all Phase 4 extractions
+**Current Status (v1.32.393):**
+- **11 comprehensive test suites** (3,694 lines total)
+- **269 test cases** covering all Phase 4 extractions
 - **100% coverage** of extracted utilities
 - All tests use **JUnit 4 + Mockito + Kotlin**
 
@@ -139,6 +139,32 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
   - MLDataCollector (requires context)
 - **Total**: 26 test cases
 
+### KeyEventReceiverBridgeTest.kt (377 lines)
+**Coverage**: 100% of KeyEventReceiverBridge.kt
+- ✅ All IReceiver method delegations (11 methods)
+- ✅ Lazy initialization pattern (receiver set after bridge creation)
+- ✅ Direct method bypass (getCurrentInputConnection, getHandler)
+- ✅ Null safety before receiver set (all methods handle null gracefully)
+- ✅ Receiver lifecycle (set, replace)
+- ✅ Factory method (companion object create())
+- ✅ Integration scenarios (full lifecycle testing)
+- ✅ Edge cases (empty/null strings, boolean returns with null receiver)
+- **Total**: 35 test cases
+
+### DebugModePropagatorTest.kt (400 lines)
+**Coverage**: 100% of DebugModePropagator.kt
+- ✅ Debug mode propagation to SuggestionHandler
+- ✅ Debug mode propagation to NeuralLayoutHelper
+- ✅ Logger adapter creation for NeuralLayoutHelper
+- ✅ Logger adapter message forwarding (single and multiple messages)
+- ✅ Null manager handling (individual and both null)
+- ✅ Enable and disable scenarios
+- ✅ Multiple propagations and toggle scenarios
+- ✅ Factory method (companion object create())
+- ✅ Integration tests (full lifecycle, real messages)
+- ✅ Edge cases (empty/null messages, multiple propagators)
+- **Total**: 31 test cases
+
 ## Testing Methodology
 
 ### Frameworks Used
@@ -266,6 +292,24 @@ fun testMethodName_scenario_expectedBehavior() {
 - **Manager Tests**: Individual creation tests for all 8 managers
 - **Integration Tests**: 3 comprehensive integration scenarios
 - **Factory Pattern**: Tests for companion object factory method
+
+### KeyEventReceiverBridgeTest
+- **Lines of Code**: 377
+- **Test Cases**: 35
+- **Mock Usage**: Extensive (Keyboard2, Handler, KeyboardReceiver, InputConnection, KeyValue.Event)
+- **Edge Cases**: 6 (null receiver, empty/null strings, multiple receiver replacements)
+- **Delegation Tests**: 11 method delegation tests
+- **Direct Method Tests**: 2 tests for methods that bypass receiver
+- **Lifecycle Tests**: Receiver set, replace, and null safety scenarios
+
+### DebugModePropagatorTest
+- **Lines of Code**: 400
+- **Test Cases**: 31
+- **Mock Usage**: Extensive (SuggestionHandler, NeuralLayoutHelper, DebugLogger, DebugLoggingManager)
+- **Edge Cases**: 6 (null managers individually/combined, empty/null messages, multiple propagators)
+- **Propagation Tests**: 12 tests for debug mode enable/disable propagation
+- **Logger Adapter Tests**: 4 tests for adapter creation and message forwarding
+- **Integration Tests**: 3 full lifecycle and real message scenarios
 
 ## Continuous Improvement
 
