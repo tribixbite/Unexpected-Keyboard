@@ -26,7 +26,6 @@ import android.widget.TextView;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Map;
@@ -88,9 +87,8 @@ public class Keyboard2 extends InputMethodService
   // User adaptation
   private UserAdaptationManager _adaptationManager;
 
-  // Contraction mappings for apostrophe insertion
-  private Map<String, String> _nonPairedContractions = new HashMap<>();
-  private Set<String> _knownContractions = new HashSet<>();  // Set of valid contractions (with apostrophes)
+  // Contraction mappings for apostrophe insertion (v1.32.341: extracted to ContractionManager)
+  private ContractionManager _contractionManager;
 
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
@@ -185,8 +183,9 @@ public class Keyboard2 extends InputMethodService
     // Initialize user adaptation manager
     _adaptationManager = UserAdaptationManager.getInstance(this);
 
-    // Load contraction mappings for apostrophe insertion
-    loadContractionMappings();
+    // Load contraction mappings for apostrophe insertion (v1.32.341: extracted to ContractionManager)
+    _contractionManager = new ContractionManager(this);
+    _contractionManager.loadMappings();
 
     // KeyboardSwipeRecognizer is now handled through SwipeTypingEngine
     
@@ -1229,7 +1228,8 @@ public class Keyboard2 extends InputMethodService
 
     // Check if this is a known contraction (already has apostrophes from displayText)
     // If it is, skip autocorrect to prevent fuzzy matching to wrong words
-    boolean isKnownContraction = _knownContractions.contains(word.toLowerCase());
+    // v1.32.341: Use ContractionManager for lookup
+    boolean isKnownContraction = _contractionManager.isKnownContraction(word);
 
     // Skip autocorrect for:
     // 1. Known contractions (prevent fuzzy matching)
@@ -2326,72 +2326,5 @@ public class Keyboard2 extends InputMethodService
     }
   }
 
-  /**
-   * Load contraction mappings from JSON files.
-   * Loads both non-paired and paired contractions into _knownContractions set.
-   * Example: "dont" -> "don't", "well" -> "we'll"
-   */
-  private void loadContractionMappings()
-  {
-    try
-    {
-      // Load non-paired contractions (dont -> don't)
-      java.io.InputStream inputStream = getAssets().open("dictionaries/contractions_non_paired.json");
-      java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
-      StringBuilder jsonBuilder = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null)
-      {
-        jsonBuilder.append(line);
-      }
-      reader.close();
-
-      // Parse JSON and populate map + set
-      org.json.JSONObject jsonObj = new org.json.JSONObject(jsonBuilder.toString());
-      java.util.Iterator<String> keys = jsonObj.keys();
-      while (keys.hasNext())
-      {
-        String withoutApostrophe = keys.next();
-        String withApostrophe = jsonObj.getString(withoutApostrophe);
-        _nonPairedContractions.put(withoutApostrophe.toLowerCase(), withApostrophe.toLowerCase());
-        _knownContractions.add(withApostrophe.toLowerCase());  // Add to set for quick lookup
-      }
-
-      Log.d("Keyboard2", "Loaded " + _nonPairedContractions.size() + " non-paired contractions");
-
-      // Load paired contractions (well -> we'll)
-      // Format: {"well": [{"contraction": "we'll", "frequency": 243}]}
-      inputStream = getAssets().open("dictionaries/contraction_pairings.json");
-      reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
-      jsonBuilder = new StringBuilder();
-      while ((line = reader.readLine()) != null)
-      {
-        jsonBuilder.append(line);
-      }
-      reader.close();
-
-      jsonObj = new org.json.JSONObject(jsonBuilder.toString());
-      keys = jsonObj.keys();
-      int pairedCount = 0;
-      while (keys.hasNext())
-      {
-        String baseWord = keys.next();
-        org.json.JSONArray contractions = jsonObj.getJSONArray(baseWord);
-        for (int i = 0; i < contractions.length(); i++)
-        {
-          org.json.JSONObject contractionObj = contractions.getJSONObject(i);
-          String contraction = contractionObj.getString("contraction");
-          _knownContractions.add(contraction.toLowerCase());
-          pairedCount++;
-        }
-      }
-
-      Log.d("Keyboard2", "Loaded " + pairedCount + " paired contractions");
-      Log.d("Keyboard2", "Total known contractions: " + _knownContractions.size());
-    }
-    catch (Exception e)
-    {
-      Log.e("Keyboard2", "Failed to load contraction mappings", e);
-    }
-  }
+  // v1.32.341: loadContractionMappings() method removed - functionality moved to ContractionManager class
 }
