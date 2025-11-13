@@ -431,27 +431,20 @@ public class Keyboard2 extends InputMethodService
   {
     refresh_config();
 
-    // Initialize KeyboardReceiver if needed (v1.32.368: extracted to KeyboardReceiver class)
-    if (_receiver == null)
-    {
-      _receiver = new KeyboardReceiver(
-        this,
-        this,
-        _keyboardView,
-        _layoutManager,
-        _clipboardManager,
-        _contextTracker,
-        _inputCoordinator,
-        _subtypeManager,
-        _handler
-      );
-
-      // Set receiver on bridge (v1.32.390: KeyEventReceiverBridge)
-      if (_receiverBridge != null)
-      {
-        _receiverBridge.setReceiver(_receiver);
-      }
-    }
+    // Initialize KeyboardReceiver if needed (v1.32.397: extracted to ReceiverInitializer)
+    // Lazy initialization: creates receiver on first call, returns existing on subsequent calls
+    _receiver = ReceiverInitializer.create(
+      this,
+      this,
+      _keyboardView,
+      _layoutManager,
+      _clipboardManager,
+      _contextTracker,
+      _inputCoordinator,
+      _subtypeManager,
+      _handler,
+      _receiverBridge
+    ).initializeIfNeeded(_receiver);
 
     // Auto-close clipboard pane when switching to new app/field
     // Prevents confusing UX where clipboard briefly shows then keyboard closes
