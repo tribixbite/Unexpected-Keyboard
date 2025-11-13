@@ -97,6 +97,9 @@ public class Keyboard2 extends InputMethodService
   // Debug logging management (v1.32.384: extracted to DebugLoggingManager)
   private DebugLoggingManager _debugLoggingManager;
 
+  // Config propagation (v1.32.386: extracted to ConfigPropagator)
+  private ConfigPropagator _configPropagator;
+
   /**
    * Layout currently visible before it has been modified.
    * (v1.32.363: Delegated to LayoutManager)
@@ -313,6 +316,19 @@ public class Keyboard2 extends InputMethodService
 
     // Register broadcast receiver for debug mode control (v1.32.384: delegated to DebugLoggingManager)
     _debugLoggingManager.registerDebugModeReceiver(this);
+
+    // Initialize config propagator (v1.32.386: extracted config propagation logic)
+    // Note: LayoutManager and SubtypeManager are initialized in refreshSubtypeImm() called from onCreate
+    _configPropagator = ConfigPropagator.builder()
+      .setClipboardManager(_clipboardManager)
+      .setPredictionCoordinator(_predictionCoordinator)
+      .setInputCoordinator(_inputCoordinator)
+      .setSuggestionHandler(_suggestionHandler)
+      .setNeuralLayoutHelper(_neuralLayoutHelper)
+      .setLayoutManager(_layoutManager)
+      .setKeyboardView(_keyboardView)
+      .setSubtypeManager(_subtypeManager)
+      .build();
   }
 
   @Override
@@ -442,49 +458,10 @@ public class Keyboard2 extends InputMethodService
     // Update cached reference
     _config = newConfig;
 
-    // Refresh subtitle IME
-    refreshSubtypeImm();
-
-    // Update clipboard manager config
-    if (_clipboardManager != null)
+    // Propagate config to all managers (v1.32.386: delegated to ConfigPropagator)
+    if (_configPropagator != null)
     {
-      _clipboardManager.setConfig(_config);
-    }
-
-    // Update prediction coordinator config
-    if (_predictionCoordinator != null)
-    {
-      _predictionCoordinator.setConfig(_config);
-    }
-
-    // Update input coordinator config (v1.32.350)
-    if (_inputCoordinator != null)
-    {
-      _inputCoordinator.setConfig(_config);
-    }
-
-    // Update suggestion handler config (v1.32.361)
-    if (_suggestionHandler != null)
-    {
-      _suggestionHandler.setConfig(_config);
-    }
-
-    // Update neural layout helper config (v1.32.362)
-    if (_neuralLayoutHelper != null)
-    {
-      _neuralLayoutHelper.setConfig(_config);
-    }
-
-    // Update layout manager config (v1.32.363)
-    if (_layoutManager != null)
-    {
-      _layoutManager.setConfig(_config);
-    }
-
-    // Reset keyboard view
-    if (_keyboardView != null)
-    {
-      _keyboardView.reset();
+      _configPropagator.propagateConfig(_config, getResources());
     }
   }
 
