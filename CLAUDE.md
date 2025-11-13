@@ -18,7 +18,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 - NEVER proceed without confirming successful build
 - Fix ALL compilation errors immediately
-- Test on device when possible
+- Test with adb when possible
+- Always write and run relevant tests
+- USE KOTLIN FOR NEW CODE
 
 ### 3. DOCUMENT ALL PROGRESS
 **MANDATORY**: Update `memory/pm.md` with:

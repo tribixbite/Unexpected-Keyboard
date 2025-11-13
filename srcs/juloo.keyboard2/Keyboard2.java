@@ -612,14 +612,18 @@ public class Keyboard2 extends InputMethodService
       // Create suggestion bar if needed
       if (_suggestionBar == null)
       {
-        _inputViewContainer = new LinearLayout(this);
-        _inputViewContainer.setOrientation(LinearLayout.VERTICAL);
-        
-        // Get theme from keyboard view if available
+        // Initialize suggestion bar and input view hierarchy (v1.32.381)
         Theme theme = _keyboardView != null ? _keyboardView.getTheme() : null;
-        _suggestionBar = theme != null ? new SuggestionBar(this, theme) : new SuggestionBar(this);
+        SuggestionBarInitializer.InitializationResult result =
+          SuggestionBarInitializer.initialize(this, theme, _config.suggestion_bar_opacity,
+            _config.clipboard_pane_height_percent);
+
+        _inputViewContainer = result.getInputViewContainer();
+        _suggestionBar = result.getSuggestionBar();
+        _contentPaneContainer = result.getContentPaneContainer();
+
+        // Register suggestion selection listener (v1.32.381)
         _suggestionBar.setOnSuggestionSelectedListener(this);
-        _suggestionBar.setOpacity(_config.suggestion_bar_opacity);
 
         // Update InputCoordinator with suggestion bar reference (v1.32.350)
         if (_inputCoordinator != null)
@@ -638,37 +642,6 @@ public class Keyboard2 extends InputMethodService
         {
           _neuralLayoutHelper.setSuggestionBar(_suggestionBar);
         }
-
-        // Wrap SuggestionBar in HorizontalScrollView for scrollable predictions
-        android.widget.HorizontalScrollView scrollView = new android.widget.HorizontalScrollView(this);
-        scrollView.setHorizontalScrollBarEnabled(false); // Hide scrollbar
-        scrollView.setFillViewport(false); // Don't stretch content
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
-          LinearLayout.LayoutParams.MATCH_PARENT,
-          (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40,
-            getResources().getDisplayMetrics()));
-        scrollView.setLayoutParams(scrollParams);
-
-        // Set SuggestionBar to wrap_content width for scrolling
-        LinearLayout.LayoutParams suggestionParams = new LinearLayout.LayoutParams(
-          LinearLayout.LayoutParams.WRAP_CONTENT,
-          LinearLayout.LayoutParams.MATCH_PARENT);
-        _suggestionBar.setLayoutParams(suggestionParams);
-
-        scrollView.addView(_suggestionBar);
-        _inputViewContainer.addView(scrollView);
-
-        // Add content pane container (for clipboard/emoji) between suggestion bar and keyboard
-        // This stays hidden until user opens clipboard or emoji pane
-        // Height is based on user config (default 30% of screen height)
-        _contentPaneContainer = new FrameLayout(this);
-        int screenHeight = getResources().getDisplayMetrics().heightPixels;
-        int paneHeight = (screenHeight * _config.clipboard_pane_height_percent) / 100;
-        _contentPaneContainer.setLayoutParams(new LinearLayout.LayoutParams(
-          LinearLayout.LayoutParams.MATCH_PARENT,
-          paneHeight));
-        _contentPaneContainer.setVisibility(View.GONE); // Hidden by default
-        _inputViewContainer.addView(_contentPaneContainer);
 
         // Update KeyboardReceiver with view references (v1.32.368)
         if (_receiver != null)
