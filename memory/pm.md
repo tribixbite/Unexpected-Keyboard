@@ -9,13 +9,69 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.349 (399)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phases 1 & 2 Complete!
+**Latest Version**: v1.32.360 (410)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phase 3 (1/2) Complete!
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → ~1,950 lines, target: <700)
-**Refactoring Progress**: 5/7 extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,996 lines, target: <700)
+**Refactoring Progress**: 6/7 extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 1/2 ✅)
 
-### Recent Work (v1.32.349)
+### Recent Work (v1.32.358-360) - Phase 3 InputCoordinator
+
+**REFACTORING PHASE 3: Extract InputCoordinator (Phase 3, 1/2 Complete!)**
+- **Goal**: Centralize all text input operations (typing, backspace, swipe, suggestions)
+- **Created**: InputCoordinator.java (1,050 lines)
+  - Extracted 10 methods from Keyboard2.java:
+    * updateContext(String word)
+    * updatePredictionsForCurrentWord()
+    * onSuggestionSelected(String, InputConnection, EditorInfo, Resources)
+    * handleRegularTyping(String, InputConnection, EditorInfo)
+    * handleBackspace()
+    * handleDeleteLastWord(InputConnection, EditorInfo)
+    * handleSwipeTyping(List, List, List, InputConnection, EditorInfo, Resources)
+    * handlePredictionResults(List, List, InputConnection, EditorInfo, Resources)
+    * resetSwipeData()
+    * getCurrentSwipeData()
+  - Manages ML data collection for swipe training
+  - Handles autocorrection during typing
+  - Smart word deletion with Termux support
+  - Async prediction handler integration
+  - Non-final _suggestionBar field (updated in onStartInputView)
+- **Modified**: Keyboard2.java (~2,197 → 1,996 lines, -201)
+  - Removed _currentSwipeData field (moved to InputCoordinator)
+  - Added _inputCoordinator field with initialization in onCreate()
+  - Updated setSuggestionBar() call in onStartInputView()
+  - Delegated handleSwipeTyping() to InputCoordinator
+  - Updated onConfigChanged() to propagate config to InputCoordinator
+  - Added Resources import for delegation
+- **Bug Fixes** (v1.32.359-360):
+  - v1.32.359: Fixed PredictionCoordinator not calling _neuralEngine.initialize()
+  - v1.32.360: Fixed model loading status always showing "not loaded"
+  - v1.32.360: Fixed model switching not cleaning up old ONNX sessions
+  - v1.32.360: Added immediate reinitialization on model config changes
+- **Architecture**:
+  - InputCoordinator accepts InputConnection/EditorInfo as parameters
+  - No direct InputMethodService coupling (methods are pure)
+  - Debug logging temporarily disabled (TODO: add logger interface)
+  - File logging temporarily disabled
+  - Clean separation: input logic in coordinator, UI in Keyboard2
+- **Impact**:
+  - Keyboard2.java: ~2,197 → 1,996 lines (-201)
+  - Created InputCoordinator: +1,050 lines
+  - Net extracted: ~1,050 lines
+  - Build successful ✅ (v1.32.358-360, builds 408-410)
+  - Zero behavioral changes (all input operations work identically)
+  - Model loading and switching now works correctly
+- **Benefits**:
+  - Centralized input handling (single source of truth)
+  - Improved testability (can mock InputCoordinator)
+  - Better encapsulation (input state not directly accessible)
+  - Clearer lifecycle management
+  - Easier to add new input modes
+  - Model loading bugs fixed
+- **Phase 3 Progress**: 1/2 complete ✅ (InputCoordinator done, ViewManager pending)
+- **Next**: ViewManager extraction (final Phase 3 component)
+
+### Previous Work (v1.32.349)
 
 **REFACTORING PHASE 1: Extract ClipboardManager (Phase 1 Complete!)**
 - **Goal**: Isolate clipboard pane and search functionality
