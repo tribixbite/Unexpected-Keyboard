@@ -31,6 +31,19 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ View reference management
 - **Total**: 28 test cases
 
+### WindowLayoutUtilsTest.kt (288 lines)
+**Coverage**: 100% of WindowLayoutUtils.kt
+- ✅ Window layout height updates (different/same height, null params)
+- ✅ View layout height updates (different/same height, null params)
+- ✅ View gravity updates (LinearLayout and FrameLayout)
+- ✅ Gravity unchanged scenarios
+- ✅ Unsupported layout param types (graceful handling)
+- ✅ Edge-to-edge configuration (API 35+)
+- ✅ Soft input window layout params (fullscreen and non-fullscreen)
+- ✅ Bottom gravity application
+- ✅ Null parent handling
+- **Total**: 18 test cases
+
 ## Testing Methodology
 
 ### Frameworks Used
@@ -106,6 +119,13 @@ fun testMethodName_scenario_expectedBehavior() {
 - **Mock Usage**: Extensive (11 dependencies)
 - **Edge Cases**: 4
 - **Delegation Tests**: 15
+
+### WindowLayoutUtilsTest
+- **Lines of Code**: 288
+- **Test Cases**: 18
+- **Mock Usage**: Extensive (Window, View, LayoutParams)
+- **Edge Cases**: 5 (null params, same values, unsupported types)
+- **Layout Types Tested**: 2 (LinearLayout, FrameLayout)
 
 ## Continuous Improvement
 

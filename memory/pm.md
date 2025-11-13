@@ -9,13 +9,55 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.374 (424)
+**Latest Version**: v1.32.376 (426)
 **Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues! (Tested on device ✅)
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,193 lines, target: <700)
-**Refactoring Progress**: 12/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 5/? ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,147 lines, target: <700)
+**Refactoring Progress**: 13/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 6/? ✅)
+**Test Coverage**: 60 test cases across 3 comprehensive Kotlin test suites
 
-### Recent Work (v1.32.362-374) - Phase 4 Continues!
+### Recent Work (v1.32.362-376) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract WindowLayoutUtils (Phase 4, 6/? Complete! ✅)**
+- **Goal**: Extract window and view layout management utilities into Kotlin object
+- **Created**: WindowLayoutUtils.kt (145 lines, Kotlin)
+  - updateLayoutHeightOf(Window, Int) - Update window layout height
+  - updateLayoutHeightOf(View, Int) - Update view layout height
+  - updateLayoutGravityOf(View, Int) - Update view gravity for Linear/FrameLayout
+  - configureEdgeToEdge(Window) - Configure edge-to-edge display for API 35+
+  - updateSoftInputWindowLayoutParams(...) - Main method combining all utilities
+  - All methods annotated with @JvmStatic for Java interop
+- **Created**: WindowLayoutUtilsTest.kt (288 lines)
+  - 18 comprehensive test cases with AAA pattern
+  - Tests all 5 utility methods
+  - Edge cases: null params, unchanged values, different layout param types
+  - Mocks: Window, View, WindowManager.LayoutParams, ViewGroup.LayoutParams
+  - Tests fullscreen vs non-fullscreen modes
+  - Verifies gravity updates for LinearLayout and FrameLayout
+- **Modified**: Keyboard2.java (1,193 → 1,147 lines, -46)
+  - Replaced updateSoftInputWindowLayoutParams() with delegation to WindowLayoutUtils
+  - Removed 3 static utility methods (updateLayoutHeightOf x2, updateLayoutGravityOf)
+  - Simplified from 57 lines to 10 lines (including javadoc)
+- **Architecture**:
+  - First Kotlin extraction demonstrating migration path
+  - Static-like object with @JvmStatic methods for Java interop
+  - Immutable utility functions with no state
+  - Clean separation: layout logic in WindowLayoutUtils, IME lifecycle in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,193 → 1,147 lines (-46) 🎉
+  - Created WindowLayoutUtils.kt: +145 lines (Kotlin)
+  - Created WindowLayoutUtilsTest.kt: +288 lines
+  - Total Keyboard2 reduction: 2,397 → 1,147 lines (-1,250 total!)
+  - Build successful ✅ (v1.32.376, build 426)
+  - ⚠️ Expected deprecation warning for setDecorFitsSystemWindows() (API 35+)
+- **Benefits**:
+  - Demonstrates Kotlin migration for utility classes
+  - Comprehensive test coverage (18 test cases)
+  - Better organization of window/view layout logic
+  - Improved testability through Kotlin's concise testing syntax
+  - Foundation for future Kotlin extractions
+- **Phase 4 Progress**: 6/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager + KeyboardReceiver + MLDataCollector + WindowLayoutUtils done!)
+- **Next**: Continue Phase 4 extractions (only ~447 lines remaining to reach <700 target!)
 
 **REFACTORING PHASE 4: Extract MLDataCollector (Phase 4, 5/? Complete! ✅)**
 - **Goal**: Extract ML data collection logic for swipe gesture training data
