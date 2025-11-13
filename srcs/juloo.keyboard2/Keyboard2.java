@@ -514,29 +514,14 @@ public class Keyboard2 extends InputMethodService
         // Register suggestion selection listener (v1.32.381)
         _suggestionBar.setOnSuggestionSelectedListener(this);
 
-        // Update InputCoordinator with suggestion bar reference (v1.32.350)
-        if (_inputCoordinator != null)
-        {
-          _inputCoordinator.setSuggestionBar(_suggestionBar);
-        }
-
-        // Update SuggestionHandler with suggestion bar reference (v1.32.361)
-        if (_suggestionHandler != null)
-        {
-          _suggestionHandler.setSuggestionBar(_suggestionBar);
-        }
-
-        // Update NeuralLayoutHelper with suggestion bar reference (v1.32.362)
-        if (_neuralLayoutHelper != null)
-        {
-          _neuralLayoutHelper.setSuggestionBar(_suggestionBar);
-        }
-
-        // Update KeyboardReceiver with view references (v1.32.368)
-        if (_receiver != null)
-        {
-          _receiver.setViewReferences(_emojiPane, _contentPaneContainer);
-        }
+        // Propagate suggestion bar and view references to managers (v1.32.394)
+        SuggestionBarPropagator suggestionBarPropagator = SuggestionBarPropagator.create(
+          _inputCoordinator,
+          _suggestionHandler,
+          _neuralLayoutHelper,
+          _receiver
+        );
+        suggestionBarPropagator.propagateAll(_suggestionBar, _emojiPane, _contentPaneContainer);
 
         _inputViewContainer.addView(_keyboardView);
       }
