@@ -107,10 +107,8 @@ public final class KeyEventHandler
         // Handle backspace for word prediction
         if (key.getKeyevent() == KeyEvent.KEYCODE_DEL)
         {
-          if (_recv instanceof Keyboard2.Receiver)
-          {
-            ((Keyboard2.Receiver)_recv).handle_backspace();
-          }
+          // v1.32.368: Receiver extracted to KeyboardReceiver, use interface method
+          _recv.handle_backspace();
         }
         break;
       case Modifier: break;

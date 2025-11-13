@@ -9,13 +9,55 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.367 (417)
+**Latest Version**: v1.32.369 (419)
 **Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues!
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,342 lines, target: <700)
-**Refactoring Progress**: 10/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 3/? ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,213 lines, target: <700)
+**Refactoring Progress**: 11/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 4/? ✅)
 
-### Recent Work (v1.32.362-367) - Phase 4 Continues!
+### Recent Work (v1.32.362-369) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract KeyboardReceiver (Phase 4, 4/? Complete! ✅)**
+- **Goal**: Extract keyboard event handling from inner Receiver class to standalone KeyboardReceiver
+- **Created**: KeyboardReceiver.java (290 lines)
+  - Extracted entire Receiver inner class from Keyboard2.java
+  - Implements KeyEventHandler.IReceiver interface
+  - Handles special key events (CONFIG, SWITCH_TEXT, SWITCH_NUMERIC, SWITCH_EMOJI, etc.)
+  - Manages layout switching (text, numeric, emoji, clipboard)
+  - Coordinates input method switching (CHANGE_METHOD_PICKER, CHANGE_METHOD_AUTO)
+  - Manages keyboard view state (shift, compose, selection)
+  - Handles clipboard and emoji pane management
+  - Bridges between KeyEventHandler and Keyboard2
+- **Modified**: Keyboard2.java (1,342 → 1,213 lines, -129!)
+  - Removed Receiver inner class (188 lines)
+  - Added _receiver field with lazy initialization in onStartInputView()
+  - Created thin delegating wrapper in onCreate() for KeyEventHandler
+  - Made inflate_view(), getConnectionToken() public for KeyboardReceiver access
+  - Added getConfig() method for KeyboardReceiver
+  - Updated KeyEventHandler to call interface method directly (removed instanceof check)
+- **Modified**: KeyEventHandler.java
+  - Removed Keyboard2.Receiver instanceof check
+  - Call handle_backspace() through IReceiver interface directly
+- **Architecture**:
+  - KeyboardReceiver is standalone class (not inner class)
+  - Accepts all manager dependencies through constructor
+  - Implements KeyEventHandler.IReceiver interface
+  - Lazy initialization after managers are created
+  - Clean separation: event handling in receiver, IME lifecycle in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,342 → 1,213 lines (-129) 🎉
+  - Created KeyboardReceiver: +290 lines
+  - Total Keyboard2 reduction: 2,397 → 1,213 lines (-1,184 total!)
+  - Build successful ✅ (v1.32.369, build 419)
+  - Zero behavioral changes (all keyboard events work identically)
+- **Benefits**:
+  - Extracted largest inner class from Keyboard2
+  - Better separation of concerns (event handling vs IME)
+  - Improved testability (can test KeyboardReceiver independently)
+  - Clearer dependencies (explicit constructor injection)
+  - Easier to add new event types
+- **Phase 4 Progress**: 4/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager + KeyboardReceiver done!)
+- **Next**: Continue Phase 4 extractions (only ~513 lines remaining to reach <700 target!)
 
 **REFACTORING PHASE 4: Extract SubtypeManager (Phase 4, 3/? Complete! ✅)**
 - **Goal**: Extract IME subtype management, locale detection, and extra keys logic

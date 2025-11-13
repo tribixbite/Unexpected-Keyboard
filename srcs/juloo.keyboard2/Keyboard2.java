@@ -89,6 +89,9 @@ public class Keyboard2 extends InputMethodService
   // Subtype management (v1.32.365: extracted to SubtypeManager)
   private SubtypeManager _subtypeManager;
 
+  // Event handling (v1.32.368: extracted to KeyboardReceiver)
+  private KeyboardReceiver _receiver;
+
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
   private android.content.BroadcastReceiver _debugModeReceiver;
@@ -174,7 +177,24 @@ public class Keyboard2 extends InputMethodService
     super.onCreate();
     SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     _handler = new Handler(getMainLooper());
-    _keyeventhandler = new KeyEventHandler(this.new Receiver());
+
+    // NOTE: Receiver will be initialized after managers are created (line ~250)
+    // Using a temporary inner class that delegates to _receiver field
+    _keyeventhandler = new KeyEventHandler(new KeyEventHandler.IReceiver() {
+      public void handle_event_key(KeyValue.Event ev) { _receiver.handle_event_key(ev); }
+      public void set_shift_state(boolean state, boolean lock) { _receiver.set_shift_state(state, lock); }
+      public void set_compose_pending(boolean pending) { _receiver.set_compose_pending(pending); }
+      public void selection_state_changed(boolean selection_is_ongoing) { _receiver.selection_state_changed(selection_is_ongoing); }
+      public InputConnection getCurrentInputConnection() { return _receiver.getCurrentInputConnection(); }
+      public Handler getHandler() { return _receiver.getHandler(); }
+      public void handle_text_typed(String text) { _receiver.handle_text_typed(text); }
+      public void handle_backspace() { _receiver.handle_backspace(); }
+      public void handle_delete_last_word() { _receiver.handle_delete_last_word(); }
+      public boolean isClipboardSearchMode() { return _receiver.isClipboardSearchMode(); }
+      public void appendToClipboardSearch(String text) { _receiver.appendToClipboardSearch(text); }
+      public void backspaceClipboardSearch() { _receiver.backspaceClipboardSearch(); }
+      public void exitClipboardSearchMode() { _receiver.exitClipboardSearchMode(); }
+    });
 
     // Create FoldStateTracker for device fold state monitoring
     FoldStateTracker foldStateTracker = new FoldStateTracker(this);
@@ -550,6 +570,22 @@ public class Keyboard2 extends InputMethodService
   {
     refresh_config();
 
+    // Initialize KeyboardReceiver if needed (v1.32.368: extracted to KeyboardReceiver class)
+    if (_receiver == null)
+    {
+      _receiver = new KeyboardReceiver(
+        this,
+        this,
+        _keyboardView,
+        _layoutManager,
+        _clipboardManager,
+        _contextTracker,
+        _inputCoordinator,
+        _subtypeManager,
+        _handler
+      );
+    }
+
     // Auto-close clipboard pane when switching to new app/field
     // Prevents confusing UX where clipboard briefly shows then keyboard closes
     if (_contentPaneContainer != null && _contentPaneContainer.getVisibility() == View.VISIBLE)
@@ -648,6 +684,12 @@ public class Keyboard2 extends InputMethodService
           paneHeight));
         _contentPaneContainer.setVisibility(View.GONE); // Hidden by default
         _inputViewContainer.addView(_contentPaneContainer);
+
+        // Update KeyboardReceiver with view references (v1.32.368)
+        if (_receiver != null)
+        {
+          _receiver.setViewReferences(_emojiPane, _contentPaneContainer);
+        }
 
         _inputViewContainer.addView(_keyboardView);
       }
@@ -833,199 +875,24 @@ public class Keyboard2 extends InputMethodService
   }
 
   /** Not static */
-  public class Receiver implements KeyEventHandler.IReceiver
-  {
-    public void handle_event_key(KeyValue.Event ev)
-    {
-      switch (ev)
-      {
-        case CONFIG:
-          Intent intent = new Intent(Keyboard2.this, SettingsActivity.class);
-          intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-          startActivity(intent);
-          break;
+  // v1.32.368: Receiver inner class removed - functionality moved to KeyboardReceiver class
 
-        case SWITCH_TEXT:
-          _keyboardView.setKeyboard(_layoutManager.clearSpecialLayout());
-          break;
-
-        case SWITCH_NUMERIC:
-          setSpecialLayout(loadNumpad(R.xml.numeric));
-          break;
-
-        case SWITCH_EMOJI:
-          if (_emojiPane == null)
-            _emojiPane = (ViewGroup)inflate_view(R.layout.emoji_pane);
-
-          // Show emoji pane in content container (keyboard stays visible below)
-          if (_contentPaneContainer != null)
-          {
-            _contentPaneContainer.removeAllViews();
-            _contentPaneContainer.addView(_emojiPane);
-            _contentPaneContainer.setVisibility(View.VISIBLE);
-          }
-          else
-          {
-            // Fallback for when predictions disabled (no container)
-            setInputView(_emojiPane);
-          }
-          break;
-
-        case SWITCH_CLIPBOARD:
-          // Get clipboard pane from manager (lazy initialization)
-          ViewGroup clipboardPane = _clipboardManager.getClipboardPane(getLayoutInflater());
-
-          // Reset search mode and clear any previous search when showing clipboard pane
-          _clipboardManager.resetSearchOnShow();
-
-          // Show clipboard pane in content container (keyboard stays visible below)
-          if (_contentPaneContainer != null)
-          {
-            _contentPaneContainer.removeAllViews();
-            _contentPaneContainer.addView(clipboardPane);
-            _contentPaneContainer.setVisibility(View.VISIBLE);
-          }
-          else
-          {
-            // Fallback for when predictions disabled (no container)
-            setInputView(clipboardPane);
-          }
-          break;
-
-        case SWITCH_BACK_EMOJI:
-        case SWITCH_BACK_CLIPBOARD:
-          // Exit clipboard search mode when switching back
-          _clipboardManager.resetSearchOnHide();
-
-          // Hide content pane (keyboard remains visible)
-          if (_contentPaneContainer != null)
-          {
-            _contentPaneContainer.setVisibility(View.GONE);
-          }
-          else
-          {
-            // Fallback for when predictions disabled
-            setInputView(_keyboardView);
-          }
-          break;
-
-        case CHANGE_METHOD_PICKER:
-          get_imm().showInputMethodPicker();
-          break;
-
-        case CHANGE_METHOD_AUTO:
-          if (VERSION.SDK_INT < 28)
-            get_imm().switchToLastInputMethod(getConnectionToken());
-          else
-            switchToNextInputMethod(false);
-          break;
-
-        case ACTION:
-          InputConnection conn = getCurrentInputConnection();
-          if (conn != null)
-            conn.performEditorAction(actionId);
-          break;
-
-        case SWITCH_FORWARD:
-          incrTextLayout(1);
-          break;
-
-        case SWITCH_BACKWARD:
-          incrTextLayout(-1);
-          break;
-
-        case SWITCH_GREEKMATH:
-          setSpecialLayout(loadNumpad(R.xml.greekmath));
-          break;
-
-        case CAPS_LOCK:
-          set_shift_state(true, true);
-          break;
-
-        case SWITCH_VOICE_TYPING:
-          if (!VoiceImeSwitcher.switch_to_voice_ime(Keyboard2.this, get_imm(),
-                Config.globalPrefs()))
-            _config.shouldOfferVoiceTyping = false;
-          break;
-
-        case SWITCH_VOICE_TYPING_CHOOSER:
-          VoiceImeSwitcher.choose_voice_ime(Keyboard2.this, get_imm(),
-              Config.globalPrefs());
-          break;
-      }
-    }
-
-    public void set_shift_state(boolean state, boolean lock)
-    {
-      _keyboardView.set_shift_state(state, lock);
-    }
-
-    public void set_compose_pending(boolean pending)
-    {
-      _keyboardView.set_compose_pending(pending);
-    }
-
-    public void selection_state_changed(boolean selection_is_ongoing)
-    {
-      _keyboardView.set_selection_state(selection_is_ongoing);
-    }
-
-    public InputConnection getCurrentInputConnection()
-    {
-      return Keyboard2.this.getCurrentInputConnection();
-    }
-
-    public Handler getHandler()
-    {
-      return _handler;
-    }
-    
-    public void handle_text_typed(String text)
-    {
-      // Reset swipe tracking when regular typing occurs
-      _contextTracker.setWasLastInputSwipe(false);
-      _inputCoordinator.resetSwipeData();
-      handleRegularTyping(text);
-    }
-    
-    public void handle_backspace()
-    {
-      Keyboard2.this.handleBackspace();
-    }
-
-    public void handle_delete_last_word()
-    {
-      Keyboard2.this.handleDeleteLastWord();
-    }
-
-    @Override
-    public boolean isClipboardSearchMode()
-    {
-      return _clipboardManager.isInSearchMode();
-    }
-
-    @Override
-    public void appendToClipboardSearch(String text)
-    {
-      _clipboardManager.appendToSearch(text);
-    }
-
-    @Override
-    public void backspaceClipboardSearch()
-    {
-      _clipboardManager.deleteFromSearch();
-    }
-
-    @Override
-    public void exitClipboardSearchMode()
-    {
-      _clipboardManager.clearSearch();
-    }
-  }
-
-  private IBinder getConnectionToken()
+  /**
+   * Gets connection token for IME operations.
+   * (v1.32.368: Made public for KeyboardReceiver)
+   */
+  public IBinder getConnectionToken()
   {
     return getWindow().getWindow().getAttributes().token;
+  }
+
+  /**
+   * Gets current configuration.
+   * (v1.32.368: Added for KeyboardReceiver)
+   */
+  public Config getConfig()
+  {
+    return _config;
   }
 
   // v1.32.349: showDateFilterDialog() method removed - functionality moved to ClipboardManager class
@@ -1198,7 +1065,11 @@ public class Keyboard2 extends InputMethodService
     _inputCoordinator.handleSwipeTyping(swipedKeys, swipePath, timestamps, ic, editorInfo, resources);
   }
 
-  private View inflate_view(int layout)
+  /**
+   * Inflates a view with the current theme.
+   * (v1.32.368: Made public for KeyboardReceiver)
+   */
+  public View inflate_view(int layout)
   {
     return View.inflate(new ContextThemeWrapper(this, _config.theme), layout, null);
   }
