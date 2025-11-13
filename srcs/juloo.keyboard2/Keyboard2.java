@@ -242,32 +242,25 @@ public class Keyboard2 extends InputMethodService
     _debugLoggingManager = new DebugLoggingManager(this, getPackageName());
     _debugLoggingManager.initializeLogWriter();
 
-    // Create debug mode propagator (v1.32.392: extracted debug mode listener)
-    DebugModePropagator debugModePropagator = DebugModePropagator.create(
+    // Initialize propagators (v1.32.396: extracted propagator initialization)
+    // Creates and registers DebugModePropagator, builds ConfigPropagator with all managers
+    PropagatorInitializer.InitializationResult propagators = PropagatorInitializer.create(
       _suggestionHandler,
       _neuralLayoutHelper,
       _debugLoggerImpl,
-      _debugLoggingManager
-    );
+      _debugLoggingManager,
+      _clipboardManager,
+      _predictionCoordinator,
+      _inputCoordinator,
+      _layoutManager,
+      _keyboardView,
+      _subtypeManager
+    ).initialize();
 
-    // Register debug mode propagator with debug logging manager (v1.32.392)
-    _debugLoggingManager.registerDebugModeListener(debugModePropagator);
+    _configPropagator = propagators.getConfigPropagator();
 
     // Register broadcast receiver for debug mode control (v1.32.384: delegated to DebugLoggingManager)
     _debugLoggingManager.registerDebugModeReceiver(this);
-
-    // Initialize config propagator (v1.32.386: extracted config propagation logic)
-    // Note: LayoutManager and SubtypeManager are initialized in refreshSubtypeImm() called from onCreate
-    _configPropagator = ConfigPropagator.builder()
-      .setClipboardManager(_clipboardManager)
-      .setPredictionCoordinator(_predictionCoordinator)
-      .setInputCoordinator(_inputCoordinator)
-      .setSuggestionHandler(_suggestionHandler)
-      .setNeuralLayoutHelper(_neuralLayoutHelper)
-      .setLayoutManager(_layoutManager)
-      .setKeyboardView(_keyboardView)
-      .setSubtypeManager(_subtypeManager)
-      .build();
   }
 
   @Override
