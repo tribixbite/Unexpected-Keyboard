@@ -93,7 +93,10 @@ public class SettingsActivity extends PreferenceActivity
         android.util.Log.e("SettingsActivity", "Failed to load version info", e);
       }
     }
-    
+
+    // Update clipboard storage stats
+    updateClipboardStats();
+
     // Add update button
     Preference updatePref = findPreference("update_app");
     if (updatePref != null)
@@ -1788,6 +1791,7 @@ public class SettingsActivity extends PreferenceActivity
     // Register for preference changes and update summaries
     getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     updateCGRParameterSummaries();
+    updateClipboardStats();
   }
   
   @Override
@@ -1843,6 +1847,35 @@ public class SettingsActivity extends PreferenceActivity
     {
       int lengthFilter = prefs.getInt("cgr_length_filter", 70);
       lengthPref.setSummary("Current: " + lengthFilter + "% (Length similarity filter)");
+    }
+  }
+
+  /**
+   * Update clipboard storage statistics preference with current data
+   */
+  private void updateClipboardStats()
+  {
+    Preference statsPref = findPreference("clipboard_storage_stats");
+    if (statsPref != null)
+    {
+      try
+      {
+        ClipboardHistoryService service = ClipboardHistoryService.get_service(this);
+        if (service != null)
+        {
+          String stats = service.getStorageStats();
+          statsPref.setSummary(stats);
+        }
+        else
+        {
+          statsPref.setSummary("Clipboard service not available");
+        }
+      }
+      catch (Exception e)
+      {
+        statsPref.setSummary("Error loading statistics");
+        android.util.Log.e("SettingsActivity", "Failed to load clipboard stats", e);
+      }
     }
   }
 }

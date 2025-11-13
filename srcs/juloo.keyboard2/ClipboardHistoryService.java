@@ -322,9 +322,39 @@ public final class ClipboardHistoryService
   /** Get statistics about clipboard storage */
   public String getStorageStats()
   {
-    int total = _database.getTotalEntryCount();
-    int active = _database.getActiveEntryCount();
-    return String.format("Clipboard: %d active entries (%d total in database)", active, total);
+    ClipboardDatabase.StorageStats stats = _database.getStorageStats();
+
+    // Format size in human-readable format (KB/MB)
+    String activeSize = formatBytes(stats.activeSizeBytes);
+    String pinnedSize = formatBytes(stats.pinnedSizeBytes);
+
+    // Build multi-line summary with active and pinned breakdown
+    StringBuilder sb = new StringBuilder();
+    sb.append(String.format("%d active entries (%s)", stats.activeEntries, activeSize));
+
+    if (stats.pinnedEntries > 0)
+    {
+      sb.append(String.format("\n%d pinned (%s)", stats.pinnedEntries, pinnedSize));
+    }
+
+    return sb.toString();
+  }
+
+  /** Format bytes into human-readable string (KB or MB) */
+  private String formatBytes(long bytes)
+  {
+    if (bytes < 1024)
+    {
+      return bytes + " B";
+    }
+    else if (bytes < 1024 * 1024)
+    {
+      return String.format("%.1f KB", bytes / 1024.0);
+    }
+    else
+    {
+      return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
+    }
   }
 
   public static interface OnClipboardHistoryChange

@@ -61,6 +61,7 @@ The Clipboard Manager provides persistent clipboard history with pinning, search
 10. **FR-10**: Clipboard entries must expire after configurable period (default 7 days)
 11. **FR-11**: Pinned entries must never expire
 12. **FR-12**: User must be able to configure maximum size per clipboard item to prevent system overload (v1.32.327)
+13. **FR-13**: User must be able to view clipboard storage statistics (entry count and size) (v1.32.329)
 
 ### Non-Functional Requirements
 
@@ -573,6 +574,68 @@ if (maxSizeKb > 0)
   - Continues with add (fail-open for reliability)
   - Logs error to logcat
 
+#### Clipboard Storage Statistics (v1.32.329)
+
+**Purpose**: Provide users with visibility into clipboard usage (entry count and storage size)
+
+**Implementation**:
+
+**ClipboardDatabase.StorageStats** (ClipboardDatabase.java:365-383):
+```java
+public static class StorageStats
+{
+    public int totalEntries;      // Total entries in database
+    public int activeEntries;     // Non-expired entries
+    public int pinnedEntries;     // Pinned entries only
+    public long totalSizeBytes;   // Total UTF-8 byte size
+    public long activeSizeBytes;  // Active entries size
+    public long pinnedSizeBytes;  // Pinned entries size
+}
+```
+
+**ClipboardDatabase.getStorageStats()** (ClipboardDatabase.java:389-454):
+- Queries all entries with content, is_pinned, and expiry_timestamp
+- Calculates UTF-8 byte size for each entry
+- Separates stats into total, active (non-expired), and pinned
+- Returns StorageStats object with complete breakdown
+
+**ClipboardHistoryService.getStorageStats()** (ClipboardHistoryService.java:323-341):
+- Calls ClipboardDatabase.getStorageStats()
+- Formats output using formatBytes() helper (B/KB/MB)
+- Returns multi-line string:
+  - Line 1: "X active entries (Y KB/MB)"
+  - Line 2 (if pinned exist): "Z pinned (W KB/MB)"
+
+**ClipboardHistoryService.formatBytes()** (ClipboardHistoryService.java:344-358):
+- Converts bytes to human-readable format
+- < 1024: "X B"
+- < 1 MB: "X.X KB" (1 decimal)
+- >= 1 MB: "X.XX MB" (2 decimals)
+
+**SettingsActivity Integration**:
+
+**Preference Definition** (settings.xml:136):
+```xml
+<Preference android:key="clipboard_storage_stats"
+            android:title="Clipboard usage"
+            android:summary="Loading statistics..."
+            android:dependency="clipboard_history_enabled"
+            android:selectable="false"/>
+```
+
+**Dynamic Update** (SettingsActivity.java:1856-1879):
+- onCreate(): Calls updateClipboardStats() on initial display
+- onResume(): Calls updateClipboardStats() when returning to settings (line 1794)
+- updateClipboardStats(): Fetches stats from ClipboardHistoryService and updates preference summary
+- Handles service unavailable and error cases gracefully
+
+**User Experience**:
+- Appears as non-clickable informational preference
+- Disabled when clipboard_history_enabled is false
+- Updates immediately when settings screen opens
+- Shows real-time clipboard storage usage
+- Helps users understand clipboard memory footprint
+
 ### ClipboardHistoryView
 
 **File**: `srcs/juloo.keyboard2/ClipboardHistoryView.java`
@@ -1035,6 +1098,19 @@ res/xml/
 ---
 
 ## Changelog
+
+### v1.32.329 (2025-11-12)
+- **FEATURE**: Added clipboard usage statistics display
+  - Real-time display in Settings → Clipboard → "Clipboard usage"
+  - Shows active entry count and size (e.g., "5 active entries (12.3 KB)")
+  - Shows pinned entry count and size when pinned items exist (e.g., "2 pinned (3.4 KB)")
+  - Refreshes automatically when settings screen is opened
+  - Updates dynamically when clipboard changes
+- **Files Modified**:
+  - srcs/juloo.keyboard2/ClipboardDatabase.java: Added StorageStats class and getStorageStats()
+  - srcs/juloo.keyboard2/ClipboardHistoryService.java: Updated getStorageStats() and added formatBytes()
+  - res/xml/settings.xml: Added clipboard_storage_stats preference
+  - srcs/juloo.keyboard2/SettingsActivity.java: Added updateClipboardStats() and onResume() integration
 
 ### v1.32.327 (2025-11-12)
 - **FEATURE**: Added maximum item size limit for clipboard entries

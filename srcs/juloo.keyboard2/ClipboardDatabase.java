@@ -344,21 +344,115 @@ public class ClipboardDatabase extends SQLiteOpenHelper
     {
         long currentTime = System.currentTimeMillis();
         SQLiteDatabase db = this.getReadableDatabase();
-        
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_CLIPBOARD + 
+
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_CLIPBOARD +
             " WHERE " + COLUMN_EXPIRY_TIMESTAMP + " > ? OR " + COLUMN_IS_PINNED + " = 1",
             new String[]{String.valueOf(currentTime)});
-        
+
         int count = 0;
         if (cursor.moveToFirst())
         {
             count = cursor.getInt(0);
         }
         cursor.close();
-        
+
         return count;
     }
-    
+
+    /**
+     * Storage statistics holder class
+     */
+    public static class StorageStats
+    {
+        public int totalEntries;
+        public int activeEntries;
+        public int pinnedEntries;
+        public long totalSizeBytes;
+        public long activeSizeBytes;
+        public long pinnedSizeBytes;
+
+        public StorageStats(int total, int active, int pinned, long totalSize, long activeSize, long pinnedSize)
+        {
+            this.totalEntries = total;
+            this.activeEntries = active;
+            this.pinnedEntries = pinned;
+            this.totalSizeBytes = totalSize;
+            this.activeSizeBytes = activeSize;
+            this.pinnedSizeBytes = pinnedSize;
+        }
+    }
+
+    /**
+     * Get comprehensive storage statistics
+     * Returns counts and sizes for all, active, and pinned entries
+     */
+    public StorageStats getStorageStats()
+    {
+        long currentTime = System.currentTimeMillis();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Query all entries with content for size calculation
+        Cursor cursor = db.rawQuery("SELECT " + COLUMN_CONTENT + ", " + COLUMN_IS_PINNED + ", " +
+            COLUMN_EXPIRY_TIMESTAMP + " FROM " + TABLE_CLIPBOARD, null);
+
+        int totalEntries = 0;
+        int activeEntries = 0;
+        int pinnedEntries = 0;
+        long totalSizeBytes = 0;
+        long activeSizeBytes = 0;
+        long pinnedSizeBytes = 0;
+
+        try
+        {
+            if (cursor.moveToFirst())
+            {
+                do
+                {
+                    String content = cursor.getString(0);
+                    boolean isPinned = cursor.getInt(1) == 1;
+                    long expiryTimestamp = cursor.getLong(2);
+
+                    // Calculate UTF-8 byte size
+                    long contentSize = 0;
+                    try
+                    {
+                        contentSize = content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+                    }
+                    catch (Exception e)
+                    {
+                        // Skip size calculation on error
+                    }
+
+                    totalEntries++;
+                    totalSizeBytes += contentSize;
+
+                    // Check if entry is active (not expired or pinned)
+                    boolean isActive = isPinned || expiryTimestamp > currentTime;
+
+                    if (isPinned)
+                    {
+                        pinnedEntries++;
+                        pinnedSizeBytes += contentSize;
+                    }
+
+                    if (isActive)
+                    {
+                        activeEntries++;
+                        activeSizeBytes += contentSize;
+                    }
+                }
+                while (cursor.moveToNext());
+            }
+        }
+        finally
+        {
+            cursor.close();
+        }
+
+        return new StorageStats(totalEntries, activeEntries, pinnedEntries,
+                                totalSizeBytes, activeSizeBytes, pinnedSizeBytes);
+    }
+
     /**
      * Apply size limits by removing oldest entries (except pinned)
      */
