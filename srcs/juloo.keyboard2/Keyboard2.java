@@ -226,17 +226,9 @@ public class Keyboard2 extends InputMethodService
     _neuralLayoutHelper = managers.getNeuralLayoutHelper();
     _mlDataCollector = managers.getMlDataCollector();
 
-    if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
-    {
-      _predictionCoordinator.initialize();
-
-      // Set swipe typing components on keyboard view if swipe is enabled
-      if (_config.swipe_typing_enabled && _predictionCoordinator.isSwipeTypingAvailable())
-      {
-        android.util.Log.d("Keyboard2", "Neural engine initialized - dimensions and key positions will be set after layout");
-        _keyboardView.setSwipeTypingComponents(_predictionCoordinator.getWordPredictor(), this);
-      }
-    }
+    // Initialize prediction components if enabled (v1.32.405: extracted to PredictionInitializer)
+    PredictionInitializer.create(_config, _predictionCoordinator, _keyboardView, this)
+        .initializeIfEnabled();
 
     // Initialize debug logging manager (v1.32.384)
     _debugLoggingManager = new DebugLoggingManager(this, getPackageName());
