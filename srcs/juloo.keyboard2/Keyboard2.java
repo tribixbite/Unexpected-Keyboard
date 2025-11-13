@@ -1089,58 +1089,15 @@ public class Keyboard2 extends InputMethodService
    * Check if this keyboard is set as the default IME.
    * If not, show a non-intrusive notification to help user enable it.
    * Only shown once per app launch to avoid annoyance.
+   *
+   * v1.32.377: IME status checking extracted to IMEStatusHelper (Kotlin).
    */
   private void checkAndPromptDefaultIME()
   {
-    try
-    {
-      // Get preference to track if we've already shown the prompt this session
-      SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-      boolean hasPromptedThisSession = prefs.getBoolean("ime_prompt_shown_this_session", false);
-
-      if (hasPromptedThisSession)
-      {
-        return; // Already prompted, don't annoy the user
-      }
-
-      // Check if we're the default IME
-      InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-      if (imm == null)
-      {
-        return;
-      }
-
-      String defaultIme = android.provider.Settings.Secure.getString(
-          getContentResolver(),
-          android.provider.Settings.Secure.DEFAULT_INPUT_METHOD
-      );
-
-      String ourIme = getPackageName() + "/" + getClass().getName();
-
-      if (!ourIme.equals(defaultIme))
-      {
-        // We're not the default - show helpful toast
-        _handler.postDelayed(new Runnable()
-        {
-          @Override
-          public void run()
-          {
-            android.widget.Toast.makeText(
-                Keyboard2.this,
-                "Set Unexpected Keyboard as default in Settings → System → Languages & input → On-screen keyboard",
-                android.widget.Toast.LENGTH_LONG
-            ).show();
-          }
-        }, 2000); // Delay 2 seconds so it doesn't interfere with startup
-
-        // Mark that we've shown the prompt this session
-        prefs.edit().putBoolean("ime_prompt_shown_this_session", true).apply();
-      }
-    }
-    catch (Exception e)
-    {
-      android.util.Log.e("Keyboard2", "Error checking default IME", e);
-    }
+    SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
+    IMEStatusHelper.checkAndPromptDefaultIME(
+        this, _handler, prefs, getPackageName(), getClass().getName()
+    );
   }
 
   // v1.32.341: loadContractionMappings() method removed - functionality moved to ContractionManager class
