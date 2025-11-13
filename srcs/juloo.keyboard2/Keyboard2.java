@@ -106,6 +106,9 @@ public class Keyboard2 extends InputMethodService
   // Suggestion/prediction bridge (v1.32.406: extracted to SuggestionBridge)
   private SuggestionBridge _suggestionBridge;
 
+  // Neural layout bridge (v1.32.407: extracted to NeuralLayoutBridge)
+  private NeuralLayoutBridge _neuralLayoutBridge;
+
   /**
    * Layout currently visible before it has been modified.
    * (v1.32.363: Delegated to LayoutManager)
@@ -239,6 +242,9 @@ public class Keyboard2 extends InputMethodService
       _predictionCoordinator,
       _keyboardView
     );
+
+    // Initialize neural layout bridge (v1.32.407: extracted to NeuralLayoutBridge)
+    _neuralLayoutBridge = NeuralLayoutBridge.create(_neuralLayoutHelper, _keyboardView);
 
     // Initialize prediction components if enabled (v1.32.405: extracted to PredictionInitializer)
     PredictionInitializer.create(_config, _predictionCoordinator, _keyboardView, this)
@@ -673,27 +679,21 @@ public class Keyboard2 extends InputMethodService
   /**
    * Calculate dynamic keyboard height based on user settings.
    * (v1.32.362: Delegated to NeuralLayoutHelper)
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   private float calculateDynamicKeyboardHeight()
   {
-    if (_neuralLayoutHelper != null)
-    {
-      return _neuralLayoutHelper.calculateDynamicKeyboardHeight();
-    }
-    return _keyboardView != null ? _keyboardView.getHeight() : 0;
+    return _neuralLayoutBridge.calculateDynamicKeyboardHeight();
   }
 
   /**
    * Get user keyboard height percentage for logging.
    * (v1.32.362: Delegated to NeuralLayoutHelper)
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   private int getUserKeyboardHeightPercent()
   {
-    if (_neuralLayoutHelper != null)
-    {
-      return _neuralLayoutHelper.getUserKeyboardHeightPercent();
-    }
-    return 35; // Default
+    return _neuralLayoutBridge.getUserKeyboardHeightPercent();
   }
   
   // Called by Keyboard2View when swipe typing completes
@@ -724,70 +724,58 @@ public class Keyboard2 extends InputMethodService
 
   /**
    * Update swipe predictions by checking keyboard view for CGR results.
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   public void updateCGRPredictions()
   {
-    if (_neuralLayoutHelper != null)
-    {
-      _neuralLayoutHelper.updateCGRPredictions();
-    }
+    _neuralLayoutBridge.updateCGRPredictions();
   }
 
   /**
    * Check and update CGR predictions (call this periodically or on swipe events).
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   public void checkCGRPredictions()
   {
-    if (_neuralLayoutHelper != null)
-    {
-      _neuralLayoutHelper.checkCGRPredictions();
-    }
+    _neuralLayoutBridge.checkCGRPredictions();
   }
 
   /**
    * Update swipe predictions in real-time during gesture (legacy method).
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   public void updateSwipePredictions(List<String> predictions)
   {
-    if (_neuralLayoutHelper != null)
-    {
-      _neuralLayoutHelper.updateSwipePredictions(predictions);
-    }
+    _neuralLayoutBridge.updateSwipePredictions(predictions);
   }
 
   /**
    * Complete swipe predictions after gesture ends (legacy method).
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   public void completeSwipePredictions(List<String> finalPredictions)
   {
-    if (_neuralLayoutHelper != null)
-    {
-      _neuralLayoutHelper.completeSwipePredictions(finalPredictions);
-    }
+    _neuralLayoutBridge.completeSwipePredictions(finalPredictions);
   }
 
   /**
    * Clear swipe predictions (legacy method).
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   public void clearSwipePredictions()
   {
-    if (_neuralLayoutHelper != null)
-    {
-      _neuralLayoutHelper.clearSwipePredictions();
-    }
+    _neuralLayoutBridge.clearSwipePredictions();
   }
 
   /**
    * Extract key positions from keyboard layout and set them on neural engine.
    * CRITICAL for neural swipe typing - without this, key detection fails completely!
    * (v1.32.362: Delegated to NeuralLayoutHelper)
+   * (v1.32.407: Delegated to NeuralLayoutBridge)
    */
   private void setNeuralKeyboardLayout()
   {
-    if (_neuralLayoutHelper != null)
-    {
-      _neuralLayoutHelper.setNeuralKeyboardLayout();
-    }
+    _neuralLayoutBridge.setNeuralKeyboardLayout();
   }
 
   // v1.32.362: extractKeyPositionsFromLayout() method removed - functionality moved to NeuralLayoutHelper class
