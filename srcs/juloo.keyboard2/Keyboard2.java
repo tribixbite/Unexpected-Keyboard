@@ -760,62 +760,16 @@ public class Keyboard2 extends InputMethodService
     updateSoftInputWindowLayoutParams();
   }
 
+  /**
+   * Updates soft input window layout parameters for IME.
+   *
+   * v1.32.375: Window layout management extracted to WindowLayoutUtils (Kotlin).
+   * Configures edge-to-edge display, window height, input area height, and gravity.
+   */
   private void updateSoftInputWindowLayoutParams() {
     final Window window = getWindow().getWindow();
-    // On API >= 35, Keyboard2View behaves as edge-to-edge
-    // APIs 30 to 34 have visual artifact when edge-to-edge is enabled
-    if (VERSION.SDK_INT >= 35)
-    {
-      WindowManager.LayoutParams wattrs = window.getAttributes();
-      wattrs.layoutInDisplayCutoutMode =
-        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-      // Allow to draw behind system bars
-      wattrs.setFitInsetsTypes(0);
-      window.setDecorFitsSystemWindows(false);
-    }
-    updateLayoutHeightOf(window, ViewGroup.LayoutParams.MATCH_PARENT);
     final View inputArea = window.findViewById(android.R.id.inputArea);
-
-    updateLayoutHeightOf(
-            (View) inputArea.getParent(),
-            isFullscreenMode()
-                    ? ViewGroup.LayoutParams.MATCH_PARENT
-                    : ViewGroup.LayoutParams.WRAP_CONTENT);
-    updateLayoutGravityOf((View) inputArea.getParent(), Gravity.BOTTOM);
-
-  }
-
-  private static void updateLayoutHeightOf(final Window window, final int layoutHeight) {
-    final WindowManager.LayoutParams params = window.getAttributes();
-    if (params != null && params.height != layoutHeight) {
-      params.height = layoutHeight;
-      window.setAttributes(params);
-    }
-  }
-
-  private static void updateLayoutHeightOf(final View view, final int layoutHeight) {
-    final ViewGroup.LayoutParams params = view.getLayoutParams();
-    if (params != null && params.height != layoutHeight) {
-      params.height = layoutHeight;
-      view.setLayoutParams(params);
-    }
-  }
-
-  private static void updateLayoutGravityOf(final View view, final int layoutGravity) {
-    final ViewGroup.LayoutParams lp = view.getLayoutParams();
-    if (lp instanceof LinearLayout.LayoutParams) {
-      final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) lp;
-      if (params.gravity != layoutGravity) {
-        params.gravity = layoutGravity;
-        view.setLayoutParams(params);
-      }
-    } else if (lp instanceof FrameLayout.LayoutParams) {
-      final FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) lp;
-      if (params.gravity != layoutGravity) {
-        params.gravity = layoutGravity;
-        view.setLayoutParams(params);
-      }
-    }
+    WindowLayoutUtils.updateSoftInputWindowLayoutParams(window, inputArea, isFullscreenMode());
   }
 
   @Override
