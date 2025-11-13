@@ -105,10 +105,20 @@ public class PredictionCoordinator
     {
       _neuralEngine = new NeuralSwipeTypingEngine(_context, _config);
 
+      // CRITICAL: Call initialize() to actually load the ONNX models
+      boolean success = _neuralEngine.initialize();
+      if (!success)
+      {
+        Log.e(TAG, "Neural engine initialization returned false");
+        _neuralEngine = null;
+        _asyncPredictionHandler = null;
+        return;
+      }
+
       // Initialize async prediction handler
       _asyncPredictionHandler = new AsyncPredictionHandler(_neuralEngine);
 
-      Log.d(TAG, "NeuralSwipeTypingEngine initialized");
+      Log.d(TAG, "NeuralSwipeTypingEngine initialized successfully");
     }
     catch (Exception e)
     {
