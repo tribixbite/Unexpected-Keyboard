@@ -39,7 +39,8 @@ import juloo.keyboard2.prefs.LayoutsPreference;
 
 public class Keyboard2 extends InputMethodService
   implements SharedPreferences.OnSharedPreferenceChangeListener,
-  SuggestionBar.OnSuggestionSelectedListener
+  SuggestionBar.OnSuggestionSelectedListener,
+  ConfigChangeListener
 {
   // Unified prediction strategy: All predictions wait for gesture completion
   // to match SwipeCalibrationActivity behavior and eliminate premature predictions
@@ -58,10 +59,10 @@ public class Keyboard2 extends InputMethodService
   public int actionId; // Action performed by the Action key.
   private Handler _handler;
 
-  private Config _config;
+  // Configuration management (v1.32.345: extracted to ConfigurationManager)
+  private ConfigurationManager _configManager;
+  private Config _config; // Cached reference from _configManager, updated by ConfigChangeListener
 
-  private FoldStateTracker _foldStateTracker;
-  
   // Swipe typing components
   private DictionaryManager _dictionaryManager;
   private WordPredictor _wordPredictor;
@@ -156,10 +157,20 @@ public class Keyboard2 extends InputMethodService
     SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
     _handler = new Handler(getMainLooper());
     _keyeventhandler = new KeyEventHandler(this.new Receiver());
-    _foldStateTracker = new FoldStateTracker(this);
-    Config.initGlobalConfig(prefs, getResources(), _keyeventhandler, _foldStateTracker.isUnfolded());
-    prefs.registerOnSharedPreferenceChangeListener(this);
-    _config = Config.globalConfig();
+
+    // Create FoldStateTracker for device fold state monitoring
+    FoldStateTracker foldStateTracker = new FoldStateTracker(this);
+
+    // Initialize global config for KeyEventHandler
+    Config.initGlobalConfig(prefs, getResources(), _keyeventhandler, foldStateTracker.isUnfolded());
+
+    // Initialize configuration manager (v1.32.345: extracted configuration management)
+    _configManager = new ConfigurationManager(this, Config.globalConfig(), foldStateTracker);
+    _config = _configManager.getConfig(); // Cache reference for convenience
+    _configManager.registerConfigChangeListener(this); // Register for config change notifications
+
+    // Register ConfigurationManager as SharedPreferences listener
+    prefs.registerOnSharedPreferenceChangeListener(_configManager);
 
     // Check if we're the default IME and remind user if not
     checkAndPromptDefaultIME();
@@ -167,8 +178,9 @@ public class Keyboard2 extends InputMethodService
     _keyboardView.reset();
     Logs.set_debug_logs(getResources().getBoolean(R.bool.debug_logs));
     ClipboardHistoryService.on_startup(this, _keyeventhandler);
-    _foldStateTracker.setChangedCallback(() -> { refresh_config(); });
-    
+
+    // Fold state change callback is handled by ConfigurationManager
+
     // Initialize ML data store
     _mlDataStore = SwipeMLDataStore.getInstance(this);
     
@@ -249,7 +261,7 @@ public class Keyboard2 extends InputMethodService
   public void onDestroy() {
     super.onDestroy();
 
-    _foldStateTracker.close();
+    _configManager.getFoldStateTracker().close();
 
     // Cleanup clipboard listener
     ClipboardHistoryService.on_shutdown();
@@ -410,10 +422,25 @@ public class Keyboard2 extends InputMethodService
       [setInputView()] must be called soon after. */
   private void refresh_config()
   {
-    int prev_theme = _config.theme;
-    _config.refresh(getResources(), _foldStateTracker.isUnfolded());
+    // Delegate to ConfigurationManager, which will trigger listener callbacks
+    _configManager.refresh(getResources());
+  }
+
+  // ConfigChangeListener implementation (v1.32.345)
+
+  /**
+   * Called when configuration has been refreshed.
+   * Updates local config reference and propagates to components.
+   */
+  @Override
+  public void onConfigChanged(Config newConfig)
+  {
+    // Update cached reference
+    _config = newConfig;
+
+    // Refresh subtitle IME
     refreshSubtypeImm();
-    
+
     // Update swipe engine config if it exists
     if (_neuralEngine != null)
     {
@@ -423,15 +450,26 @@ public class Keyboard2 extends InputMethodService
     {
       _wordPredictor.setConfig(_config);
     }
-    // Refreshing the theme config requires re-creating the views
-    if (prev_theme != _config.theme)
+
+    // Reset keyboard view
+    if (_keyboardView != null)
     {
-      _keyboardView = (Keyboard2View)inflate_view(R.layout.keyboard);
-      _emojiPane = null;
-      _clipboard_pane = null;
-      setInputView(_keyboardView);
+      _keyboardView.reset();
     }
-    _keyboardView.reset();
+  }
+
+  /**
+   * Called when theme has changed.
+   * Re-creates keyboard views with new theme.
+   */
+  @Override
+  public void onThemeChanged(int oldTheme, int newTheme)
+  {
+    // Recreate views with new theme
+    _keyboardView = (Keyboard2View)inflate_view(R.layout.keyboard);
+    _emojiPane = null;
+    _clipboard_pane = null;
+    setInputView(_keyboardView);
   }
 
   private KeyboardData refresh_special_layout(EditorInfo info)
@@ -696,8 +734,15 @@ public class Keyboard2 extends InputMethodService
   @Override
   public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key)
   {
-    refresh_config();
-    _keyboardView.setKeyboard(current_layout());
+    // NOTE: ConfigurationManager is the primary SharedPreferences listener and handles
+    // config refresh. This method handles additional UI updates.
+
+    // Update keyboard layout
+    if (_keyboardView != null)
+    {
+      _keyboardView.setKeyboard(current_layout());
+    }
+
     // Update suggestion bar opacity if it exists
     if (_suggestionBar != null)
     {
@@ -705,6 +750,7 @@ public class Keyboard2 extends InputMethodService
     }
 
     // Update neural predictor when model-related settings change
+    // (This is redundant with onConfigChanged but kept for explicit model reloading)
     if (_key != null && (_key.equals("neural_custom_encoder_uri") ||
                         _key.equals("neural_custom_decoder_uri") ||
                         _key.equals("neural_model_version") ||
