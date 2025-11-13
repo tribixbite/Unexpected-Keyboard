@@ -73,6 +73,8 @@ public final class Config
   public int clipboard_history_limit;
   public int clipboard_pane_height_percent; // 10-50, default 30 (percentage of screen height)
   public int clipboard_max_item_size_kb; // Maximum size per clipboard item in KB, 0 = unlimited
+  public String clipboard_limit_type; // "count" or "size" - type of history limit
+  public int clipboard_size_limit_mb; // Maximum total size in MB when using size-based limit, 0 = unlimited
   public boolean swipe_typing_enabled;
   public boolean swipe_show_debug_scores;
   public boolean word_prediction_enabled;
@@ -249,6 +251,12 @@ public final class Config
       clipboard_max_item_size_kb = Integer.parseInt(_prefs.getString("clipboard_max_item_size_kb", "500"));
     } catch (NumberFormatException e) {
       clipboard_max_item_size_kb = 500; // Default 500KB
+    }
+    clipboard_limit_type = _prefs.getString("clipboard_limit_type", "count"); // Default to count-based
+    try {
+      clipboard_size_limit_mb = Integer.parseInt(_prefs.getString("clipboard_size_limit_mb", "10"));
+    } catch (NumberFormatException e) {
+      clipboard_size_limit_mb = 10; // Default 10MB
     }
     swipe_typing_enabled = _prefs.getBoolean("swipe_typing_enabled", false);
     swipe_show_debug_scores = _prefs.getBoolean("swipe_show_debug_scores", false);

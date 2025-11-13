@@ -62,6 +62,7 @@ The Clipboard Manager provides persistent clipboard history with pinning, search
 11. **FR-11**: Pinned entries must never expire
 12. **FR-12**: User must be able to configure maximum size per clipboard item to prevent system overload (v1.32.327)
 13. **FR-13**: User must be able to view clipboard storage statistics (entry count and size) (v1.32.329)
+14. **FR-14**: User must be able to choose between count-based and size-based clipboard history limits (v1.32.330)
 
 ### Non-Functional Requirements
 
@@ -636,6 +637,111 @@ public static class StorageStats
 - Shows real-time clipboard storage usage
 - Helps users understand clipboard memory footprint
 
+#### Clipboard Limit Type Toggle (v1.32.330)
+
+**Purpose**: Allow users to choose between count-based and size-based clipboard history limits
+
+**Implementation**:
+
+**Limit Type Preference** (settings.xml:132):
+```xml
+<ListPreference android:key="clipboard_limit_type"
+                android:title="History limit type"
+                android:summary="Choose between count-based or size-based limit"
+                android:dependency="clipboard_history_enabled"
+                android:defaultValue="count"
+                android:entries="@array/pref_clipboard_limit_type_entries"
+                android:entryValues="@array/pref_clipboard_limit_type_values"/>
+```
+
+**Options** (arrays.xml:141-148):
+- "count" (default): Item count (default) - limit by number of entries
+- "size": Total storage size - limit by total MB
+
+**Size Limit Preference** (settings.xml:134):
+```xml
+<ListPreference android:key="clipboard_size_limit_mb"
+                android:title="Maximum total size"
+                android:summary="Total storage size limit for clipboard history"
+                android:dependency="clipboard_history_enabled"
+                android:defaultValue="10"
+                android:entries="@array/pref_clipboard_size_limit_mb_entries"
+                android:entryValues="@array/pref_clipboard_size_limit_mb_values"/>
+```
+
+**Size Limit Options** (arrays.xml:149-166):
+- 1 MB
+- 5 MB
+- 10 MB (recommended default)
+- 25 MB
+- 50 MB
+- 100 MB
+- Unlimited (0 = no limit)
+
+**ClipboardDatabase.applySizeLimitBytes()** (ClipboardDatabase.java:512-596):
+```java
+public int applySizeLimitBytes(int maxSizeMB)
+{
+    if (maxSizeMB <= 0)
+        return 0; // No limit
+
+    long maxSizeBytes = maxSizeMB * 1024L * 1024L; // Convert MB to bytes
+
+    // Get all non-pinned active entries ordered by timestamp (oldest first)
+    // Calculate cumulative size and identify entries to delete
+    // Delete oldest entries until total size is under limit
+}
+```
+
+**Algorithm**:
+1. Query all non-pinned active entries ordered by timestamp ASC (oldest first)
+2. Iterate through entries, calculating cumulative UTF-8 byte size
+3. Once cumulative size exceeds maxSizeBytes, mark remaining entries for deletion
+4. Build and execute DELETE query with IN clause
+5. Log entries deleted and total size
+
+**ClipboardHistoryService Integration** (ClipboardHistoryService.java:287-310):
+```java
+// Apply size limits if configured (based on limit type)
+String limitType = Config.globalConfig().clipboard_limit_type;
+if ("size".equals(limitType))
+{
+    // Apply size-based limit (total MB)
+    int maxSizeMB = Config.globalConfig().clipboard_size_limit_mb;
+    if (maxSizeMB > 0)
+    {
+        _database.applySizeLimitBytes(maxSizeMB);
+    }
+}
+else
+{
+    // Apply count-based limit (default)
+    int maxHistorySize = Config.globalConfig().clipboard_history_limit;
+    if (maxHistorySize > 0)
+    {
+        _database.applySizeLimit(maxHistorySize);
+    }
+}
+```
+
+**Config Fields** (Config.java:76-77):
+```java
+public String clipboard_limit_type; // "count" or "size" - type of history limit
+public int clipboard_size_limit_mb; // Maximum total size in MB when using size-based limit, 0 = unlimited
+```
+
+**Default Values**:
+- clipboard_limit_type: "count" (backward compatible)
+- clipboard_size_limit_mb: 10 (10MB recommended)
+
+**User Experience**:
+- Both limit type and size limit preferences visible in Settings → Clipboard
+- Count limit used when limit type is "count" (default)
+- Size limit used when limit type is "size"
+- Limit applied after each new clipboard entry is added
+- Oldest entries deleted first to stay within limit
+- Pinned entries never deleted by limit enforcement
+
 ### ClipboardHistoryView
 
 **File**: `srcs/juloo.keyboard2/ClipboardHistoryView.java`
@@ -1098,6 +1204,21 @@ res/xml/
 ---
 
 ## Changelog
+
+### v1.32.330 (2025-11-12)
+- **FEATURE**: Added clipboard limit type toggle (count vs size)
+  - Toggle between count-based limit (number of entries) and size-based limit (total MB)
+  - Settings → Clipboard → "History limit type"
+  - Count-based: Uses existing "History entry limit" setting (100-1000 entries or unlimited)
+  - Size-based: New "Maximum total size" setting (1MB, 5MB, 10MB, 25MB, 50MB, 100MB, or unlimited)
+  - Default: count-based for backward compatibility
+  - Dynamically applies appropriate limit when adding new clipboard entries
+- **Files Modified**:
+  - res/values/arrays.xml: Added limit type toggle and size limit arrays
+  - res/xml/settings.xml: Added clipboard_limit_type and clipboard_size_limit_mb preferences
+  - srcs/juloo.keyboard2/Config.java: Added clipboard_limit_type and clipboard_size_limit_mb fields
+  - srcs/juloo.keyboard2/ClipboardDatabase.java: Added applySizeLimitBytes() method
+  - srcs/juloo.keyboard2/ClipboardHistoryService.java: Updated add_clip() to use appropriate limit
 
 ### v1.32.329 (2025-11-12)
 - **FEATURE**: Added clipboard usage statistics display

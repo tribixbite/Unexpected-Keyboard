@@ -138,6 +138,32 @@
     <item>5120</item>
     <item>0</item>
   </string-array>
+  <string-array name="pref_clipboard_limit_type_entries">
+    <item>Item count (default)</item>
+    <item>Total storage size</item>
+  </string-array>
+  <string-array name="pref_clipboard_limit_type_values">
+    <item>count</item>
+    <item>size</item>
+  </string-array>
+  <string-array name="pref_clipboard_size_limit_mb_entries">
+    <item>1 MB</item>
+    <item>5 MB</item>
+    <item>10 MB (recommended)</item>
+    <item>25 MB</item>
+    <item>50 MB</item>
+    <item>100 MB</item>
+    <item>Unlimited</item>
+  </string-array>
+  <string-array name="pref_clipboard_size_limit_mb_values">
+    <item>1</item>
+    <item>5</item>
+    <item>10</item>
+    <item>25</item>
+    <item>50</item>
+    <item>100</item>
+    <item>0</item>
+  </string-array>
   <string-array name="swipe_correction_preset_entries">
     <item>Strict (High Accuracy)</item>
     <item>Balanced (Default)</item>

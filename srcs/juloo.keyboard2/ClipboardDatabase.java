@@ -505,6 +505,97 @@ public class ClipboardDatabase extends SQLiteOpenHelper
     }
 
     /**
+     * Apply size limits by removing oldest entries until total size is under maxSizeBytes
+     * @param maxSizeMB Maximum total size in megabytes (0 = unlimited)
+     * @return Number of entries deleted
+     */
+    public int applySizeLimitBytes(int maxSizeMB)
+    {
+        if (maxSizeMB <= 0)
+            return 0; // No limit
+
+        long maxSizeBytes = maxSizeMB * 1024L * 1024L; // Convert MB to bytes
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        try
+        {
+            // Get all non-pinned active entries ordered by timestamp (oldest first)
+            long currentTime = System.currentTimeMillis();
+            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID + ", " + COLUMN_CONTENT +
+                " FROM " + TABLE_CLIPBOARD +
+                " WHERE " + COLUMN_IS_PINNED + " = 0 AND " + COLUMN_EXPIRY_TIMESTAMP + " > ?" +
+                " ORDER BY " + COLUMN_TIMESTAMP + " ASC",
+                new String[]{String.valueOf(currentTime)});
+
+            // Calculate cumulative size and identify entries to delete
+            long totalSize = 0;
+            java.util.List<Long> idsToDelete = new java.util.ArrayList<>();
+
+            try
+            {
+                if (cursor.moveToFirst())
+                {
+                    do
+                    {
+                        long id = cursor.getLong(0);
+                        String content = cursor.getString(1);
+
+                        // Calculate UTF-8 byte size
+                        long contentSize = 0;
+                        try
+                        {
+                            contentSize = content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+                        }
+                        catch (Exception e)
+                        {
+                            // Skip size calculation on error
+                        }
+
+                        totalSize += contentSize;
+
+                        // If total size exceeds limit, mark this entry for deletion
+                        if (totalSize > maxSizeBytes)
+                        {
+                            idsToDelete.add(id);
+                        }
+                    }
+                    while (cursor.moveToNext());
+                }
+            }
+            finally
+            {
+                cursor.close();
+            }
+
+            // Delete marked entries
+            if (idsToDelete.isEmpty())
+            {
+                return 0; // No cleanup needed
+            }
+
+            // Build DELETE query with IN clause
+            StringBuilder deleteQuery = new StringBuilder("DELETE FROM " + TABLE_CLIPBOARD + " WHERE " + COLUMN_ID + " IN (");
+            for (int i = 0; i < idsToDelete.size(); i++)
+            {
+                if (i > 0) deleteQuery.append(",");
+                deleteQuery.append(idsToDelete.get(i));
+            }
+            deleteQuery.append(")");
+
+            db.execSQL(deleteQuery.toString());
+
+            android.util.Log.d("ClipboardDatabase", "Applied size limit (bytes): removed " + idsToDelete.size() +
+                " oldest entries (limit=" + maxSizeMB + "MB, totalSize=" + (totalSize / 1024 / 1024) + "MB)");
+            return idsToDelete.size();
+        }
+        catch (Exception e)
+        {
+            android.util.Log.e("ClipboardDatabase", "Error applying size limit (bytes): " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Export all clipboard entries (active and pinned) to JSON format
      */
     public org.json.JSONObject exportToJSON()

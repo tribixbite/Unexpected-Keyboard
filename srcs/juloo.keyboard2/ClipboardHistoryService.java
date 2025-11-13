@@ -284,13 +284,27 @@ public final class ClipboardHistoryService
     
     if (added)
     {
-      // Apply size limits if configured
-      int maxHistorySize = Config.globalConfig().clipboard_history_limit;
-      if (maxHistorySize > 0)
+      // Apply size limits if configured (based on limit type)
+      String limitType = Config.globalConfig().clipboard_limit_type;
+      if ("size".equals(limitType))
       {
-        _database.applySizeLimit(maxHistorySize);
+        // Apply size-based limit (total MB)
+        int maxSizeMB = Config.globalConfig().clipboard_size_limit_mb;
+        if (maxSizeMB > 0)
+        {
+          _database.applySizeLimitBytes(maxSizeMB);
+        }
       }
-      
+      else
+      {
+        // Apply count-based limit (default)
+        int maxHistorySize = Config.globalConfig().clipboard_history_limit;
+        if (maxHistorySize > 0)
+        {
+          _database.applySizeLimit(maxHistorySize);
+        }
+      }
+
       if (_listener != null)
         _listener.on_clipboard_history_change();
     }
