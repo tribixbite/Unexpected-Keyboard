@@ -15,8 +15,8 @@ import java.util.List;
 public final class ClipboardHistoryView extends NonScrollListView
   implements ClipboardHistoryService.OnClipboardHistoryChange
 {
-  List<String> _history;
-  List<String> _filteredHistory;
+  List<ClipboardEntry> _history;
+  List<ClipboardEntry> _filteredHistory;
   String _searchFilter = "";
   ClipboardHistoryService _service;
   ClipboardEntriesAdapter _adapter;
@@ -54,10 +54,10 @@ public final class ClipboardHistoryView extends NonScrollListView
     }
     else
     {
-      List<String> filtered = new ArrayList<String>();
-      for (String item : _history)
+      List<ClipboardEntry> filtered = new ArrayList<ClipboardEntry>();
+      for (ClipboardEntry item : _history)
       {
-        if (item.toLowerCase().contains(_searchFilter))
+        if (item.content.toLowerCase().contains(_searchFilter))
         {
           filtered.add(item);
         }
@@ -72,7 +72,7 @@ public final class ClipboardHistoryView extends NonScrollListView
       the list of pinned clipboards. */
   public void pin_entry(int pos)
   {
-    String clip = _filteredHistory.get(pos);
+    String clip = _filteredHistory.get(pos).content;
 
     // Set pinned status in database instead of removing
     _service.set_pinned_status(clip, true);
@@ -88,7 +88,7 @@ public final class ClipboardHistoryView extends NonScrollListView
   /** Send the specified entry to the editor. */
   public void paste_entry(int pos)
   {
-    ClipboardHistoryService.paste(_filteredHistory.get(pos));
+    ClipboardHistoryService.paste(_filteredHistory.get(pos).content);
   }
 
   @Override
@@ -127,11 +127,13 @@ public final class ClipboardHistoryView extends NonScrollListView
       if (v == null)
         v = View.inflate(getContext(), R.layout.clipboard_history_entry, null);
 
-      final String text = _filteredHistory.get(pos);
+      final ClipboardEntry entry = _filteredHistory.get(pos);
+      final String text = entry.content;
       final TextView textView = (TextView)v.findViewById(R.id.clipboard_entry_text);
       final View expandButton = v.findViewById(R.id.clipboard_entry_expand);
 
-      textView.setText(text);
+      // Set text with timestamp appended
+      textView.setText(entry.getFormattedText(getContext()));
 
       // Check if text contains newlines (multi-line)
       final boolean isMultiLine = text.contains("\n");

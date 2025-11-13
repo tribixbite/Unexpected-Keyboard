@@ -135,15 +135,15 @@ public class ClipboardDatabase extends SQLiteOpenHelper
     /**
      * Get all active clipboard entries (non-expired, non-pinned)
      */
-    public List<String> getActiveClipboardEntries()
+    public List<ClipboardEntry> getActiveClipboardEntries()
     {
-        List<String> entries = new ArrayList<>();
+        List<ClipboardEntry> entries = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
 
         SQLiteDatabase db = this.getReadableDatabase();
 
         // Get only non-pinned entries (pinned entries shown separately)
-        String query = "SELECT " + COLUMN_CONTENT + " FROM " + TABLE_CLIPBOARD +
+        String query = "SELECT " + COLUMN_CONTENT + ", " + COLUMN_TIMESTAMP + " FROM " + TABLE_CLIPBOARD +
             " WHERE " + COLUMN_IS_PINNED + " = 0 AND " + COLUMN_EXPIRY_TIMESTAMP + " > ?" +
             " ORDER BY " + COLUMN_TIMESTAMP + " DESC";
 
@@ -156,7 +156,8 @@ public class ClipboardDatabase extends SQLiteOpenHelper
                 do
                 {
                     String content = cursor.getString(0);
-                    entries.add(content);
+                    long timestamp = cursor.getLong(1);
+                    entries.add(new ClipboardEntry(content, timestamp));
                 } while (cursor.moveToNext());
             }
         }
@@ -176,13 +177,13 @@ public class ClipboardDatabase extends SQLiteOpenHelper
     /**
      * Get all pinned clipboard entries
      */
-    public List<String> getPinnedEntries()
+    public List<ClipboardEntry> getPinnedEntries()
     {
-        List<String> entries = new ArrayList<>();
+        List<ClipboardEntry> entries = new ArrayList<>();
 
         SQLiteDatabase db = this.getReadableDatabase();
 
-        String query = "SELECT " + COLUMN_CONTENT + " FROM " + TABLE_CLIPBOARD +
+        String query = "SELECT " + COLUMN_CONTENT + ", " + COLUMN_TIMESTAMP + " FROM " + TABLE_CLIPBOARD +
             " WHERE " + COLUMN_IS_PINNED + " = 1" +
             " ORDER BY " + COLUMN_TIMESTAMP + " DESC";
 
@@ -195,7 +196,8 @@ public class ClipboardDatabase extends SQLiteOpenHelper
                 do
                 {
                     String content = cursor.getString(0);
-                    entries.add(content);
+                    long timestamp = cursor.getLong(1);
+                    entries.add(new ClipboardEntry(content, timestamp));
                 } while (cursor.moveToNext());
             }
         }

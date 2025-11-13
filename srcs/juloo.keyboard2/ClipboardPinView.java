@@ -17,7 +17,7 @@ import org.json.JSONException;
 
 public final class ClipboardPinView extends MaxHeightListView
 {
-  List<String> _entries;
+  List<ClipboardEntry> _entries;
   ClipboardPinEntriesAdapter _adapter;
   ClipboardHistoryService _service;
   // Track expanded state: position -> isExpanded
@@ -26,7 +26,7 @@ public final class ClipboardPinView extends MaxHeightListView
   public ClipboardPinView(Context ctx, AttributeSet attrs)
   {
     super(ctx, attrs);
-    _entries = new ArrayList<String>();
+    _entries = new ArrayList<ClipboardEntry>();
     _service = ClipboardHistoryService.get_service(ctx);
     _adapter = this.new ClipboardPinEntriesAdapter();
     setAdapter(_adapter);
@@ -72,7 +72,7 @@ public final class ClipboardPinView extends MaxHeightListView
     if (pos < 0 || pos >= _entries.size())
       return;
 
-    String clip = _entries.get(pos);
+    String clip = _entries.get(pos).content;
 
     // Delete entirely from database
     if (_service != null)
@@ -86,7 +86,7 @@ public final class ClipboardPinView extends MaxHeightListView
   /** Send the specified entry to the editor. */
   public void paste_entry(int pos)
   {
-    ClipboardHistoryService.paste(_entries.get(pos));
+    ClipboardHistoryService.paste(_entries.get(pos).content);
   }
 
   @Override
@@ -113,11 +113,13 @@ public final class ClipboardPinView extends MaxHeightListView
       if (v == null)
         v = View.inflate(getContext(), R.layout.clipboard_pin_entry, null);
 
-      final String text = _entries.get(pos);
+      final ClipboardEntry entry = _entries.get(pos);
+      final String text = entry.content;
       final TextView textView = (TextView)v.findViewById(R.id.clipboard_pin_text);
       final View expandButton = v.findViewById(R.id.clipboard_pin_expand);
 
-      textView.setText(text);
+      // Set text with timestamp appended
+      textView.setText(entry.getFormattedText(getContext()));
 
       // Check if text contains newlines (multi-line)
       final boolean isMultiLine = text.contains("\n");

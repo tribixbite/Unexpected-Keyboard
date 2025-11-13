@@ -201,7 +201,7 @@ public final class ClipboardHistoryService
     return String.format("Clipboard monitoring active (%d entries)", activeEntries);
   }
 
-  public List<String> clear_expired_and_get_history()
+  public List<ClipboardEntry> clear_expired_and_get_history()
   {
     // Clean up expired entries and return active ones
     _database.cleanupExpiredEntries();
@@ -212,8 +212,8 @@ public final class ClipboardHistoryService
   public void remove_history_entry(String clip)
   {
     // Check if this is the most recent clipboard entry
-    List<String> currentHistory = _database.getActiveClipboardEntries();
-    boolean isCurrentClip = !currentHistory.isEmpty() && currentHistory.get(0).equals(clip);
+    List<ClipboardEntry> currentHistory = _database.getActiveClipboardEntries();
+    boolean isCurrentClip = !currentHistory.isEmpty() && currentHistory.get(0).content.equals(clip);
 
     // If removing the current clipboard, clear the system clipboard
     if (isCurrentClip)
@@ -328,7 +328,7 @@ public final class ClipboardHistoryService
   }
 
   /** Get all pinned clipboard entries */
-  public List<String> get_pinned_entries()
+  public List<ClipboardEntry> get_pinned_entries()
   {
     return _database.getPinnedEntries();
   }
