@@ -309,7 +309,10 @@ public class OnnxSwipePredictor
         // logDebug("⚠️ ONNX models failed to load - missing encoder or decoder session");
         Log.w(TAG, "Failed to load ONNX models");
       }
-      
+
+      // CRITICAL: Mark as initialized regardless of success/failure to prevent re-entry
+      _isInitialized = true;
+
       return _isModelLoaded;
     }
     catch (Exception e)
@@ -853,10 +856,36 @@ public class OnnxSwipePredictor
       {
         Log.d(TAG, String.format("Model config changed: versionChanged=%b, pathsChanged=%b. Re-initialization required.",
           versionChanged, pathsChanged));
+
+        // CRITICAL: Clean up old sessions before reinitializing
+        try
+        {
+          if (_encoderSession != null)
+          {
+            _encoderSession.close();
+            _encoderSession = null;
+            Log.d(TAG, "Closed old encoder session");
+          }
+          if (_decoderSession != null)
+          {
+            _decoderSession.close();
+            _decoderSession = null;
+            Log.d(TAG, "Closed old decoder session");
+          }
+        }
+        catch (Exception e)
+        {
+          Log.e(TAG, "Error closing old sessions", e);
+        }
+
         _currentModelVersion = newModelVersion;
         _isInitialized = false;
         _isModelLoaded = false;
-        // Will reinitialize on next prediction
+
+        // CRITICAL: Immediately reinitialize instead of waiting for next prediction
+        // This ensures settings UI shows correct model status right away
+        Log.d(TAG, "Triggering immediate model reinitialization...");
+        initialize();
       }
 
       // Update max sequence length override
