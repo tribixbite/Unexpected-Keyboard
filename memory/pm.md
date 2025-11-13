@@ -9,14 +9,56 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.380 (430)
+**Latest Version**: v1.32.383 (433)
 **Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues! (Tested on device ✅)
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,082 lines, target: <700)
-**Refactoring Progress**: 15/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 8/? ✅)
-**Test Coverage**: 102 test cases across 5 comprehensive Kotlin test suites
+**Current Focus**: Keyboard2.java Refactoring (2,397 → ~1,020 lines, target: <700)
+**Refactoring Progress**: 16/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 9/? ✅)
+**Test Coverage**: 130 test cases across 6 comprehensive Kotlin test suites
 
-### Recent Work (v1.32.362-380) - Phase 4 Continues!
+### Recent Work (v1.32.362-383) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract SuggestionBarInitializer (Phase 4, 9/? Complete! ✅)**
+- **Goal**: Extract suggestion bar and input view initialization into Kotlin utility
+- **Created**: SuggestionBarInitializer.kt (160 lines, Kotlin)
+  - initialize(...) - Create suggestion bar with scrollable container and content pane
+  - InitializationResult data class - Holds all created views (container, suggestion bar, content pane, scroll view)
+  - calculateContentPaneHeight(...) - Helper to compute content pane size based on screen height
+  - All methods annotated with @JvmStatic for Java interop
+- **Created**: SuggestionBarInitializerTest.kt (353 lines)
+  - 28 comprehensive test cases with AAA pattern
+  - Tests initialization with/without theme
+  - Tests view hierarchy construction (scroll view, suggestion bar, content pane)
+  - Tests layout parameters (40dp scroll height, match_parent/wrap_content)
+  - Tests content pane configuration (visibility, sizing, screen percentage)
+  - Tests content pane height calculation (different screen sizes, edge cases)
+  - Edge cases: 0% height, 100% height, 0 opacity, full opacity
+- **Modified**: Keyboard2.java (1,082 → ~1,020 lines, -62 estimated)
+  - Replaced ~68 lines of initialization code with 8-line delegation call
+  - onStartInputView() now calls SuggestionBarInitializer.initialize()
+  - Kept listener registration and reference propagation in Keyboard2
+  - Removed all view creation and layout parameter setup
+- **Architecture**:
+  - Kotlin object with data class for clean return of multiple views
+  - Centralizes all suggestion bar UI initialization logic
+  - Clean separation: view creation in initializer, wiring in Keyboard2
+  - Scrollable suggestion bar (HorizontalScrollView wrapper)
+  - Content pane for clipboard/emoji (hidden by default, configurable height)
+- **Impact**:
+  - Keyboard2.java: 1,082 → ~1,020 lines (-62 estimated) 🎉
+  - Created SuggestionBarInitializer.kt: +160 lines (Kotlin)
+  - Created SuggestionBarInitializerTest.kt: +353 lines
+  - Total Keyboard2 reduction: 2,397 → ~1,020 lines (-1,377 total!)
+  - Build successful ✅ (v1.32.383, build 433)
+- **Benefits**:
+  - Centralized suggestion bar initialization logic
+  - Type-safe data class for returning multiple views
+  - Improved testability (can test view creation independently)
+  - Better organization of UI initialization
+  - Foundation for more UI initialization utilities
+  - Demonstrates Kotlin data class usage for clean API design
+- **Phase 4 Progress**: 9/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager + KeyboardReceiver + MLDataCollector + WindowLayoutUtils + IMEStatusHelper + EditorInfoHelper + SuggestionBarInitializer done!)
+- **Next**: Continue Phase 4 extractions (only ~320 lines remaining to reach <700 target!)
 
 **REFACTORING PHASE 4: Extract EditorInfoHelper (Phase 4, 8/? Complete! ✅)**
 - **Goal**: Extract EditorInfo parsing and action label utilities into Kotlin object

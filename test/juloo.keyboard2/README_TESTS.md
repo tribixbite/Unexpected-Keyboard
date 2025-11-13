@@ -69,6 +69,20 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Data class equality and null handling
 - **Total**: 26 test cases
 
+### SuggestionBarInitializerTest.kt (353 lines)
+**Coverage**: 100% of SuggestionBarInitializer.kt
+- ✅ Initialization with theme and without theme
+- ✅ Suggestion bar opacity configuration
+- ✅ View hierarchy construction (container, scroll view, suggestion bar, content pane)
+- ✅ Scroll view configuration (scrollbar disabled, fill viewport disabled)
+- ✅ Layout parameters (40dp scroll height, wrap_content suggestion bar)
+- ✅ Content pane visibility (hidden by default)
+- ✅ Content pane height calculation (based on screen height percentage)
+- ✅ Edge cases (0% height, 100% height, 0 opacity, full opacity)
+- ✅ Different screen sizes (small, standard, large/4K)
+- ✅ Data class equality and field accessibility
+- **Total**: 28 test cases
+
 ## Testing Methodology
 
 ### Frameworks Used
@@ -165,6 +179,13 @@ fun testMethodName_scenario_expectedBehavior() {
 - **Mock Usage**: Moderate (Resources, EditorInfo)
 - **Edge Cases**: 3 (null labels, unknown actions, data class equality)
 - **Action Types Tested**: 7 (all IME action constants)
+
+### SuggestionBarInitializerTest
+- **Lines of Code**: 353
+- **Test Cases**: 28
+- **Mock Usage**: Extensive (Context, Resources, DisplayMetrics, Theme)
+- **Edge Cases**: 4 (0% height, 100% height, 0 opacity, full opacity)
+- **Screen Sizes Tested**: 3 (small 800px, standard 1920px, large 3840px)
 
 ## Continuous Improvement
 
