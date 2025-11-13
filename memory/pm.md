@@ -9,36 +9,54 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.341 (391)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phase 1 Refactoring Started!
+**Latest Version**: v1.32.344 (394)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phase 1 Refactoring In Progress!
 **Branch**: feature/swipe-typing
 **Current Focus**: Keyboard2.java Refactoring (2,397 → 2,330 lines, target: <700)
-**Refactoring Progress**: 1/7 extractions complete (ContractionManager ✅)
+**Refactoring Progress**: 2/7 extractions complete (ContractionManager ✅, PredictionContextTracker ✅)
 
-### Recent Work (v1.32.341)
+### Recent Work (v1.32.344)
+
+**REFACTORING PHASE 1: Extract PredictionContextTracker**
+- **Goal**: Isolate prediction context state management from Keyboard2.java
+- **Created**: PredictionContextTracker.java (261 lines)
+  - Tracks current partial word being typed (_currentWord: StringBuilder)
+  - Maintains previous words for n-gram context (_contextWords: List<String>, max 2)
+  - Tracks swipe vs tap input (_wasLastInputSwipe: boolean)
+  - Tracks auto-inserted words for smart deletion (_lastAutoInsertedWord: String)
+  - Tracks source of last commit (_lastCommitSource: PredictionSource)
+  - Public API: append/get/clearCurrentWord(), commitWord(), getContextWords(),
+    wasLastInputSwipe(), getLastAutoInsertedWord(), etc.
+  - Includes deleteLastChar() helper for backspace handling
+  - Debug state inspection via getDebugState()
+- **Modified**: Keyboard2.java (2,330 lines)
+  - Replaced 5 fields with single _contextTracker field
+  - Updated all 50+ usages to use tracker methods
+  - Modified updateContext() to use _contextTracker.commitWord()
+  - Systematic replacement: _currentWord → _contextTracker methods
+  - Systematic replacement: _contextWords → _contextTracker.getContextWords()
+  - Systematic replacement: _wasLastInputSwipe → _contextTracker setters/getters
+  - Systematic replacement: _lastAutoInsertedWord → _contextTracker methods
+  - Systematic replacement: _lastCommitSource → _contextTracker methods
+- **Impact**:
+  - Keyboard2.java: 2,397 → 2,330 lines (maintained after 2nd extraction)
+  - Created PredictionContextTracker: +261 lines
+  - Build successful ✅ (v1.32.344, build 394)
+  - Zero behavioral changes (all tests pass)
+- **Benefits**:
+  - Centralized context management (single source of truth)
+  - Easier to add n-gram support (currently bigram with MAX_CONTEXT_WORDS=2)
+  - Clear state tracking for smart deletion and prediction
+  - Testable independently from Keyboard2
+  - Better encapsulation with proper getters/setters
+- **Next**: Continue Phase 1 or move to Phase 2 (ConfigurationManager or PredictionCoordinator)
+
+### Previous Work (v1.32.341)
 
 **REFACTORING PHASE 1: Extract ContractionManager**
-- **Goal**: Reduce Keyboard2.java complexity by extracting contraction logic
 - **Created**: ContractionManager.java (216 lines)
-  - Manages contraction mappings for apostrophe insertion
-  - Loads non-paired contractions (dont → don't)
-  - Loads paired contractions (well → we'll)
-  - Public API: loadMappings(), isKnownContraction(), getNonPairedMapping()
-- **Modified**: Keyboard2.java
-  - Removed 2 fields (_nonPairedContractions, _knownContractions)
-  - Removed 1 method (loadContractionMappings - 67 lines)
-  - Added 1 field (_contractionManager)
-  - Updated 1 usage (isKnownContraction check)
-- **Impact**:
-  - Keyboard2.java: 2,397 → 2,330 lines (-67 lines)
-  - Created ContractionManager: +216 lines
-  - Build successful ✅
-  - Zero behavioral changes (bit-for-bit identical)
-- **Benefits**:
-  - Isolated contraction logic (testable independently)
-  - Clear single responsibility
-  - Reduced Keyboard2.java complexity
-- **Next**: ClipboardManager extraction (Phase 1, item 2/3)
+- **Impact**: Keyboard2.java: 2,397 → 2,330 lines (-67 lines)
+- **Status**: ✅ Complete
 
 ### Previous Work (v1.32.340)
 
