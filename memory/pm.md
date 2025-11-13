@@ -7,13 +7,60 @@
 
 ---
 
-## 🔥 Current Status (2025-11-12)
+## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.313 (363)
-**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard UI Reorganization
+**Latest Version**: v1.32.337 (387)
+**Build Status**: ✅ BUILD SUCCESSFUL - Clipboard Date Filter Feature Complete
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.313)
+### Recent Work (v1.32.331-337)
+
+**Added Clipboard Timestamps and Date Filter (6 builds)**
+
+**Phase 1: Timestamp Display (v1.32.331)**
+- Added timestamps to all clipboard entries
+- Created ClipboardEntry.java data class to wrap content + timestamp
+- Modified database methods to return List<ClipboardEntry> instead of List<String>
+- Used SpannableString with ForegroundColorSpan for timestamp formatting
+- Timestamp appears at end of text in secondary color
+- Format: "Just now", "5m ago", "3h ago", "Yesterday", "3d ago", "Nov 12"
+- Naturally overflows with entry text (no layout changes)
+- Files:
+  - NEW: srcs/juloo.keyboard2/ClipboardEntry.java
+  - MODIFIED: ClipboardDatabase.java (getActiveClipboardEntries, getPinnedEntries)
+  - MODIFIED: ClipboardHistoryService.java (method signatures)
+  - MODIFIED: ClipboardHistoryView.java (uses ClipboardEntry)
+  - MODIFIED: ClipboardPinView.java (uses ClipboardEntry)
+
+**Phase 2: Date Filter UI (v1.32.332)**
+- Added 📅 calendar icon between "↑Pinned ↓Unpinned" heading and search box
+- Created date filter dialog with DatePicker, Before/After toggle, Enable/Disable switch
+- Implemented filtering logic in ClipboardHistoryView
+- Added Apply/Cancel/Clear buttons
+- Files:
+  - NEW: res/layout/clipboard_date_filter_dialog.xml
+  - MODIFIED: res/layout/clipboard_pane.xml (added date filter icon)
+  - MODIFIED: Keyboard2.java (showDateFilterDialog method)
+  - MODIFIED: ClipboardHistoryView.java (date filter state + methods)
+
+**Phase 3: Bug Fixes (v1.32.333-337)**
+- **v1.32.333**: Fixed layout inflation crash (removed unsupported background attribute)
+- **v1.32.334**: Fixed dialog window token crash (use clickedView.getWindowToken())
+- **v1.32.335**: Fixed light theme dialog (wrapped context with Theme_DeviceDefault_Dialog)
+- **v1.32.336**: Reverted incorrect text color changes (only dialog needed fixing)
+- **v1.32.337**: Fixed dialog text colors (added textColorPrimary to all widgets)
+
+**Technical Details**:
+- Database already had timestamp column (Unix milliseconds)
+- Filter logic: before mode shows entries < timestamp, after mode shows entries >= timestamp
+- Filter works alongside existing search filter
+- Dialog uses ContextThemeWrapper for proper dark/light theme matching
+- DatePicker in spinner mode with calendarViewShown=false (compact UI)
+- Window token retrieved from clicked view for InputMethodService context
+
+**Result**: Complete clipboard history management with temporal filtering
+
+### Previous Work (v1.32.313)
 
 **Reorganized Clipboard UI - Better Space Usage**
 - **Changes**:
