@@ -86,6 +86,9 @@ public class Keyboard2 extends InputMethodService
   // Neural layout helper (v1.32.362: extracted to NeuralLayoutHelper)
   private NeuralLayoutHelper _neuralLayoutHelper;
 
+  // Subtype management (v1.32.365: extracted to SubtypeManager)
+  private SubtypeManager _subtypeManager;
+
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
   private android.content.BroadcastReceiver _debugModeReceiver;
@@ -371,72 +374,29 @@ public class Keyboard2 extends InputMethodService
     }
   };
 
-  private List<InputMethodSubtype> getEnabledSubtypes(InputMethodManager imm)
-  {
-    String pkg = getPackageName();
-    for (InputMethodInfo imi : imm.getEnabledInputMethodList())
-      if (imi.getPackageName().equals(pkg))
-        return imm.getEnabledInputMethodSubtypeList(imi, true);
-    return Arrays.asList();
-  }
-
-  @TargetApi(12)
-  private ExtraKeys extra_keys_of_subtype(InputMethodSubtype subtype)
-  {
-    String extra_keys = subtype.getExtraValueOf("extra_keys");
-    String script = subtype.getExtraValueOf("script");
-    if (extra_keys != null)
-      return ExtraKeys.parse(script, extra_keys);
-    return ExtraKeys.EMPTY;
-  }
-
-  private void refreshAccentsOption(InputMethodManager imm, List<InputMethodSubtype> enabled_subtypes)
-  {
-    List<ExtraKeys> extra_keys = new ArrayList<ExtraKeys>();
-    for (InputMethodSubtype s : enabled_subtypes)
-      extra_keys.add(extra_keys_of_subtype(s));
-    _config.extra_keys_subtype = ExtraKeys.merge(extra_keys);
-  }
-
+  /**
+   * Gets InputMethodManager.
+   * (v1.32.365: Delegated to SubtypeManager)
+   */
   InputMethodManager get_imm()
   {
-    return (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+    return _subtypeManager.getInputMethodManager();
   }
 
-  @TargetApi(12)
-  private InputMethodSubtype defaultSubtypes(InputMethodManager imm, List<InputMethodSubtype> enabled_subtypes)
-  {
-    if (VERSION.SDK_INT < 24)
-      return imm.getCurrentInputMethodSubtype();
-    // Android might return a random subtype, for example, the first in the
-    // list alphabetically.
-    InputMethodSubtype current_subtype = imm.getCurrentInputMethodSubtype();
-    if (current_subtype == null)
-      return null;
-    for (InputMethodSubtype s : enabled_subtypes)
-      if (s.getLanguageTag().equals(current_subtype.getLanguageTag()))
-        return s;
-    return null;
-  }
-
+  /**
+   * Refreshes IME subtype settings and initializes managers.
+   * (v1.32.365: Simplified by delegating to SubtypeManager)
+   */
   private void refreshSubtypeImm()
   {
-    InputMethodManager imm = get_imm();
-    _config.shouldOfferVoiceTyping = true;
-    KeyboardData default_layout = null;
-    _config.extra_keys_subtype = null;
-    if (VERSION.SDK_INT >= 12)
+    // Initialize SubtypeManager if needed (v1.32.365)
+    if (_subtypeManager == null)
     {
-      List<InputMethodSubtype> enabled_subtypes = getEnabledSubtypes(imm);
-      InputMethodSubtype subtype = defaultSubtypes(imm, enabled_subtypes);
-      if (subtype != null)
-      {
-        String s = subtype.getExtraValueOf("default_layout");
-        if (s != null)
-          default_layout = LayoutsPreference.layout_of_string(getResources(), s);
-        refreshAccentsOption(imm, enabled_subtypes);
-      }
+      _subtypeManager = new SubtypeManager(this);
     }
+
+    // Refresh subtype and get default layout (v1.32.365: delegated to SubtypeManager)
+    KeyboardData default_layout = _subtypeManager.refreshSubtype(_config, getResources());
     if (default_layout == null)
       default_layout = KeyboardData.load(getResources(), R.xml.latn_qwerty_us);
 

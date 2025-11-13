@@ -9,13 +9,52 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.364 (414)
+**Latest Version**: v1.32.367 (417)
 **Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues!
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,382 lines, target: <700)
-**Refactoring Progress**: 9/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 2/? ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,342 lines, target: <700)
+**Refactoring Progress**: 10/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 3/? ✅)
 
-### Recent Work (v1.32.362-364) - Phase 4 Continues!
+### Recent Work (v1.32.362-367) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract SubtypeManager (Phase 4, 3/? Complete! ✅)**
+- **Goal**: Extract IME subtype management, locale detection, and extra keys logic
+- **Created**: SubtypeManager.java (185 lines)
+  - Extracted 5 methods from Keyboard2.java:
+    * getEnabledSubtypes() - Gets list of enabled IME subtypes for this keyboard
+    * extra_keys_of_subtype() - Extracts extra keys (accents) from subtype
+    * refreshAccentsOption() - Merges extra keys from all enabled subtypes
+    * defaultSubtypes() - Gets default subtype (handles API 24+ differences)
+    * refreshSubtype() - Main method that refreshes subtype and returns default layout
+  - Manages InputMethodManager access
+  - Handles locale-specific layout detection
+  - Merges extra keys from multiple subtypes
+  - Android version-aware (API 12+, 24+)
+  - Configures voice typing availability
+- **Modified**: Keyboard2.java (1,382 → 1,342 lines, -40!)
+  - Added _subtypeManager field with initialization in refreshSubtypeImm()
+  - Removed getEnabledSubtypes(), extra_keys_of_subtype(), refreshAccentsOption(), defaultSubtypes() methods
+  - Simplified refreshSubtypeImm() to delegate to SubtypeManager
+  - Updated get_imm() to delegate to SubtypeManager
+- **Architecture**:
+  - SubtypeManager is pure utility class (no InputMethodService dependency)
+  - Accepts Context for system services and resources
+  - Provides clean API for subtype operations
+  - Clean separation: subtype logic in manager, IME lifecycle in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,382 → 1,342 lines (-40) 🎉
+  - Created SubtypeManager: +185 lines
+  - Total Keyboard2 reduction: 2,397 → 1,342 lines (-1,055 total!)
+  - Build successful ✅ (v1.32.367, build 417)
+  - Zero behavioral changes (all subtype features work identically)
+- **Benefits**:
+  - Centralized subtype management (single source of truth)
+  - Improved testability (can mock SubtypeManager)
+  - Better encapsulation (IME details hidden from Keyboard2)
+  - Clearer API (focused interface for subtype operations)
+  - Easier to add new locale support
+- **Phase 4 Progress**: 3/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager done!)
+- **Next**: Continue Phase 4 extractions (Event Receiver, additional helpers, etc.)
 
 **REFACTORING PHASE 4: Extract LayoutManager (Phase 4, 2/? Complete! ✅)**
 - **Goal**: Extract keyboard layout selection, switching, and loading logic
