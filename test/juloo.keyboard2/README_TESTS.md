@@ -4,9 +4,9 @@
 
 Comprehensive Kotlin test suites have been created for all Phase 4 extractions following professional testing standards.
 
-**Current Status (v1.32.393):**
-- **11 comprehensive test suites** (3,694 lines total)
-- **269 test cases** covering all Phase 4 extractions
+**Current Status (v1.32.396):**
+- **13 comprehensive test suites** (4,646 lines total)
+- **344 test cases** covering all Phase 4 extractions
 - **100% coverage** of extracted utilities
 - All tests use **JUnit 4 + Mockito + Kotlin**
 
@@ -164,6 +164,36 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Integration tests (full lifecycle, real messages)
 - ✅ Edge cases (empty/null messages, multiple propagators)
 - **Total**: 31 test cases
+
+### SuggestionBarPropagatorTest.kt (452 lines)
+**Coverage**: 100% of SuggestionBarPropagator.kt
+- ✅ SuggestionBar propagation to all 3 managers (InputCoordinator, SuggestionHandler, NeuralLayoutHelper)
+- ✅ View reference propagation to KeyboardReceiver
+- ✅ Combined propagateAll() method
+- ✅ Null manager handling (individual and all null)
+- ✅ Null view handling (null emoji pane, null content pane, both null)
+- ✅ Null receiver handling
+- ✅ Factory method (companion object create())
+- ✅ Multiple propagation calls (SuggestionBar updated, views updated)
+- ✅ Full lifecycle integration (propagate suggestion bar → propagate views)
+- ✅ propagateAll() equivalence to separate calls
+- **Total**: 38 test cases
+
+### PropagatorInitializerTest.kt (499 lines)
+**Coverage**: 100% of PropagatorInitializer.kt
+- ✅ ConfigPropagator creation and initialization
+- ✅ DebugModePropagator registration with DebugLoggingManager
+- ✅ Registered listener is DebugModePropagator type
+- ✅ ConfigPropagator contains all managers
+- ✅ Registered listener can propagate debug mode changes
+- ✅ Factory method (companion object create())
+- ✅ Data class structure (equality, copy, field accessibility)
+- ✅ Null manager handling (10 tests for all nullable managers)
+- ✅ All nullable managers null scenario
+- ✅ Multiple initialization creates independent propagators
+- ✅ Full lifecycle integration (initialize → trigger debug mode → verify propagation)
+- ✅ Both propagators work together (ConfigPropagator + DebugModePropagator)
+- **Total**: 37 test cases
 
 ## Testing Methodology
 
