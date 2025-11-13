@@ -9,13 +9,63 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.348 (398)
-**Build Status**: ✅ BUILD SUCCESSFUL - Phase 2 Complete!
+**Latest Version**: v1.32.349 (399)
+**Build Status**: ✅ BUILD SUCCESSFUL - Phases 1 & 2 Complete!
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → ~2,150 lines, target: <700)
-**Refactoring Progress**: 4/7 extractions complete (Phase 1: 2/3, Phase 2: 2/2 ✅)
+**Current Focus**: Keyboard2.java Refactoring (2,397 → ~1,950 lines, target: <700)
+**Refactoring Progress**: 5/7 extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅)
 
-### Recent Work (v1.32.347-348)
+### Recent Work (v1.32.349)
+
+**REFACTORING PHASE 1: Extract ClipboardManager (Phase 1 Complete!)**
+- **Goal**: Isolate clipboard pane and search functionality
+- **Created**: ClipboardManager.java (365 lines)
+  - Manages clipboard pane view lifecycle (lazy initialization with getClipboardPane())
+  - Manages clipboard search mode state (isInSearchMode())
+  - Handles search text modification: appendToSearch(), deleteFromSearch(), clearSearch()
+  - Provides search state reset methods: resetSearchOnShow(), resetSearchOnHide()
+  - Shows date filter dialog with showDateFilterDialog()
+  - Encapsulates all clipboard-specific UI and state
+  - Clean lifecycle: cleanup() for theme changes and shutdown
+- **Modified**: Keyboard2.java (~2,150 → ~1,950 lines, -200 estimated)
+  - Replaced 4 clipboard fields with single _clipboardManager
+  - Removed fields: _clipboard_pane, _clipboardSearchMode, _clipboardSearchBox, _clipboardHistoryView
+  - Updated onCreate() to initialize ClipboardManager
+  - Updated onDestroy() to call clipboardManager.cleanup()
+  - Updated onThemeChanged() to cleanup clipboard manager views
+  - Updated onConfigChanged() to propagate config to clipboard manager
+  - Updated onStartInputView() to use clipboardManager.resetSearchOnHide()
+  - Simplified SWITCH_CLIPBOARD case using clipboardManager.getClipboardPane()
+  - Simplified SWITCH_BACK_CLIPBOARD using clipboardManager.resetSearchOnHide()
+  - Updated all Receiver interface methods to delegate to clipboard manager
+  - Removed showDateFilterDialog() method (moved to ClipboardManager)
+- **Note**: _contentPaneContainer remains in Keyboard2 (shared with emoji pane)
+- **Architecture**:
+  - Single Responsibility: ClipboardManager owns clipboard pane and search state
+  - Lazy Initialization: Pane created on first access via getClipboardPane()
+  - Clear Lifecycle: Initialize in onCreate(), cleanup in onDestroy() and onThemeChanged()
+  - Config Propagation: setConfig() updates configuration
+  - Delegation Pattern: Keyboard2 delegates all clipboard operations to manager
+- **Impact**:
+  - Keyboard2.java: ~2,150 → ~1,950 lines (-200 estimated)
+  - Created ClipboardManager: +365 lines
+  - Net extracted: ~365 lines
+  - Build successful ✅ (v1.32.349, build 399)
+  - Zero behavioral changes (all clipboard features work identically)
+- **Benefits**:
+  - Centralized clipboard management (single source of truth)
+  - Improved testability (can mock ClipboardManager)
+  - Better encapsulation (clipboard state not directly accessible)
+  - Clearer lifecycle management (initialize/cleanup in one place)
+  - Easier to extend (add new clipboard features to manager only)
+  - Reduced coupling (clipboard logic separated from keyboard logic)
+- **Phase 1 Complete**: 3/3 extractions done ✅
+  1. ContractionManager (v1.32.341) ✅
+  2. PredictionContextTracker (v1.32.344) ✅
+  3. ClipboardManager (v1.32.349) ✅
+- **Next**: Consider Phase 3 extractions (InputCoordinator or ViewManager)
+
+### Previous Work (v1.32.347-348)
 
 **REFACTORING PHASE 2: Extract PredictionCoordinator (Phase 2 Complete!)**
 - **Goal**: Centralize prediction engine lifecycle and management
