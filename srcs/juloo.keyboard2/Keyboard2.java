@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.inputmethodservice.InputMethodService;
 import android.os.Build.VERSION;
 import android.os.Handler;
@@ -70,14 +71,14 @@ public class Keyboard2 extends InputMethodService
   private LinearLayout _inputViewContainer;
   private BufferedWriter _logWriter = null;
 
-  // ML data collection
-  private SwipeMLData _currentSwipeData;
-
   // Prediction context tracking (v1.32.342: extracted to PredictionContextTracker)
   private PredictionContextTracker _contextTracker;
 
   // Contraction mappings for apostrophe insertion (v1.32.341: extracted to ContractionManager)
   private ContractionManager _contractionManager;
+
+  // Input coordination (v1.32.350: extracted to InputCoordinator)
+  private InputCoordinator _inputCoordinator;
 
   // Debug mode for swipe pipeline logging
   private boolean _debugMode = false;
@@ -187,6 +188,20 @@ public class Keyboard2 extends InputMethodService
 
     // Initialize prediction coordinator (v1.32.346: extracted prediction engine management)
     _predictionCoordinator = new PredictionCoordinator(this, _config);
+
+    // Initialize input coordinator (v1.32.350: extracted input handling logic)
+    // Note: _suggestionBar will be set later in onStartInputView
+    _inputCoordinator = new InputCoordinator(
+      this,
+      _config,
+      _contextTracker,
+      _predictionCoordinator,
+      _contractionManager,
+      null, // _suggestionBar created later in onStartInputView
+      _keyboardView,
+      _keyeventhandler
+    );
+
     if (_config.word_prediction_enabled || _config.swipe_typing_enabled)
     {
       _predictionCoordinator.initialize();
@@ -431,6 +446,12 @@ public class Keyboard2 extends InputMethodService
       _predictionCoordinator.setConfig(_config);
     }
 
+    // Update input coordinator config (v1.32.350)
+    if (_inputCoordinator != null)
+    {
+      _inputCoordinator.setConfig(_config);
+    }
+
     // Reset keyboard view
     if (_keyboardView != null)
     {
@@ -518,6 +539,12 @@ public class Keyboard2 extends InputMethodService
         _suggestionBar = theme != null ? new SuggestionBar(this, theme) : new SuggestionBar(this);
         _suggestionBar.setOnSuggestionSelectedListener(this);
         _suggestionBar.setOpacity(_config.suggestion_bar_opacity);
+
+        // Update InputCoordinator with suggestion bar reference (v1.32.350)
+        if (_inputCoordinator != null)
+        {
+          _inputCoordinator.setSuggestionBar(_suggestionBar);
+        }
 
         // Wrap SuggestionBar in HorizontalScrollView for scrollable predictions
         android.widget.HorizontalScrollView scrollView = new android.widget.HorizontalScrollView(this);
@@ -886,7 +913,7 @@ public class Keyboard2 extends InputMethodService
     {
       // Reset swipe tracking when regular typing occurs
       _contextTracker.setWasLastInputSwipe(false);
-      _currentSwipeData = null;
+      _inputCoordinator.resetSwipeData();
       handleRegularTyping(text);
     }
     
@@ -1110,16 +1137,17 @@ public class Keyboard2 extends InputMethodService
     boolean isSwipeAutoInsert = _contextTracker.wasLastInputSwipe();
 
     // Store ML data if this was a swipe prediction selection
-    if (isSwipeAutoInsert && _currentSwipeData != null && _predictionCoordinator.getMlDataStore() != null)
+    SwipeMLData currentSwipeData = _inputCoordinator.getCurrentSwipeData();
+    if (isSwipeAutoInsert && currentSwipeData != null && _predictionCoordinator.getMlDataStore() != null)
     {
       // Create a new ML data object with the selected word
       android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
       SwipeMLData mlData = new SwipeMLData(word, "user_selection",
                                            metrics.widthPixels, metrics.heightPixels,
                                            _keyboardView.getHeight());
-      
+
       // Copy trace points from the temporary data
-      for (SwipeMLData.TracePoint point : _currentSwipeData.getTracePoints())
+      for (SwipeMLData.TracePoint point : currentSwipeData.getTracePoints())
       {
         // Add points with their original normalized values and timestamps
         // Since they're already normalized, we need to denormalize then renormalize
@@ -1132,7 +1160,7 @@ public class Keyboard2 extends InputMethodService
       }
       
       // Copy registered keys
-      for (String key : _currentSwipeData.getRegisteredKeys())
+      for (String key : currentSwipeData.getRegisteredKeys())
       {
         mlData.addRegisteredKey(key);
       }
@@ -1141,10 +1169,10 @@ public class Keyboard2 extends InputMethodService
       _predictionCoordinator.getMlDataStore().storeSwipeData(mlData);
 
     }
-    
+
     // Reset swipe tracking
     _contextTracker.setWasLastInputSwipe(false);
-    _currentSwipeData = null;
+    _inputCoordinator.resetSwipeData();
     
     InputConnection ic = getCurrentInputConnection();
     if (ic != null)
@@ -1695,204 +1723,11 @@ public class Keyboard2 extends InputMethodService
                                 List<android.graphics.PointF> swipePath,
                                 List<Long> timestamps)
   {
-    // Clear auto-inserted word tracking when new swipe starts
-    _contextTracker.clearLastAutoInsertedWord();
-
-    // DEBUG: Log swipe start
-    sendDebugLog("\n========== NEW SWIPE ==========\n");
-    sendDebugLog(String.format("Path points: %d, Keys detected: %d\n",
-        swipePath != null ? swipePath.size() : 0,
-        swipedKeys != null ? swipedKeys.size() : 0));
-
-    // DEBUG: Log keyboard dimensions and first/last path points
-    if (_keyboardView != null && swipePath != null && swipePath.size() > 0)
-    {
-      sendDebugLog(String.format("Keyboard dimensions: %dx%d\n",
-          _keyboardView.getWidth(), _keyboardView.getHeight()));
-      android.graphics.PointF first = swipePath.get(0);
-      android.graphics.PointF last = swipePath.get(swipePath.size() - 1);
-      sendDebugLog(String.format("Path: (%.1f, %.1f) → (%.1f, %.1f)\n",
-          first.x, first.y, last.x, last.y));
-
-      // Calculate and log sampling rate
-      if (timestamps != null && timestamps.size() > 1)
-      {
-        long totalTime = timestamps.get(timestamps.size() - 1) - timestamps.get(0);
-        float samplingHz = (timestamps.size() - 1) * 1000.0f / totalTime;
-        sendDebugLog(String.format("Sampling rate: %.1f Hz (%.0fms total)\n",
-            samplingHz, (float)totalTime));
-      }
-    }
-
-    if (!_config.swipe_typing_enabled)
-    {
-      return;
-    }
-    
-    if (_predictionCoordinator.getNeuralEngine() == null)
-    {
-      // Fallback to word predictor if engine not initialized
-      if (_predictionCoordinator.getWordPredictor() == null)
-      {
-        return;
-      }
-
-      // Ensure prediction engines are initialized (lazy initialization)
-      _predictionCoordinator.ensureInitialized();
-
-      // Neural engine dimensions and key positions already set in onStartInputView
-    }
-    
-    // Mark that last input was a swipe for ML data collection
-    _contextTracker.setWasLastInputSwipe(true);
-    
-    // Prepare ML data (will be saved if user selects a prediction)
-    android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
-    _currentSwipeData = new SwipeMLData("", "user_selection",
-                                        metrics.widthPixels, metrics.heightPixels,
-                                        _keyboardView.getHeight());
-    
-    // Add swipe path points with timestamps
-    if (swipePath != null && timestamps != null && swipePath.size() == timestamps.size())
-    {
-      for (int i = 0; i < swipePath.size(); i++)
-      {
-        android.graphics.PointF point = swipePath.get(i);
-        long timestamp = timestamps.get(i);
-        _currentSwipeData.addRawPoint(point.x, point.y, timestamp);
-      }
-    }
-      
-    // Build key sequence from swiped keys for ML data ONLY
-    // NOTE: This is gesture tracker's detection - neural network will recalculate independently
-    StringBuilder gestureTrackerKeys = new StringBuilder();
-    for (KeyboardData.Key key : swipedKeys)
-    {
-      if (key != null && key.keys[0] != null)
-      {
-        KeyValue kv = key.keys[0];
-        if (kv.getKind() == KeyValue.Kind.Char)
-        {
-          char c = kv.getChar();
-          gestureTrackerKeys.append(c);
-          // Add to ML data
-          if (_currentSwipeData != null)
-          {
-            _currentSwipeData.addRegisteredKey(String.valueOf(c));
-          }
-        }
-      }
-    }
-
-    // DEBUG: Log gesture tracker's detection (for comparison)
-    sendDebugLog(String.format("Gesture tracker keys: \"%s\" (%d keys filtered from %d path points)\n",
-        gestureTrackerKeys.toString(), swipedKeys.size(), swipePath != null ? swipePath.size() : 0));
-
-    // Log to file for analysis
-    if (_logWriter != null && gestureTrackerKeys.length() > 0)
-    {
-      try
-      {
-        _logWriter.write("[" + new java.util.Date() + "] Swipe: " + gestureTrackerKeys.toString() + "\n");
-        _logWriter.flush();
-      }
-      catch (IOException e)
-      {
-      }
-    }
-
-    if (swipePath != null && !swipePath.isEmpty())
-    {
-      // Create SwipeInput exactly like SwipeCalibrationActivity (empty swipedKeys)
-      // This ensures neural system handles key detection internally for consistency
-      // The neural network will recalculate keys from the full path without filtering
-      SwipeInput swipeInput = new SwipeInput(swipePath != null ? swipePath : new ArrayList<>(),
-                                            timestamps != null ? timestamps : new ArrayList<>(),
-                                            new ArrayList<>()); // Empty - neural recalculates keys
-      
-      // UNIFIED PREDICTION STRATEGY: All predictions wait for gesture completion
-      // This matches SwipeCalibrationActivity behavior and eliminates premature predictions
-
-      // Cancel any pending predictions first
-      if (_predictionCoordinator.getAsyncPredictionHandler() != null)
-      {
-        _predictionCoordinator.getAsyncPredictionHandler().cancelPendingPredictions();
-      }
-      
-      // Request predictions asynchronously - always done on gesture completion
-      // which matches the calibration activity's ACTION_UP behavior
-      if (_predictionCoordinator.getAsyncPredictionHandler() != null)
-      {
-        _predictionCoordinator.getAsyncPredictionHandler().requestPredictions(swipeInput, new AsyncPredictionHandler.PredictionCallback()
-        {
-          @Override
-          public void onPredictionsReady(List<String> predictions, List<Integer> scores)
-          {
-            // Process predictions on UI thread
-            handlePredictionResults(predictions, scores);
-          }
-          
-          @Override
-          public void onPredictionError(String error)
-          {
-            // Clear suggestions on error
-            if (_suggestionBar != null)
-            {
-              _suggestionBar.clearSuggestions();
-            }
-          }
-        });
-      }
-      else
-      {
-        // Fallback to synchronous prediction if async handler not available
-        long startTime = System.currentTimeMillis();
-        PredictionResult result = _predictionCoordinator.getNeuralEngine().predict(swipeInput);
-      long predictionTime = System.currentTimeMillis() - startTime;
-      List<String> predictions = result.words;
-      
-      if (predictions.size() > 0)
-      {
-      }
-      else
-      {
-      }
-      
-      // Log predictions to file
-      if (_logWriter != null)
-      {
-        try
-        {
-          _logWriter.write("  Predictions: " + predictions + " (" + predictionTime + "ms)\n");
-          _logWriter.write("  Scores: " + result.scores + "\n");
-          _logWriter.flush();
-        }
-        catch (IOException e)
-        {
-        }
-      }
-      
-      // Show suggestions in the bar
-      if (_suggestionBar != null && !predictions.isEmpty())
-      {
-        _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
-        _suggestionBar.setSuggestionsWithScores(predictions, result.scores);
-        
-        // Auto-commit the first suggestion if confidence is high
-        if (predictions.size() > 0)
-        {
-          // For now, just show suggestions - user can tap to select
-          // Could auto-commit the first word here if desired
-        }
-      }
-      else
-      {
-      }
-      } // Close fallback else block
-    }
-    else
-    {
-    }
+    // v1.32.350: Delegated to InputCoordinator
+    InputConnection ic = getCurrentInputConnection();
+    EditorInfo editorInfo = getCurrentInputEditorInfo();
+    Resources resources = getResources();
+    _inputCoordinator.handleSwipeTyping(swipedKeys, swipePath, timestamps, ic, editorInfo, resources);
   }
 
   private View inflate_view(int layout)
