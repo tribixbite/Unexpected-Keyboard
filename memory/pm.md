@@ -9,14 +9,53 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.378 (428)
+**Latest Version**: v1.32.380 (430)
 **Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues! (Tested on device ✅)
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,104 lines, target: <700)
-**Refactoring Progress**: 14/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 7/? ✅)
-**Test Coverage**: 76 test cases across 4 comprehensive Kotlin test suites
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,082 lines, target: <700)
+**Refactoring Progress**: 15/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 8/? ✅)
+**Test Coverage**: 102 test cases across 5 comprehensive Kotlin test suites
 
-### Recent Work (v1.32.362-378) - Phase 4 Continues!
+### Recent Work (v1.32.362-380) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract EditorInfoHelper (Phase 4, 8/? Complete! ✅)**
+- **Goal**: Extract EditorInfo parsing and action label utilities into Kotlin object
+- **Created**: EditorInfoHelper.kt (149 lines, Kotlin)
+  - EditorActionInfo data class - Holds action label, ID, and swap flag
+  - extractActionInfo(...) - Extract action info from EditorInfo
+  - actionLabelFor(...) - Map IME action to localized string
+  - actionResourceIdFor(...) - Map IME action to resource ID
+  - All methods annotated with @JvmStatic for Java interop
+- **Created**: EditorInfoHelperTest.kt (314 lines)
+  - 26 comprehensive test cases with AAA pattern
+  - Tests action info extraction (custom labels and all IME actions)
+  - Tests action label mapping for all IME action constants
+  - Tests Enter/Action key swap behavior (IME_FLAG_NO_ENTER_ACTION)
+  - Edge cases: null labels, unknown actions, data class equality
+- **Modified**: Keyboard2.java (1,104 → 1,082 lines, -22)
+  - Replaced actionLabel_of_imeAction() with EditorInfoHelper.actionLabelFor()
+  - Replaced refresh_action_label() implementation with delegation
+  - Removed 28 lines of action label mapping logic
+  - Simplified from 37 lines to 15 lines (including javadoc)
+- **Architecture**:
+  - Kotlin object with data class for clean return values
+  - Handles all IME action types (NEXT, DONE, GO, SEARCH, SEND, PREVIOUS)
+  - Immutable data class for action info transfer
+  - Clean separation: EditorInfo parsing in helper, config updates in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,104 → 1,082 lines (-22) 🎉
+  - Created EditorInfoHelper.kt: +149 lines (Kotlin)
+  - Created EditorInfoHelperTest.kt: +314 lines
+  - Total Keyboard2 reduction: 2,397 → 1,082 lines (-1,315 total!)
+  - Build successful ✅ (v1.32.380, build 430)
+- **Benefits**:
+  - Centralized EditorInfo parsing logic
+  - Type-safe data class for action info
+  - Comprehensive coverage of all IME actions
+  - Improved testability (easy to test mappings)
+  - Demonstrates Kotlin data class usage for clean APIs
+- **Phase 4 Progress**: 8/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager + KeyboardReceiver + MLDataCollector + WindowLayoutUtils + IMEStatusHelper + EditorInfoHelper done!)
+- **Next**: Continue Phase 4 extractions (only ~382 lines remaining to reach <700 target!)
 
 **REFACTORING PHASE 4: Extract IMEStatusHelper (Phase 4, 7/? Complete! ✅)**
 - **Goal**: Extract IME status checking and prompting utilities into Kotlin object

@@ -57,6 +57,18 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ⚠️ **Android Testing Limitation**: Settings.Secure is final/static, requires PowerMock/MockK/Robolectric for full coverage
 - **Total**: 16 test cases
 
+### EditorInfoHelperTest.kt (314 lines)
+**Coverage**: 100% of EditorInfoHelper.kt
+- ✅ Action info extraction with custom action labels
+- ✅ Action info extraction with IME actions (all 7 types)
+- ✅ Action label mapping for all IME action constants
+- ✅ Resource ID mapping for all actions
+- ✅ Enter/Action key swap behavior (IME_FLAG_NO_ENTER_ACTION)
+- ✅ Null action labels (IME_ACTION_NONE, IME_ACTION_UNSPECIFIED)
+- ✅ Unknown action handling
+- ✅ Data class equality and null handling
+- **Total**: 26 test cases
+
 ## Testing Methodology
 
 ### Frameworks Used
@@ -146,6 +158,13 @@ fun testMethodName_scenario_expectedBehavior() {
 - **Mock Usage**: Extensive (Context, Handler, Prefs, IMM, ContentResolver)
 - **Edge Cases**: 4 (null IMM, exceptions, null default IME, package/class mismatch)
 - **Android Limitations**: Documents Settings.Secure mocking challenges
+
+### EditorInfoHelperTest
+- **Lines of Code**: 314
+- **Test Cases**: 26
+- **Mock Usage**: Moderate (Resources, EditorInfo)
+- **Edge Cases**: 3 (null labels, unknown actions, data class equality)
+- **Action Types Tested**: 7 (all IME action constants)
 
 ## Continuous Improvement
 
