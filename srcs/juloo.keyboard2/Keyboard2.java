@@ -242,32 +242,16 @@ public class Keyboard2 extends InputMethodService
     _debugLoggingManager = new DebugLoggingManager(this, getPackageName());
     _debugLoggingManager.initializeLogWriter();
 
-    // Register debug mode change listener to propagate to managers (v1.32.384)
-    _debugLoggingManager.registerDebugModeListener(new DebugLoggingManager.DebugModeListener()
-    {
-      @Override
-      public void onDebugModeChanged(boolean enabled)
-      {
-        // Propagate debug mode to SuggestionHandler (v1.32.361)
-        if (_suggestionHandler != null)
-        {
-          _suggestionHandler.setDebugMode(enabled, _debugLoggerImpl);
-        }
+    // Create debug mode propagator (v1.32.392: extracted debug mode listener)
+    DebugModePropagator debugModePropagator = DebugModePropagator.create(
+      _suggestionHandler,
+      _neuralLayoutHelper,
+      _debugLoggerImpl,
+      _debugLoggingManager
+    );
 
-        // Propagate debug mode to NeuralLayoutHelper (v1.32.362)
-        if (_neuralLayoutHelper != null)
-        {
-          _neuralLayoutHelper.setDebugMode(enabled, new NeuralLayoutHelper.DebugLogger()
-          {
-            @Override
-            public void sendDebugLog(String message)
-            {
-              _debugLoggingManager.sendDebugLog(message);
-            }
-          });
-        }
-      }
-    });
+    // Register debug mode propagator with debug logging manager (v1.32.392)
+    _debugLoggingManager.registerDebugModeListener(debugModePropagator);
 
     // Register broadcast receiver for debug mode control (v1.32.384: delegated to DebugLoggingManager)
     _debugLoggingManager.registerDebugModeReceiver(this);
