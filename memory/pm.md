@@ -9,11 +9,69 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.339 (389)
-**Build Status**: ✅ BUILD SUCCESSFUL - External ONNX Model File Picker Fixed
+**Latest Version**: v1.32.340 (390)
+**Build Status**: ✅ BUILD SUCCESSFUL - Prediction Source Slider Now Works!
 **Branch**: feature/swipe-typing
 
-### Recent Work (v1.32.339)
+### Recent Work (v1.32.340)
+
+**CRITICAL FIX: Prediction Source slider now actually affects scoring**
+- **Root Cause** (identified by Gemini 2.5 Pro):
+  - Config.java calculates `swipe_confidence_weight` and `swipe_frequency_weight` from the "Prediction Source" slider (0-100)
+  - BUT it never writes these to SharedPreferences!
+  - OptimizedVocabulary.java tries to read them from SharedPreferences
+  - Result: Always uses hardcoded defaults (0.6/0.4), slider has ZERO effect
+
+- **Fix**: OptimizedVocabulary.java:156-158
+  ```java
+  // Read swipe_prediction_source slider directly and calculate weights
+  int predictionSource = prefs.getInt("swipe_prediction_source", 60);
+  confidenceWeight = predictionSource / 100.0f;  // 0-100 → 0.0-1.0
+  frequencyWeight = 1.0f - confidenceWeight;     // Complementary
+  ```
+
+- **Impact**: The "Prediction Source" slider in Settings → Swipe Corrections → Advanced Swipe Tuning NOW WORKS
+  - 0 = Pure dictionary (0% NN confidence, 100% frequency)
+  - 50 = Balanced (50% NN confidence, 50% frequency)
+  - 100 = Pure AI (100% NN confidence, 0% frequency)
+  - Default: 60 (slightly favor NN over dictionary)
+
+- **Complete NN Settings Audit** (by Gemini 2.5 Pro):
+
+  **✅ WORKING SETTINGS**:
+  - neural_beam_width (2) - Controls beam search width
+  - neural_max_length (35) - Maximum word length
+  - neural_model_version - Model selection (v1/v2/v3/custom)
+  - neural_user_max_seq_length - Override sequence length
+  - neural_resampling_mode - Trajectory resampling
+  - swipe_common_words_boost (1.3) - Tier 2 boost
+  - swipe_top5000_boost (1.0) - Tier 1 boost
+  - swipe_rare_words_penalty (0.75) - Tier 0 penalty
+  - swipe_beam_autocorrect_enabled - Master autocorrect switch
+  - autocorrect_max_length_diff (2) - Length tolerance
+  - autocorrect_prefix_length (2) - Prefix matching
+  - autocorrect_max_beam_candidates (3) - Fuzzy match depth
+  - autocorrect_min_word_length (3) - Min correction length
+  - autocorrect_char_match_threshold (0.67) - Character similarity
+  - swipe_fuzzy_match_mode - Algorithm selection (edit_distance/positional)
+
+  **⚠️ PARTIAL - May not work as expected**:
+  - neural_confidence_threshold (0.1) - Only used in fallback path (when OptimizedVocabulary fails)
+  - neural_prediction_enabled - Implicit (keyboard service level, not in predictor)
+
+  **❌ NOT IMPLEMENTED** (settings exist but no code uses them):
+  - autocorrect_enabled - Global typing autocorrect (different pipeline)
+  - swipe_final_autocorrect_enabled - Post-selection correction (not implemented)
+  - word_prediction_enabled - Regular typing predictions (different engine)
+  - prediction_context_boost (2.0) - N-gram context (not implemented)
+  - prediction_frequency_scale (1000.0) - Typing frequency scaling (not implemented)
+
+- **Files Modified**:
+  - OptimizedVocabulary.java (scoring weight calculation fix)
+  - build.gradle (versionCode 390, versionName 1.32.340)
+  - memory/pm.md (this file)
+
+### Previous Work (v1.32.339)
 
 **CRITICAL FIX: External ONNX model file pickers now work correctly**
 - **Root Cause Analysis** (by Gemini 2.5 Pro):

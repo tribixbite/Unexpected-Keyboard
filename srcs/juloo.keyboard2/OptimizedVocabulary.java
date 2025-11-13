@@ -151,8 +151,12 @@ public class OptimizedVocabulary
         debugMode = prefs.getBoolean("swipe_debug_detailed_logging", false);
 
         // Read configurable scoring weights (v1.33+)
-        confidenceWeight = prefs.getFloat("swipe_confidence_weight", CONFIDENCE_WEIGHT);
-        frequencyWeight = prefs.getFloat("swipe_frequency_weight", FREQUENCY_WEIGHT);
+        // CRITICAL FIX: Calculate weights from "swipe_prediction_source" slider (0-100)
+        // Config.java calculates these but never writes them to SharedPreferences!
+        int predictionSource = prefs.getInt("swipe_prediction_source", 60);  // 60 = balanced default
+        confidenceWeight = predictionSource / 100.0f;  // 0-100 slider → 0.0-1.0 weight
+        frequencyWeight = 1.0f - confidenceWeight;     // Complementary weight
+
         commonBoost = prefs.getFloat("swipe_common_words_boost", COMMON_WORDS_BOOST);
         top5000Boost = prefs.getFloat("swipe_top5000_boost", TOP5000_BOOST);
         rarePenalty = prefs.getFloat("swipe_rare_words_penalty", RARE_WORDS_PENALTY);
