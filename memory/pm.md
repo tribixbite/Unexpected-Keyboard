@@ -9,14 +9,50 @@
 
 ## 🔥 Current Status (2025-11-13)
 
-**Latest Version**: v1.32.376 (426)
+**Latest Version**: v1.32.378 (428)
 **Build Status**: ✅ BUILD SUCCESSFUL - Phase 4 continues! (Tested on device ✅)
 **Branch**: feature/swipe-typing
-**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,147 lines, target: <700)
-**Refactoring Progress**: 13/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 6/? ✅)
-**Test Coverage**: 60 test cases across 3 comprehensive Kotlin test suites
+**Current Focus**: Keyboard2.java Refactoring (2,397 → 1,104 lines, target: <700)
+**Refactoring Progress**: 14/? extractions complete (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: 7/? ✅)
+**Test Coverage**: 76 test cases across 4 comprehensive Kotlin test suites
 
-### Recent Work (v1.32.362-376) - Phase 4 Continues!
+### Recent Work (v1.32.362-378) - Phase 4 Continues!
+
+**REFACTORING PHASE 4: Extract IMEStatusHelper (Phase 4, 7/? Complete! ✅)**
+- **Goal**: Extract IME status checking and prompting utilities into Kotlin object
+- **Created**: IMEStatusHelper.kt (152 lines, Kotlin)
+  - checkAndPromptDefaultIME(...) - Check if default IME and show prompt if not
+  - isDefaultIME(...) - Query if keyboard is currently default IME
+  - resetSessionPrompt(...) - Reset session prompt flag for testing
+  - All methods annotated with @JvmStatic for Java interop
+- **Created**: IMEStatusHelperTest.kt (322 lines)
+  - 16 comprehensive test cases with AAA pattern
+  - Tests prompt logic: session tracking, default checking, toast display
+  - Edge cases: null IMM, exceptions, preference persistence
+  - Documents Android testing limitations (Settings.Secure mocking)
+- **Modified**: Keyboard2.java (1,147 → 1,104 lines, -43)
+  - Replaced checkAndPromptDefaultIME() with delegation to IMEStatusHelper
+  - Removed 49 lines of IME checking and toast display logic
+  - Simplified from 52 lines to 9 lines (including javadoc)
+- **Architecture**:
+  - Kotlin object with @JvmStatic methods for Java interop
+  - Handles Android system integration (Settings, IMM, SharedPreferences)
+  - Session-based prompt tracking to avoid annoyance
+  - Clean separation: IME status logic in helper, lifecycle in Keyboard2
+- **Impact**:
+  - Keyboard2.java: 1,147 → 1,104 lines (-43) 🎉
+  - Created IMEStatusHelper.kt: +152 lines (Kotlin)
+  - Created IMEStatusHelperTest.kt: +322 lines
+  - Total Keyboard2 reduction: 2,397 → 1,104 lines (-1,293 total!)
+  - Build successful ✅ (v1.32.378, build 428)
+- **Benefits**:
+  - Centralized IME status checking logic
+  - Improved testability (can test independently)
+  - Better organization of system integration utilities
+  - Foundation for more Android system utilities
+  - Demonstrates Kotlin migration for system integration
+- **Phase 4 Progress**: 7/? complete ✅ (NeuralLayoutHelper + LayoutManager + SubtypeManager + KeyboardReceiver + MLDataCollector + WindowLayoutUtils + IMEStatusHelper done!)
+- **Next**: Continue Phase 4 extractions (only ~404 lines remaining to reach <700 target!)
 
 **REFACTORING PHASE 4: Extract WindowLayoutUtils (Phase 4, 6/? Complete! ✅)**
 - **Goal**: Extract window and view layout management utilities into Kotlin object

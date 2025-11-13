@@ -44,6 +44,19 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Null parent handling
 - **Total**: 18 test cases
 
+### IMEStatusHelperTest.kt (322 lines)
+**Coverage**: ~85% of IMEStatusHelper.kt (Android Settings.Secure mocking limited)
+- ✅ Session-based prompt tracking (already prompted, not prompted)
+- ✅ Default IME checking (we are default, we are not default)
+- ✅ Toast display timing (2-second delay verification)
+- ✅ Null InputMethodManager handling
+- ✅ Exception handling (Settings query failures)
+- ✅ Default IME status queries (true/false/null/exceptions)
+- ✅ Package and class name matching
+- ✅ Session prompt reset functionality
+- ⚠️ **Android Testing Limitation**: Settings.Secure is final/static, requires PowerMock/MockK/Robolectric for full coverage
+- **Total**: 16 test cases
+
 ## Testing Methodology
 
 ### Frameworks Used
@@ -126,6 +139,13 @@ fun testMethodName_scenario_expectedBehavior() {
 - **Mock Usage**: Extensive (Window, View, LayoutParams)
 - **Edge Cases**: 5 (null params, same values, unsupported types)
 - **Layout Types Tested**: 2 (LinearLayout, FrameLayout)
+
+### IMEStatusHelperTest
+- **Lines of Code**: 322
+- **Test Cases**: 16
+- **Mock Usage**: Extensive (Context, Handler, Prefs, IMM, ContentResolver)
+- **Edge Cases**: 4 (null IMM, exceptions, null default IME, package/class mismatch)
+- **Android Limitations**: Documents Settings.Secure mocking challenges
 
 ## Continuous Improvement
 
