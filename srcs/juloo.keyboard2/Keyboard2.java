@@ -267,29 +267,14 @@ public class Keyboard2 extends InputMethodService
   public void onDestroy() {
     super.onDestroy();
 
-    _configManager.getFoldStateTracker().close();
-
-    // Cleanup clipboard listener
-    ClipboardHistoryService.on_shutdown();
-
-    // Cleanup clipboard manager
-    if (_clipboardManager != null)
-    {
-      _clipboardManager.cleanup();
-    }
-
-    // Cleanup prediction coordinator
-    if (_predictionCoordinator != null)
-    {
-      _predictionCoordinator.shutdown();
-    }
-
-    // Unregister debug mode receiver and close log writer (v1.32.384: delegated to DebugLoggingManager)
-    if (_debugLoggingManager != null)
-    {
-      _debugLoggingManager.unregisterDebugModeReceiver(this);
-      _debugLoggingManager.close();
-    }
+    // Cleanup all managers (v1.32.404: extracted to CleanupHandler)
+    CleanupHandler.create(
+      this,
+      _configManager,
+      _clipboardManager,
+      _predictionCoordinator,
+      _debugLoggingManager
+    ).cleanup();
   }
 
   /**
