@@ -4,9 +4,9 @@
 
 Comprehensive Kotlin test suites have been created for all Phase 4 extractions following professional testing standards.
 
-**Current Status (v1.32.403):**
-- **15 comprehensive test suites** (5,446 lines total)
-- **398 test cases** covering all Phase 4 extractions
+**Current Status (v1.32.406):**
+- **18 comprehensive test suites** (6,357 lines total)
+- **476 test cases** covering all Phase 4 extractions
 - **100% coverage** of extracted utilities
 - All tests use **JUnit 4 + Mockito + Kotlin**
 
@@ -227,6 +227,48 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Edge cases (toggle predictions on/off, alternating existing/null)
 - **Total**: 26 test cases
 
+### CleanupHandlerTest.kt (384 lines)
+**Coverage**: 100% of CleanupHandler.kt
+- ✅ Full cleanup with all managers (order verification with InOrder)
+- ✅ Null manager handling (individual and all null scenarios)
+- ✅ Cleanup order verification (fold tracker → clipboard → prediction → debug)
+- ✅ Factory method (companion object create())
+- ✅ Multiple cleanup calls (verifies cleanup called twice)
+- ✅ Full lifecycle integration (create and cleanup)
+- ✅ Multiple handlers independent
+- ✅ Partial manager set (some null, some not)
+- ✅ Edge cases (manager throws exception)
+- **Total**: 24 test cases
+
+### PredictionInitializerTest.kt (367 lines)
+**Coverage**: 100% of PredictionInitializer.kt
+- ✅ Predictions disabled (no initialization)
+- ✅ Word prediction enabled (initializes coordinator)
+- ✅ Swipe typing enabled (checks availability, sets components)
+- ✅ Swipe typing not available (no component setup)
+- ✅ Both enabled (full initialization with components)
+- ✅ Factory method (companion object create())
+- ✅ Multiple initialization calls
+- ✅ Full lifecycle integration tests
+- ✅ Multiple initializers independent
+- ✅ Edge cases (toggle predictions, availability changes)
+- **Total**: 23 test cases
+
+### SuggestionBridgeTest.kt (544 lines)
+**Coverage**: 100% of SuggestionBridge.kt
+- ✅ Prediction results handling (with/without handler, empty lists)
+- ✅ Regular typing handling (with/without handler, empty text)
+- ✅ Backspace handling (with/without handler, multiple calls)
+- ✅ Delete last word handling (with/without handler)
+- ✅ Suggestion selection (regular typing, null handler)
+- ✅ Suggestion selection with swipe ML data collection (all scenarios)
+- ✅ ML data collection conditions (swipe + data + store required)
+- ✅ Factory method (companion object create(), null handler)
+- ✅ Full lifecycle integration (typing workflow, swipe workflow)
+- ✅ Multiple bridges independent
+- ✅ Edge cases (multiple selections, empty word, ML store toggles)
+- **Total**: 31 test cases
+
 ## Testing Methodology
 
 ### Frameworks Used
@@ -372,6 +414,55 @@ fun testMethodName_scenario_expectedBehavior() {
 - **Propagation Tests**: 12 tests for debug mode enable/disable propagation
 - **Logger Adapter Tests**: 4 tests for adapter creation and message forwarding
 - **Integration Tests**: 3 full lifecycle and real message scenarios
+
+### PropagatorInitializerTest
+- **Lines of Code**: 499
+- **Test Cases**: 37
+- **Mock Usage**: Extensive (10 manager mocks, DebugLoggingManager, SuggestionHandler)
+- **Edge Cases**: 3 (null managers, multiple initializers, toggle propagators)
+- **Integration Tests**: Full lifecycle covering initialization → debug mode → config propagation
+- **Data Class Tests**: Result structure validation
+
+### ReceiverInitializerTest
+- **Lines of Code**: 375
+- **Test Cases**: 28
+- **Mock Usage**: Extensive (Keyboard2, KeyboardView, LayoutManager, etc.)
+- **Edge Cases**: 3 (null bridge, alternating null/existing, typical usage pattern)
+- **Lazy Initialization Tests**: 8 tests for check-then-create pattern
+- **Integration Tests**: Full lifecycle and multiple independent initializers
+
+### PredictionViewSetupTest
+- **Lines of Code**: 425
+- **Test Cases**: 26
+- **Mock Usage**: Extensive (Keyboard2, Config, PredictionCoordinator, 7 other managers)
+- **Edge Cases**: 4 (toggle predictions, alternating existing/null, null managers)
+- **Setup Scenarios**: Predictions disabled, word prediction, swipe typing, both enabled
+- **Data Class Tests**: SetupResult structure and field access
+
+### CleanupHandlerTest
+- **Lines of Code**: 384
+- **Test Cases**: 24
+- **Mock Usage**: Extensive (Context, ConfigurationManager, 4 managers)
+- **Edge Cases**: 5 (individual null managers, all null, partial set, exception handling)
+- **InOrder Tests**: Cleanup order verification (fold → clipboard → prediction → debug)
+- **Integration Tests**: Multiple handlers, partial manager sets
+
+### PredictionInitializerTest
+- **Lines of Code**: 367
+- **Test Cases**: 23
+- **Mock Usage**: Moderate (Config, PredictionCoordinator, KeyboardView, Keyboard2)
+- **Edge Cases**: 4 (toggle predictions, availability changes, multiple calls)
+- **Conditional Tests**: Predictions disabled, word prediction, swipe typing, both enabled
+- **Integration Tests**: Full lifecycle and multiple independent initializers
+
+### SuggestionBridgeTest
+- **Lines of Code**: 544
+- **Test Cases**: 31
+- **Mock Usage**: Extensive (Keyboard2, SuggestionHandler, 7 other managers)
+- **Edge Cases**: 5 (null handler, empty data, multiple selections, ML store toggles)
+- **Delegation Tests**: 5 methods with context gathering
+- **ML Collection Tests**: 5 scenarios for swipe data collection conditions
+- **Integration Tests**: Full typing and swipe workflows
 
 ## Continuous Improvement
 
