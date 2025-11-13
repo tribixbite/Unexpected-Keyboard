@@ -71,6 +71,25 @@
   - build.gradle (versionCode 390, versionName 1.32.340)
   - memory/pm.md (this file)
 
+**Documentation Created**:
+- **docs/NN_SETTINGS_GUIDE.md** - Comprehensive neural network settings guide (v1.32.340+)
+  - Complete explanation of all 17 working NN settings
+  - Recommended presets: Balanced, Accuracy-Focused, Speed-Focused, Custom Vocabulary
+  - Performance impact chart
+  - Troubleshooting guide with logcat commands
+  - Testing and debugging section
+
+- **docs/TESTING_CHECKLIST.md** - Systematic testing protocol for NN fixes
+  - Test 1: External Model File Picker verification
+  - Test 2: Prediction Source Slider (0/50/100 values)
+  - Test 3: Working Settings verification (beam width, boosts, autocorrect)
+  - Test 4: Performance benchmarking
+  - Test 5: Edge cases (long words, short swipes, custom words)
+  - Test 6: Config reload (OnSharedPreferenceChangeListener fix)
+  - Logcat monitoring commands and success criteria
+
+- **docs/specs/README.md** - Updated with links to new user guides
+
 ### Previous Work (v1.32.339)
 
 **CRITICAL FIX: External ONNX model file pickers now work correctly**

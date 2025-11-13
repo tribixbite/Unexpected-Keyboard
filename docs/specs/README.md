@@ -89,12 +89,16 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 - [DICTIONARY_MANAGER.md](DICTIONARY_MANAGER.md#user-workflows) - How to manage words
 - [CLIPBOARD_MANAGER.md](CLIPBOARD_MANAGER.md#user-workflows) - How to use clipboard history and backup
 - [SHORT_SWIPE_GESTURES.md](SHORT_SWIPE_GESTURES.md#common-layout-patterns) - Available swipe shortcuts and configuration
+- **[../NN_SETTINGS_GUIDE.md](../NN_SETTINGS_GUIDE.md)** - ✨ Complete neural network settings guide (v1.32.340+)
 
 **Understanding Predictions:**
 - [SWIPE_PREDICTION_PIPELINE.md](SWIPE_PREDICTION_PIPELINE.md#pipeline-architecture) - How swipe predictions work
 - [TYPING_PREDICTION.md](TYPING_PREDICTION.md#scoring-algorithm) - How typing predictions work
 - [BEAM_SEARCH_VOCABULARY.md](BEAM_SEARCH_VOCABULARY.md#scoring-algorithm) - How words are ranked
 - [AUTO_CORRECTION.md](AUTO_CORRECTION.md#swipe-autocorrect-v13207) - How autocorrect works
+
+**Testing & Troubleshooting:**
+- **[../TESTING_CHECKLIST.md](../TESTING_CHECKLIST.md)** - ✨ Testing checklist for NN fixes (v1.32.339-340)
 
 ---
 
