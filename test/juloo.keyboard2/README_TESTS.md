@@ -4,9 +4,9 @@
 
 Comprehensive Kotlin test suites have been created for all Phase 4 extractions following professional testing standards.
 
-**Current Status (v1.32.408):**
-- **20 comprehensive test suites** (7,621 lines total)
-- **571 test cases** covering all Phase 4 extractions
+**Current Status (v1.32.410):**
+- **21 comprehensive test suites** (8,230 lines total)
+- **607 test cases** covering all Phase 4 extractions
 - **100% coverage** of extracted utilities
 - All tests use **JUnit 4 + Mockito + Kotlin**
 
@@ -300,6 +300,18 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Multiple bridges independent
 - ✅ Edge cases (same layout repeatedly, cycle forward/back, load without applying)
 - **Total**: 46 test cases
+
+### SubtypeLayoutInitializerTest.kt (609 lines)
+**Coverage**: 100% of SubtypeLayoutInitializer.kt
+- ✅ First initialization (creates SubtypeManager, LayoutManager, LayoutBridge)
+- ✅ Subsequent refresh (updates layout, reuses managers, no new bridge)
+- ✅ Null default layout handling (fallback to QWERTY layout)
+- ✅ Factory method (companion object create())
+- ✅ Data class structure (InitializationResult equality, copy, field access)
+- ✅ Multiple refresh cycles (first then subsequent, alternating calls)
+- ✅ Full lifecycle integration (init→refresh, multiple refreshes, independent initializers)
+- ✅ Edge cases (partial managers, layout changes, null→non-null, same managers repeated)
+- **Total**: 36 test cases
 
 ## Testing Methodology
 
