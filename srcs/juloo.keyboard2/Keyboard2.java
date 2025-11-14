@@ -112,6 +112,9 @@ public class Keyboard2 extends InputMethodService
   // Layout bridge (v1.32.408: extracted to LayoutBridge)
   private LayoutBridge _layoutBridge;
 
+  // Preference UI update handler (v1.32.412: extracted to PreferenceUIUpdateHandler)
+  private PreferenceUIUpdateHandler _preferenceUIUpdateHandler;
+
   /**
    * Layout currently visible before it has been modified.
    * (v1.32.363: Delegated to LayoutManager)
@@ -549,32 +552,21 @@ public class Keyboard2 extends InputMethodService
   {
     // NOTE: ConfigurationManager is the primary SharedPreferences listener and handles
     // config refresh. This method handles additional UI updates.
+    // (v1.32.412: Delegated to PreferenceUIUpdateHandler)
 
-    // Update keyboard layout
-    if (_keyboardView != null)
+    // Initialize handler lazily (depends on components that may not exist yet)
+    if (_preferenceUIUpdateHandler == null)
     {
-      _keyboardView.setKeyboard(current_layout());
+      _preferenceUIUpdateHandler = PreferenceUIUpdateHandler.create(
+        _config,
+        _layoutBridge,
+        _predictionCoordinator,
+        _keyboardView,
+        _suggestionBar
+      );
     }
 
-    // Update suggestion bar opacity if it exists
-    if (_suggestionBar != null)
-    {
-      _suggestionBar.setOpacity(_config.suggestion_bar_opacity);
-    }
-
-    // Update neural predictor when model-related settings change
-    // (This is redundant with onConfigChanged but kept for explicit model reloading)
-    if (_key != null && (_key.equals("neural_custom_encoder_uri") ||
-                        _key.equals("neural_custom_decoder_uri") ||
-                        _key.equals("neural_model_version") ||
-                        _key.equals("neural_user_max_seq_length")))
-    {
-      if (_predictionCoordinator.getNeuralEngine() != null)
-      {
-        _predictionCoordinator.getNeuralEngine().setConfig(_config);
-        Log.d("Keyboard2", "Neural model setting changed: " + _key + " - engine config updated");
-      }
-    }
+    _preferenceUIUpdateHandler.handlePreferenceChange(_key);
   }
 
   @Override
