@@ -22,7 +22,7 @@ class ReceiverInitializer(
     private val context: Keyboard2,
     private val keyboard2: Keyboard2,
     private val keyboardView: Keyboard2View,
-    private val layoutManager: LayoutManager,
+    private val layoutManager: LayoutManager?,
     private val clipboardManager: ClipboardManager,
     private val contextTracker: PredictionContextTracker,
     private val inputCoordinator: InputCoordinator,
@@ -35,16 +35,21 @@ class ReceiverInitializer(
      *
      * Uses lazy initialization pattern:
      * 1. Checks if receiver already exists
-     * 2. Creates new KeyboardReceiver with all dependencies
+     * 2. Creates new KeyboardReceiver with all dependencies (requires layoutManager)
      * 3. Sets receiver on KeyEventReceiverBridge
      *
      * @param existingReceiver The current receiver (null if not yet created)
-     * @return The existing receiver or newly created receiver
+     * @return The existing receiver, newly created receiver, or null if layoutManager not ready
      */
-    fun initializeIfNeeded(existingReceiver: KeyboardReceiver?): KeyboardReceiver {
+    fun initializeIfNeeded(existingReceiver: KeyboardReceiver?): KeyboardReceiver? {
         // Return existing receiver if already created
         if (existingReceiver != null) {
             return existingReceiver
+        }
+
+        // Cannot create receiver without layoutManager - defer until layout is initialized
+        if (layoutManager == null) {
+            return null
         }
 
         // Create new KeyboardReceiver with all dependencies
@@ -73,7 +78,7 @@ class ReceiverInitializer(
          * @param context The Context (Keyboard2 service)
          * @param keyboard2 The Keyboard2 service
          * @param keyboardView The keyboard view
-         * @param layoutManager The layout manager
+         * @param layoutManager The layout manager (nullable - if null, receiver creation deferred)
          * @param clipboardManager The clipboard manager
          * @param contextTracker The prediction context tracker
          * @param inputCoordinator The input coordinator
@@ -87,7 +92,7 @@ class ReceiverInitializer(
             context: Keyboard2,
             keyboard2: Keyboard2,
             keyboardView: Keyboard2View,
-            layoutManager: LayoutManager,
+            layoutManager: LayoutManager?,
             clipboardManager: ClipboardManager,
             contextTracker: PredictionContextTracker,
             inputCoordinator: InputCoordinator,

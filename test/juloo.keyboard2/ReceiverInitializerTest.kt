@@ -372,4 +372,127 @@ class ReceiverInitializerTest {
         // Bridge should be called twice (for null cases)
         verify(mockReceiverBridge, times(2)).setReceiver(any())
     }
+
+    // ========== Null LayoutManager Tests (v1.32.413: initialization order fix) ==========
+
+    @Test
+    fun testNullLayoutManager_initializeIfNeeded_returnsNull() {
+        // Arrange - create initializer with null layoutManager
+        val initializerWithNullLayout = ReceiverInitializer(
+            mockContext,
+            mockKeyboard2,
+            mockKeyboardView,
+            null,  // null layoutManager
+            mockClipboardManager,
+            mockContextTracker,
+            mockInputCoordinator,
+            mockSubtypeManager,
+            mockHandler,
+            mockReceiverBridge
+        )
+
+        // Act
+        val result = initializerWithNullLayout.initializeIfNeeded(null)
+
+        // Assert
+        assertNull("Should return null when layoutManager is null", result)
+    }
+
+    @Test
+    fun testNullLayoutManager_doesNotCreateReceiver() {
+        // Arrange - create initializer with null layoutManager
+        val initializerWithNullLayout = ReceiverInitializer(
+            mockContext,
+            mockKeyboard2,
+            mockKeyboardView,
+            null,  // null layoutManager
+            mockClipboardManager,
+            mockContextTracker,
+            mockInputCoordinator,
+            mockSubtypeManager,
+            mockHandler,
+            mockReceiverBridge
+        )
+
+        // Act
+        initializerWithNullLayout.initializeIfNeeded(null)
+
+        // Assert - bridge should not be called since receiver wasn't created
+        verifyNoInteractions(mockReceiverBridge)
+    }
+
+    @Test
+    fun testNullLayoutManager_withExistingReceiver_returnsExisting() {
+        // Arrange - create initializer with null layoutManager
+        val initializerWithNullLayout = ReceiverInitializer(
+            mockContext,
+            mockKeyboard2,
+            mockKeyboardView,
+            null,  // null layoutManager
+            mockClipboardManager,
+            mockContextTracker,
+            mockInputCoordinator,
+            mockSubtypeManager,
+            mockHandler,
+            mockReceiverBridge
+        )
+
+        // Act - even with null layoutManager, should return existing receiver
+        val result = initializerWithNullLayout.initializeIfNeeded(mockExistingReceiver)
+
+        // Assert
+        assertSame("Should return existing receiver even with null layoutManager",
+                   mockExistingReceiver, result)
+    }
+
+    @Test
+    fun testFactoryMethod_withNullLayoutManager_createsInitializer() {
+        // Act
+        val initializer = ReceiverInitializer.create(
+            mockContext,
+            mockKeyboard2,
+            mockKeyboardView,
+            null,  // null layoutManager
+            mockClipboardManager,
+            mockContextTracker,
+            mockInputCoordinator,
+            mockSubtypeManager,
+            mockHandler,
+            mockReceiverBridge
+        )
+
+        // Assert
+        assertNotNull("Factory should create initializer with null layoutManager", initializer)
+
+        // Verify behavior - should return null when trying to initialize
+        val result = initializer.initializeIfNeeded(null)
+        assertNull("Should defer creation when layoutManager is null", result)
+    }
+
+    @Test
+    fun testNullLayoutManager_multipleCallsWithExisting_returnsExisting() {
+        // Arrange
+        val initializerWithNullLayout = ReceiverInitializer(
+            mockContext,
+            mockKeyboard2,
+            mockKeyboardView,
+            null,  // null layoutManager
+            mockClipboardManager,
+            mockContextTracker,
+            mockInputCoordinator,
+            mockSubtypeManager,
+            mockHandler,
+            mockReceiverBridge
+        )
+
+        // Act - multiple calls with existing receiver
+        val result1 = initializerWithNullLayout.initializeIfNeeded(mockExistingReceiver)
+        val result2 = initializerWithNullLayout.initializeIfNeeded(mockExistingReceiver)
+        val result3 = initializerWithNullLayout.initializeIfNeeded(mockExistingReceiver)
+
+        // Assert
+        assertSame("All calls should return same existing receiver", mockExistingReceiver, result1)
+        assertSame("All calls should return same existing receiver", mockExistingReceiver, result2)
+        assertSame("All calls should return same existing receiver", mockExistingReceiver, result3)
+    }
 }

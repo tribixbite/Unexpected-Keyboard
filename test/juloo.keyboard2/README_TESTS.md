@@ -195,7 +195,7 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Both propagators work together (ConfigPropagator + DebugModePropagator)
 - **Total**: 37 test cases
 
-### ReceiverInitializerTest.kt (375 lines)
+### ReceiverInitializerTest.kt (499 lines, 33 tests)
 **Coverage**: 100% of ReceiverInitializer.kt
 - ✅ Lazy initialization pattern (returns existing receiver if not null)
 - ✅ Creates new KeyboardReceiver when existing is null
@@ -209,7 +209,10 @@ Comprehensive Kotlin test suites have been created for all Phase 4 extractions f
 - ✅ Multiple initializers are independent
 - ✅ Typical usage pattern verification (simulates real onStartInputView calls)
 - ✅ Edge cases (alternating null and existing receivers)
-- **Total**: 28 test cases
+- ✅ **v1.32.413**: Null layoutManager handling (defers creation, returns null)
+- ✅ **v1.32.413**: Null layoutManager with existing receiver (returns existing)
+- ✅ **v1.32.413**: Factory method with null layoutManager
+- **Total**: 33 test cases (5 new for initialization order fix)
 
 ### PredictionViewSetupTest.kt (425 lines)
 **Coverage**: 100% of PredictionViewSetup.kt

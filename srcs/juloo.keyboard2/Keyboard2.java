@@ -431,8 +431,16 @@ public class Keyboard2 extends InputMethodService
   {
     refresh_config();
 
+    // Initialize subtype and layout if not already done (v1.32.413: ensure layoutManager is ready)
+    // This is needed for receiver initialization which depends on layoutManager
+    if (_layoutManager == null)
+    {
+      refreshSubtypeImm();
+    }
+
     // Initialize KeyboardReceiver if needed (v1.32.397: extracted to ReceiverInitializer)
     // Lazy initialization: creates receiver on first call, returns existing on subsequent calls
+    // Note: initializeIfNeeded() may return null if layoutManager not ready (rare edge case)
     _receiver = ReceiverInitializer.create(
       this,
       this,
