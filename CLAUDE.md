@@ -11,16 +11,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **UPDATE** these files with ALL progress and changes made
 - **RECORD** completed tasks, new issues, and roadmap updates
 
-### 2. BUILD AFTER EVERY CODE CHANGE
+### 2. BUILD AND TEST AFTER EVERY CODE CHANGE
 **MANDATORY**: After EVERY code modification:
 ```bash
-./build-on-termux.sh
+./build-test-deploy.sh  # Full test + build + deploy + verify
 ```
-- NEVER proceed without confirming successful build
-- Fix ALL compilation errors immediately
-- Test with adb when possible
-- Always write and run relevant tests
+OR for quick verification:
+```bash
+./pre-commit-tests.sh   # Fast: compile + unit tests + checks
+./build-on-termux.sh    # Build only (no tests)
+```
+
+**TESTING REQUIREMENTS**:
+- NEVER skip tests - they catch runtime issues that compilation misses
+- Write unit tests (20+ cases) for ALL new utilities
+- Add integration tests for Android framework usage
+- Use smoke tests to verify app doesn't crash on load
+- Monitor logcat during first run after changes
 - USE KOTLIN FOR NEW CODE
+
+**Test Scripts**:
+- `./build-test-deploy.sh` - Complete pipeline (recommended)
+- `./pre-commit-tests.sh` - Quick pre-commit verification
+- `./smoke-test.sh` - Post-install verification via ADB
+- `./gradlew test` - Run unit tests only
 
 ### 3. DOCUMENT ALL PROGRESS
 **MANDATORY**: Update `memory/pm.md` with:
