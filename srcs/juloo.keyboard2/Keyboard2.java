@@ -333,32 +333,21 @@ public class Keyboard2 extends InputMethodService
   /**
    * Refreshes IME subtype settings and initializes managers.
    * (v1.32.365: Simplified by delegating to SubtypeManager)
+   * (v1.32.409: Delegated to SubtypeLayoutInitializer)
    */
   private void refreshSubtypeImm()
   {
-    // Initialize SubtypeManager if needed (v1.32.365)
-    if (_subtypeManager == null)
-    {
-      _subtypeManager = new SubtypeManager(this);
-    }
+    SubtypeLayoutInitializer.InitializationResult result =
+        SubtypeLayoutInitializer.create(this, _config, _keyboardView)
+            .refreshSubtypeAndLayout(_subtypeManager, _layoutManager, getResources());
 
-    // Refresh subtype and get default layout (v1.32.365: delegated to SubtypeManager)
-    KeyboardData default_layout = _subtypeManager.refreshSubtype(_config, getResources());
-    if (default_layout == null)
-      default_layout = KeyboardData.load(getResources(), R.xml.latn_qwerty_us);
+    _subtypeManager = result.getSubtypeManager();
+    _layoutManager = result.getLayoutManager();
 
-    // Set locale layout on LayoutManager (v1.32.363)
-    if (_layoutManager != null)
+    // Initialize LayoutBridge on first call (result.layoutBridge is non-null only on first call)
+    if (result.getLayoutBridge() != null)
     {
-      _layoutManager.setLocaleTextLayout(default_layout);
-    }
-    else
-    {
-      // First call - initialize LayoutManager with default layout
-      _layoutManager = new LayoutManager(this, _config, default_layout);
-
-      // Initialize LayoutBridge (v1.32.408: extracted to LayoutBridge)
-      _layoutBridge = LayoutBridge.create(_layoutManager, _keyboardView);
+      _layoutBridge = result.getLayoutBridge();
     }
   }
 
