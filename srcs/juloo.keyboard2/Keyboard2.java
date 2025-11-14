@@ -623,78 +623,16 @@ public class Keyboard2 extends InputMethodService
     }
   }
   
-  /**
-   * Handle prediction results from async prediction handler
-   * (v1.32.361: Delegated to SuggestionHandler)
-   * (v1.32.406: Delegated to SuggestionBridge)
-   */
-  private void handlePredictionResults(List<String> predictions, List<Integer> scores)
-  {
-    _suggestionBridge.handlePredictionResults(predictions, scores);
-  }
-  
-  /**
-   * Called when user selects a suggestion from suggestion bar.
-   * (v1.32.370: ML data collection delegated to MLDataCollector)
-   * (v1.32.406: Delegated to SuggestionBridge)
-   */
-  @Override
-  public void onSuggestionSelected(String word)
-  {
-    _suggestionBridge.onSuggestionSelected(word);
-  }
-  
-  /**
-   * Handle regular typing predictions (non-swipe)
-   * (v1.32.361: Delegated to SuggestionHandler)
-   * (v1.32.406: Delegated to SuggestionBridge)
-   */
-  public void handleRegularTyping(String text)
-  {
-    _suggestionBridge.handleRegularTyping(text);
-  }
-  
-  /**
-   * Handle backspace for prediction tracking
-   * (v1.32.361: Delegated to SuggestionHandler)
-   * (v1.32.406: Delegated to SuggestionBridge)
-   */
-  public void handleBackspace()
-  {
-    _suggestionBridge.handleBackspace();
-  }
-  
-  // v1.32.361: updatePredictionsForCurrentWord() method removed - functionality moved to SuggestionHandler class
+  // Suggestion/Prediction Methods (v1.32.406: Delegated to SuggestionBridge)
+  private void handlePredictionResults(List<String> predictions, List<Integer> scores) { _suggestionBridge.handlePredictionResults(predictions, scores); }
+  @Override public void onSuggestionSelected(String word) { _suggestionBridge.onSuggestionSelected(word); }
+  public void handleRegularTyping(String text) { _suggestionBridge.handleRegularTyping(text); }
+  public void handleBackspace() { _suggestionBridge.handleBackspace(); }
+  public void handleDeleteLastWord() { _suggestionBridge.handleDeleteLastWord(); }
 
-  /**
-   * Smart delete last word - deletes the last auto-inserted word or last typed word.
-   * (v1.32.361: Delegated to SuggestionHandler)
-   * (v1.32.406: Delegated to SuggestionBridge)
-   */
-  public void handleDeleteLastWord()
-  {
-    _suggestionBridge.handleDeleteLastWord();
-  }
-
-  /**
-   * Calculate dynamic keyboard height based on user settings.
-   * (v1.32.362: Delegated to NeuralLayoutHelper)
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  private float calculateDynamicKeyboardHeight()
-  {
-    return _neuralLayoutBridge.calculateDynamicKeyboardHeight();
-  }
-
-  /**
-   * Get user keyboard height percentage for logging.
-   * (v1.32.362: Delegated to NeuralLayoutHelper)
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  private int getUserKeyboardHeightPercent()
-  {
-    return _neuralLayoutBridge.getUserKeyboardHeightPercent();
-  }
+  // Neural Layout Methods (v1.32.407: Delegated to NeuralLayoutBridge)
+  private float calculateDynamicKeyboardHeight() { return _neuralLayoutBridge.calculateDynamicKeyboardHeight(); }
+  private int getUserKeyboardHeightPercent() { return _neuralLayoutBridge.getUserKeyboardHeightPercent(); }
   
   // Called by Keyboard2View when swipe typing completes
   public void handleSwipeTyping(List<KeyboardData.Key> swipedKeys,
@@ -717,84 +655,20 @@ public class Keyboard2 extends InputMethodService
     return View.inflate(new ContextThemeWrapper(this, _config.theme), layout, null);
   }
   
-  /**
-   * CGR Prediction Integration Methods
-   * (v1.32.362: Delegated to NeuralLayoutHelper)
-   */
+  // CGR Prediction Methods (v1.32.407: Delegated to NeuralLayoutBridge)
+  public void updateCGRPredictions() { _neuralLayoutBridge.updateCGRPredictions(); }
+  public void checkCGRPredictions() { _neuralLayoutBridge.checkCGRPredictions(); }
+  public void updateSwipePredictions(List<String> predictions) { _neuralLayoutBridge.updateSwipePredictions(predictions); }
+  public void completeSwipePredictions(List<String> finalPredictions) { _neuralLayoutBridge.completeSwipePredictions(finalPredictions); }
+  public void clearSwipePredictions() { _neuralLayoutBridge.clearSwipePredictions(); }
 
-  /**
-   * Update swipe predictions by checking keyboard view for CGR results.
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  public void updateCGRPredictions()
-  {
-    _neuralLayoutBridge.updateCGRPredictions();
-  }
+  // CRITICAL: Extract key positions for neural swipe (v1.32.407: Delegated to NeuralLayoutBridge)
+  private void setNeuralKeyboardLayout() { _neuralLayoutBridge.setNeuralKeyboardLayout(); }
 
-  /**
-   * Check and update CGR predictions (call this periodically or on swipe events).
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  public void checkCGRPredictions()
-  {
-    _neuralLayoutBridge.checkCGRPredictions();
-  }
-
-  /**
-   * Update swipe predictions in real-time during gesture (legacy method).
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  public void updateSwipePredictions(List<String> predictions)
-  {
-    _neuralLayoutBridge.updateSwipePredictions(predictions);
-  }
-
-  /**
-   * Complete swipe predictions after gesture ends (legacy method).
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  public void completeSwipePredictions(List<String> finalPredictions)
-  {
-    _neuralLayoutBridge.completeSwipePredictions(finalPredictions);
-  }
-
-  /**
-   * Clear swipe predictions (legacy method).
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  public void clearSwipePredictions()
-  {
-    _neuralLayoutBridge.clearSwipePredictions();
-  }
-
-  /**
-   * Extract key positions from keyboard layout and set them on neural engine.
-   * CRITICAL for neural swipe typing - without this, key detection fails completely!
-   * (v1.32.362: Delegated to NeuralLayoutHelper)
-   * (v1.32.407: Delegated to NeuralLayoutBridge)
-   */
-  private void setNeuralKeyboardLayout()
-  {
-    _neuralLayoutBridge.setNeuralKeyboardLayout();
-  }
-
-  // v1.32.362: extractKeyPositionsFromLayout() method removed - functionality moved to NeuralLayoutHelper class
-
-  // Removed reloadCGRParameters method - causing crashes
-
-  /**
-   * Check if this keyboard is set as the default IME.
-   * If not, show a non-intrusive notification to help user enable it.
-   * Only shown once per app launch to avoid annoyance.
-   *
-   * v1.32.377: IME status checking extracted to IMEStatusHelper (Kotlin).
-   */
-  private void checkAndPromptDefaultIME()
-  {
+  // Check if default IME, show notification if not (v1.32.377: Delegated to IMEStatusHelper)
+  private void checkAndPromptDefaultIME() {
     SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(this);
-    IMEStatusHelper.checkAndPromptDefaultIME(
-        this, _handler, prefs, getPackageName(), getClass().getName()
-    );
+    IMEStatusHelper.checkAndPromptDefaultIME(this, _handler, prefs, getPackageName(), getClass().getName());
   }
 
   // v1.32.341: loadContractionMappings() method removed - functionality moved to ContractionManager class
