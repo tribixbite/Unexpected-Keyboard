@@ -1,6 +1,7 @@
 package juloo.keyboard2;
 
 import android.content.Context;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -70,8 +71,9 @@ public class ClipboardManager
   {
     if (_clipboardPane == null)
     {
-      // Inflate clipboard pane layout
-      _clipboardPane = (ViewGroup)layoutInflater.inflate(R.layout.clipboard_pane, null);
+      // Inflate clipboard pane layout with correct theme (v1.32.415: fix theme attribute resolution)
+      Context themedContext = new ContextThemeWrapper(_context, _config.theme);
+      _clipboardPane = (ViewGroup)View.inflate(themedContext, R.layout.clipboard_pane, null);
 
       // Get search box and history view references
       _clipboardSearchBox = (TextView)_clipboardPane.findViewById(R.id.clipboard_search);

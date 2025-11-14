@@ -355,3 +355,163 @@ Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
 ---
 
 **Remember**: If it touches Android framework APIs, it needs integration tests!
+
+## Themed Context Issues (v1.32.415)
+
+### What Happened
+
+During documentation condensing (v1.32.414), clipboard functionality started crashing:
+- Build succeeded ✅
+- App loaded successfully ✅
+- **Opening clipboard crashed** ❌
+
+### Root Cause
+
+**Layout inflation without themed context causes attribute resolution failures.**
+
+```java
+// WRONG - causes "UnsupportedOperationException: Failed to resolve attribute"
+_clipboardPane = (ViewGroup)layoutInflater.inflate(R.layout.clipboard_pane, null);
+```
+
+When layout XML uses theme attributes like `?attr/colorKey`, they can only be resolved if the inflation happens with a properly themed context:
+
+```xml
+<!-- clipboard_pane.xml -->
+<TextView 
+    android:background="?attr/colorKey"     <!-- Requires themed context! -->
+    android:textColor="?attr/colorLabel"/>  <!-- Requires themed context! -->
+```
+
+### The Fix
+
+**Always wrap context with theme before inflating views that use theme attributes:**
+
+```java
+// CORRECT - theme attributes resolve properly
+Context themedContext = new ContextThemeWrapper(_context, _config.theme);
+_clipboardPane = (ViewGroup)View.inflate(themedContext, R.layout.clipboard_pane, null);
+```
+
+### Red Flags for Themed Context Issues
+
+✅ **Always use themed context when:**
+
+1. **Layout Uses Theme Attributes**
+   - `?attr/colorKeyboard`, `?attr/colorKey`
+   - `?attr/colorLabel`, `?attr/colorSubLabel`
+   - Any `?attr/*` reference in XML
+
+2. **Inflating Views with LayoutInflater**
+   - `layoutInflater.inflate(R.layout.*, null)`
+   - Must wrap context: `new ContextThemeWrapper(context, theme)`
+
+3. **Creating Dialogs or Panes**
+   - Emoji pane, clipboard pane, settings dialogs
+   - Any custom UI components using theme
+
+4. **Error Messages Indicate Theme Issues**
+   - "UnsupportedOperationException: Failed to resolve attribute"
+   - "Error inflating class"
+   - Theme-related crashes in LayoutInflater
+
+### Prevention Strategy
+
+**Pattern to Always Use:**
+
+```java
+// Step 1: Get theme from config
+int theme = _config.theme;
+
+// Step 2: Wrap context with theme
+Context themedContext = new ContextThemeWrapper(context, theme);
+
+// Step 3: Inflate with themed context
+View view = View.inflate(themedContext, R.layout.your_layout, null);
+```
+
+**Reusable Helper (Keyboard2.java):**
+
+```java
+public View inflate_view(int layout) {
+    return View.inflate(new ContextThemeWrapper(this, _config.theme), layout, null);
+}
+```
+
+### Testing Strategy
+
+**Unit Tests** (Document Requirements):
+```kotlin
+@Test
+fun testThemedInflationPattern_documented() {
+    // REQUIREMENT: Context must be wrapped with theme
+    // Pattern: new ContextThemeWrapper(context, config.theme)
+    
+    // REQUIREMENT: Use View.inflate() with themed context
+    // Pattern: View.inflate(themedContext, layout, null)
+    
+    assertTrue("Themed inflation pattern documented", true)
+}
+```
+
+**Integration Tests** (Verify Actual Inflation):
+- Test on real Android device/emulator
+- Verify layouts inflate without crashes
+- Check theme attributes resolve correctly
+- Test with different themes (light/dark)
+
+**Smoke Tests** (Runtime Verification):
+- Open clipboard pane
+- Switch themes
+- Verify no inflation crashes
+- Check visual appearance
+
+### Example: ClipboardManager Fix (v1.32.415)
+
+**Before (Crashed)**:
+```java
+public ViewGroup getClipboardPane(LayoutInflater layoutInflater) {
+    if (_clipboardPane == null) {
+        _clipboardPane = (ViewGroup)layoutInflater.inflate(R.layout.clipboard_pane, null);
+        // ERROR: Theme attributes can't resolve!
+    }
+    return _clipboardPane;
+}
+```
+
+**After (Fixed)**:
+```java
+public ViewGroup getClipboardPane(LayoutInflater layoutInflater) {
+    if (_clipboardPane == null) {
+        // Inflate with themed context (v1.32.415: fix theme attribute resolution)
+        Context themedContext = new ContextThemeWrapper(_context, _config.theme);
+        _clipboardPane = (ViewGroup)View.inflate(themedContext, R.layout.clipboard_pane, null);
+    }
+    return _clipboardPane;
+}
+```
+
+### Lessons Learned
+
+1. **Theme Attributes Are Not Optional** - Views using `?attr/*` MUST have themed context
+2. **LayoutInflater Is Not Enough** - Raw LayoutInflater doesn't apply theme
+3. **Integration Testing Catches This** - Unit tests can't detect theme resolution failures
+4. **Consistent Pattern Prevents Issues** - Always use `inflate_view()` helper or ContextThemeWrapper
+
+### Checklist for Theme-Safe Code
+
+- [ ] Does layout XML use `?attr/*` attributes?
+- [ ] Is View.inflate() or LayoutInflater used?
+- [ ] Is context wrapped with ContextThemeWrapper?
+- [ ] Is config.theme validated (> 0)?
+- [ ] Are smoke tests verifying UI opens correctly?
+- [ ] Is integration test covering actual inflation?
+
+### Related Issues
+
+- ReceiverInitializer null layoutManager (v1.32.413) - Initialization order
+- SubtypeLayoutInitializer crash (v1.32.410) - Framework integration
+- Clipboard theme crash (v1.32.415) - Themed context (this issue)
+
+All three demonstrate: **Unit tests pass ≠ App works**
+
