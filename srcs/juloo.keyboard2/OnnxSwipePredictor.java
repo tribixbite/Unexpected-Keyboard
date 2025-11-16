@@ -155,6 +155,7 @@ public class OnnxSwipePredictor
     
     try
     {
+      Log.d(TAG, "STARTING OnnxSwipePredictor.initialize()");
       // Log.d(TAG, "Loading ONNX models...");
       // logDebug("🔄 Loading ONNX transformer models...");
 
@@ -237,6 +238,7 @@ public class OnnxSwipePredictor
       }
 
       // Load encoder model (using correct name from web demo)
+      Log.d(TAG, "Loading encoder model from: " + encoderPath);
       byte[] encoderModelData = loadModelFromAssets(encoderPath);
       if (encoderModelData != null)
       {
@@ -257,8 +259,10 @@ public class OnnxSwipePredictor
         // logDebug("❌ Failed to load encoder model data");
         Log.e(TAG, "Failed to load encoder model data from: " + encoderPath);
       }
+      Log.d(TAG, "Finished loading encoder model");
 
       // Load decoder model (using correct name from web demo)
+      Log.d(TAG, "Loading decoder model from: " + decoderPath);
       byte[] decoderModelData = loadModelFromAssets(decoderPath);
       if (decoderModelData != null)
       {
@@ -279,13 +283,18 @@ public class OnnxSwipePredictor
         // logDebug("❌ Failed to load decoder model data");
         Log.e(TAG, "Failed to load decoder model data from: " + decoderPath);
       }
+      Log.d(TAG, "Finished loading decoder model");
       
       // Load tokenizer configuration
+      Log.d(TAG, "Loading tokenizer");
       boolean tokenizerLoaded = _tokenizer.loadFromAssets(_context);
+      Log.d(TAG, "Tokenizer loaded: " + tokenizerLoaded);
       // logDebug("📝 Tokenizer loaded: " + tokenizerLoaded + " (vocab size: " + _tokenizer.getVocabSize() + ")");
       
       // OPTIMIZATION: Load vocabulary for fast filtering
+      Log.d(TAG, "Loading vocabulary");
       boolean vocabularyLoaded = _vocabulary.loadVocabulary();
+      Log.d(TAG, "Vocabulary loaded: " + vocabularyLoaded);
       // logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getStats().totalWords + ")");
       
       _isModelLoaded = (_encoderSession != null && _decoderSession != null);
@@ -320,6 +329,7 @@ public class OnnxSwipePredictor
       // CRITICAL: Mark as initialized regardless of success/failure to prevent re-entry
       _isInitialized = true;
 
+      Log.d(TAG, "FINISHED OnnxSwipePredictor.initialize()");
       return _isModelLoaded;
     }
     catch (Exception e)
@@ -1337,18 +1347,12 @@ public class OnnxSwipePredictor
         // Prepare batched inputs for all active beams
         long tensorStart = System.nanoTime();
 
-        // Get memory shape from encoder output (needed for pool capacity check)
+        // Get memory shape from encoder output
         long[] memoryShape = memory.getInfo().getShape(); // [1, seq_len, hidden_dim]
         int memorySeqLen = (int)memoryShape[1];
         int hiddenDim = (int)memoryShape[2];
 
-        // OPTIMIZATION v1.32.420: Ensure memory pool has sufficient capacity
-        ensureMemoryPoolCapacity(numActiveBeams, memorySeqLen, hiddenDim);
-
-        // OPTIMIZATION v1.32.420: Use pooled buffers if available, fallback to allocation
-        boolean usePooledBuffers = (_pooledTokensLongBuffer != null &&
-                                     _pooledMemoryArray != null &&
-                                     _pooledSrcMaskArray != null);
+        // BUGFIX v1.32.423: Removed buggy memory pool usage (was allocating slices anyway)
 
         // Allocate or reuse batched arrays
         long[][] batchedTokens = new long[numActiveBeams][DECODER_SEQ_LENGTH];
@@ -1373,33 +1377,17 @@ public class OnnxSwipePredictor
           }
         }
 
-        // OPTIMIZATION v1.32.420: Reuse pooled ByteBuffer if available
-        java.nio.LongBuffer tokensBuffer;
-        if (usePooledBuffers)
-        {
-          // Reuse pooled buffer - clear and refill
-          _pooledTokensLongBuffer.clear();
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            _pooledTokensLongBuffer.put(batchedTokens[b]);
-          }
-          _pooledTokensLongBuffer.rewind();
-          tokensBuffer = _pooledTokensLongBuffer;
-        }
-        else
-        {
-          // Fallback: allocate new buffer
-          java.nio.ByteBuffer tokensByteBuffer = java.nio.ByteBuffer.allocateDirect(
-            numActiveBeams * DECODER_SEQ_LENGTH * 8); // 8 bytes per long
-          tokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
-          tokensBuffer = tokensByteBuffer.asLongBuffer();
+        // Create batched tensors - shape [num_active_beams, seq_length]
+        java.nio.ByteBuffer tokensByteBuffer = java.nio.ByteBuffer.allocateDirect(
+          numActiveBeams * DECODER_SEQ_LENGTH * 8); // 8 bytes per long
+        tokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
+        java.nio.LongBuffer tokensBuffer = tokensByteBuffer.asLongBuffer();
 
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            tokensBuffer.put(batchedTokens[b]);
-          }
-          tokensBuffer.rewind();
+        for (int b = 0; b < numActiveBeams; b++)
+        {
+          tokensBuffer.put(batchedTokens[b]);
         }
+        tokensBuffer.rewind();
 
         OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
           tokensBuffer, new long[]{numActiveBeams, DECODER_SEQ_LENGTH});
@@ -1408,78 +1396,30 @@ public class OnnxSwipePredictor
         // Get memory data from encoder
         float[][][] memoryData = (float[][][])memory.getValue();
 
-        // OPTIMIZATION v1.32.420: Reuse pooled memory array if available
-        float[][][] replicatedMemory;
-        if (usePooledBuffers)
-        {
-          // Reuse pooled array - just fill the needed slice
-          replicatedMemory = _pooledMemoryArray; // Reference to pool
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            for (int s = 0; s < memorySeqLen; s++)
-            {
-              System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
-            }
-          }
-        }
-        else
-        {
-          // Fallback: allocate new array
-          replicatedMemory = new float[numActiveBeams][memorySeqLen][hiddenDim];
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            for (int s = 0; s < memorySeqLen; s++)
-            {
-              System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
-            }
-          }
-        }
-
-        // CRITICAL: Only pass the slice we need, not the entire pool
-        // Create a view of just the active beams to avoid ONNX shape mismatch
-        float[][][] memorySlice = new float[numActiveBeams][memorySeqLen][hiddenDim];
+        // BUGFIX v1.32.423: Simplify - just allocate correctly-sized arrays directly
+        // The "pooling" was buggy - it allocated slices anyway, defeating the optimization
+        float[][][] replicatedMemory = new float[numActiveBeams][memorySeqLen][hiddenDim];
         for (int b = 0; b < numActiveBeams; b++)
         {
-          memorySlice[b] = replicatedMemory[b];
-        }
-
-        OnnxTensor batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, memorySlice);
-
-        // OPTIMIZATION v1.32.420: Reuse pooled src_mask array if available
-        boolean[][] srcMask;
-        if (usePooledBuffers)
-        {
-          // Reuse pooled array - just fill the needed slice
-          srcMask = _pooledSrcMaskArray; // Reference to pool
-          for (int b = 0; b < numActiveBeams; b++)
+          for (int s = 0; s < memorySeqLen; s++)
           {
-            for (int i = 0; i < _maxSequenceLength; i++)
-            {
-              srcMask[b][i] = (i >= features.actualLength);
-            }
-          }
-        }
-        else
-        {
-          // Fallback: allocate new array
-          srcMask = new boolean[numActiveBeams][_maxSequenceLength];
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            for (int i = 0; i < _maxSequenceLength; i++)
-            {
-              srcMask[b][i] = (i >= features.actualLength);
-            }
+            System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
           }
         }
 
-        // CRITICAL: Only pass the slice we need, not the entire pool
-        boolean[][] srcMaskSlice = new boolean[numActiveBeams][_maxSequenceLength];
+        OnnxTensor batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
+
+        // Create src_mask for all beams
+        boolean[][] srcMask = new boolean[numActiveBeams][_maxSequenceLength];
         for (int b = 0; b < numActiveBeams; b++)
         {
-          srcMaskSlice[b] = srcMask[b];
+          for (int i = 0; i < _maxSequenceLength; i++)
+          {
+            srcMask[b][i] = (i >= features.actualLength);
+          }
         }
 
-        OnnxTensor srcMaskTensorLocal = OnnxTensor.createTensor(_ortEnvironment, srcMaskSlice);
+        OnnxTensor srcMaskTensorLocal = OnnxTensor.createTensor(_ortEnvironment, srcMask);
 
         long tensorTime = (System.nanoTime() - tensorStart) / 1_000_000;
         totalTensorTime += tensorTime;
