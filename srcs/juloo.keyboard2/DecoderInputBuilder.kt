@@ -15,7 +15,6 @@ class DecoderInputBuilder(
 ) {
     companion object {
         private const val PAD_IDX = 0
-        private const val DECODER_SEQ_LENGTH = 35
     }
 
     /**
@@ -59,28 +58,44 @@ class DecoderInputBuilder(
 
     /**
      * Create separate padding and causal masks for custom models
+     * CRITICAL: Custom models expect FLOAT tensors, not boolean
+     * Uses actual token array length instead of hardcoded DECODER_SEQ_LENGTH
      */
     private fun createSeparateMasks(
         batchedTokens: Array<LongArray>,
         decoderInputs: HashMap<String, OnnxTensor>
     ) {
         val numActiveBeams = batchedTokens.size
+        val actualSeqLength = batchedTokens[0].size  // Use actual sequence length from tokens
 
-        // Padding mask: True where tokens are PAD (0), False elsewhere
+        // Padding mask: 1.0 where tokens are PAD (0), 0.0 elsewhere (FLOAT tensor)
         val paddingMask = Array(numActiveBeams) { b ->
-            BooleanArray(DECODER_SEQ_LENGTH) { i ->
-                batchedTokens[b][i] == PAD_IDX.toLong()
+            FloatArray(actualSeqLength) { i ->
+                if (batchedTokens[b][i] == PAD_IDX.toLong()) 1.0f else 0.0f
             }
         }
 
-        // Causal mask: True in upper triangle to prevent attending to future positions
-        // For custom models, we use all-false since they may handle causality internally
-        val causalMask = Array(numActiveBeams) {
-            BooleanArray(DECODER_SEQ_LENGTH) { false }
+        // Causal mask: -inf in upper triangle to prevent attending to future positions (FLOAT tensor)
+        // Use 0.0 on diagonal and lower triangle, negative infinity on upper triangle
+        val causalMask = Array(numActiveBeams) { _ ->
+            FloatArray(actualSeqLength * actualSeqLength) { idx ->
+                val i = idx / actualSeqLength
+                val j = idx % actualSeqLength
+                if (j > i) Float.NEGATIVE_INFINITY else 0.0f
+            }
+        }
+
+        // Reshape causal mask to [num_beams, seq_len, seq_len]
+        val causalMask3D = Array(numActiveBeams) { b ->
+            Array(actualSeqLength) { i ->
+                FloatArray(actualSeqLength) { j ->
+                    causalMask[b][i * actualSeqLength + j]
+                }
+            }
         }
 
         decoderInputs["target_padding_mask"] = OnnxTensor.createTensor(ortEnvironment, paddingMask)
-        decoderInputs["target_causal_mask"] = OnnxTensor.createTensor(ortEnvironment, causalMask)
+        decoderInputs["target_causal_mask"] = OnnxTensor.createTensor(ortEnvironment, causalMask3D)
     }
 
     /**
