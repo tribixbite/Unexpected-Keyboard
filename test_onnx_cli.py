@@ -39,35 +39,73 @@ def setup_models():
     
     return encoder_session, decoder_session
 
+def create_qwerty_layout():
+    """Create QWERTY keyboard layout (normalized 0-1)"""
+    layout = {}
+
+    # Row 1 (q-p): y=0.25
+    row1 = "qwertyuiop"
+    for i, char in enumerate(row1):
+        layout[char] = (0.05 + i * 0.09, 0.25)
+
+    # Row 2 (a-l): y=0.50, offset by 0.045
+    row2 = "asdfghjkl"
+    for i, char in enumerate(row2):
+        layout[char] = (0.095 + i * 0.09, 0.50)
+
+    # Row 3 (z-m): y=0.75, offset by 0.135
+    row3 = "zxcvbnm"
+    for i, char in enumerate(row3):
+        layout[char] = (0.185 + i * 0.09, 0.75)
+
+    return layout
+
+def find_nearest_key(x, y, layout):
+    """Find nearest key to point (x, y)"""
+    min_dist = float('inf')
+    nearest = 'a'  # default
+
+    for char, (kx, ky) in layout.items():
+        dist = (x - kx)**2 + (y - ky)**2
+        if dist < min_dist:
+            min_dist = dist
+            nearest = char
+
+    return nearest
+
 def create_test_swipe():
-    """Create test swipe data matching v3 model format"""
-    MAX_SEQUENCE_LENGTH = 250
-    
-    # Create simple horizontal swipe for word "hello"
+    """Create realistic swipe for word 'hello' with smooth interpolation"""
+    layout = create_qwerty_layout()
     test_points = []
-    
-    # Simulate 5 key positions for h-e-l-l-o
-    key_positions = [
-        (0.3, 0.6),  # h
-        (0.4, 0.3),  # e  
-        (0.7, 0.6),  # l
-        (0.7, 0.6),  # l (same position)
-        (0.9, 0.3)   # o
-    ]
-    
-    # Create smooth path between keys
+
+    # Word to swipe: "sad" (row 2 only - simpler path)
+    word = "sad"
+    key_positions = [layout[c] for c in word]
+
+    # Create smooth continuous path through ALL keys
     for i in range(len(key_positions) - 1):
         start_x, start_y = key_positions[i]
         end_x, end_y = key_positions[i + 1]
-        
-        # Interpolate between keys (10 points each)
-        for j in range(10):
-            t = j / 10.0
+
+        # Interpolate between consecutive keys (8 points between each)
+        for j in range(8):
+            t = j / 8.0
             x = start_x + t * (end_x - start_x)
             y = start_y + t * (end_y - start_y)
-            test_points.append((x, y, chr(ord('h') + i)))  # Associate with key
-    
-    return test_points[:66]  # Match log: 66 points
+
+            # Find nearest key for this interpolated position
+            nearest = find_nearest_key(x, y, layout)
+            test_points.append((x, y, nearest))
+
+    # Add final key position
+    final_x, final_y = key_positions[-1]
+    for j in range(4):  # A few points on the final key
+        x = final_x + (j - 2) * 0.005
+        y = final_y + (j - 2) * 0.005
+        nearest = find_nearest_key(x, y, layout)
+        test_points.append((x, y, nearest))
+
+    return test_points
 
 def create_encoder_inputs(test_points):
     """Create encoder input tensors for v3 model (250 seq len)"""
@@ -112,6 +150,13 @@ def create_encoder_inputs(test_points):
     print(f"📊 Encoder inputs created:")
     print(f"   Trajectory: shape {trajectory_data.shape}, actual_length: {actual_length}")
     print(f"   Nearest keys: shape {nearest_keys_data.shape}")
+    print(f"   First 10 nearest keys: {nearest_keys_data[:10]}")
+
+    # Decode nearest keys to show what characters
+    idx_to_char = {i + 4: chr(ord('a') + i) for i in range(26)}
+    idx_to_char.update({0: '<pad>', 1: '<unk>', 2: '<sos>', 3: '<eos>'})
+    decoded = [idx_to_char.get(int(k), '?') for k in nearest_keys_data[:10]]
+    print(f"   Decoded: {decoded}")
     print(f"   Source mask: shape {src_mask_data.shape}, padded: {np.sum(src_mask_data)}")
     
     return {
@@ -180,6 +225,13 @@ def run_decoder_beam_search(decoder_session, memory, src_mask):
                     if j > i:  # Mask future positions
                         target_causal_mask[i, j] = -1e9
 
+            # Debug: Show masks for first beam only
+            if step == 0 and beam == beams[0]:
+                print(f"   Debug masks for first prediction:")
+                print(f"     Padding mask: {target_padding_mask[:5]} (first 5)")
+                print(f"     Causal mask[0]: {target_causal_mask[0][:5]} (first 5 of row 0)")
+                print(f"     Causal mask[1]: {target_causal_mask[1][:5]} (first 5 of row 1)")
+
             # Create source mask (BOOLEAN - True where PAD)
             src_mask_decoder = np.zeros(memory.shape[1], dtype=bool)
 
@@ -210,14 +262,24 @@ def run_decoder_beam_search(decoder_session, memory, src_mask):
                 
                 # Apply softmax
                 probs = softmax(relevant_logits)
-                
+
                 # Get top k
                 top_k = np.argsort(probs)[::-1][:BEAM_WIDTH]
-                
+
+                # Debug: Show what tokens are being predicted
+                if step == 0:
+                    print(f"\n   Step {step} top predictions:")
+                    idx_to_char = {i + 4: chr(ord('a') + i) for i in range(26)}
+                    idx_to_char.update({0: '<pad>', 1: '<unk>', 2: '<sos>', 3: '<eos>'})
+                    for i in range(min(5, len(top_k))):
+                        token_id = int(top_k[i])
+                        char = idx_to_char.get(token_id, '?')
+                        print(f"      {i+1}. token={token_id} ({char}) prob={probs[token_id]:.4f}")
+
                 for idx in top_k:
                     new_beam = {
                         'tokens': beam['tokens'] + [int(idx)],
-                        'score': beam['score'] + np.log(probs[idx]), 
+                        'score': beam['score'] + np.log(probs[idx]),
                         'finished': (idx == EOS_IDX)
                     }
                     candidates.append(new_beam)
