@@ -164,6 +164,37 @@ Input B (Key Path) → Embedding(16) → Masking → GRU(64)
 - Memory efficiency: Reduced GC pressure through pooled buffers
 - Production ready: All critical optimizations implemented
 
+#### Phase 5.1: Custom Model Support ✅ COMPLETE (v1.32.431)
+**Custom ONNX Model Loading**: Users can now load custom encoder/decoder models via settings!
+
+**Features**:
+- [x] File picker UI for custom encoder and decoder selection
+- [x] Persistent URI storage using Android content URIs
+- [x] Immediate file feedback with filename and size display
+- [x] Real-time status updates in settings
+- [x] Model interface auto-detection after loading
+- [x] Support for both builtin v2 and custom model interfaces
+
+**Technical Implementation**:
+- **DecoderInputBuilder.kt**: Refactored decoder input parameter building into separate Kotlin class
+- **Interface Detection**: Auto-detects model input interface by checking `getInputNames()`
+- **Dual Interface Support**:
+  - Builtin v2: Uses single `target_mask` (combined padding+causal)
+  - Custom models: Uses separate `target_padding_mask` and `target_causal_mask`
+- **Builder Pattern**: Clean separation of concerns for maintainability
+
+**Benefits**:
+- Users can train and deploy their own models without app updates
+- Enables A/B testing different architectures
+- Supports iterative model improvement
+- Reduces need for app bundle bloat with multiple model versions
+
+**Files Modified**:
+- `srcs/juloo.keyboard2/OnnxSwipePredictor.java` - Interface detection and builder integration
+- `srcs/juloo.keyboard2/DecoderInputBuilder.kt` - NEW: Separate input parameter builder
+- `srcs/juloo.keyboard2/SettingsActivity.java` - File picker and status display
+- `res/values/arrays.xml` - Cleaned up model version dropdown
+
 #### Phase 6: Production Features 📋 TODO
 - [ ] A/B testing framework
 - [ ] Model versioning
