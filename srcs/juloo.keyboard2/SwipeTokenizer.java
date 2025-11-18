@@ -43,7 +43,7 @@ public class SwipeTokenizer
     {
       Log.d(TAG, "Loading tokenizer configuration from assets");
       
-      InputStream inputStream = context.getAssets().open("models/tokenizer.json");
+      InputStream inputStream = context.getAssets().open("models/tokenizer_config.json");
       BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
       
       StringBuilder jsonBuilder = new StringBuilder();
