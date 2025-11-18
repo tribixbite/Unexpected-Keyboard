@@ -19,20 +19,20 @@ Generated version info:  ()
 > Task :generateDebugResValues FROM-CACHE
 > Task :generateDebugResources
 > Task :packageDebugResources
+> Task :checkDebugAarMetadata
 > Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
-> Task :checkDebugAarMetadata
-> Task :mergeDebugResources
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
+> Task :mergeDebugResources
 > Task :mergeDebugAssets
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :compressDebugAssets FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
@@ -88,5 +88,35 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 15s
+BUILD SUCCESSFUL in 1m 9s
 39 actionable tasks: 31 executed, 8 from cache
+rgeDebugJavaResource
+> Task :dexBuilderDebug
+> Task :mergeProjectDexDebug
+> Task :packageDebug
+> Task :createDebugApkListingFileRedirect
+> Task :assembleDebug
+
+BUILD SUCCESSFUL in 1m 9s
+39 actionable tasks: 31 executed, 8 from cache
+
+=== BUILD SUCCESSFUL! ===
+APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
+
+-rw-------. 1 u0_a364 u0_a364 58M Nov 18 06:48 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+
+Copying APK to /storage/emulated/0/unexpected/ for updates...
+APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.431-484.apk
+-rw-rw----. 1 u0_a315 media_rw 58M Nov 18 06:48 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.431-484.apk
+Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
+
+Step 6: Attempting ADB connection and installation...
+✅ ADB device already connected
+
+Uninstalling previous debug version...
+  ℹ️  No previous version found
+
+Installing new APK via ADB...
+./build-on-termux.sh: line 292: /data/data/com.termux/files/home/android-sdk/platform-tools/adb: cannot execute binary file: Exec format error
+❌ ADB install failed, falling back to manual installation
+Opening APK for installation...

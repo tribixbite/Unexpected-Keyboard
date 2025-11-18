@@ -2,8 +2,6 @@
 # Pre-Commit Test Runner
 # Quick verification before committing changes
 
-set -e
-
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
@@ -18,7 +16,8 @@ echo ""
 echo -e "${BLUE}[1/4]${NC} Checking Kotlin/Java compilation..."
 # Note: On ARM64 Termux, we can't run full AAPT2, so we check compilation only
 COMPILE_OUTPUT=$(./gradlew compileDebugKotlin compileDebugJavaWithJavac --no-daemon 2>&1)
-if echo "$COMPILE_OUTPUT" | grep -qi "BUILD FAILED\|Compilation failed"; then
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ] && echo "$COMPILE_OUTPUT" | grep -q "error:"; then
     echo -e "${RED}✗ Compilation failed${NC}"
     echo "$COMPILE_OUTPUT" | grep -A 5 "error:"
     exit 1

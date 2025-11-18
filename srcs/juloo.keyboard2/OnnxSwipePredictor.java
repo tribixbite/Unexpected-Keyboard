@@ -74,11 +74,13 @@ public class OnnxSwipePredictor
   private SwipeTokenizer _tokenizer;
   private SwipeTrajectoryProcessor _trajectoryProcessor;
   private OptimizedVocabulary _vocabulary; // OPTIMIZATION: Web app vocabulary system
+  private DecoderInputBuilder _decoderInputBuilder; // OPTIMIZATION v1.32.429: Separate input param builder
   
   // Model state
   private boolean _isModelLoaded = false;
   private boolean _isInitialized = false;
   private boolean _keepSessionsInMemory = true; // OPTIMIZATION: Never unload for speed
+  private boolean _usesSeparateMasks = false; // Track if decoder uses separate padding/causal masks (custom models) vs combined target_mask (v2 builtin)
   
   // Configuration parameters
   private int _beamWidth = DEFAULT_BEAM_WIDTH;
@@ -289,6 +291,27 @@ public class OnnxSwipePredictor
 
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_decoderSession, "Decoder");
+
+        // BUGFIX v1.32.429: Detect decoder input interface to support both builtin and custom models
+        // Builtin v2: uses single "target_mask" input
+        // Custom models: use separate "target_padding_mask" and "target_causal_mask" inputs
+        try
+        {
+          java.util.Set<String> inputNames = _decoderSession.getInputNames();
+          _usesSeparateMasks = inputNames.contains("target_padding_mask");
+          Log.d(TAG, String.format("Decoder input interface detected: %s (inputs: %s)",
+            _usesSeparateMasks ? "separate masks (custom)" : "combined mask (v2 builtin)",
+            inputNames));
+
+          // Initialize decoder input builder with detected interface
+          _decoderInputBuilder = new DecoderInputBuilder(_ortEnvironment, _usesSeparateMasks);
+        }
+        catch (Exception e)
+        {
+          Log.w(TAG, "Failed to detect decoder input interface, assuming v2 builtin", e);
+          _usesSeparateMasks = false;
+          _decoderInputBuilder = new DecoderInputBuilder(_ortEnvironment, false);
+        }
 
         Log.d(TAG, String.format("Decoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
       }
@@ -1440,11 +1463,15 @@ public class OnnxSwipePredictor
 
         // Run SINGLE batched decoder inference for ALL beams
         long inferenceStart = System.nanoTime();
-        Map<String, OnnxTensor> decoderInputs = new HashMap<>();
-        decoderInputs.put("memory", batchedMemoryTensor);
-        decoderInputs.put("target_tokens", targetTokensTensor);
-        decoderInputs.put("target_mask", targetMaskTensor);
-        decoderInputs.put("src_mask", srcMaskTensorLocal);
+
+        // REFACTOR v1.32.429: Use separate builder for decoder inputs
+        Map<String, OnnxTensor> decoderInputs = _decoderInputBuilder.buildInputs(
+          batchedMemoryTensor,
+          targetTokensTensor,
+          batchedTokens,
+          batchedTargetMask,
+          srcMaskTensorLocal
+        );
 
         OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
         long inferenceTime = (System.nanoTime() - inferenceStart) / 1_000_000;
