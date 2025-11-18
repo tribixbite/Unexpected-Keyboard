@@ -12,8 +12,8 @@ import os
 
 def setup_models():
     """Load ONNX models and create inference sessions"""
-    encoder_path = "assets/models/swipe_model_character_quant.onnx"
-    decoder_path = "assets/models/swipe_decoder_character_quant.onnx"
+    encoder_path = "assets/models/swipe_encoder_android.onnx"
+    decoder_path = "assets/models/swipe_decoder_android.onnx"
     
     if not os.path.exists(encoder_path):
         print(f"❌ Encoder model not found: {encoder_path}")
@@ -40,8 +40,8 @@ def setup_models():
     return encoder_session, decoder_session
 
 def create_test_swipe():
-    """Create test swipe data matching web demo format"""
-    MAX_SEQUENCE_LENGTH = 150
+    """Create test swipe data matching v3 model format"""
+    MAX_SEQUENCE_LENGTH = 250
     
     # Create simple horizontal swipe for word "hello"
     test_points = []
@@ -70,8 +70,8 @@ def create_test_swipe():
     return test_points[:66]  # Match log: 66 points
 
 def create_encoder_inputs(test_points):
-    """Create encoder input tensors exactly like web demo"""
-    MAX_SEQUENCE_LENGTH = 150
+    """Create encoder input tensors for v3 model (250 seq len)"""
+    MAX_SEQUENCE_LENGTH = 250
     
     # Initialize arrays
     trajectory_data = np.zeros((MAX_SEQUENCE_LENGTH, 6), dtype=np.float32)
@@ -136,52 +136,63 @@ def run_encoder(encoder_session, inputs):
         return None
 
 def run_decoder_beam_search(decoder_session, memory, src_mask):
-    """Run decoder with beam search exactly like web demo"""
+    """Run decoder with beam search using v3 separate masks"""
     print("\n🔍 Running decoder beam search...")
-    
+
     # Constants
     DECODER_SEQ_LENGTH = 20
     VOCAB_SIZE = 30
     BEAM_WIDTH = 8
     MAX_LENGTH = 35
-    
+
     # Special tokens
     PAD_IDX, UNK_IDX, SOS_IDX, EOS_IDX = 0, 1, 2, 3
-    
+
     # Initialize beams
     beams = [{'tokens': [SOS_IDX], 'score': 0.0, 'finished': False}]
-    
+
     for step in range(MAX_LENGTH):
         candidates = []
-        
+
         for beam in beams:
             if beam['finished']:
                 candidates.append(beam)
                 continue
-            
+
             # Prepare decoder inputs
             padded_tokens = np.zeros(DECODER_SEQ_LENGTH, dtype=np.int64)
-            tgt_mask = np.zeros(DECODER_SEQ_LENGTH, dtype=np.uint8)
-            
-            # Copy beam tokens and create mask
+
+            # Copy beam tokens
             beam_len = len(beam['tokens'])
             for i in range(min(beam_len, DECODER_SEQ_LENGTH)):
                 padded_tokens[i] = beam['tokens'][i]
+
+            # Create target_padding_mask (BOOLEAN - True where PAD)
+            target_padding_mask = np.zeros(DECODER_SEQ_LENGTH, dtype=bool)
             for i in range(beam_len, DECODER_SEQ_LENGTH):
-                tgt_mask[i] = 1  # Mark padded positions
-            
-            # Create source mask (all zeros like web demo)
-            src_mask_decoder = np.zeros(memory.shape[1], dtype=np.uint8)
-            
+                target_padding_mask[i] = True  # Mark padded positions
+
+            # Create target_causal_mask (FLOAT32 - 0.0 allowed, -1e9 blocked)
+            # Shape: [dec_seq, dec_seq]
+            target_causal_mask = np.zeros((DECODER_SEQ_LENGTH, DECODER_SEQ_LENGTH), dtype=np.float32)
+            for i in range(DECODER_SEQ_LENGTH):
+                for j in range(DECODER_SEQ_LENGTH):
+                    if j > i:  # Mask future positions
+                        target_causal_mask[i, j] = -1e9
+
+            # Create source mask (BOOLEAN - True where PAD)
+            src_mask_decoder = np.zeros(memory.shape[1], dtype=bool)
+
             try:
-                # Run decoder
+                # Run decoder with v3 separate masks
                 decoder_inputs = {
                     'memory': memory,
                     'target_tokens': padded_tokens.reshape(1, DECODER_SEQ_LENGTH),
-                    'target_mask': tgt_mask.reshape(1, DECODER_SEQ_LENGTH).astype(bool),
-                    'src_mask': src_mask_decoder.reshape(1, -1).astype(bool)
+                    'target_padding_mask': target_padding_mask.reshape(1, DECODER_SEQ_LENGTH),
+                    'target_causal_mask': target_causal_mask,  # 2D, no batch dimension per config
+                    'src_mask': src_mask_decoder.reshape(1, -1)
                 }
-                
+
                 decoder_output = decoder_session.run(None, decoder_inputs)
                 logits = decoder_output[0]  # Shape: [1, 20, 30]
                 

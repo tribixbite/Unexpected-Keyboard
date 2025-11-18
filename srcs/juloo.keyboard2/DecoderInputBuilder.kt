@@ -57,9 +57,10 @@ class DecoderInputBuilder(
     }
 
     /**
-     * Create separate padding and causal masks for models with separate mask inputs
-     * CRITICAL: V3 builtin and custom models expect BOOLEAN tensors
-     * Uses actual token array length instead of hardcoded DECODER_SEQ_LENGTH
+     * Create separate padding and causal masks for v3 models with separate mask inputs
+     * Per model_config.json:
+     * - target_padding_mask: BOOLEAN (true where PAD)
+     * - target_causal_mask: FLOAT32 (0.0 allowed, -1e9 blocked)
      */
     private fun createSeparateMasks(
         batchedTokens: Array<LongArray>,
@@ -68,25 +69,24 @@ class DecoderInputBuilder(
         val numActiveBeams = batchedTokens.size
         val actualSeqLength = batchedTokens[0].size  // Use actual sequence length from tokens
 
-        // Padding mask: false where valid tokens, true where PAD (BOOLEAN tensor)
+        // Padding mask: BOOLEAN - true where PAD, false where valid tokens
         val paddingMask = Array(numActiveBeams) { b ->
             BooleanArray(actualSeqLength) { i ->
                 batchedTokens[b][i] == PAD_IDX.toLong()
             }
         }
 
-        // Causal mask: false for allowed positions, true for masked future positions (BOOLEAN tensor)
-        // Lower triangle and diagonal: false (allowed), upper triangle: true (masked)
-        val causalMask3D = Array(numActiveBeams) { _ ->
-            Array(actualSeqLength) { i ->
-                BooleanArray(actualSeqLength) { j ->
-                    j > i  // True in upper triangle (mask future positions)
-                }
+        // Causal mask: FLOAT32 - 0.0 for allowed positions, -1e9 for masked future positions
+        // Shape per config: [dec_seq, dec_seq] - NO batch dimension
+        // Lower triangle and diagonal: 0.0f (allowed), upper triangle: -1e9 (masked)
+        val causalMask2D = Array(actualSeqLength) { i ->
+            FloatArray(actualSeqLength) { j ->
+                if (j > i) -1e9f else 0.0f
             }
         }
 
         decoderInputs["target_padding_mask"] = OnnxTensor.createTensor(ortEnvironment, paddingMask)
-        decoderInputs["target_causal_mask"] = OnnxTensor.createTensor(ortEnvironment, causalMask3D)
+        decoderInputs["target_causal_mask"] = OnnxTensor.createTensor(ortEnvironment, causalMask2D)
     }
 
     /**

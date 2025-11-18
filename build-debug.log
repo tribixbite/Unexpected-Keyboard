@@ -24,10 +24,10 @@ Generated version info:  ()
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
-> Task :processDebugMainManifest
 > Task :mergeDebugResources
-> Task :processDebugManifest
+> Task :processDebugMainManifest
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
@@ -37,13 +37,13 @@ Generated version info:  ()
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeDebugJniLibFolders
 > Task :checkDebugDuplicateClasses
+> Task :processDebugManifestForPackage
+> Task :mergeDebugNativeLibs
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
-> Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
@@ -72,41 +72,5 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 12s
+BUILD SUCCESSFUL in 57s
 39 actionable tasks: 30 executed, 9 from cache
-ile:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:105:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:120:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
-
-> Task :compileDebugJavaWithJavac FROM-CACHE
-> Task :processDebugJavaRes
-> Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
-
-BUILD SUCCESSFUL in 1m 12s
-39 actionable tasks: 30 executed, 9 from cache
-
-=== BUILD SUCCESSFUL! ===
-APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
--rw-------. 1 u0_a364 u0_a364 46M Nov 18 09:01 build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
-Copying APK to /storage/emulated/0/unexpected/ for updates...
-APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.441-494.apk
--rw-rw----. 1 u0_a315 media_rw 46M Nov 18 09:01 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.441-494.apk
-Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
-
-Step 6: Attempting ADB connection and installation...
-✅ ADB device already connected
-
-Uninstalling previous debug version...
-  ℹ️  No previous version found
-
-Installing new APK via ADB...
-./build-on-termux.sh: line 292: /data/data/com.termux/files/home/android-sdk/platform-tools/adb: cannot execute binary file: Exec format error
-❌ ADB install failed, falling back to manual installation
-Opening APK for installation...
