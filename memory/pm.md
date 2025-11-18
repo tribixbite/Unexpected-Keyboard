@@ -7,17 +7,67 @@
 
 ---
 
-## 🔥 Current Status (2025-11-13 - UPDATED)
+## 🔥 Current Status (2025-11-18 - UPDATED)
 
-**Latest Version**: v1.32.415 (466) 🎉
-**Build Status**: ✅ BUILD SUCCESSFUL - PHASE 4 COMPLETE! (Tested on device ✅)
+**Latest Version**: v1.32.440 (493) 🔧
+**Build Status**: ✅ BUILD SUCCESSFUL - TOKENIZER FIX DEPLOYED
 **Branch**: feature/swipe-typing
-**Current Focus**: ✅ **PHASE 4 COMPLETE!** Keyboard2.java: 2,397 → 675 lines (71.9% reduction!)
+**Current Focus**: 🔧 **FIXING BUILTIN MODEL PREDICTIONS** - Custom model support + tokenizer loading
 **Refactoring Progress**: Phase 4 COMPLETE! (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: COMPLETE ✅)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 2 crashes fixed (ReceiverInitializer v1.32.413, Clipboard v1.32.415)
+**Critical Fixes**: 4 fixes applied (Debug logging v1.32.437, Tensor types v1.32.439, Tokenizer filename v1.32.440)
 
-### 🎉 Latest Work (v1.32.412-415) - PHASE 4 COMPLETE!
+### 🔧 Latest Work (v1.32.437-440) - CUSTOM MODEL SUPPORT & TOKENIZER FIX
+
+**TOKENIZER LOADING FIX (v1.32.440)**
+- **Problem**: Tokenizer failed to load - `Tokenizer loaded: false` in logs
+- **Root Cause**: Wrong filename - code looked for `models/tokenizer.json` but file is `models/tokenizer_config.json`
+- **Fix**: Changed SwipeTokenizer.java:46
+  ```java
+  // Before:
+  InputStream inputStream = context.getAssets().open("models/tokenizer.json");
+  // After:
+  InputStream inputStream = context.getAssets().open("models/tokenizer_config.json");
+  ```
+- **Impact**: Tokenizer should now load from builtin assets, enabling predictions
+- **Status**: ✅ FIXED - Ready for testing
+
+**CUSTOM MODEL TENSOR TYPE FIX (v1.32.439)**
+- **Problem**: Custom models expected FLOAT tensors, but v1.32.438 used BOOLEAN
+- **Error**: "Unexpected input data type. Actual: (tensor(bool)), expected: (tensor(float))"
+- **Fix**: Reverted DecoderInputBuilder.kt to use FLOAT tensors
+  - Padding mask: `FloatArray` (1.0f where PAD, 0.0f where valid)
+  - Causal mask: `FloatArray` (Float.NEGATIVE_INFINITY in upper triangle, 0.0f elsewhere)
+- **Context**: User replaced builtin models with v3 custom models that expect float tensors
+- **APK Size**: Reduced from 58MB to 46MB (old web models deleted)
+- **Status**: ✅ FIXED - Custom models load without tensor type errors
+
+**DEBUG LOGGING PERFORMANCE FIX (v1.32.437)**
+- **Problem**: Compilation error - wrong field name for debug logging config
+- **User Request**: "make sure the logging doesnt negatively impact performance for regular swiping"
+- **Fix**: Changed all debug logging checks from `_config.swipe_debug_logging` to `_config.swipe_debug_detailed_logging`
+- **Locations**: OnnxSwipePredictor.java lines 269, 309, 449
+- **Impact**: Debug logging only active when settings flag enabled, zero performance impact on normal usage
+- **Status**: ✅ FIXED
+
+**SEQUENCE LENGTH CONFIGURATION**
+- User set `neural_user_max_seq_length=250` to match custom model architecture
+- Encoder logs confirm: `features.actualLength=40, _maxSequenceLength=250`
+- Both encoder and decoder loading successfully with max_seq_len=250
+
+**FILES MODIFIED**:
+- SwipeTokenizer.java: Fixed tokenizer config filename
+- DecoderInputBuilder.kt: Reverted to float tensors for custom models
+- OnnxSwipePredictor.java: Fixed debug logging field names
+- build.gradle: v1.32.440, build 493
+
+**NEXT STEPS**:
+1. User should test v1.32.440 with builtin models
+2. Verify tokenizer loads successfully (check logs: "Tokenizer loaded: true")
+3. Confirm predictions appear after swiping
+4. Test both builtin v3 and custom models
+
+### 🎉 Previous Work (v1.32.412-415) - PHASE 4 COMPLETE!
 
 **SESSION SUMMARY (v1.32.415)** - See `docs/SESSION_SUMMARY_v1.32.415.md` for full details
 
