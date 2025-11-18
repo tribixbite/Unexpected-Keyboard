@@ -57,8 +57,8 @@ class DecoderInputBuilder(
     }
 
     /**
-     * Create separate padding and causal masks for custom models
-     * CRITICAL: Custom models expect FLOAT tensors (0.0 = valid, -inf = masked for causal)
+     * Create separate padding and causal masks for models with separate mask inputs
+     * CRITICAL: V3 builtin and custom models expect BOOLEAN tensors
      * Uses actual token array length instead of hardcoded DECODER_SEQ_LENGTH
      */
     private fun createSeparateMasks(
@@ -68,19 +68,19 @@ class DecoderInputBuilder(
         val numActiveBeams = batchedTokens.size
         val actualSeqLength = batchedTokens[0].size  // Use actual sequence length from tokens
 
-        // Padding mask: 0.0 where valid tokens, 1.0 where PAD (FLOAT tensor)
+        // Padding mask: false where valid tokens, true where PAD (BOOLEAN tensor)
         val paddingMask = Array(numActiveBeams) { b ->
-            FloatArray(actualSeqLength) { i ->
-                if (batchedTokens[b][i] == PAD_IDX.toLong()) 1.0f else 0.0f
+            BooleanArray(actualSeqLength) { i ->
+                batchedTokens[b][i] == PAD_IDX.toLong()
             }
         }
 
-        // Causal mask: 0.0 for allowed positions, -inf for masked future positions (FLOAT tensor)
-        // Lower triangle and diagonal: 0.0 (allowed), upper triangle: -inf (masked)
+        // Causal mask: false for allowed positions, true for masked future positions (BOOLEAN tensor)
+        // Lower triangle and diagonal: false (allowed), upper triangle: true (masked)
         val causalMask3D = Array(numActiveBeams) { _ ->
             Array(actualSeqLength) { i ->
-                FloatArray(actualSeqLength) { j ->
-                    if (j > i) Float.NEGATIVE_INFINITY else 0.0f
+                BooleanArray(actualSeqLength) { j ->
+                    j > i  // True in upper triangle (mask future positions)
                 }
             }
         }
