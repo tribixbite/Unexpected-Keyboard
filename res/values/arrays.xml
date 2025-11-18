@@ -186,14 +186,10 @@
   <!-- Neural Model Version -->
   <string-array name="pref_neural_model_version_entries">
     <item>@string/pref_neural_model_v2</item>
-    <item>@string/pref_neural_model_v1</item>
-    <item>@string/pref_neural_model_v3</item>
     <item>@string/pref_neural_model_custom</item>
   </string-array>
   <string-array name="pref_neural_model_version_values">
     <item>v2</item>
-    <item>v1</item>
-    <item>v3</item>
     <item>custom</item>
   </string-array>
 

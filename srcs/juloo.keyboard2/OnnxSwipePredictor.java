@@ -177,6 +177,20 @@ public class OnnxSwipePredictor
 
         case "v1":
         case "v3":
+          // Legacy model versions removed from bundle - fallback to v2
+          Log.w(TAG, String.format("Model version %s is no longer included - falling back to v2", _currentModelVersion));
+          android.widget.Toast.makeText(_context,
+            "Model " + _currentModelVersion + " removed. Using built-in v2.",
+            android.widget.Toast.LENGTH_LONG).show();
+
+          encoderPath = "models/swipe_encoder_android.onnx";
+          decoderPath = "models/swipe_decoder_android.onnx";
+          _maxSequenceLength = 250;
+          _modelAccuracy = "80.6%";
+          _modelSource = "fallback";
+          _currentModelVersion = "v2";
+          break;
+
         case "custom":
           // External models - require file picker
           if (_config != null && _config.neural_custom_encoder_path != null &&

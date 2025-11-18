@@ -230,6 +230,29 @@ public class SettingsActivity extends PreferenceActivity
       });
     }
 
+    // Set up model version change listener to update info display
+    Preference modelVersionPref = findPreference("neural_model_version");
+    if (modelVersionPref != null)
+    {
+      modelVersionPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
+      {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue)
+        {
+          // Update model info display after a short delay to let preference save
+          new android.os.Handler().postDelayed(new Runnable()
+          {
+            @Override
+            public void run()
+            {
+              updateNeuralModelInfo();
+            }
+          }, 100);
+          return true;
+        }
+      });
+    }
+
     // Set up neural model file pickers
     Preference loadEncoderPref = findPreference("neural_load_encoder");
     if (loadEncoderPref != null)
@@ -274,17 +297,42 @@ public class SettingsActivity extends PreferenceActivity
     {
       try
       {
-        // Get model info from singleton predictor
-        OnnxSwipePredictor predictor = OnnxSwipePredictor.getInstance(this);
-        if (predictor != null && predictor.isAvailable())
+        SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+        String modelVersion = prefs.getString("neural_model_version", "v2");
+        String encoderUri = prefs.getString("neural_custom_encoder_uri", null);
+        String decoderUri = prefs.getString("neural_custom_decoder_uri", null);
+
+        StringBuilder summary = new StringBuilder();
+
+        if ("custom".equals(modelVersion))
         {
-          String modelInfo = predictor.getModelInfo();
-          modelInfoPref.setSummary("✅ Loaded: " + modelInfo);
+          // Custom model mode
+          if (encoderUri != null && decoderUri != null)
+          {
+            summary.append("✅ Custom models selected\n");
+            summary.append("Will load on next swipe (may take ~5s first time)");
+          }
+          else if (encoderUri != null)
+          {
+            summary.append("⚠️ Only encoder selected\nNeed decoder file too");
+          }
+          else if (decoderUri != null)
+          {
+            summary.append("⚠️ Only decoder selected\nNeed encoder file too");
+          }
+          else
+          {
+            summary.append("⚠️ No custom files selected\nUse file pickers below");
+          }
         }
         else
         {
-          modelInfoPref.setSummary("⚠️ Model not loaded");
+          // v2 builtin model
+          summary.append("✅ Built-in model (v2)\n");
+          summary.append("250-length, 80.6% accuracy, ready to use");
         }
+
+        modelInfoPref.setSummary(summary.toString());
       }
       catch (Exception e)
       {
