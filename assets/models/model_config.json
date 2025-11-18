@@ -34,13 +34,56 @@
     }
   },
   "inference": {
+    "inputs": {
+      "memory": {
+        "shape": [
+          "B",
+          "enc_seq",
+          "d_model"
+        ],
+        "dtype": "float32",
+        "meaning": "Encoder output memory"
+      },
+      "target_tokens": {
+        "shape": [
+          "B",
+          "dec_seq"
+        ],
+        "dtype": "int64",
+        "meaning": "Decoder input token ids (including <sos>)"
+      },
+      "src_mask": {
+        "shape": [
+          "B",
+          "enc_seq"
+        ],
+        "dtype": "bool",
+        "meaning": "Encoder padding mask (True = PAD)"
+      },
+      "target_padding_mask": {
+        "shape": [
+          "B",
+          "dec_seq"
+        ],
+        "dtype": "bool",
+        "meaning": "Decoder padding mask (True = PAD)"
+      },
+      "target_causal_mask": {
+        "shape": [
+          "dec_seq",
+          "dec_seq"
+        ],
+        "dtype": "float32",
+        "meaning": "Decoder causal mask (0.0 allowed, large negative/-1e9 blocked)"
+      }
+    },
     "beam_size": 5,
     "max_length": 20,
     "length_penalty": 1.0,
     "temperature": 1.0
   },
   "performance": {
-    "word_accuracy": 0.8058035714285714,
+    "word_accuracy": 0.7336956521739131,
     "deployment_targets": [
       "web",
       "android"

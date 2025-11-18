@@ -58,7 +58,7 @@ class DecoderInputBuilder(
 
     /**
      * Create separate padding and causal masks for custom models
-     * CRITICAL: Custom models expect FLOAT tensors, not boolean
+     * CRITICAL: Custom models expect FLOAT tensors (0.0 = valid, -inf = masked for causal)
      * Uses actual token array length instead of hardcoded DECODER_SEQ_LENGTH
      */
     private fun createSeparateMasks(
@@ -68,28 +68,19 @@ class DecoderInputBuilder(
         val numActiveBeams = batchedTokens.size
         val actualSeqLength = batchedTokens[0].size  // Use actual sequence length from tokens
 
-        // Padding mask: 1.0 where tokens are PAD (0), 0.0 elsewhere (FLOAT tensor)
+        // Padding mask: 0.0 where valid tokens, 1.0 where PAD (FLOAT tensor)
         val paddingMask = Array(numActiveBeams) { b ->
             FloatArray(actualSeqLength) { i ->
                 if (batchedTokens[b][i] == PAD_IDX.toLong()) 1.0f else 0.0f
             }
         }
 
-        // Causal mask: -inf in upper triangle to prevent attending to future positions (FLOAT tensor)
-        // Use 0.0 on diagonal and lower triangle, negative infinity on upper triangle
-        val causalMask = Array(numActiveBeams) { _ ->
-            FloatArray(actualSeqLength * actualSeqLength) { idx ->
-                val i = idx / actualSeqLength
-                val j = idx % actualSeqLength
-                if (j > i) Float.NEGATIVE_INFINITY else 0.0f
-            }
-        }
-
-        // Reshape causal mask to [num_beams, seq_len, seq_len]
-        val causalMask3D = Array(numActiveBeams) { b ->
+        // Causal mask: 0.0 for allowed positions, -inf for masked future positions (FLOAT tensor)
+        // Lower triangle and diagonal: 0.0 (allowed), upper triangle: -inf (masked)
+        val causalMask3D = Array(numActiveBeams) { _ ->
             Array(actualSeqLength) { i ->
                 FloatArray(actualSeqLength) { j ->
-                    causalMask[b][i * actualSeqLength + j]
+                    if (j > i) Float.NEGATIVE_INFINITY else 0.0f
                 }
             }
         }
