@@ -261,12 +261,17 @@ public class OnnxSwipePredictor
         // logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
         OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Encoder");
         _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
-        // logDebug("✅ Encoder session created successfully");
-        // logDebug("   Inputs: " + _encoderSession.getInputNames());
-        // logDebug("   Outputs: " + _encoderSession.getOutputNames());
 
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_encoderSession, "Encoder");
+
+        // Log encoder interface only if debug logging enabled
+        if (_config != null && _config.swipe_debug_detailed_logging)
+        {
+          Log.d(TAG, "✅ Encoder session created successfully");
+          Log.d(TAG, "   Encoder Inputs: " + _encoderSession.getInputNames());
+          Log.d(TAG, "   Encoder Outputs: " + _encoderSession.getOutputNames());
+        }
 
         Log.d(TAG, String.format("Encoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
       }
@@ -299,9 +304,14 @@ public class OnnxSwipePredictor
         {
           java.util.Set<String> inputNames = _decoderSession.getInputNames();
           _usesSeparateMasks = inputNames.contains("target_padding_mask");
-          Log.d(TAG, String.format("Decoder input interface detected: %s (inputs: %s)",
-            _usesSeparateMasks ? "separate masks (custom)" : "combined mask (v2 builtin)",
-            inputNames));
+
+          // Log only if debug logging enabled
+          if (_config != null && _config.swipe_debug_detailed_logging)
+          {
+            Log.d(TAG, String.format("Decoder input interface detected: %s (inputs: %s)",
+              _usesSeparateMasks ? "separate masks (custom)" : "combined mask (v2 builtin)",
+              inputNames));
+          }
 
           // Initialize decoder input builder with detected interface
           _decoderInputBuilder = new DecoderInputBuilder(_ortEnvironment, _usesSeparateMasks);
@@ -434,13 +444,16 @@ public class OnnxSwipePredictor
         trajectoryTensor = createTrajectoryTensor(features);
         nearestKeysTensor = createNearestKeysTensor(features);
         srcMaskTensor = createSourceMaskTensor(features);
-        
-        // Log tensor shapes for debugging
-        // logDebug("🔧 Encoder input tensor shapes:");
-        // logDebug("   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
-        // logDebug("   nearest_keys: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
-        // logDebug("   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()) + " (BOOL)");
-        
+
+        // Log tensor shapes only if debug logging enabled
+        if (_config != null && _config.swipe_debug_detailed_logging)
+        {
+          Log.d(TAG, "🔧 Encoder input tensor shapes (features.actualLength=" + features.actualLength + ", _maxSequenceLength=" + _maxSequenceLength + "):");
+          Log.d(TAG, "   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
+          Log.d(TAG, "   nearest_keys: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
+          Log.d(TAG, "   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()));
+        }
+
         Map<String, OnnxTensor> encoderInputs = new HashMap<>();
         encoderInputs.put("trajectory_features", trajectoryTensor);
         encoderInputs.put("nearest_keys", nearestKeysTensor);
