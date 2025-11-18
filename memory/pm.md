@@ -9,15 +9,36 @@
 
 ## 🔥 Current Status (2025-11-18 - UPDATED)
 
-**Latest Version**: v1.32.440 (493) 🔧
-**Build Status**: ✅ BUILD SUCCESSFUL - TOKENIZER FIX DEPLOYED
+**Latest Version**: v1.32.441 (494) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - V3 BOOLEAN TENSOR FIX DEPLOYED
 **Branch**: feature/swipe-typing
-**Current Focus**: 🔧 **FIXING BUILTIN MODEL PREDICTIONS** - Custom model support + tokenizer loading
+**Current Focus**: 🎯 **V3 MODEL PREDICTIONS READY** - All tensor types fixed, tokenizer loading
 **Refactoring Progress**: Phase 4 COMPLETE! (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: COMPLETE ✅)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 4 fixes applied (Debug logging v1.32.437, Tensor types v1.32.439, Tokenizer filename v1.32.440)
+**Critical Fixes**: 5 fixes applied (Debug logging, Tokenizer, Boolean tensors for v3 separate masks)
 
-### 🔧 Latest Work (v1.32.437-440) - CUSTOM MODEL SUPPORT & TOKENIZER FIX
+### 🔧 Latest Work (v1.32.437-441) - V3 MODEL SUPPORT & TENSOR TYPE FIXES
+
+**V3 BOOLEAN TENSOR FIX (v1.32.441) - CRITICAL**
+- **Problem**: V3 builtin models use separate mask inputs but expect BOOLEAN, not FLOAT
+- **Error**: "Unexpected input data type. Actual: (tensor(float)) , expected: (tensor(bool))"
+- **Discovery**: New v3 builtin models in assets/models/ have separate mask interface:
+  - Inputs: `[memory, target_tokens, src_mask, target_padding_mask, target_causal_mask]`
+  - But expect BOOLEAN tensors, not FLOAT as in external custom models
+- **Fix**: Changed DecoderInputBuilder.kt separate mask creation
+  ```kotlin
+  // Before (v1.32.439-440):
+  val paddingMask = Array(numBeams) { ... FloatArray ... }  // WRONG for v3 builtin
+
+  // After (v1.32.441):
+  val paddingMask = Array(numBeams) { ... BooleanArray ... }  // CORRECT
+  ```
+  - target_padding_mask: `BooleanArray` (true where PAD, false where valid)
+  - target_causal_mask: `BooleanArray` (true in upper triangle, false elsewhere)
+- **Impact**: V3 builtin models should now work correctly with predictions
+- **Status**: ✅ FIXED - Ready for testing
+
+### 🔧 Previous Work (v1.32.437-440) - TOKENIZER & CUSTOM MODEL SUPPORT
 
 **TOKENIZER LOADING FIX (v1.32.440)**
 - **Problem**: Tokenizer failed to load - `Tokenizer loaded: false` in logs
@@ -55,17 +76,23 @@
 - Encoder logs confirm: `features.actualLength=40, _maxSequenceLength=250`
 - Both encoder and decoder loading successfully with max_seq_len=250
 
-**FILES MODIFIED**:
-- SwipeTokenizer.java: Fixed tokenizer config filename
-- DecoderInputBuilder.kt: Reverted to float tensors for custom models
-- OnnxSwipePredictor.java: Fixed debug logging field names
-- build.gradle: v1.32.440, build 493
+**FILES MODIFIED (v1.32.437-441)**:
+- SwipeTokenizer.java: Fixed tokenizer config filename (v1.32.440)
+- DecoderInputBuilder.kt: Boolean tensors for v3 separate masks (v1.32.441)
+- OnnxSwipePredictor.java: Fixed debug logging field names (v1.32.437)
+- build.gradle: v1.32.441, build 494
 
-**NEXT STEPS**:
-1. User should test v1.32.440 with builtin models
-2. Verify tokenizer loads successfully (check logs: "Tokenizer loaded: true")
-3. Confirm predictions appear after swiping
-4. Test both builtin v3 and custom models
+**TESTING RESULTS (v1.32.440)**:
+- ✅ Tokenizer loading: SUCCESS ("Tokenizer loaded with 30 characters")
+- ✅ Model interface detection: "separate masks (custom)" detected correctly
+- ❌ Predictions: FAILED (tensor type mismatch - fixed in v1.32.441)
+
+**NEXT STEPS (v1.32.441)**:
+1. User should test v1.32.441 with builtin v3 models
+2. Verify no tensor type errors in logs
+3. Confirm predictions appear in suggestion bar after swiping
+4. Test prediction accuracy and beam search results
+5. If working, create unit tests for ONNX inference pipeline
 
 ### 🎉 Previous Work (v1.32.412-415) - PHASE 4 COMPLETE!
 
