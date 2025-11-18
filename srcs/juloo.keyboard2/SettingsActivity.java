@@ -243,6 +243,8 @@ public class SettingsActivity extends PreferenceActivity
           return true;
         }
       });
+      // Update summary with current file
+      updateModelFileSummary(loadEncoderPref, "neural_custom_encoder_uri");
     }
 
     Preference loadDecoderPref = findPreference("neural_load_decoder");
@@ -257,6 +259,8 @@ public class SettingsActivity extends PreferenceActivity
           return true;
         }
       });
+      // Update summary with current file
+      updateModelFileSummary(loadDecoderPref, "neural_custom_decoder_uri");
     }
 
     // Update neural model info display
@@ -965,6 +969,7 @@ public class SettingsActivity extends PreferenceActivity
       getContentResolver().takePersistableUriPermission(uri, takeFlags);
 
       // Validate file can be accessed via ContentResolver
+      long fileSize = 0;
       try (java.io.InputStream inputStream = getContentResolver().openInputStream(uri))
       {
         if (inputStream == null)
@@ -981,6 +986,9 @@ public class SettingsActivity extends PreferenceActivity
           Toast.makeText(this, "File is empty or unreadable", Toast.LENGTH_LONG).show();
           return;
         }
+
+        // Get file size for display
+        fileSize = inputStream.available() + bytesRead;
       }
 
       // Get filename from URI
@@ -993,6 +1001,13 @@ public class SettingsActivity extends PreferenceActivity
           if (nameIndex >= 0)
           {
             filename = cursor.getString(nameIndex);
+          }
+
+          // Get accurate file size
+          int sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE);
+          if (sizeIndex >= 0)
+          {
+            fileSize = cursor.getLong(sizeIndex);
           }
         }
       }
@@ -1011,17 +1026,22 @@ public class SettingsActivity extends PreferenceActivity
 
       // Save content URI to preferences (not file path!)
       SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
-      if (isEncoder)
-      {
-        editor.putString("neural_custom_encoder_uri", uri.toString());
-        Toast.makeText(this, "✅ Encoder loaded: " + filename, Toast.LENGTH_SHORT).show();
-      }
-      else
-      {
-        editor.putString("neural_custom_decoder_uri", uri.toString());
-        Toast.makeText(this, "✅ Decoder loaded: " + filename, Toast.LENGTH_SHORT).show();
-      }
+      String prefKey = isEncoder ? "neural_custom_encoder_uri" : "neural_custom_decoder_uri";
+      editor.putString(prefKey, uri.toString());
       editor.apply();
+
+      // Format file size
+      String sizeStr = formatFileSize(fileSize);
+
+      // Update preference summary immediately
+      String prefItemKey = isEncoder ? "neural_load_encoder" : "neural_load_decoder";
+      Preference pref = findPreference(prefItemKey);
+      if (pref != null)
+      {
+        pref.setSummary("✅ " + filename + " (" + sizeStr + ")");
+      }
+
+      Toast.makeText(this, "✅ " + (isEncoder ? "Encoder" : "Decoder") + " file selected: " + filename + " (" + sizeStr + ")", Toast.LENGTH_LONG).show();
 
       // Check if both files are now set and prompt user to change model version if needed
       SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
@@ -1029,9 +1049,16 @@ public class SettingsActivity extends PreferenceActivity
       String decoderUri = prefs.getString("neural_custom_decoder_uri", null);
       String modelVersion = prefs.getString("neural_model_version", "v2");
 
-      if (encoderUri != null && decoderUri != null && modelVersion.equals("v2"))
+      if (encoderUri != null && decoderUri != null)
       {
-        Toast.makeText(this, "✅ Files loaded. Now, change 'Model Version' to 'custom' to use them.", Toast.LENGTH_LONG).show();
+        if (!modelVersion.equals("custom"))
+        {
+          Toast.makeText(this, "📝 Both files loaded! Change 'Model Version' to 'custom' to use them.", Toast.LENGTH_LONG).show();
+        }
+        else
+        {
+          Toast.makeText(this, "🔄 Custom models will load on next swipe. This may take a moment...", Toast.LENGTH_LONG).show();
+        }
       }
 
       // Update model info
@@ -1887,6 +1914,87 @@ public class SettingsActivity extends PreferenceActivity
         statsPref.setSummary("Error loading statistics");
         android.util.Log.e("SettingsActivity", "Failed to load clipboard stats", e);
       }
+    }
+  }
+
+  /**
+   * Update model file preference summary with currently selected file
+   */
+  private void updateModelFileSummary(Preference pref, String uriPrefKey)
+  {
+    try
+    {
+      SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+      String uriStr = prefs.getString(uriPrefKey, null);
+
+      if (uriStr == null)
+      {
+        pref.setSummary("No file selected");
+        return;
+      }
+
+      android.net.Uri uri = android.net.Uri.parse(uriStr);
+
+      // Get filename and size from URI
+      String filename = null;
+      long fileSize = 0;
+
+      try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null))
+      {
+        if (cursor != null && cursor.moveToFirst())
+        {
+          int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+          if (nameIndex >= 0)
+          {
+            filename = cursor.getString(nameIndex);
+          }
+
+          int sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE);
+          if (sizeIndex >= 0)
+          {
+            fileSize = cursor.getLong(sizeIndex);
+          }
+        }
+      }
+
+      if (filename == null)
+      {
+        filename = uri.getLastPathSegment();
+      }
+
+      if (filename != null)
+      {
+        String sizeStr = formatFileSize(fileSize);
+        pref.setSummary("✅ " + filename + " (" + sizeStr + ")");
+      }
+      else
+      {
+        pref.setSummary("File selected");
+      }
+    }
+    catch (Exception e)
+    {
+      pref.setSummary("Error reading file info");
+      Log.e("SettingsActivity", "Failed to update model file summary", e);
+    }
+  }
+
+  /**
+   * Format file size for display
+   */
+  private String formatFileSize(long bytes)
+  {
+    if (bytes < 1024)
+    {
+      return bytes + " B";
+    }
+    else if (bytes < 1024 * 1024)
+    {
+      return String.format("%.1f KB", bytes / 1024.0);
+    }
+    else
+    {
+      return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
     }
   }
 }
