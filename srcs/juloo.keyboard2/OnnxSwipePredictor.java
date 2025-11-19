@@ -104,6 +104,14 @@ public class OnnxSwipePredictor
   private boolean[][] _pooledSrcMaskArray;               // Reusable src_mask array
   private int _pooledBufferMaxBeams = 0;                 // Track allocated capacity
 
+  // OPTIMIZATION v1.32.489: Pre-allocated buffers for beam search loop
+  // These are allocated once and reused every iteration to eliminate GC pressure
+  private int[][] _preallocBatchedTokens;               // [beam_width, DECODER_SEQ_LENGTH]
+  private java.nio.ByteBuffer _preallocTokensByteBuffer; // Direct buffer for ONNX
+  private java.nio.IntBuffer _preallocTokensIntBuffer;   // View into byte buffer
+  private int[] _preallocSrcLengths;                     // [beam_width] for actual_src_length
+  private float[] _preallocProbs;                        // [vocab_size] for softmax output
+
   // OPTIMIZATION: Dedicated thread pool for ONNX operations (1.5x speedup expected)
   private static ExecutorService _onnxExecutor;
   private static final Object _executorLock = new Object();
@@ -661,7 +669,22 @@ public class OnnxSwipePredictor
       // OPTIMIZATION v1.32.420: Initialize memory pool for tensor buffers
       initializeMemoryPool(decoderSeqLength);
 
-      // Log.d(TAG, "Reusable tensor buffers initialized (decoderSeqLength: " + decoderSeqLength + ")");
+      // OPTIMIZATION v1.32.489: Pre-allocate beam search loop buffers
+      // These are allocated once and reused every iteration to eliminate GC pressure
+      int maxBeams = _beamWidth > 0 ? _beamWidth : DEFAULT_BEAM_WIDTH;
+      int vocabSize = 30; // Standard vocab size (26 letters + special tokens)
+
+      _preallocBatchedTokens = new int[maxBeams][decoderSeqLength];
+      _preallocSrcLengths = new int[maxBeams];
+      _preallocProbs = new float[vocabSize];
+
+      // Direct buffer for ONNX tensor creation (reusable)
+      int tokensByteBufferSize = maxBeams * decoderSeqLength * 4; // 4 bytes per int
+      _preallocTokensByteBuffer = java.nio.ByteBuffer.allocateDirect(tokensByteBufferSize);
+      _preallocTokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
+      _preallocTokensIntBuffer = _preallocTokensByteBuffer.asIntBuffer();
+
+      Log.d(TAG, "Pre-allocated beam search buffers: " + maxBeams + " beams × " + decoderSeqLength + " seq_len, vocab=" + vocabSize);
     }
     catch (Exception e)
     {
@@ -1508,39 +1531,44 @@ public class OnnxSwipePredictor
         int memorySeqLen = (int)memoryShape[1];
         int hiddenDim = (int)memoryShape[2];
 
-        // BUGFIX v1.32.423: Removed buggy memory pool usage (was allocating slices anyway)
+        // OPTIMIZATION v1.32.489: Use pre-allocated buffers instead of allocating each iteration
+        // This eliminates GC pressure from repeated allocations in beam search loop
 
-        // Allocate batched token arrays
-        // V4 expects int32 for target_tokens
-        int[][] batchedTokens = new int[numActiveBeams][DECODER_SEQ_LENGTH];
+        // Ensure pre-allocated buffers have sufficient capacity
+        if (_preallocBatchedTokens == null || _preallocBatchedTokens.length < numActiveBeams)
+        {
+          // Fallback: allocate if pre-allocated buffers aren't ready or too small
+          _preallocBatchedTokens = new int[numActiveBeams][DECODER_SEQ_LENGTH];
+          _preallocSrcLengths = new int[numActiveBeams];
+          int tokensByteBufferSize = numActiveBeams * DECODER_SEQ_LENGTH * 4;
+          _preallocTokensByteBuffer = java.nio.ByteBuffer.allocateDirect(tokensByteBufferSize);
+          _preallocTokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
+          _preallocTokensIntBuffer = _preallocTokensByteBuffer.asIntBuffer();
+        }
 
-        // Fill batched arrays for all active beams
+        // Fill batched arrays for all active beams (reusing pre-allocated arrays)
         for (int b = 0; b < numActiveBeams; b++)
         {
           BeamSearchState beam = activeBeams.get(b);
 
           // Pad sequence to DECODER_SEQ_LENGTH
-          Arrays.fill(batchedTokens[b], (int)PAD_IDX);
+          Arrays.fill(_preallocBatchedTokens[b], (int)PAD_IDX);
           for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LENGTH); i++)
           {
-            batchedTokens[b][i] = beam.tokens.get(i).intValue();
+            _preallocBatchedTokens[b][i] = beam.tokens.get(i).intValue();
           }
         }
 
-        // Create batched tensors - shape [num_active_beams, seq_length]
-        java.nio.ByteBuffer tokensByteBuffer = java.nio.ByteBuffer.allocateDirect(
-          numActiveBeams * DECODER_SEQ_LENGTH * 4); // 4 bytes per int
-        tokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
-        java.nio.IntBuffer tokensBuffer = tokensByteBuffer.asIntBuffer();
-
+        // Reuse pre-allocated ByteBuffer for ONNX tensor creation
+        _preallocTokensIntBuffer.clear();
         for (int b = 0; b < numActiveBeams; b++)
         {
-          tokensBuffer.put(batchedTokens[b]);
+          _preallocTokensIntBuffer.put(_preallocBatchedTokens[b]);
         }
-        tokensBuffer.rewind();
+        _preallocTokensIntBuffer.rewind();
 
         OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
-          tokensBuffer, new long[]{numActiveBeams, DECODER_SEQ_LENGTH});
+          _preallocTokensIntBuffer, new long[]{numActiveBeams, DECODER_SEQ_LENGTH});
 
         // Get memory data from encoder
         float[][][] memoryData = (float[][][])memory.getValue();
@@ -1559,9 +1587,10 @@ public class OnnxSwipePredictor
         OnnxTensor batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
 
         // Create actual_src_length for all beams (new V4 interface - decoder creates masks internally)
-        int[] srcLengths = new int[numActiveBeams];
-        Arrays.fill(srcLengths, actualSrcLength);
-        OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, srcLengths);
+        // OPTIMIZATION v1.32.489: Reuse pre-allocated array instead of allocating each iteration
+        Arrays.fill(_preallocSrcLengths, 0, numActiveBeams, actualSrcLength);
+        OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment,
+          Arrays.copyOf(_preallocSrcLengths, numActiveBeams));
 
         long tensorTime = (System.nanoTime() - tensorStart) / 1_000_000;
         totalTensorTime += tensorTime;
@@ -1597,7 +1626,17 @@ public class OnnxSwipePredictor
             float[] vocabLogits = logits3D[b][currentPos];
 
             // Apply softmax
-            float[] probs = new float[vocabSize];
+            // OPTIMIZATION v1.32.489: Reuse pre-allocated probs array if possible
+            float[] probs;
+            if (_preallocProbs != null && _preallocProbs.length >= vocabSize)
+            {
+              probs = _preallocProbs;
+            }
+            else
+            {
+              probs = new float[vocabSize];
+            }
+
             float maxLogit = vocabLogits[0];
             for (int i = 1; i < Math.min(vocabLogits.length, vocabSize); i++) {
               if (vocabLogits[i] > maxLogit) maxLogit = vocabLogits[i];
