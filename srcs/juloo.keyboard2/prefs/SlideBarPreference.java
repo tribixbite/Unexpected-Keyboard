@@ -72,12 +72,52 @@ public class SlideBarPreference extends DialogPreference
   {
   }
 
+  /**
+   * Safely get persisted float, handling legacy values from older settings exports.
+   * Older versions may have stored Integer or String instead of Float.
+   */
+  private float getSafePersistedFloat(float defaultValue)
+  {
+    try
+    {
+      return getPersistedFloat(defaultValue);
+    }
+    catch (ClassCastException e)
+    {
+      // Try Integer first
+      try
+      {
+        int intValue = getPersistedInt((int)defaultValue);
+        float floatValue = (float)intValue;
+        persistFloat(floatValue);
+        return floatValue;
+      }
+      catch (ClassCastException e2)
+      {
+        // Try String
+        try
+        {
+          String strValue = getPersistedString(String.valueOf(defaultValue));
+          float floatValue = Float.parseFloat(strValue);
+          persistFloat(floatValue);
+          return floatValue;
+        }
+        catch (Exception e3)
+        {
+          // Give up and use default
+          persistFloat(defaultValue);
+          return defaultValue;
+        }
+      }
+    }
+  }
+
   @Override
   protected void onSetInitialValue(boolean restorePersistedValue, Object defaultValue)
   {
     if (restorePersistedValue)
     {
-      _value = getPersistedFloat(_min);
+      _value = getSafePersistedFloat(_min);
     }
     else
     {
@@ -100,7 +140,7 @@ public class SlideBarPreference extends DialogPreference
     if (positiveResult)
       persistFloat(_value);
     else
-      _seekBar.setProgress((int)((getPersistedFloat(_min) - _min) * STEPS / (_max - _min)));
+      _seekBar.setProgress((int)((getSafePersistedFloat(_min) - _min) * STEPS / (_max - _min)));
 
     updateText();
   }
