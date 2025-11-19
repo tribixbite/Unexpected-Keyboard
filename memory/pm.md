@@ -9,15 +9,32 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.490 (543) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - Pre-allocated beam search buffers
+**Latest Version**: v1.32.492 (545) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - Critical log prob fix
 **Branch**: feature/swipe-typing
 **Current Focus**: 🎯 **ONNX NEURAL PREDICTIONS** - Testing swipe predictions end-to-end
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 21 fixes applied (see history below)
+**Critical Fixes**: 22 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.489-490) - BUFFER PRE-ALLOCATION OPTIMIZATION
+### 🔧 Latest Work (v1.32.492) - CRITICAL LOG PROB FIX
+
+**LOG PROB FIX (v1.32.492) - CRITICAL**
+- **Problem**: Beam search returning 0 candidates
+- **Root Cause**: Decoder outputs `log_probs` (f32), NOT raw logits!
+  - Was incorrectly applying softmax to log probs
+  - Double conversion produced invalid probability distributions
+  - All beams produced empty words (only special tokens)
+- **Solution**: Use log probs directly like Python test_alpha_model.py
+  - Remove softmax conversion entirely
+  - Score = -sum(log_probs), sort ascending (lower is better)
+  - topK selection finds highest log probs
+- **Files Modified**:
+  - OnnxSwipePredictor.java: Remove softmax, use log probs directly
+- **Status**: ✅ BUILT v1.32.492 - Ready for testing
+- **Impact**: This was the root cause of 0 predictions
+
+### 🔧 Previous Work (v1.32.489-490) - BUFFER PRE-ALLOCATION OPTIMIZATION
 
 **BUFFER PRE-ALLOCATION OPTIMIZATION (v1.32.489-490)**
 - **Problem**: GC pressure from repeated allocations inside beam search loop
