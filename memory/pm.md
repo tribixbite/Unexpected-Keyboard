@@ -33,7 +33,9 @@
   - Add null checks for both maps
 - **Files Modified**:
   - SwipeTokenizer.java: Build char_to_idx from idx_to_char, add null checks
-- **Status**: ✅ BUILT v1.32.486 - Needs verification (tap text field to trigger keyboard)
+- **Status**: ✅ VERIFIED - Tokenizer loads with 26 characters, ONNX models initialize successfully
+  - Logs confirm: "Tokenizer loaded with 26 characters", "FINISHED OnnxSwipePredictor.initialize()"
+  - Next: Test actual swipe predictions with manual gestures
 
 **IMPROVED ONNX ERROR LOGGING (v1.32.485)**
 - **Problem**: ONNX initialization errors were showing empty messages
