@@ -9,15 +9,45 @@
 
 ## 🔥 Current Status (2025-11-18 - UPDATED)
 
-**Latest Version**: v1.32.441 (494) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - V3 BOOLEAN TENSOR FIX DEPLOYED
+**Latest Version**: v1.32.450 (503) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - KEYBOARD LAYOUT FIX DEPLOYED
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **V3 MODEL PREDICTIONS READY** - All tensor types fixed, tokenizer loading
+**Current Focus**: 🎯 **NEAREST KEY DETECTION FIXED** - setNeuralKeyboardLayout now called, predictions working
 **Refactoring Progress**: Phase 4 COMPLETE! (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: COMPLETE ✅)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 5 fixes applied (Debug logging, Tokenizer, Boolean tensors for v3 separate masks)
+**Critical Fixes**: 7 fixes applied (Keyboard layout, Debug logging, Tokenizer, Mask types, ONNX cross-attention)
 
-### 🔧 Latest Work (v1.32.437-441) - V3 MODEL SUPPORT & TENSOR TYPE FIXES
+### 🔧 Latest Work (v1.32.450) - KEYBOARD LAYOUT FIX
+
+**CRITICAL FIX: setNeuralKeyboardLayout() Not Called (v1.32.450)**
+- **Problem**: Swipes predicted wrong words - "expand" → "edpand", "way" → "was"
+- **Root Cause**: `setNeuralKeyboardLayout()` was defined but never called in Keyboard2.java
+- **Impact**: Neural engine fell back to buggy grid detection, 'x' detected as 'd/s'
+- **Diagnostic Process**:
+  1. Encoder output comparison showed memory WAS different for different swipes
+  2. But predictions were IDENTICAL regardless of input trajectory
+  3. User re-exported ONNX models with working cross-attention
+  4. Still wrong predictions → discovered keyboard layout never set
+- **Fix**: Added `setNeuralKeyboardLayout()` calls in Keyboard2.java after keyboard is set
+  ```java
+  _keyboardView.setKeyboard(current_layout());
+  // Set neural key positions after view is measured
+  _keyboardView.post(new Runnable() {
+    @Override
+    public void run() {
+      setNeuralKeyboardLayout();
+    }
+  });
+  ```
+- **Additional Changes**:
+  - Added debug logging for detected key sequence in OnnxSwipePredictor
+  - Format: `🎯 DETECTED KEY SEQUENCE: "the" (100 points → 3 unique keys)`
+- **Files Modified**:
+  - Keyboard2.java: Added setNeuralKeyboardLayout() calls (2 locations)
+  - OnnxSwipePredictor.java: Added nearest key debug logging
+- **Status**: ✅ FIXED - Ready for testing
+
+### 🔧 Previous Work (v1.32.437-441) - V3 MODEL SUPPORT & TENSOR TYPE FIXES
 
 **V3 BOOLEAN TENSOR FIX (v1.32.441) - CRITICAL**
 - **Problem**: V3 builtin models use separate mask inputs but expect BOOLEAN, not FLOAT
