@@ -1710,31 +1710,30 @@ public class OnnxSwipePredictor
     
     // Convert token sequences to words with detailed debugging
     List<BeamSearchCandidate> results = new ArrayList<>();
-    // logDebug("🔤 Converting " + beams.size() + " beams to words...");
-    
+    logDebug("🔤 Converting " + beams.size() + " beams to words...\n");
+
     for (int b = 0; b < beams.size(); b++) {
       BeamSearchState beam = beams.get(b);
       StringBuilder word = new StringBuilder();
-      
-      // logDebug("   Beam " + b + " tokens: " + beam.tokens + " (score: " + beam.score + ")");
-      
+      StringBuilder tokenLog = new StringBuilder();
+
       for (Long token : beam.tokens)
       {
         int idx = token.intValue();
         if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
-          // logDebug("     Token " + idx + " -> SPECIAL (skipped)");
+          tokenLog.append("[").append(idx).append("] ");
           continue;
         }
-        
+
         char ch = _tokenizer.indexToChar(idx);
-        // logDebug("     Token " + idx + " -> '" + ch + "'");
-        
+        tokenLog.append(ch);
+
         if (ch != '?' && !Character.toString(ch).startsWith("<"))
         {
           word.append(ch);
         }
       }
-      
+
       String wordStr = word.toString();
       if (wordStr.length() > 0)
       {
@@ -1742,13 +1741,14 @@ public class OnnxSwipePredictor
         // Since score is positive (accumulated -log(prob)), use exp(-score)
         float confidence = (float)Math.exp(-beam.score);
         results.add(new BeamSearchCandidate(wordStr, confidence));
-        // logDebug("   ✅ Beam " + b + " -> '" + wordStr + "' (score: " + beam.score + ", confidence: " + confidence + ")");
+        logDebug(String.format("   Beam %d: '%s' (score=%.2f, conf=%.3f) tokens=%s\n",
+          b, wordStr, beam.score, confidence, tokenLog.toString()));
       } else {
-        // logDebug("   ❌ Beam " + b + " -> empty word (tokens only special)");
+        logDebug(String.format("   Beam %d: EMPTY (tokens=%s)\n", b, tokenLog.toString()));
       }
     }
-    
-    // logDebug("🎯 Generated " + results.size() + " word candidates from " + beams.size() + " beams");
+
+    logDebug("🎯 Generated " + results.size() + " word candidates from " + beams.size() + " beams\n");
     return results;
   }
   
