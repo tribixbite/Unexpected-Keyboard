@@ -341,11 +341,21 @@ public class NeuralLayoutHelper
         Log.d(TAG, String.format("Set QWERTY bounds: top=%.0f, height=%.0f (q.y=%.0f, m.y=%.0f)",
             qwertyTop, qwertyHeight, qPos.y, mPos.y));
 
+        // Touch Y-offset for fat finger compensation
+        // DISABLED (v1.32.467): The 37% offset was too aggressive and may have caused issues
+        // with top row key detection. Setting to 0 to isolate QWERTY bounds fix.
+        // TODO: Re-enable with smaller offset (10-15%) after verifying bounds work correctly
+        float touchYOffset = 0.0f;  // Was: rowHeight * 0.37f
+        _predictionCoordinator.getNeuralEngine().setTouchYOffset(touchYOffset);
+        Log.d(TAG, String.format("Touch Y-offset: %.0f pixels (DISABLED for debugging, row height=%.0f)",
+            touchYOffset, rowHeight));
+
         // Debug output only when debug mode is active
         if (_debugMode)
         {
           sendDebugLog(String.format(">>> Neural engine: %d key positions set\n", keyPositions.size()));
           sendDebugLog(String.format(">>> QWERTY bounds: top=%.0f, height=%.0f\n", qwertyTop, qwertyHeight));
+          sendDebugLog(String.format(">>> Touch Y-offset: %.0f px (fat finger compensation)\n", touchYOffset));
           PointF zPos = keyPositions.getOrDefault('z', mPos);
           sendDebugLog(String.format(">>> Samples: q=(%.0f,%.0f) a=(%.0f,%.0f) z=(%.0f,%.0f)\n",
               qPos.x, qPos.y, aPos.x, aPos.y, zPos.x, zPos.y));

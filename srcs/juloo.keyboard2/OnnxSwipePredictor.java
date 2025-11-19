@@ -1103,6 +1103,19 @@ public class OnnxSwipePredictor
       _trajectoryProcessor.setQwertyAreaBounds(qwertyTop, qwertyHeight);
     }
   }
+
+  /**
+   * Set touch Y-offset compensation for fat finger effect.
+   *
+   * @param offset Pixels to add to Y coordinate (positive = shift down toward key center)
+   */
+  public void setTouchYOffset(float offset)
+  {
+    if (_trajectoryProcessor != null)
+    {
+      _trajectoryProcessor.setTouchYOffset(offset);
+    }
+  }
   
   /**
    * Set real key positions for trajectory processing
@@ -1773,6 +1786,21 @@ public class OnnxSwipePredictor
    */
   private PredictionResult createOptimizedPredictionResult(List<BeamSearchCandidate> candidates, SwipeInput input)
   {
+    // ALWAYS log top 3 model outputs for debugging (shows raw NN output before filtering)
+    if (_debugLogger != null && !candidates.isEmpty())
+    {
+      StringBuilder modelOutput = new StringBuilder("🤖 MODEL OUTPUT: ");
+      int numToShow = Math.min(3, candidates.size());
+      for (int i = 0; i < numToShow; i++)
+      {
+        BeamSearchCandidate c = candidates.get(i);
+        if (i > 0) modelOutput.append(", ");
+        modelOutput.append(String.format("%s(%.2f)", c.word, c.confidence));
+      }
+      modelOutput.append("\n");
+      logDebug(modelOutput.toString());
+    }
+
     // Convert beam candidates to vocabulary format
     List<OptimizedVocabulary.CandidateWord> vocabCandidates = new ArrayList<>();
     for (BeamSearchCandidate candidate : candidates)

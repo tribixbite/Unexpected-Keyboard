@@ -27,6 +27,11 @@ public class SwipeTrajectoryProcessor
   private float _qwertyAreaTop = 0.0f;      // Y offset where QWERTY starts (below suggestion bar, etc.)
   private float _qwertyAreaHeight = 0.0f;   // Height of QWERTY key area only
 
+  // Touch Y-offset compensation (v1.32.466)
+  // Users typically touch ~74 pixels above key center due to fat finger effect
+  // This offset is added to raw Y coordinates before normalization
+  private float _touchYOffset = 0.0f;
+
   // Resampling configuration
   private SwipeResampler.ResamplingMode _resamplingMode = SwipeResampler.ResamplingMode.TRUNCATE;
 
@@ -63,6 +68,19 @@ public class SwipeTrajectoryProcessor
     _qwertyAreaHeight = qwertyHeight;
     Log.d(TAG, String.format("📐 QWERTY area bounds set: top=%.0f, height=%.0f (full kb height=%.0f)",
         qwertyTop, qwertyHeight, _keyboardHeight));
+  }
+
+  /**
+   * Set touch Y-offset compensation for fat finger effect.
+   * Users typically touch ~74 pixels above key centers due to finger geometry.
+   * This offset is added to raw Y coordinates before normalization.
+   *
+   * @param offset Pixels to add to Y coordinate (positive = shift down toward key center)
+   */
+  public void setTouchYOffset(float offset)
+  {
+    _touchYOffset = offset;
+    Log.d(TAG, String.format("📐 Touch Y-offset set: %.0f pixels", offset));
   }
 
   /**
@@ -287,14 +305,18 @@ public class SwipeTrajectoryProcessor
     for (PointF point : coordinates) {
       float x = (point.x / _keyboardWidth);
 
+      // Apply touch Y-offset compensation (fat finger effect)
+      // Users typically touch ~74 pixels above key centers
+      float adjustedY = point.y + _touchYOffset;
+
       // For Y: normalize over QWERTY area if bounds are set
       float y;
       if (usingQwertyBounds) {
         // Map QWERTY area [yTop, yTop+yHeight] to [0, 1]
-        y = (point.y - yTop) / yHeight;
+        y = (adjustedY - yTop) / yHeight;
       } else {
         // Fall back to full keyboard height
-        y = (point.y / _keyboardHeight);
+        y = (adjustedY / _keyboardHeight);
       }
 
       // Clamp to [0,1]

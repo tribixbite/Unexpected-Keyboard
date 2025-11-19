@@ -158,6 +158,21 @@ public class NeuralSwipeTypingEngine
       Log.d(TAG, String.format("Set QWERTY area bounds: top=%.0f, height=%.0f", qwertyTop, qwertyHeight));
     }
   }
+
+  /**
+   * Set touch Y-offset compensation for fat finger effect.
+   * Users typically touch above key centers; this offset compensates.
+   *
+   * @param offset Pixels to add to Y coordinate (positive = shift down)
+   */
+  public void setTouchYOffset(float offset)
+  {
+    if (_neuralPredictor != null)
+    {
+      _neuralPredictor.setTouchYOffset(offset);
+      Log.d(TAG, String.format("Set touch Y-offset: %.0f pixels", offset));
+    }
+  }
   
   /**
    * Set real key positions for accurate coordinate mapping

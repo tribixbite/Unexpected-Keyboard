@@ -7,17 +7,61 @@
 
 ---
 
-## 🔥 Current Status (2025-11-18 - UPDATED)
+## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.464 (517) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - QWERTY BOUNDS FIX DEPLOYED
+**Latest Version**: v1.32.469 (522) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - ANALYSIS & KOTLIN EXTRACTION
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **Y-AXIS NORMALIZATION FIX** - Correct QWERTY area bounds for key detection
-**Refactoring Progress**: Phase 4 COMPLETE! (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: COMPLETE ✅)
+**Current Focus**: 🎯 **KEY DETECTION DEBUGGING** - Thorough analysis of coordinate flow + Kotlin extraction
+**Refactoring Progress**: Phase 4 COMPLETE! + New Kotlin extraction (CoordinateNormalizer.kt)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 9 fixes applied (QWERTY bounds, V4 interface, Keyboard layout, Debug logging, Tokenizer, Mask types, ONNX cross-attention)
+**Critical Fixes**: 11 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.464) - QWERTY AREA BOUNDS FIX
+### 🔧 Latest Work (v1.32.467-469) - THOROUGH ANALYSIS & KOTLIN EXTRACTION
+
+**KEY DETECTION DEBUGGING (v1.32.467-469) - IN PROGRESS**
+- **Problem**: 'only' outputs 'onlo', 'zen' outputs 'cen'
+- **Key Observations**:
+  - Both 'y' and 'o' are top row keys (Y=0.167) but different X (0.55 vs 0.85)
+  - If Y normalization were wrong, we'd expect middle row detection, not another top row key
+  - This suggests X-axis issue OR model beam search problem
+
+**Thorough Code Analysis Findings**:
+1. **Suggestion bar is SEPARATE view** - keyboard view doesn't include it
+2. **QWERTY bounds appear mathematically correct**: qwertyTop=0, height=595
+   - z at y=496px → normalized 0.834 (correct for row 2)
+   - q at y=99px → normalized 0.167 (correct for row 0)
+3. **Fat finger offset was overcorrecting** (v1.32.466-467)
+   - 37% row height offset (74px) was too aggressive
+   - **Disabled to 0** to isolate actual issue
+4. **Added better debug logging** (v1.32.468)
+   - DETECTED KEY SEQUENCE: shows input to model
+   - MODEL OUTPUT: shows beam search output
+   - This will clarify if issue is key detection vs model decoding
+
+**Kotlin Extraction (v1.32.469)**:
+- Created `CoordinateNormalizer.kt` for testable coordinate normalization
+- Centralizes QWERTY bounds calculation, normalization, and key detection
+- Includes debug analysis tools for swipe trajectories
+- Will enable unit testing of coordinate processing
+
+**Files Modified**:
+- NeuralLayoutHelper.java: Disabled touch Y-offset (was 37%, now 0)
+- OnnxSwipePredictor.java: Added MODEL OUTPUT debug logging
+- CoordinateNormalizer.kt: NEW - Kotlin coordinate normalization with analysis
+
+**Testing Instructions for v1.32.469**:
+When testing, look for these debug lines:
+```
+🎯 DETECTED KEY SEQUENCE: "only" (X points → Y unique keys)
+🤖 MODEL OUTPUT: only(0.85), tony(0.12), ...
+```
+- If DETECTED shows 'only' but OUTPUT shows 'onlo', issue is in model
+- If DETECTED shows 'onlo', issue is in key detection
+
+**Status**: ✅ BUILT v1.32.469 - Ready for diagnostic testing
+
+### 🔧 Previous Work (v1.32.464-466) - QWERTY BOUNDS & TOUCH OFFSET
 
 **Y-AXIS NORMALIZATION FIX (v1.32.464) - CRITICAL**
 - **Problem**: Keys 'x', 'z' never detected; 'your' outputs as 'hour'
