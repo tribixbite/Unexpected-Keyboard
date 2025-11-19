@@ -157,8 +157,25 @@ public class SwipeTrajectoryProcessor
     List<TrajectoryPoint> points = new ArrayList<>();
 
     // Use Kotlin TrajectoryFeatureCalculator for correct feature calculation
+    // CRITICAL: Must use normalizedCoords (same size as timestamps), not processedCoords
+    // which may have been resampled to a different size. Python calculates features
+    // on full array then truncates, so we do the same.
     List<TrajectoryFeatureCalculator.FeaturePoint> featurePoints =
-        TrajectoryFeatureCalculator.INSTANCE.calculateFeatures(processedCoords, timestamps);
+        TrajectoryFeatureCalculator.INSTANCE.calculateFeatures(normalizedCoords, timestamps);
+
+    // If resampling occurred, we need to resample the features too
+    // For now, just use the processedCoords indices
+    if (processedCoords != normalizedCoords && processedCoords.size() < featurePoints.size()) {
+        // Resampling happened - subsample features uniformly
+        List<TrajectoryFeatureCalculator.FeaturePoint> resampledFeatures = new ArrayList<>();
+        int origSize = featurePoints.size();
+        int newSize = processedCoords.size();
+        for (int i = 0; i < newSize; i++) {
+            int origIdx = (int) ((long) i * (origSize - 1) / (newSize - 1));
+            resampledFeatures.add(featurePoints.get(origIdx));
+        }
+        featurePoints = resampledFeatures;
+    }
 
     // Convert to TrajectoryPoint list
     for (TrajectoryFeatureCalculator.FeaturePoint fp : featurePoints)
