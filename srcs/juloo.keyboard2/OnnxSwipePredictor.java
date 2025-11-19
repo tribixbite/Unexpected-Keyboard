@@ -1264,10 +1264,10 @@ public class OnnxSwipePredictor
   private OnnxTensor createNearestKeysTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
-    // Create direct buffer as recommended by ONNX docs
-    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(_maxSequenceLength * 8); // 8 bytes per long
+    // Create direct buffer - V4 expects int32, not int64
+    java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.allocateDirect(_maxSequenceLength * 4); // 4 bytes per int
     byteBuffer.order(java.nio.ByteOrder.nativeOrder());
-    java.nio.LongBuffer buffer = byteBuffer.asLongBuffer();
+    java.nio.IntBuffer buffer = byteBuffer.asIntBuffer();
 
     // CRITICAL FIX: nearestKeys is now List<Integer> (token indices), not List<Character>!
     for (int i = 0; i < _maxSequenceLength; i++)
@@ -1279,7 +1279,7 @@ public class OnnxSwipePredictor
       }
       else
       {
-        buffer.put(PAD_IDX); // Padding (should never hit this - features are pre-padded)
+        buffer.put((int)PAD_IDX); // Padding (should never hit this - features are pre-padded)
       }
     }
 
