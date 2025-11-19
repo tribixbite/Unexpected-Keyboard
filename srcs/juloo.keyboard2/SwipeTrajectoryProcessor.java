@@ -238,6 +238,22 @@ public class SwipeTrajectoryProcessor
    */
   private List<PointF> normalizeCoordinates(List<PointF> coordinates)
   {
+    // CRITICAL: Check if keyboard dimensions are set correctly
+    // If still at default 1.0f, coordinates won't normalize properly
+    if (_keyboardWidth <= 1.0f || _keyboardHeight <= 1.0f) {
+      Log.w(TAG, String.format("⚠️ Keyboard dimensions not set! Using defaults: %.1f x %.1f",
+          _keyboardWidth, _keyboardHeight));
+      // Try to infer from coordinates
+      float maxX = 0, maxY = 0;
+      for (PointF p : coordinates) {
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      }
+      if (maxX > 1.0f) _keyboardWidth = maxX * 1.1f;  // Add 10% margin
+      if (maxY > 1.0f) _keyboardHeight = maxY * 1.1f;
+      Log.d(TAG, String.format("📐 Inferred keyboard size: %.0f x %.0f", _keyboardWidth, _keyboardHeight));
+    }
+
     List<PointF> normalized = new ArrayList<>();
     for (PointF point : coordinates) {
       float x = (point.x / _keyboardWidth);
@@ -247,26 +263,44 @@ public class SwipeTrajectoryProcessor
       y = Math.max(0f, Math.min(1f, y));
       normalized.add(new PointF(x, y));
     }
+
+    // Log normalization info for first swipe
+    if (!coordinates.isEmpty() && !normalized.isEmpty()) {
+      PointF raw = coordinates.get(0);
+      PointF norm = normalized.get(0);
+      Log.d(TAG, String.format("📐 Normalization: kb=%.0fx%.0f, raw=(%.0f,%.0f) → norm=(%.3f,%.3f)",
+          _keyboardWidth, _keyboardHeight, raw.x, raw.y, norm.x, norm.y));
+    }
+
     return normalized;
   }
 
   /**
-   * Detect nearest key for each coordinate using real keyboard layout
+   * Detect nearest key for each coordinate using KeyboardGrid
    * CRITICAL: Returns integer token indices (4-29 for a-z), NOT characters!
+   *
+   * Input coordinates MUST be normalized to [0,1] range.
    */
-  private List<Integer> detectNearestKeys(List<PointF> coordinates)
+  private List<Integer> detectNearestKeys(List<PointF> normalizedCoordinates)
   {
     List<Integer> nearestKeys = new ArrayList<>();
     StringBuilder debugKeySeq = new StringBuilder();
     char lastDebugChar = '\0';
 
-    for (PointF point : coordinates)
+    // Log first few coordinates for debugging
+    if (!normalizedCoordinates.isEmpty()) {
+      PointF first = normalizedCoordinates.get(0);
+      PointF last = normalizedCoordinates.get(normalizedCoordinates.size() - 1);
+      Log.d(TAG, String.format("🔍 Detecting keys from %d normalized points: first=(%.3f,%.3f) last=(%.3f,%.3f)",
+          normalizedCoordinates.size(), first.x, first.y, last.x, last.y));
+    }
+
+    for (PointF point : normalizedCoordinates)
     {
-      // ALWAYS use Python KeyboardGrid for nearest key detection
-      // The model was trained on this specific grid layout, NOT real keyboard positions
-      // Using real positions causes key mismatches (e.g., 'x' detected as 'd')
-      int tokenIndex = detectKeyFromQwertyGrid(point);
+      // Use Kotlin KeyboardGrid for nearest key detection
+      int tokenIndex = KeyboardGrid.INSTANCE.getNearestKeyToken(point.x, point.y);
       nearestKeys.add(tokenIndex);
+
       // Convert back to char for debug display
       char debugChar = tokenIndex >= 4 && tokenIndex <= 29 ? (char)('a' + (tokenIndex - 4)) : '?';
       if (debugChar != lastDebugChar) {
@@ -276,8 +310,8 @@ public class SwipeTrajectoryProcessor
     }
 
     // Log the deduplicated key sequence detected from trajectory
-    Log.d(TAG, String.format("Neural key detection: \"%s\" (deduplicated from %d trajectory points)",
-        debugKeySeq.toString(), coordinates.size()));
+    Log.d(TAG, String.format("🎯 DETECTED KEY SEQUENCE: \"%s\" (from %d points)",
+        debugKeySeq.toString(), normalizedCoordinates.size()));
 
     return nearestKeys;
   }
