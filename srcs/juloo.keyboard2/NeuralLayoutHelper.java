@@ -316,18 +316,25 @@ public class NeuralLayoutHelper
       // Use q (top row) and m (bottom row) to determine the vertical extent
       if (keyPositions.containsKey('q') && keyPositions.containsKey('m'))
       {
-        PointF qPos = keyPositions.get('q');  // Top row
-        PointF mPos = keyPositions.get('m');  // Bottom row
+        PointF qPos = keyPositions.get('q');  // Top row center
+        PointF mPos = keyPositions.get('m');  // Bottom row center
 
         // Estimate row height from the distance between rows
         // q is in row 0, a is in row 1, z/m are in row 2
         PointF aPos = keyPositions.getOrDefault('a', qPos);
         float rowHeight = (mPos.y - qPos.y) / 2.0f;  // Approximate row height
 
-        // QWERTY top is half a row above 'q' center
+        // QWERTY bounds: from top of first row to bottom of last row
+        // qwertyTop = q.y - rowHeight/2 (top edge of row 0)
+        // qwertyHeight = 3 * rowHeight (all 3 rows)
         float qwertyTop = qPos.y - rowHeight / 2.0f;
-        // QWERTY bottom is half a row below 'm' center
-        float qwertyHeight = (mPos.y - qwertyTop) + rowHeight / 2.0f;
+        float qwertyHeight = 3.0f * rowHeight;
+
+        // Ensure qwertyTop is non-negative
+        if (qwertyTop < 0) {
+          qwertyHeight += qwertyTop;  // Reduce height by the negative amount
+          qwertyTop = 0;
+        }
 
         // Set bounds on neural engine
         _predictionCoordinator.getNeuralEngine().setQwertyAreaBounds(qwertyTop, qwertyHeight);

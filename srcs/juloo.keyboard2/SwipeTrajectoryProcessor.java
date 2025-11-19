@@ -303,16 +303,25 @@ public class SwipeTrajectoryProcessor
       normalized.add(new PointF(x, y));
     }
 
-    // Log normalization info for first swipe
+    // Log normalization info for first and last points
     if (!coordinates.isEmpty() && !normalized.isEmpty()) {
-      PointF raw = coordinates.get(0);
-      PointF norm = normalized.get(0);
+      PointF rawFirst = coordinates.get(0);
+      PointF normFirst = normalized.get(0);
+      PointF rawLast = coordinates.get(coordinates.size() - 1);
+      PointF normLast = normalized.get(normalized.size() - 1);
+
       if (usingQwertyBounds) {
-        Log.d(TAG, String.format("📐 Normalization (QWERTY): top=%.0f, h=%.0f, raw=(%.0f,%.0f) → norm=(%.3f,%.3f)",
-            yTop, yHeight, raw.x, raw.y, norm.x, norm.y));
+        Log.d(TAG, String.format("📐 QWERTY NORMALIZATION: top=%.0f, height=%.0f (kb=%.0fx%.0f)",
+            yTop, yHeight, _keyboardWidth, _keyboardHeight));
+        Log.d(TAG, String.format("📐 RAW first=(%.0f,%.0f) last=(%.0f,%.0f)",
+            rawFirst.x, rawFirst.y, rawLast.x, rawLast.y));
+        Log.d(TAG, String.format("📐 NORMALIZED first=(%.3f,%.3f) last=(%.3f,%.3f)",
+            normFirst.x, normFirst.y, normLast.x, normLast.y));
+        // Show expected Y for z row (should be ~0.833)
+        Log.d(TAG, String.format("📐 For z at pixel y=496: normalized y = %.3f", (496 - yTop) / yHeight));
       } else {
         Log.d(TAG, String.format("📐 Normalization: kb=%.0fx%.0f, raw=(%.0f,%.0f) → norm=(%.3f,%.3f)",
-            _keyboardWidth, _keyboardHeight, raw.x, raw.y, norm.x, norm.y));
+            _keyboardWidth, _keyboardHeight, rawFirst.x, rawFirst.y, normFirst.x, normFirst.y));
       }
     }
 

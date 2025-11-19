@@ -430,6 +430,14 @@ public class OnnxSwipePredictor
         float kbWidth = _trajectoryProcessor != null ? _trajectoryProcessor._keyboardWidth : 0;
         float kbHeight = _trajectoryProcessor != null ? _trajectoryProcessor._keyboardHeight : 0;
 
+        // Log raw and normalized coordinates to debug Y-axis issues
+        if (input.coordinates != null && !input.coordinates.isEmpty() && features.normalizedPoints != null) {
+          android.graphics.PointF rawFirst = input.coordinates.get(0);
+          android.graphics.PointF rawLast = input.coordinates.get(input.coordinates.size() - 1);
+          logDebug(String.format("📐 RAW coords: first=(%.0f,%.0f) last=(%.0f,%.0f)\n",
+              rawFirst.x, rawFirst.y, rawLast.x, rawLast.y));
+        }
+
         logDebug(String.format("📐 Keyboard: %.0fx%.0f | Points: %d\n", kbWidth, kbHeight, features.actualLength));
         logDebug("🎯 DETECTED KEY SEQUENCE: \"" + keySeqBuilder.toString() +
                  "\" (" + features.actualLength + " points → " + keySeqBuilder.length() + " unique keys)\n");
