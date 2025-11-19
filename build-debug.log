@@ -33,7 +33,6 @@ Generated version info:  ()
 > Task :mergeDebugResources
 > Task :mergeDebugAssets
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :compressDebugAssets FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeDebugJniLibFolders
 > Task :checkDebugDuplicateClasses
@@ -43,6 +42,7 @@ Generated version info:  ()
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
 > Task :processDebugManifestForPackage
+> Task :compressDebugAssets
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -89,5 +89,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 51s
-39 actionable tasks: 31 executed, 8 from cache
+BUILD SUCCESSFUL in 49s
+39 actionable tasks: 32 executed, 7 from cache

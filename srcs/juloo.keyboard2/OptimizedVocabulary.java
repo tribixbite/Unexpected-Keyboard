@@ -117,6 +117,7 @@ public class OptimizedVocabulary
    */
   public List<FilteredPrediction> filterPredictions(List<CandidateWord> rawPredictions, SwipeStats swipeStats)
   {
+    Log.d(TAG, "DEBUG: Checking for 'asshole' in vocabulary. Is present: " + vocabulary.containsKey("asshole"));
     if (!isLoaded)
     {
       Log.w(TAG, "Vocabulary not loaded, returning raw predictions");

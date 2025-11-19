@@ -10625,6 +10625,14 @@
     {
       "contraction": "it'll",
       "frequency": 185
+    },
+    {
+      "contraction": "it's",
+      "frequency": 255
+    },
+    {
+      "contraction": "it'd",
+      "frequency": 180
     }
   ]
 }

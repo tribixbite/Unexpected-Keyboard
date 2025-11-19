@@ -116,6 +116,7 @@ public final class Config
   public int neural_beam_width; // 1 - 16
   public int neural_max_length; // 10 - 50
   public float neural_confidence_threshold; // 0.0 - 1.0
+  public boolean neural_batch_beams; // Batch all beams in single inference (experimental, may cause errors)
   public boolean swipe_debug_detailed_logging; // Enable detailed trajectory/NN logging
   public boolean swipe_debug_show_raw_output; // Always show at least 2 raw NN outputs
   public boolean swipe_show_raw_beam_predictions; // Show raw beam outputs (labeled) at end of suggestions
@@ -307,6 +308,7 @@ public final class Config
     neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 2);
     neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);
     neural_confidence_threshold = safeGetFloat(_prefs, "neural_confidence_threshold", 0.1f);
+    neural_batch_beams = _prefs.getBoolean("neural_batch_beams", false); // Default off - sequential is safer
     termux_mode_enabled = _prefs.getBoolean("termux_mode_enabled", false);
     swipe_debug_detailed_logging = _prefs.getBoolean("swipe_debug_detailed_logging", false);
     swipe_debug_show_raw_output = _prefs.getBoolean("swipe_debug_show_raw_output", true);

@@ -1518,34 +1518,66 @@ public class OnnxSwipePredictor
         break;
       }
 
-      // CRITICAL FIX v1.32.495: Sequential beam processing (batch=1) to match Python exactly
-      // Batched inference fails with reshape errors in self-attention layers
-      // Process each beam individually like test_alpha_model.py does
       long tensorStart = System.nanoTime();
 
-      for (int b = 0; b < activeBeams.size(); b++)
-      {
-        BeamSearchState beam = activeBeams.get(b);
+      // Check if batched processing is enabled (experimental)
+      boolean useBatched = _config != null && _config.neural_batch_beams;
 
+      if (useBatched)
+      {
+        // EXPERIMENTAL: Batched beam processing - all beams in single inference
+        // May cause reshape errors in self-attention layers
         try
         {
-          // Pad sequence to DECODER_SEQ_LEN (batch=1 like Python)
-          int[] tgtTokens = new int[DECODER_SEQ_LEN];
-          Arrays.fill(tgtTokens, (int)PAD_IDX);
-          for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LEN); i++)
+          int numActiveBeams = activeBeams.size();
+
+          // Get memory shape from encoder output
+          long[] memoryShape = memory.getInfo().getShape(); // [1, seq_len, hidden_dim]
+          int memorySeqLen = (int)memoryShape[1];
+          int hiddenDim = (int)memoryShape[2];
+
+          // Prepare batched token arrays
+          int[][] batchedTokens = new int[numActiveBeams][DECODER_SEQ_LEN];
+          for (int b = 0; b < numActiveBeams; b++)
           {
-            tgtTokens[i] = beam.tokens.get(i).intValue();
+            BeamSearchState beam = activeBeams.get(b);
+            Arrays.fill(batchedTokens[b], (int)PAD_IDX);
+            for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LEN); i++)
+            {
+              batchedTokens[b][i] = beam.tokens.get(i).intValue();
+            }
           }
 
-          // Create tensors with batch=1 (matches Python exactly)
-          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
-            java.nio.IntBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LEN});
-          OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment,
-            new int[]{actualSrcLength});
+          // Flatten to 1D for tensor creation
+          int[] flatTokens = new int[numActiveBeams * DECODER_SEQ_LEN];
+          for (int b = 0; b < numActiveBeams; b++)
+          {
+            System.arraycopy(batchedTokens[b], 0, flatTokens, b * DECODER_SEQ_LEN, DECODER_SEQ_LEN);
+          }
 
-          // Run decoder with batch=1 (memory already has batch=1 from encoder)
+          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
+            java.nio.IntBuffer.wrap(flatTokens), new long[]{numActiveBeams, DECODER_SEQ_LEN});
+
+          // Replicate memory for all beams
+          float[][][] memoryData = (float[][][])memory.getValue();
+          float[][][] replicatedMemory = new float[numActiveBeams][memorySeqLen][hiddenDim];
+          for (int b = 0; b < numActiveBeams; b++)
+          {
+            for (int s = 0; s < memorySeqLen; s++)
+            {
+              System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
+            }
+          }
+          OnnxTensor batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
+
+          // Create batched actual_src_length
+          int[] srcLengths = new int[numActiveBeams];
+          Arrays.fill(srcLengths, actualSrcLength);
+          OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, srcLengths);
+
+          // Run batched decoder inference
           Map<String, OnnxTensor> decoderInputs = new HashMap<>();
-          decoderInputs.put("memory", memory);
+          decoderInputs.put("memory", batchedMemoryTensor);
           decoderInputs.put("target_tokens", targetTokensTensor);
           decoderInputs.put("actual_src_length", actualSrcLengthTensor);
 
@@ -1553,45 +1585,110 @@ public class OnnxSwipePredictor
           OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
           totalInferenceTime += (System.nanoTime() - inferenceStart) / 1_000_000;
 
+          // Process batched output [num_beams, seq_len, vocab_size]
           OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
+          float[][][] logits3D = (float[][][]) logitsTensor.getValue();
 
-          // Handle 3D logits tensor [1, seq_len, vocab_size]
-          Object logitsValue = logitsTensor.getValue();
-          float[][][] logits3D = (float[][][]) logitsValue;
-
-          // Get log probs for last valid position
-          // CRITICAL FIX v1.32.492: Decoder outputs LOG PROBS, not raw logits!
-          int currentPos = beam.tokens.size() - 1;
-          if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
+          for (int b = 0; b < numActiveBeams; b++)
           {
-            float[] logProbs = logits3D[0][currentPos];  // batch=0 since we use batch=1
-
-            // Get top k tokens by highest log prob (higher is better)
-            int[] topK = getTopKIndices(logProbs, beamWidth);
-
-            // Create new beams
-            for (int idx : topK)
+            BeamSearchState beam = activeBeams.get(b);
+            int currentPos = beam.tokens.size() - 1;
+            if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
             {
-              BeamSearchState newBeam = new BeamSearchState(beam);
-              newBeam.tokens.add((long)idx);
-              // CRITICAL FIX: Add log prob directly (higher log prob = better)
-              // Python does: new_score = score + log_prob (sorting descending)
-              // We do: score = -sum(log_probs), sorting ascending (lower is better)
-              newBeam.score -= logProbs[idx];  // Subtract log prob (which is negative)
-              newBeam.finished = (idx == EOS_IDX || idx == PAD_IDX);
-              candidates.add(newBeam);
+              float[] logProbs = logits3D[b][currentPos];
+              int[] topK = getTopKIndices(logProbs, beamWidth);
+              for (int idx : topK)
+              {
+                BeamSearchState newBeam = new BeamSearchState(beam);
+                newBeam.tokens.add((long)idx);
+                newBeam.score -= logProbs[idx];
+                newBeam.finished = (idx == EOS_IDX || idx == PAD_IDX);
+                candidates.add(newBeam);
+              }
             }
           }
 
-          // Clean up tensors for this beam
+          // Cleanup
           targetTokensTensor.close();
           actualSrcLengthTensor.close();
+          batchedMemoryTensor.close();
           decoderOutput.close();
         }
         catch (Exception e)
         {
-          logDebug("💥 Decoder step " + step + " beam " + b + " error: " + e.getClass().getSimpleName() + " - " + e.getMessage() + "\n");
-          Log.e(TAG, "Decoder step error for beam " + b, e);
+          logDebug("💥 Batched decoder step " + step + " error: " + e.getClass().getSimpleName() + " - " + e.getMessage() + "\n");
+          Log.e(TAG, "Batched decoder step error", e);
+        }
+      }
+      else
+      {
+        // Sequential beam processing (batch=1) - default, stable mode
+        for (int b = 0; b < activeBeams.size(); b++)
+        {
+          BeamSearchState beam = activeBeams.get(b);
+
+          try
+          {
+            // Pad sequence to DECODER_SEQ_LEN (batch=1 like Python)
+            int[] tgtTokens = new int[DECODER_SEQ_LEN];
+            Arrays.fill(tgtTokens, (int)PAD_IDX);
+            for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LEN); i++)
+            {
+              tgtTokens[i] = beam.tokens.get(i).intValue();
+            }
+
+            // Create tensors with batch=1 (matches Python exactly)
+            OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
+              java.nio.IntBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LEN});
+            OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment,
+              new int[]{actualSrcLength});
+
+            // Run decoder with batch=1 (memory already has batch=1 from encoder)
+            Map<String, OnnxTensor> decoderInputs = new HashMap<>();
+            decoderInputs.put("memory", memory);
+            decoderInputs.put("target_tokens", targetTokensTensor);
+            decoderInputs.put("actual_src_length", actualSrcLengthTensor);
+
+            long inferenceStart = System.nanoTime();
+            OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
+            totalInferenceTime += (System.nanoTime() - inferenceStart) / 1_000_000;
+
+            OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
+
+            // Handle 3D logits tensor [1, seq_len, vocab_size]
+            Object logitsValue = logitsTensor.getValue();
+            float[][][] logits3D = (float[][][]) logitsValue;
+
+            // Get log probs for last valid position
+            int currentPos = beam.tokens.size() - 1;
+            if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
+            {
+              float[] logProbs = logits3D[0][currentPos];  // batch=0 since we use batch=1
+
+              // Get top k tokens by highest log prob (higher is better)
+              int[] topK = getTopKIndices(logProbs, beamWidth);
+
+              // Create new beams
+              for (int idx : topK)
+              {
+                BeamSearchState newBeam = new BeamSearchState(beam);
+                newBeam.tokens.add((long)idx);
+                newBeam.score -= logProbs[idx];
+                newBeam.finished = (idx == EOS_IDX || idx == PAD_IDX);
+                candidates.add(newBeam);
+              }
+            }
+
+            // Clean up tensors for this beam
+            targetTokensTensor.close();
+            actualSrcLengthTensor.close();
+            decoderOutput.close();
+          }
+          catch (Exception e)
+          {
+            logDebug("💥 Decoder step " + step + " beam " + b + " error: " + e.getClass().getSimpleName() + " - " + e.getMessage() + "\n");
+            Log.e(TAG, "Decoder step error for beam " + b, e);
+          }
         }
       }
 
