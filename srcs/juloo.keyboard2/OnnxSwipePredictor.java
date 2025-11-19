@@ -355,8 +355,7 @@ public class OnnxSwipePredictor
     }
     catch (Exception e)
     {
-      // logDebug("💥 ONNX initialization exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
-      Log.e(TAG, "Failed to initialize ONNX models", e);
+      Log.e(TAG, "Failed to initialize ONNX models: " + e.getClass().getSimpleName() + " - " + e.getMessage(), e);
       _isInitialized = true;
       _isModelLoaded = false;
       return false;
@@ -388,9 +387,16 @@ public class OnnxSwipePredictor
   {
     if (!_isModelLoaded)
     {
-      throw new RuntimeException("ONNX models failed to load: " + 
-        (_encoderSession == null ? "encoder missing " : "") +
-        (_decoderSession == null ? "decoder missing" : ""));
+      String reason;
+      if (_encoderSession == null && _decoderSession == null)
+        reason = "both encoder and decoder missing";
+      else if (_encoderSession == null)
+        reason = "encoder missing";
+      else if (_decoderSession == null)
+        reason = "decoder missing";
+      else
+        reason = "initialization failed (check logcat for OnnxSwipePredictor errors)";
+      throw new RuntimeException("ONNX models failed to load: " + reason);
     }
     
     try
