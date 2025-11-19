@@ -32,10 +32,14 @@ public class NeuralSwipeTypingEngine
   {
     _context = context;
     _config = config;
-    
+
     // OPTIMIZATION: Use singleton predictor with session persistence
     _neuralPredictor = OnnxSwipePredictor.getInstance(context);
-    
+
+    // OPTIMIZATION: Start async model loading immediately for faster startup
+    // Models will load in background while keyboard UI appears
+    _neuralPredictor.initializeAsync();
+
     Log.d(TAG, "NeuralSwipeTypingEngine created - using persistent singleton predictor");
   }
   

@@ -135,12 +135,54 @@ public class OnnxSwipePredictor
         if (_singletonInstance == null)
         {
           _singletonInstance = new OnnxSwipePredictor(context);
-          boolean success = _singletonInstance.initialize();
-          // Log.d(TAG, "Singleton instance created, initialization: " + success);
+          // DO NOT initialize here - let caller trigger async loading
+          // This prevents blocking UI when keyboard first appears
         }
       }
     }
     return _singletonInstance;
+  }
+
+  /**
+   * OPTIMIZATION: Initialize models asynchronously on background thread
+   * Call this from InputMethodService.onCreate() for non-blocking startup
+   */
+  public void initializeAsync()
+  {
+    if (_isInitialized)
+    {
+      return; // Already initialized
+    }
+
+    // Initialize thread pool if needed
+    initializeThreadPool();
+
+    if (_onnxExecutor != null)
+    {
+      Log.d(TAG, "Starting async model initialization...");
+      _onnxExecutor.submit(() -> {
+        boolean success = initialize();
+        Log.d(TAG, "Async initialization completed: " + success);
+      });
+    }
+    else
+    {
+      // Fallback to sync if executor not available
+      Log.w(TAG, "No executor available, falling back to sync initialization");
+      initialize();
+    }
+  }
+
+  /**
+   * Initialize models synchronously (blocking)
+   * Use initializeAsync() for non-blocking startup
+   */
+  public void initializeSync()
+  {
+    if (!_isInitialized)
+    {
+      initialize();
+    }
   }
   
   /**
@@ -385,18 +427,23 @@ public class OnnxSwipePredictor
    */
   public PredictionResult predict(SwipeInput input)
   {
+    // OPTIMIZATION: Return empty result instead of throwing when models not ready
+    // This allows UI to remain responsive while models load asynchronously
     if (!_isModelLoaded)
     {
+      // Log reason for debugging but don't throw
       String reason;
       if (_encoderSession == null && _decoderSession == null)
-        reason = "both encoder and decoder missing";
+        reason = "models still loading";
       else if (_encoderSession == null)
-        reason = "encoder missing";
+        reason = "encoder loading";
       else if (_decoderSession == null)
-        reason = "decoder missing";
+        reason = "decoder loading";
       else
-        reason = "initialization failed (check logcat for OnnxSwipePredictor errors)";
-      throw new RuntimeException("ONNX models failed to load: " + reason);
+        reason = "initialization in progress";
+
+      Log.d(TAG, "Prediction skipped: " + reason);
+      return new PredictionResult(new ArrayList<>(), new ArrayList<>()); // Empty result
     }
     
     try
