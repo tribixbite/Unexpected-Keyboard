@@ -9,7 +9,7 @@
   },
   "limits": {
     "max_seq_len": 250,
-    "max_word_len": 25
+    "max_word_len": 20
   },
   "inputs": {
     "encoder": [

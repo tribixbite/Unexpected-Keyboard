@@ -9,17 +9,30 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.496 (549) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - Sequential beam processing fix
+**Latest Version**: v1.32.501 (554) 🎯
+**Build Status**: ✅ SWIPE TYPING WORKS! Neural predictions operational
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **ONNX NEURAL PREDICTIONS** - Testing swipe predictions end-to-end
+**Current Focus**: 🎉 **MILESTONE ACHIEVED** - Neural swipe typing is working!
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 23 fixes applied (see history below)
+**Critical Fixes**: 24 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.495-496) - SEQUENTIAL BEAM PROCESSING FIX
+### 🎉 MILESTONE: SWIPE TYPING WORKING (v1.32.501)
 
-**SEQUENTIAL BEAM PROCESSING FIX (v1.32.495-496) - CRITICAL**
+**Neural swipe prediction is now operational!** After extensive debugging:
+
+1. **Sequential beam processing** (batch=1) - matches Python exactly
+2. **Decoder seq length = 20** (actual model export, not config's 25)
+3. **Log probs** used directly without softmax conversion
+
+The ONNX transformer model successfully:
+- Encodes swipe trajectories (250 points × 6 features)
+- Decodes to word predictions via beam search
+- Returns vocabulary-filtered candidates to UI
+
+### 🔧 Latest Work (v1.32.495-501) - SEQUENTIAL BEAM PROCESSING FIX
+
+**SEQUENTIAL BEAM PROCESSING FIX (v1.32.495-501) - CRITICAL**
 - **Problem**: Batched beam search causes reshape errors in decoder self-attention
   ```
   OrtException: Input shape:{10,20,32}, requested shape:{-1,8,20,32}
@@ -31,10 +44,13 @@
   - Process each beam individually, matching Python test_alpha_model.py exactly
   - Use batch=1 for all decoder inference calls
   - Guaranteed to work since it mirrors training/export configuration
+- **Critical Discovery**: Model was exported with max_word_len=20, not 25 as in config
+  - Updated model_config.json to reflect actual export value
 - **Files Modified**:
   - OnnxSwipePredictor.java: Replace batched loop with sequential beam processing
-- **Status**: ✅ BUILT v1.32.496 - Ready for testing
-- **Impact**: Resolves reshape errors, predictions should now work
+  - assets/models/model_config.json: max_word_len 25 → 20
+- **Status**: ✅ WORKING v1.32.501 - Neural swipe typing operational!
+- **Impact**: First working neural swipe predictions
 - **Trade-off**: Sequential is slower than batched, but correctness > speed
 
 ### 🔧 Previous Work (v1.32.492-494) - LOG PROB AND BUFFER FIXES
