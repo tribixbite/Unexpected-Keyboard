@@ -79,13 +79,8 @@ public class SwipeTrajectoryProcessor
     // 2. Normalize coordinates FIRST (0-1 range) - matches cleverkeys
     List<PointF> normalizedCoords = normalizeCoordinates(filteredCoords);
 
-    // 3. Detect nearest keys from filtered, un-normalized coordinates
-    // CRITICAL: Returns integer token indices, not characters!
-    List<Integer> nearestKeys = detectNearestKeys(filteredCoords);
-
-    // 4. Apply resampling if sequence exceeds maxSequenceLength
+    // 3. Apply resampling if sequence exceeds maxSequenceLength
     List<PointF> processedCoords = normalizedCoords;
-    List<Integer> processedKeys = nearestKeys;
 
     if (normalizedCoords.size() > maxSequenceLength && _resamplingMode != SwipeResampler.ResamplingMode.TRUNCATE)
     {
@@ -107,28 +102,6 @@ public class SwipeTrajectoryProcessor
         processedCoords.add(new PointF(point[0], point[1]));
       }
 
-      // For nearest keys, use DISCARD mode (makes most sense for discrete values)
-      int[][] keyArray = new int[nearestKeys.size()][1];
-      for (int i = 0; i < nearestKeys.size(); i++)
-      {
-        keyArray[i][0] = nearestKeys.get(i);
-      }
-
-      // Convert to float for resampling, then back
-      float[][] keyFloatArray = new float[keyArray.length][1];
-      for (int i = 0; i < keyArray.length; i++)
-      {
-        keyFloatArray[i][0] = (float)keyArray[i][0];
-      }
-
-      float[][] resampledKeys = SwipeResampler.resample(keyFloatArray, maxSequenceLength, SwipeResampler.ResamplingMode.DISCARD);
-
-      processedKeys = new ArrayList<>();
-      for (float[] key : resampledKeys)
-      {
-        processedKeys.add((int)key[0]);
-      }
-
       // Only log if actually resampling occurred (performance: avoid string formatting when not needed)
       if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG))
       {
@@ -136,6 +109,10 @@ public class SwipeTrajectoryProcessor
           normalizedCoords.size(), maxSequenceLength, _resamplingMode));
       }
     }
+
+    // 4. Detect nearest keys from FINAL processed coordinates (already normalized!)
+    // CRITICAL: Must happen AFTER resampling to maintain point-key correspondence
+    List<Integer> processedKeys = detectNearestKeys(processedCoords);
 
     // 5. Calculate velocities and accelerations on ACTUAL trajectory (before padding)
     // CRITICAL: Training calculates features first, then pads feature array with zeros
@@ -216,7 +193,7 @@ public class SwipeTrajectoryProcessor
     TrajectoryFeatures features = new TrajectoryFeatures();
     features.normalizedPoints = points;
     features.nearestKeys = finalNearestKeys;  // Now integer token indices!
-    features.actualLength = Math.min(filteredCoords.size(), maxSequenceLength);
+    features.actualLength = actualLength;  // From processedCoords.size()
 
     // Log.d(TAG, String.format("✅ Extracted features: %d points, %d keys (both padded to %d)",
       // points.size(), finalNearestKeys.size(), maxSequenceLength));
@@ -336,21 +313,19 @@ public class SwipeTrajectoryProcessor
    * - 3 rows (height = 1/3 each)
    * - key_w = 0.1
    * - row offsets: top=0.0, mid=0.05, bot=0.15
+   *
+   * NOTE: Input point must already be normalized to [0,1] range!
    */
-  private int detectKeyFromQwertyGrid(PointF point)
+  private int detectKeyFromQwertyGrid(PointF normalizedPoint)
   {
     // QWERTY layout rows
     String row0 = "qwertyuiop";  // 10 keys, x starts at 0.0
     String row1 = "asdfghjkl";   // 9 keys, x starts at 0.05
     String row2 = "zxcvbnm";     // 7 keys, x starts at 0.15
 
-    // Normalize to [0,1] - matches Python KeyboardGrid
-    float nx = point.x / _keyboardWidth;
-    float ny = point.y / _keyboardHeight;
-
-    // Clamp to [0,1]
-    nx = Math.max(0f, Math.min(1f, nx));
-    ny = Math.max(0f, Math.min(1f, ny));
+    // Input is already normalized - just clamp for safety
+    float nx = Math.max(0f, Math.min(1f, normalizedPoint.x));
+    float ny = Math.max(0f, Math.min(1f, normalizedPoint.y));
 
     // Grid dimensions matching Python
     float keyWidth = 0.1f;   // 1/10
