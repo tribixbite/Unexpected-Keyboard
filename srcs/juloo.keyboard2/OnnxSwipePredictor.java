@@ -1645,6 +1645,11 @@ public class OnnxSwipePredictor
           }
         }
 
+        // Debug: log candidate generation
+        if (step == 0) {
+          logDebug("Step " + step + ": generated " + (candidates.size() - numActiveBeams) + " new candidates from " + numActiveBeams + " active beams\n");
+        }
+
         // Clean up batched tensors
         targetTokensTensor.close();
         actualSrcLengthTensor.close();
@@ -1653,7 +1658,7 @@ public class OnnxSwipePredictor
       }
       catch (Exception e)
       {
-        // logDebug("💥 Batched decoder step error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        logDebug("💥 Batched decoder step " + step + " error: " + e.getClass().getSimpleName() + " - " + e.getMessage() + "\n");
         Log.e(TAG, "Batched decoder step error", e);
         // Fallback: add active beams as-is to avoid losing predictions
         candidates.addAll(activeBeams);
