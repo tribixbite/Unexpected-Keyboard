@@ -438,8 +438,8 @@ public class OnnxSwipePredictor
       try {
         trajectoryTensor = createTrajectoryTensor(features);
         nearestKeysTensor = createNearestKeysTensor(features);
-        // New encoder uses actual_length instead of src_mask
-        actualLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new long[]{features.actualLength});
+        // New encoder uses actual_length instead of src_mask (V4 expects int32)
+        actualLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{features.actualLength});
         // Still create src_mask for decoder use
         srcMaskTensor = createSourceMaskTensor(features);
 
@@ -878,16 +878,16 @@ public class OnnxSwipePredictor
         // Create fresh tensors like CLI test (no reusable buffers)
         final int DECODER_SEQ_LENGTH = 20;
 
-        // Pad sequence to DECODER_SEQ_LENGTH
-        long[] tgtTokens = new long[DECODER_SEQ_LENGTH];
-        Arrays.fill(tgtTokens, PAD_IDX);
+        // Pad sequence to DECODER_SEQ_LENGTH (V4 expects int32 for target_tokens)
+        int[] tgtTokens = new int[DECODER_SEQ_LENGTH];
+        Arrays.fill(tgtTokens, (int)PAD_IDX);
         for (int i = 0; i < Math.min(tokens.size(), DECODER_SEQ_LENGTH); i++)
         {
-          tgtTokens[i] = tokens.get(i);
+          tgtTokens[i] = tokens.get(i).intValue();
         }
 
         OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
-          java.nio.LongBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LENGTH});
+          java.nio.IntBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LENGTH});
         // V4 interface: decoder creates masks internally from actual_src_length
         OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{actualSrcLength});
 
@@ -1397,7 +1397,8 @@ public class OnnxSwipePredictor
         // BUGFIX v1.32.423: Removed buggy memory pool usage (was allocating slices anyway)
 
         // Allocate batched token arrays
-        long[][] batchedTokens = new long[numActiveBeams][DECODER_SEQ_LENGTH];
+        // V4 expects int32 for target_tokens
+        int[][] batchedTokens = new int[numActiveBeams][DECODER_SEQ_LENGTH];
 
         // Fill batched arrays for all active beams
         for (int b = 0; b < numActiveBeams; b++)
@@ -1405,18 +1406,18 @@ public class OnnxSwipePredictor
           BeamSearchState beam = activeBeams.get(b);
 
           // Pad sequence to DECODER_SEQ_LENGTH
-          Arrays.fill(batchedTokens[b], PAD_IDX);
+          Arrays.fill(batchedTokens[b], (int)PAD_IDX);
           for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LENGTH); i++)
           {
-            batchedTokens[b][i] = beam.tokens.get(i);
+            batchedTokens[b][i] = beam.tokens.get(i).intValue();
           }
         }
 
         // Create batched tensors - shape [num_active_beams, seq_length]
         java.nio.ByteBuffer tokensByteBuffer = java.nio.ByteBuffer.allocateDirect(
-          numActiveBeams * DECODER_SEQ_LENGTH * 8); // 8 bytes per long
+          numActiveBeams * DECODER_SEQ_LENGTH * 4); // 4 bytes per int
         tokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
-        java.nio.LongBuffer tokensBuffer = tokensByteBuffer.asLongBuffer();
+        java.nio.IntBuffer tokensBuffer = tokensByteBuffer.asIntBuffer();
 
         for (int b = 0; b < numActiveBeams; b++)
         {
