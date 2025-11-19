@@ -9,15 +9,42 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.472 (525) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - CRITICAL FEATURE CALCULATION FIX
+**Latest Version**: v1.32.480 (533) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - Settings import crash fix
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **FEATURE CALCULATION FIX** - Velocity/acceleration now matches Python training
+**Current Focus**: 🎯 **SETTINGS IMPORT FIX** - Float preferences now imported correctly
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 12 fixes applied (see history below)
+**Critical Fixes**: 14 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.470-472) - CRITICAL FEATURE CALCULATION FIX
+### 🔧 Latest Work (v1.32.478-480) - SETTINGS IMPORT CRASH FIX
+
+**SETTINGS IMPORT CRASH FIX (v1.32.480) - CRITICAL**
+- **Problem**: Importing exported settings caused ClassCastException crash
+  ```
+  java.lang.ClassCastException: java.lang.Integer cannot be cast to java.lang.Float
+  at SlideBarPreference.onSetInitialValue(SlideBarPreference.java:80)
+  ```
+- **Root Cause**: 3 Float preferences missing from `isFloatPreference()` in BackupRestoreManager:
+  - `swipe_rare_words_penalty`: 0.95 → stored as Integer 0
+  - `swipe_common_words_boost`: 1.0 → stored as Integer 1
+  - `swipe_top5000_boost`: 1.0899999 → stored as Integer 1
+- **Fix (v1.32.480)**: Added missing float preferences to BackupRestoreManager.java
+  - Added to `isFloatPreference()`: swipe_rare_words_penalty, swipe_common_words_boost, swipe_top5000_boost
+  - Added validation to `validateFloatPreference()`: 0.0-2.0 range
+- **Additional Fix (v1.32.478)**: Added fallback handling in SlideBarPreference
+  - `getSafePersistedFloat()` tries Float → Integer → String with automatic conversion
+- **Files Modified**:
+  - BackupRestoreManager.java: Added 3 missing float preferences
+  - SlideBarPreference.java: Added type fallback handling
+- **Status**: ✅ BUILT v1.32.480 - Ready for testing
+
+**DECODER_SEQ_LENGTH FIX (v1.32.477)**
+- **Problem**: DECODER_SEQ_LENGTH was 20, but model expects 25 (max_word_len)
+- **Fix**: Updated to 25 in all 4 locations in OnnxSwipePredictor.java
+- **Also Updated**: model_config.json max_word_len: 25
+
+### 🔧 Previous Work (v1.32.470-472) - CRITICAL FEATURE CALCULATION FIX
 
 **VELOCITY/ACCELERATION FIX (v1.32.472) - CRITICAL**
 - **Problem**: 'only' outputs 'onlo', 'zen' outputs 'cen', 'y' and 'z' not detected

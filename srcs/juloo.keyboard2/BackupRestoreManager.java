@@ -501,6 +501,12 @@ public class BackupRestoreManager
       case "neural_confidence_threshold":
         return value >= 0.0f && value <= 1.0f;
 
+      // Swipe typing boost parameters (0.0-2.0 range)
+      case "swipe_rare_words_penalty":
+      case "swipe_common_words_boost":
+      case "swipe_top5000_boost":
+        return value >= 0.0f && value <= 2.0f;
+
       default:
         // Unknown float preference - allow it (version-tolerant)
         return true;
@@ -569,6 +575,11 @@ public class BackupRestoreManager
 
       // Neural confidence threshold
       case "neural_confidence_threshold":
+
+      // Swipe typing boost parameters (SlideBarPreference floats)
+      case "swipe_rare_words_penalty":
+      case "swipe_common_words_boost":
+      case "swipe_top5000_boost":
         return true;
       default:
         return false;
