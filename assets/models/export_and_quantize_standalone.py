@@ -9,6 +9,49 @@ Features:
   - Dynamic Mask Slicing (Fixes runtime shape mismatches).
   - Optimized Quantization (Per-channel Android, High-fidelity Web).
   - Robust Metadata Export.
+
+  ## I/O contract (quick recap)
+
+**Encoder ONNX**
+
+* **Inputs**
+
+  * `trajectory_features`: `(B, max_seq_len, 6)` `float32`
+  * `nearest_keys`: `(B, max_seq_len)` `int32` (cast to `int64` internally)
+  * `actual_length`: `(B,)` `int32` (≤ `max_seq_len`)
+* **Output**
+
+  * `encoder_output`: `(B, max_seq_len, d_model)` `float32`
+
+**Decoder ONNX**
+
+* **Inputs**
+
+  * `memory`: `(B, enc_seq, d_model)` `float32` (**enc_seq dynamic**)
+  * `target_tokens`: `(B, T)` `int32` (`<sos>` at 0; PADs = tokenizer PAD)
+  * `actual_src_length`: `(B,)` `int32`
+* **Output**
+
+  * `log_probs`: `(B, T, vocab)` `float32`
+
+These mirror training and beam‑search usage. 
+
+---
+
+## One‑liner validations
+
+**Export + verify (Web):**
+`uv run export_pro_v4.py checkpoints/best.ckpt out_web --targets web --opset 17 && uv run python -c "import onnx; onnx.checker.check_model('out_web/swipe_encoder_web.onnx'); onnx.checker.check_model('out_web/swipe_decoder_web.onnx'); print('OK: web models validated')"`
+
+**Export + verify (Android):**
+`uv run export_pro_v4.py checkpoints/best.ckpt out_android --targets android --opset 17 && uv run python -c "import onnx; onnx.checker.check_model('out_android/swipe_encoder_android.onnx'); onnx.checker.check_model('out_android/swipe_decoder_android.onnx'); print('OK: android models validated')"`
+
+**ORT smoke test (Encoder; auto‑detect length):**
+`uv run python -c "import onnxruntime as ort, numpy as np; s=ort.InferenceSession('out_web/swipe_encoder_web.onnx',providers=['CPUExecutionProvider']); ish=s.get_inputs()[0].shape; L=ish[1] if isinstance(ish[1],int) else 250; x=np.random.randn(1,L,6).astype('float32'); k=np.random.randint(0,30,(1,L)).astype('int32'); l=np.array([min(50,L)],dtype='int32'); s.run(None,{'trajectory_features':x,'nearest_keys':k,'actual_length':l}); print('encoder OK')"`
+
+**ORT smoke test (Decoder; auto‑detect `d_model`/`enc_seq`):**
+`uv run python -c "import onnxruntime as ort, numpy as np; s=ort.InferenceSession('out_web/swipe_decoder_web.onnx',providers=['CPUExecutionProvider']); ish=s.get_inputs()[0].shape; L=250 if ish[1] is None else int(ish[1]); D=256 if ish[2] is None else int(ish[2]); T=10; mem=np.random.randn(1,L,D).astype('float32'); tok=np.random.randint(0,30,(1,T)).astype('int32'); sl=np.array([min(50,L)],dtype='int32'); s.run(None,{'memory':mem,'target_tokens':tok,'actual_src_length':sl}); print('decoder OK')"`
+
 """
 
 import os
@@ -172,7 +215,8 @@ def load_model_flexible(checkpoint_path: Path, cli_args: argparse.Namespace) -> 
     
     full_config = model_params.copy()
     full_config['accuracy'] = accuracy
-    full_config['max_word_len'] = resolve('max_word_len', 20)
+    # Default to 25 to match dataset/training defaults; checkpoint/CLI can override.
+    full_config['max_word_len'] = resolve('max_word_len', 25)
 
     return model, full_config, accuracy
 
@@ -341,7 +385,8 @@ def write_configs(out_dir: Path, config: Dict):
         },
         'limits': {
             'max_seq_len': config.get('max_seq_len', 250),
-            'max_word_len': config.get('max_word_len', 20)
+            # Default to 25 to reflect training dataset default when not provided
+            'max_word_len': config.get('max_word_len', 25)
         },
         'inputs': {
             'encoder': ['trajectory_features (f32)', 'nearest_keys (i32)', 'actual_length (i32)'],
