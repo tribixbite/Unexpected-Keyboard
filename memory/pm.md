@@ -9,15 +9,47 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.482 (535) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - Startup preference repair
+**Latest Version**: v1.32.486 (539) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - SwipeTokenizer NullPointerException fixed
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **STARTUP REPAIR** - Corrupted preferences fixed automatically on load
+**Current Focus**: 🎯 **ONNX NEURAL PREDICTIONS** - Testing swipe predictions end-to-end
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 16 fixes applied (see history below)
+**Critical Fixes**: 19 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.482) - STARTUP PREFERENCE REPAIR
+### 🔧 Latest Work (v1.32.486) - SWIPE TOKENIZER FIX
+
+**SWIPE TOKENIZER FIX (v1.32.486) - CRITICAL**
+- **Problem**: ONNX models fail to load with NullPointerException
+  ```
+  java.lang.NullPointerException: Attempt to invoke interface method
+  'java.util.Set java.util.Map.entrySet()' on a null object reference
+  at SwipeTokenizer.loadFromAssets(SwipeTokenizer.java:63)
+  ```
+- **Root Cause**: tokenizer_config.json only contains `idx_to_char`, not `char_to_idx`
+- **Solution**: Build char_to_idx automatically from idx_to_char
+  - Parse idx_to_char and build reverse mapping
+  - Skip special tokens (<pad>, <sos>, <eos>, <unk>) when building reverse map
+  - Add null checks for both maps
+- **Files Modified**:
+  - SwipeTokenizer.java: Build char_to_idx from idx_to_char, add null checks
+- **Status**: ✅ BUILT v1.32.486 - Needs verification (tap text field to trigger keyboard)
+
+**IMPROVED ONNX ERROR LOGGING (v1.32.485)**
+- **Problem**: ONNX initialization errors were showing empty messages
+- **Solution**: Log exception type, message, and full stack trace
+- **Files Modified**:
+  - OnnxSwipePredictor.java: Enhanced error logging in initialize() catch block
+- **Status**: ✅ BUILT - Helped identify SwipeTokenizer issue
+
+**SETTINGS REPAIR BEFORE UI (v1.32.484)**
+- **Problem**: Settings page crashed before repair could run (repair was in Config constructor)
+- **Solution**: Run repair earlier, before preference XML inflates
+- **Files Modified**:
+  - SettingsActivity.java: Call Config.repairCorruptedFloatPreferences() in onCreate before super
+- **Status**: ✅ BUILT - Settings page now opens successfully
+
+### 🔧 Previous Work (v1.32.482) - STARTUP PREFERENCE REPAIR
 
 **STARTUP PREFERENCE REPAIR (v1.32.482) - CRITICAL**
 - **Problem**: Settings page crashes even after import fix because corrupted values already stored
