@@ -9,43 +9,52 @@
 
 ## 🔥 Current Status (2025-11-18 - UPDATED)
 
-**Latest Version**: v1.32.450 (503) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - KEYBOARD LAYOUT FIX DEPLOYED
+**Latest Version**: v1.32.454 (507) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - V4 ONNX INTERFACE DEPLOYED
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **NEAREST KEY DETECTION FIXED** - setNeuralKeyboardLayout now called, predictions working
+**Current Focus**: 🎯 **V4 MODEL INTERFACE** - Internal masking, simplified Java side
 **Refactoring Progress**: Phase 4 COMPLETE! (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: COMPLETE ✅)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 7 fixes applied (Keyboard layout, Debug logging, Tokenizer, Mask types, ONNX cross-attention)
+**Critical Fixes**: 8 fixes applied (V4 interface, Keyboard layout, Debug logging, Tokenizer, Mask types, ONNX cross-attention)
 
-### 🔧 Latest Work (v1.32.450) - KEYBOARD LAYOUT FIX
+### 🔧 Latest Work (v1.32.454) - V4 ONNX MODEL INTERFACE
 
-**CRITICAL FIX: setNeuralKeyboardLayout() Not Called (v1.32.450)**
-- **Problem**: Swipes predicted wrong words - "expand" → "edpand", "way" → "was"
-- **Root Cause**: `setNeuralKeyboardLayout()` was defined but never called in Keyboard2.java
-- **Impact**: Neural engine fell back to buggy grid detection, 'x' detected as 'd/s'
-- **Diagnostic Process**:
-  1. Encoder output comparison showed memory WAS different for different swipes
-  2. But predictions were IDENTICAL regardless of input trajectory
-  3. User re-exported ONNX models with working cross-attention
-  4. Still wrong predictions → discovered keyboard layout never set
-- **Fix**: Added `setNeuralKeyboardLayout()` calls in Keyboard2.java after keyboard is set
+**V4 INTERFACE UPDATE (v1.32.454) - CRITICAL**
+- **Problem**: OrtException - "Unknown input name src_mask, expected one of [trajectory_features, nearest_keys, actual_length]"
+- **Root Cause**: User re-exported models with V4 interface that creates masks INTERNALLY
+- **V4 Interface Changes**:
+  - **Encoder**: `[trajectory_features, nearest_keys, actual_length]` (no src_mask)
+  - **Decoder**: `[memory, target_tokens, actual_src_length]` (no mask tensors)
+  - Models create masks internally from actual_length - simpler, more robust
+- **Fix**: Updated OnnxSwipePredictor.java to V4 interface
   ```java
-  _keyboardView.setKeyboard(current_layout());
-  // Set neural key positions after view is measured
-  _keyboardView.post(new Runnable() {
-    @Override
-    public void run() {
-      setNeuralKeyboardLayout();
-    }
-  });
+  // Encoder - V4 interface
+  encoderInputs.put("trajectory_features", trajectoryTensor);
+  encoderInputs.put("nearest_keys", nearestKeysTensor);
+  encoderInputs.put("actual_length", actualLengthTensor);  // int32
+
+  // Decoder - V4 interface
+  decoderInputs.put("memory", batchedMemoryTensor);
+  decoderInputs.put("target_tokens", targetTokensTensor);
+  decoderInputs.put("actual_src_length", actualSrcLengthTensor);  // int32
   ```
-- **Additional Changes**:
-  - Added debug logging for detected key sequence in OnnxSwipePredictor
-  - Format: `🎯 DETECTED KEY SEQUENCE: "the" (100 points → 3 unique keys)`
 - **Files Modified**:
-  - Keyboard2.java: Added setNeuralKeyboardLayout() calls (2 locations)
-  - OnnxSwipePredictor.java: Added nearest key debug logging
-- **Status**: ✅ FIXED - Ready for testing
+  - OnnxSwipePredictor.java: V4 interface for encoder, greedy search, beam search
+  - assets/models/export_and_quantize_standalone.py: V4 export script (new)
+  - assets/models/*.onnx: Re-exported V4 models
+- **Benefits**:
+  - Simpler Java code (no mask creation)
+  - Better robustness (models handle masking internally)
+  - Reduced tensor type mismatches
+- **Status**: ✅ BUILT - Ready for testing
+
+### 🔧 Previous Work (v1.32.450-453) - KEYBOARD LAYOUT FIX
+
+**setNeuralKeyboardLayout() Not Called (v1.32.450)**
+- **Problem**: Swipes predicted wrong words - "expand" → "edpand", "way" → "was"
+- **Root Cause**: `setNeuralKeyboardLayout()` was defined but never called
+- **Fix**: Added calls in Keyboard2.java after keyboard is set, after PredictionViewSetup
+- **Status**: ✅ FIXED
 
 ### 🔧 Previous Work (v1.32.437-441) - V3 MODEL SUPPORT & TENSOR TYPE FIXES
 
