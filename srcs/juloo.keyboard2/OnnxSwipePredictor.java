@@ -1565,7 +1565,9 @@ public class OnnxSwipePredictor
         {
           _preallocTokensIntBuffer.put(_preallocBatchedTokens[b]);
         }
-        _preallocTokensIntBuffer.rewind();
+        // CRITICAL FIX v1.32.494: Set buffer limit to match tensor size
+        // Buffer has capacity for maxBeams*seqLen, but tensor needs numActiveBeams*seqLen
+        _preallocTokensIntBuffer.flip();  // Sets limit to position, position to 0
 
         OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
           _preallocTokensIntBuffer, new long[]{numActiveBeams, DECODER_SEQ_LENGTH});
