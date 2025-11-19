@@ -47,7 +47,10 @@ public class SettingsActivity extends PreferenceActivity
     // one used by the keyboard, which have been migrated.
     try
     {
-      Config.migrate(getPreferenceManager().getSharedPreferences());
+      SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+      // Repair corrupted float preferences before loading preference UI
+      Config.repairCorruptedFloatPreferences(prefs);
+      Config.migrate(prefs);
     }
     catch (Exception _e) { fallbackEncrypted(); return; }
     addPreferencesFromResource(R.xml.settings);

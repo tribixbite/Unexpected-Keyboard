@@ -474,8 +474,9 @@ public final class Config
   /**
    * Repair corrupted float preferences that were imported as integers.
    * This runs on startup before any preference UI loads, fixing the stored values.
+   * Public so SettingsActivity can call it before loading preference XML.
    */
-  private static void repairCorruptedFloatPreferences(SharedPreferences prefs)
+  public static void repairCorruptedFloatPreferences(SharedPreferences prefs)
   {
     // All known float preferences with their default values
     String[][] floatPrefs = {
