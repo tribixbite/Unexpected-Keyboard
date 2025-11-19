@@ -121,4 +121,65 @@ object KeyboardGrid {
             android.util.Log.d("KeyboardGrid", "$key -> (${pos.x}, ${pos.y})")
         }
     }
+
+    /**
+     * Debug: Get detailed info about nearest key detection
+     * Returns a string describing the detection for debugging
+     */
+    fun getDetailedDetection(nx: Float, ny: Float): String {
+        val x = nx.coerceIn(0f, 1f)
+        val y = ny.coerceIn(0f, 1f)
+
+        var nearestKey = 'a'
+        var minDist = Float.MAX_VALUE
+
+        // Find top 3 candidates
+        val candidates = mutableListOf<Triple<Char, Float, PointF>>()
+
+        for ((key, pos) in keyPositions) {
+            val dx = x - pos.x
+            val dy = y - pos.y
+            val dist = dx * dx + dy * dy
+            candidates.add(Triple(key, dist, pos))
+
+            if (dist < minDist) {
+                minDist = dist
+                nearestKey = key
+            }
+        }
+
+        // Sort and take top 3
+        candidates.sortBy { it.second }
+        val top3 = candidates.take(3)
+
+        val sb = StringBuilder()
+        sb.append("Input: (%.3f, %.3f) → '%c'\n".format(x, y, nearestKey))
+        sb.append("Top 3: ")
+        for ((key, dist, pos) in top3) {
+            sb.append("'%c'(%.3f) ".format(key, dist))
+        }
+
+        return sb.toString()
+    }
+
+    /**
+     * Get the row a character belongs to (for debugging)
+     */
+    fun getKeyRow(c: Char): Int {
+        return when {
+            ROW_0.contains(c) -> 0
+            ROW_1.contains(c) -> 1
+            ROW_2.contains(c) -> 2
+            else -> -1
+        }
+    }
+
+    /**
+     * Debug: Check if a normalized y value is in expected range for a row
+     */
+    fun isYInRow(ny: Float, expectedRow: Int): Boolean {
+        val rowStart = expectedRow * ROW_HEIGHT
+        val rowEnd = (expectedRow + 1) * ROW_HEIGHT
+        return ny >= rowStart && ny < rowEnd
+    }
 }

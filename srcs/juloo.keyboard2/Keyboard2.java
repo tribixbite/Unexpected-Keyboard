@@ -265,6 +265,13 @@ public class Keyboard2 extends InputMethodService
     _debugLoggingManager = new DebugLoggingManager(this, getPackageName());
     _debugLoggingManager.initializeLogWriter();
 
+    // Connect debug logger to prediction coordinator for neural engine logging (v1.32.461)
+    // This enables key detection logs to appear in SwipeDebugActivity
+    if (_predictionCoordinator != null)
+    {
+      _predictionCoordinator.setDebugLogger(message -> _debugLoggingManager.sendDebugLog(message));
+    }
+
     // Initialize propagators (v1.32.396: extracted propagator initialization)
     // Creates and registers DebugModePropagator, builds ConfigPropagator with all managers
     PropagatorInitializer.InitializationResult propagators = PropagatorInitializer.create(

@@ -141,6 +141,23 @@ public class NeuralSwipeTypingEngine
       Log.d(TAG, String.format("Set keyboard dimensions: %.0fx%.0f", width, height));
     }
   }
+
+  /**
+   * Set QWERTY area bounds for proper coordinate normalization.
+   * This is critical for correct key detection - the model expects coordinates
+   * normalized over just the QWERTY key area, not the full keyboard view.
+   *
+   * @param qwertyTop Y offset in pixels where QWERTY keys start
+   * @param qwertyHeight Height in pixels of the QWERTY key area
+   */
+  public void setQwertyAreaBounds(float qwertyTop, float qwertyHeight)
+  {
+    if (_neuralPredictor != null)
+    {
+      _neuralPredictor.setQwertyAreaBounds(qwertyTop, qwertyHeight);
+      Log.d(TAG, String.format("Set QWERTY area bounds: top=%.0f, height=%.0f", qwertyTop, qwertyHeight));
+    }
+  }
   
   /**
    * Set real key positions for accurate coordinate mapping

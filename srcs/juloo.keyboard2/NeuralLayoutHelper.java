@@ -312,19 +312,45 @@ public class NeuralLayoutHelper
       _predictionCoordinator.getNeuralEngine().setRealKeyPositions(keyPositions);
       Log.d(TAG, "Set " + keyPositions.size() + " key positions on neural engine");
 
-      // Debug output only when debug mode is active
-      if (_debugMode)
+      // Calculate QWERTY area bounds from key positions
+      // Use q (top row) and m (bottom row) to determine the vertical extent
+      if (keyPositions.containsKey('q') && keyPositions.containsKey('m'))
       {
-        sendDebugLog(String.format(">>> Neural engine: %d key positions set\n", keyPositions.size()));
+        PointF qPos = keyPositions.get('q');  // Top row
+        PointF mPos = keyPositions.get('m');  // Bottom row
 
-        // Log sample positions
-        if (keyPositions.containsKey('q') && keyPositions.containsKey('a') && keyPositions.containsKey('z'))
+        // Estimate row height from the distance between rows
+        // q is in row 0, a is in row 1, z/m are in row 2
+        PointF aPos = keyPositions.getOrDefault('a', qPos);
+        float rowHeight = (mPos.y - qPos.y) / 2.0f;  // Approximate row height
+
+        // QWERTY top is half a row above 'q' center
+        float qwertyTop = qPos.y - rowHeight / 2.0f;
+        // QWERTY bottom is half a row below 'm' center
+        float qwertyHeight = (mPos.y - qwertyTop) + rowHeight / 2.0f;
+
+        // Set bounds on neural engine
+        _predictionCoordinator.getNeuralEngine().setQwertyAreaBounds(qwertyTop, qwertyHeight);
+        Log.d(TAG, String.format("Set QWERTY bounds: top=%.0f, height=%.0f (q.y=%.0f, m.y=%.0f)",
+            qwertyTop, qwertyHeight, qPos.y, mPos.y));
+
+        // Debug output only when debug mode is active
+        if (_debugMode)
         {
-          PointF qPos = keyPositions.get('q');
-          PointF aPos = keyPositions.get('a');
-          PointF zPos = keyPositions.get('z');
+          sendDebugLog(String.format(">>> Neural engine: %d key positions set\n", keyPositions.size()));
+          sendDebugLog(String.format(">>> QWERTY bounds: top=%.0f, height=%.0f\n", qwertyTop, qwertyHeight));
+          PointF zPos = keyPositions.getOrDefault('z', mPos);
           sendDebugLog(String.format(">>> Samples: q=(%.0f,%.0f) a=(%.0f,%.0f) z=(%.0f,%.0f)\n",
-            qPos.x, qPos.y, aPos.x, aPos.y, zPos.x, zPos.y));
+              qPos.x, qPos.y, aPos.x, aPos.y, zPos.x, zPos.y));
+        }
+      }
+      else
+      {
+        Log.w(TAG, "Cannot calculate QWERTY bounds - missing q or m key positions");
+        // Debug output only when debug mode is active
+        if (_debugMode)
+        {
+          sendDebugLog(String.format(">>> Neural engine: %d key positions set\n", keyPositions.size()));
         }
       }
     }

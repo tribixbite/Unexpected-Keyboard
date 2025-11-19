@@ -45,6 +45,9 @@ public class PredictionCoordinator
   private SwipeMLDataStore _mlDataStore;
   private UserAdaptationManager _adaptationManager;
 
+  // Debug logging
+  private NeuralSwipeTypingEngine.DebugLogger _debugLogger;
+
   /**
    * Creates a new PredictionCoordinator.
    *
@@ -105,6 +108,13 @@ public class PredictionCoordinator
     {
       _neuralEngine = new NeuralSwipeTypingEngine(_context, _config);
 
+      // Set debug logger before initialization so logs appear during model loading
+      if (_debugLogger != null)
+      {
+        _neuralEngine.setDebugLogger(_debugLogger);
+        Log.d(TAG, "Debug logger set on neural engine");
+      }
+
       // CRITICAL: Call initialize() to actually load the ONNX models
       boolean success = _neuralEngine.initialize();
       if (!success)
@@ -125,6 +135,24 @@ public class PredictionCoordinator
       Log.e(TAG, "Failed to initialize neural engine", e);
       _neuralEngine = null;
       _asyncPredictionHandler = null;
+    }
+  }
+
+  /**
+   * Sets the debug logger for neural engine logging.
+   * Should be called before initialize() for model loading logs.
+   *
+   * @param logger Debug logger implementation that sends to SwipeDebugActivity
+   */
+  public void setDebugLogger(NeuralSwipeTypingEngine.DebugLogger logger)
+  {
+    _debugLogger = logger;
+
+    // Also set on existing engine if already initialized
+    if (_neuralEngine != null)
+    {
+      _neuralEngine.setDebugLogger(logger);
+      Log.d(TAG, "Debug logger updated on existing neural engine");
     }
   }
 

@@ -408,8 +408,9 @@ public class OnnxSwipePredictor
       long preprocessTime = System.nanoTime() - preprocessStartTime;
       // logDebug("⏱️ Feature extraction: " + (preprocessTime / 1_000_000.0) + "ms");
 
-      // Log detected nearest key sequence for debugging
-      if (_config != null && _config.swipe_debug_detailed_logging && features.nearestKeys != null)
+      // Log detected nearest key sequence for debugging (ALWAYS when debug logger is available)
+      // This is critical for debugging key detection issues like 'x' → 'd' problems
+      if (features.nearestKeys != null && _debugLogger != null)
       {
         // Convert nearest keys to readable character sequence (deduplicated)
         StringBuilder keySeqBuilder = new StringBuilder();
@@ -424,8 +425,28 @@ public class OnnxSwipePredictor
             lastKey = tokenIdx;
           }
         }
+
+        // Get keyboard dimensions for context
+        float kbWidth = _trajectoryProcessor != null ? _trajectoryProcessor._keyboardWidth : 0;
+        float kbHeight = _trajectoryProcessor != null ? _trajectoryProcessor._keyboardHeight : 0;
+
+        logDebug(String.format("📐 Keyboard: %.0fx%.0f | Points: %d\n", kbWidth, kbHeight, features.actualLength));
         logDebug("🎯 DETECTED KEY SEQUENCE: \"" + keySeqBuilder.toString() +
-                 "\" (" + features.actualLength + " points → " + keySeqBuilder.length() + " unique keys)");
+                 "\" (" + features.actualLength + " points → " + keySeqBuilder.length() + " unique keys)\n");
+
+        // Log first and last normalized coordinates with detailed key detection
+        if (features.normalizedPoints != null && !features.normalizedPoints.isEmpty())
+        {
+          SwipeTrajectoryProcessor.TrajectoryPoint first = features.normalizedPoints.get(0);
+          SwipeTrajectoryProcessor.TrajectoryPoint last = features.normalizedPoints.get(Math.min(features.actualLength - 1, features.normalizedPoints.size() - 1));
+
+          // Show detailed detection for first and last points
+          String firstDetail = KeyboardGrid.INSTANCE.getDetailedDetection(first.x, first.y);
+          String lastDetail = KeyboardGrid.INSTANCE.getDetailedDetection(last.x, last.y);
+
+          logDebug("📍 First point: " + firstDetail);
+          logDebug("📍 Last point: " + lastDetail);
+        }
       }
       
       // Run encoder inference with proper ONNX API
@@ -1056,6 +1077,22 @@ public class OnnxSwipePredictor
     if (_trajectoryProcessor != null)
     {
       _trajectoryProcessor.setKeyboardLayout(null, width, height);
+    }
+  }
+
+  /**
+   * Set QWERTY area bounds for proper coordinate normalization.
+   * The neural model expects coordinates normalized over just the QWERTY key area,
+   * not the full keyboard view.
+   *
+   * @param qwertyTop Y offset in pixels where QWERTY keys start
+   * @param qwertyHeight Height in pixels of the QWERTY key area
+   */
+  public void setQwertyAreaBounds(float qwertyTop, float qwertyHeight)
+  {
+    if (_trajectoryProcessor != null)
+    {
+      _trajectoryProcessor.setQwertyAreaBounds(qwertyTop, qwertyHeight);
     }
   }
   

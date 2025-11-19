@@ -22,6 +22,11 @@ public class SwipeTrajectoryProcessor
   public float _keyboardWidth = 1.0f;
   public float _keyboardHeight = 1.0f;
 
+  // QWERTY area bounds for proper normalization (v1.32.463)
+  // The model expects normalized coords over QWERTY keys only, not full view
+  private float _qwertyAreaTop = 0.0f;      // Y offset where QWERTY starts (below suggestion bar, etc.)
+  private float _qwertyAreaHeight = 0.0f;   // Height of QWERTY key area only
+
   // Resampling configuration
   private SwipeResampler.ResamplingMode _resamplingMode = SwipeResampler.ResamplingMode.TRUNCATE;
 
@@ -42,6 +47,22 @@ public class SwipeTrajectoryProcessor
 
     // Log.d(TAG, String.format("Keyboard layout set: %.0fx%.0f with %d keys",
       // width, height, keyPositions != null ? keyPositions.size() : 0));
+  }
+
+  /**
+   * Set QWERTY area bounds for proper coordinate normalization.
+   * The neural model expects coordinates normalized over the QWERTY key area only,
+   * not the full keyboard view (which may include suggestion bar, number row, etc.)
+   *
+   * @param qwertyTop Y offset in pixels where QWERTY keys start
+   * @param qwertyHeight Height in pixels of the QWERTY key area
+   */
+  public void setQwertyAreaBounds(float qwertyTop, float qwertyHeight)
+  {
+    _qwertyAreaTop = qwertyTop;
+    _qwertyAreaHeight = qwertyHeight;
+    Log.d(TAG, String.format("📐 QWERTY area bounds set: top=%.0f, height=%.0f (full kb height=%.0f)",
+        qwertyTop, qwertyHeight, _keyboardHeight));
   }
 
   /**
@@ -235,6 +256,7 @@ public class SwipeTrajectoryProcessor
 
   /**
    * Normalize coordinates to [0, 1] range
+   * Uses QWERTY area bounds if set, otherwise falls back to full keyboard dimensions
    */
   private List<PointF> normalizeCoordinates(List<PointF> coordinates)
   {
@@ -254,10 +276,27 @@ public class SwipeTrajectoryProcessor
       Log.d(TAG, String.format("📐 Inferred keyboard size: %.0f x %.0f", _keyboardWidth, _keyboardHeight));
     }
 
+    // Determine normalization parameters
+    // If QWERTY area bounds are set, use them for Y normalization
+    // This ensures Y coordinates span [0,1] for just the QWERTY key area
+    float yTop = _qwertyAreaTop;
+    float yHeight = _qwertyAreaHeight > 0 ? _qwertyAreaHeight : _keyboardHeight;
+    boolean usingQwertyBounds = _qwertyAreaHeight > 0;
+
     List<PointF> normalized = new ArrayList<>();
     for (PointF point : coordinates) {
       float x = (point.x / _keyboardWidth);
-      float y = (point.y / _keyboardHeight);
+
+      // For Y: normalize over QWERTY area if bounds are set
+      float y;
+      if (usingQwertyBounds) {
+        // Map QWERTY area [yTop, yTop+yHeight] to [0, 1]
+        y = (point.y - yTop) / yHeight;
+      } else {
+        // Fall back to full keyboard height
+        y = (point.y / _keyboardHeight);
+      }
+
       // Clamp to [0,1]
       x = Math.max(0f, Math.min(1f, x));
       y = Math.max(0f, Math.min(1f, y));
@@ -268,8 +307,13 @@ public class SwipeTrajectoryProcessor
     if (!coordinates.isEmpty() && !normalized.isEmpty()) {
       PointF raw = coordinates.get(0);
       PointF norm = normalized.get(0);
-      Log.d(TAG, String.format("📐 Normalization: kb=%.0fx%.0f, raw=(%.0f,%.0f) → norm=(%.3f,%.3f)",
-          _keyboardWidth, _keyboardHeight, raw.x, raw.y, norm.x, norm.y));
+      if (usingQwertyBounds) {
+        Log.d(TAG, String.format("📐 Normalization (QWERTY): top=%.0f, h=%.0f, raw=(%.0f,%.0f) → norm=(%.3f,%.3f)",
+            yTop, yHeight, raw.x, raw.y, norm.x, norm.y));
+      } else {
+        Log.d(TAG, String.format("📐 Normalization: kb=%.0fx%.0f, raw=(%.0f,%.0f) → norm=(%.3f,%.3f)",
+            _keyboardWidth, _keyboardHeight, raw.x, raw.y, norm.x, norm.y));
+      }
     }
 
     return normalized;
