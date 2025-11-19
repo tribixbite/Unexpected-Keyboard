@@ -58,18 +58,31 @@ public class SwipeTokenizer
       Gson gson = new Gson();
       TokenizerConfig config = gson.fromJson(reader, TokenizerConfig.class);
       reader.close();
-      
+
       _charToIdx = new HashMap<>();
-      for (Map.Entry<String, Integer> entry : config.char_to_idx.entrySet()) {
-          if (entry.getKey().length() > 0) {
-              _charToIdx.put(entry.getKey().charAt(0), entry.getValue());
+      _idxToChar = new HashMap<>();
+
+      // First, load idx_to_char if present
+      if (config.idx_to_char != null) {
+          for (Map.Entry<String, String> entry : config.idx_to_char.entrySet()) {
+              String value = entry.getValue();
+              // Skip special tokens like <pad>, <sos>, <eos>, <unk>
+              if (value.length() == 1) {
+                  int idx = Integer.parseInt(entry.getKey());
+                  char ch = value.charAt(0);
+                  _idxToChar.put(idx, ch);
+                  // Build reverse mapping
+                  _charToIdx.put(ch, idx);
+              }
           }
       }
 
-      _idxToChar = new HashMap<>();
-      for (Map.Entry<String, String> entry : config.idx_to_char.entrySet()) {
-          if (entry.getValue().length() > 0) {
-              _idxToChar.put(Integer.parseInt(entry.getKey()), entry.getValue().charAt(0));
+      // If char_to_idx is explicitly provided, use it (overrides auto-generated)
+      if (config.char_to_idx != null) {
+          for (Map.Entry<String, Integer> entry : config.char_to_idx.entrySet()) {
+              if (entry.getKey().length() > 0) {
+                  _charToIdx.put(entry.getKey().charAt(0), entry.getValue());
+              }
           }
       }
       
