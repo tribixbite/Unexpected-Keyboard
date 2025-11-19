@@ -430,13 +430,17 @@ public class OnnxSwipePredictor
       
       // Run encoder inference with proper ONNX API
       OnnxTensor trajectoryTensor = null;
-      OnnxTensor nearestKeysTensor = null; 
-      OnnxTensor srcMaskTensor = null;
+      OnnxTensor nearestKeysTensor = null;
+      OnnxTensor actualLengthTensor = null;
+      OnnxTensor srcMaskTensor = null;  // Still needed for decoder
       OrtSession.Result encoderResult = null;
-      
+
       try {
         trajectoryTensor = createTrajectoryTensor(features);
         nearestKeysTensor = createNearestKeysTensor(features);
+        // New encoder uses actual_length instead of src_mask
+        actualLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new long[]{features.actualLength});
+        // Still create src_mask for decoder use
         srcMaskTensor = createSourceMaskTensor(features);
 
         // Log tensor shapes only if debug logging enabled
@@ -445,13 +449,13 @@ public class OnnxSwipePredictor
           Log.d(TAG, "🔧 Encoder input tensor shapes (features.actualLength=" + features.actualLength + ", _maxSequenceLength=" + _maxSequenceLength + "):");
           Log.d(TAG, "   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
           Log.d(TAG, "   nearest_keys: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
-          Log.d(TAG, "   src_mask: " + java.util.Arrays.toString(srcMaskTensor.getInfo().getShape()));
+          Log.d(TAG, "   actual_length: " + java.util.Arrays.toString(actualLengthTensor.getInfo().getShape()));
         }
 
         Map<String, OnnxTensor> encoderInputs = new HashMap<>();
         encoderInputs.put("trajectory_features", trajectoryTensor);
         encoderInputs.put("nearest_keys", nearestKeysTensor);
-        encoderInputs.put("src_mask", srcMaskTensor);
+        encoderInputs.put("actual_length", actualLengthTensor);
         
         // Run encoder inference with detailed timing
         long encoderStartTime = System.nanoTime();
@@ -461,7 +465,7 @@ public class OnnxSwipePredictor
           
           // Run beam search decoding with timing
           long beamSearchStartTime = System.nanoTime();
-          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, srcMaskTensor, features);
+          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, features.actualLength, features);
           long beamSearchTime = System.nanoTime() - beamSearchStartTime;
           // logDebug("⏱️ Beam search total: " + (beamSearchTime / 1_000_000.0) + "ms");
           
@@ -486,6 +490,7 @@ public class OnnxSwipePredictor
         // Proper memory cleanup
         if (trajectoryTensor != null) trajectoryTensor.close();
         if (nearestKeysTensor != null) nearestKeysTensor.close();
+        if (actualLengthTensor != null) actualLengthTensor.close();
         if (srcMaskTensor != null) srcMaskTensor.close();
       }
     }
@@ -857,7 +862,7 @@ public class OnnxSwipePredictor
    * EMERGENCY SPEED MODE: Greedy search with single beam (maximum performance)
    * Completely bypasses beam search for 10x+ speedup
    */
-  private List<BeamSearchCandidate> runGreedySearch(OnnxTensor memory, OnnxTensor srcMaskTensor, int maxLength)
+  private List<BeamSearchCandidate> runGreedySearch(OnnxTensor memory, int actualSrcLength, int maxLength)
   {
     long greedyStart = System.nanoTime();
     List<Integer> tokens = new ArrayList<>();
@@ -881,22 +886,15 @@ public class OnnxSwipePredictor
           tgtTokens[i] = tokens.get(i);
         }
 
-        // Create target mask (false = valid, true = padded)
-        boolean[][] tgtMask = new boolean[1][DECODER_SEQ_LENGTH];
-        for (int i = 0; i < DECODER_SEQ_LENGTH; i++)
-        {
-          tgtMask[0][i] = (i >= tokens.size()); // Mark padded positions
-        }
-
         OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
           java.nio.LongBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LENGTH});
-        OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, tgtMask);
-        
+        // V4 interface: decoder creates masks internally from actual_src_length
+        OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{actualSrcLength});
+
         Map<String, OnnxTensor> decoderInputs = new HashMap<>();
         decoderInputs.put("memory", memory);
         decoderInputs.put("target_tokens", targetTokensTensor);
-        decoderInputs.put("target_mask", targetMaskTensor);
-        decoderInputs.put("src_mask", srcMaskTensor);
+        decoderInputs.put("actual_src_length", actualSrcLengthTensor);
         
         OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
         OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
@@ -932,7 +930,7 @@ public class OnnxSwipePredictor
         }
         
         targetTokensTensor.close();
-        targetMaskTensor.close();
+        actualSrcLengthTensor.close();
         decoderOutput.close();
       }
       catch (Exception e)
@@ -1307,7 +1305,7 @@ public class OnnxSwipePredictor
   }
   
   private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult,
-    OnnxTensor srcMaskTensor, SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
+    int actualSrcLength, SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
   {
     if (_decoderSession == null)
     {
@@ -1398,9 +1396,8 @@ public class OnnxSwipePredictor
 
         // BUGFIX v1.32.423: Removed buggy memory pool usage (was allocating slices anyway)
 
-        // Allocate or reuse batched arrays
+        // Allocate batched token arrays
         long[][] batchedTokens = new long[numActiveBeams][DECODER_SEQ_LENGTH];
-        boolean[][] batchedTargetMask = new boolean[numActiveBeams][DECODER_SEQ_LENGTH];
 
         // Fill batched arrays for all active beams
         for (int b = 0; b < numActiveBeams; b++)
@@ -1412,12 +1409,6 @@ public class OnnxSwipePredictor
           for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LENGTH); i++)
           {
             batchedTokens[b][i] = beam.tokens.get(i);
-          }
-
-          // Create target mask (false = valid, true = padded)
-          for (int i = 0; i < DECODER_SEQ_LENGTH; i++)
-          {
-            batchedTargetMask[b][i] = (i >= beam.tokens.size());
           }
         }
 
@@ -1435,7 +1426,6 @@ public class OnnxSwipePredictor
 
         OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
           tokensBuffer, new long[]{numActiveBeams, DECODER_SEQ_LENGTH});
-        OnnxTensor targetMaskTensor = OnnxTensor.createTensor(_ortEnvironment, batchedTargetMask);
 
         // Get memory data from encoder
         float[][][] memoryData = (float[][][])memory.getValue();
@@ -1453,29 +1443,22 @@ public class OnnxSwipePredictor
 
         OnnxTensor batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
 
-        // Create src_mask for all beams
-        boolean[][] srcMask = new boolean[numActiveBeams][_maxSequenceLength];
-        for (int b = 0; b < numActiveBeams; b++)
-        {
-          for (int i = 0; i < _maxSequenceLength; i++)
-          {
-            srcMask[b][i] = (i >= features.actualLength);
-          }
-        }
-
-        OnnxTensor srcMaskTensorLocal = OnnxTensor.createTensor(_ortEnvironment, srcMask);
+        // Create actual_src_length for all beams (new V4 interface - decoder creates masks internally)
+        int[] srcLengths = new int[numActiveBeams];
+        Arrays.fill(srcLengths, actualSrcLength);
+        OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, srcLengths);
 
         long tensorTime = (System.nanoTime() - tensorStart) / 1_000_000;
         totalTensorTime += tensorTime;
 
         // Run SINGLE batched decoder inference for ALL beams
+        // V4 interface: decoder creates masks internally from actual_src_length
         long inferenceStart = System.nanoTime();
 
         Map<String, OnnxTensor> decoderInputs = new HashMap<>();
         decoderInputs.put("memory", batchedMemoryTensor);
         decoderInputs.put("target_tokens", targetTokensTensor);
-        decoderInputs.put("target_mask", targetMaskTensor);
-        decoderInputs.put("src_mask", srcMaskTensorLocal);
+        decoderInputs.put("actual_src_length", actualSrcLengthTensor);
 
         OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
         long inferenceTime = (System.nanoTime() - inferenceStart) / 1_000_000;
@@ -1533,9 +1516,8 @@ public class OnnxSwipePredictor
 
         // Clean up batched tensors
         targetTokensTensor.close();
-        targetMaskTensor.close();
+        actualSrcLengthTensor.close();
         batchedMemoryTensor.close();
-        srcMaskTensorLocal.close();
         decoderOutput.close();
       }
       catch (Exception e)

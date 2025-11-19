@@ -2,10 +2,13 @@ package juloo.keyboard2;
 
 import android.content.Context;
 import android.util.Log;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,9 +34,15 @@ public class SwipeTokenizer
   
   public SwipeTokenizer()
   {
-    initializeDefaultMapping();
+    // Mappings are now loaded from JSON
   }
   
+  // Helper class for Gson parsing
+  private static class TokenizerConfig {
+      Map<String, Integer> char_to_idx;
+      Map<String, String> idx_to_char;
+  }
+
   /**
    * Load tokenizer configuration from assets
    */
@@ -46,20 +55,23 @@ public class SwipeTokenizer
       InputStream inputStream = context.getAssets().open("models/tokenizer_config.json");
       BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
       
-      StringBuilder jsonBuilder = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null)
-      {
-        jsonBuilder.append(line);
-      }
+      Gson gson = new Gson();
+      TokenizerConfig config = gson.fromJson(reader, TokenizerConfig.class);
       reader.close();
       
-      // Parse JSON and update mappings
-      String jsonStr = jsonBuilder.toString();
-      Log.d(TAG, "Loaded tokenizer JSON configuration");
-      
-      // For now, JSON parsing is simplified - using default mapping
-      // The JSON structure is available for future enhancement
+      _charToIdx = new HashMap<>();
+      for (Map.Entry<String, Integer> entry : config.char_to_idx.entrySet()) {
+          if (entry.getKey().length() > 0) {
+              _charToIdx.put(entry.getKey().charAt(0), entry.getValue());
+          }
+      }
+
+      _idxToChar = new HashMap<>();
+      for (Map.Entry<String, String> entry : config.idx_to_char.entrySet()) {
+          if (entry.getValue().length() > 0) {
+              _idxToChar.put(Integer.parseInt(entry.getKey()), entry.getValue().charAt(0));
+          }
+      }
       
       _isLoaded = true;
       Log.d(TAG, String.format("Tokenizer loaded with %d characters", _charToIdx.size()));
@@ -68,7 +80,7 @@ public class SwipeTokenizer
     catch (IOException e)
     {
       Log.w(TAG, "Could not load tokenizer from assets, using defaults: " + e.getMessage());
-      _isLoaded = true;
+      _isLoaded = false;
       return false;
     }
   }
@@ -106,29 +118,6 @@ public class SwipeTokenizer
   public boolean isLoaded()
   {
     return _isLoaded;
-  }
-  
-  private void initializeDefaultMapping()
-  {
-    _charToIdx = new HashMap<>();
-    _idxToChar = new HashMap<>();
-    
-    // Special tokens
-    addMapping(PAD_IDX, '\0');  // Padding
-    addMapping(UNK_IDX, '?');   // Unknown
-    addMapping(SOS_IDX, '^');   // Start of sequence
-    addMapping(EOS_IDX, '$');   // End of sequence
-    
-    // Alphabet (a-z) - exactly matching web demo
-    int idx = 4;
-    for (char c = 'a'; c <= 'z'; c++)
-    {
-      addMapping(idx++, c);
-    }
-    
-    // No extra symbols - web demo only uses 4 special tokens + 26 letters = 30 total
-    
-    Log.d(TAG, String.format("Default tokenizer initialized with %d tokens", _charToIdx.size()));
   }
   
   private void addMapping(int idx, char ch)

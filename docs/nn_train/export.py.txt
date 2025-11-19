@@ -197,7 +197,11 @@ def export_encoder_onnx(model: CharacterLevelSwipeModel, output_path: Path) -> D
     seq_len = 250
     traj_features = torch.randn(batch_size, seq_len, 6)
     nearest_keys = torch.randint(0, 30, (batch_size, seq_len))
+    # Create a sample mask with some padding. This is critical.
+    # If the mask is all False, ONNX may constant-fold it, breaking the model's
+    # ability to handle variable-length inputs.
     src_mask = torch.zeros(batch_size, seq_len, dtype=torch.bool)
+    src_mask[:, -10:] = True
 
     # Dynamic axes for variable length sequences
     dynamic_axes = {
@@ -272,7 +276,9 @@ def export_decoder_onnx(model: CharacterLevelSwipeModel, output_path: Path) -> D
     memory = torch.randn(batch_size, seq_len, 256)
     tgt_tokens = torch.randint(0, 30, (batch_size, tgt_len))
     src_mask = torch.zeros(batch_size, seq_len, dtype=torch.bool)
+    src_mask[:, seq_len // 2:] = True
     tgt_mask = torch.zeros(batch_size, tgt_len, dtype=torch.bool)
+    tgt_mask[:, tgt_len // 2:] = True
 
     dynamic_axes = {
         'memory': {0: 'batch', 1: 'enc_sequence'},

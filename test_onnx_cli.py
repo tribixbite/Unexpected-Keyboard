@@ -73,13 +73,11 @@ def find_nearest_key(x, y, layout):
 
     return nearest
 
-def create_test_swipe():
-    """Create realistic swipe for word 'hello' with smooth interpolation"""
+def create_test_swipe(word="the"):
+    """Create realistic swipe for a given word"""
     layout = create_qwerty_layout()
     test_points = []
 
-    # Word to swipe: "sad" (row 2 only - simpler path)
-    word = "sad"
     key_positions = [layout[c] for c in word]
 
     # Create smooth continuous path through ALL keys
@@ -87,9 +85,9 @@ def create_test_swipe():
         start_x, start_y = key_positions[i]
         end_x, end_y = key_positions[i + 1]
 
-        # Interpolate between consecutive keys (8 points between each)
-        for j in range(8):
-            t = j / 8.0
+        # Interpolate between consecutive keys (40 points between each - much denser)
+        for j in range(40):
+            t = j / 40.0
             x = start_x + t * (end_x - start_x)
             y = start_y + t * (end_y - start_y)
 
@@ -97,11 +95,11 @@ def create_test_swipe():
             nearest = find_nearest_key(x, y, layout)
             test_points.append((x, y, nearest))
 
-    # Add final key position
+    # Add final key position with more points
     final_x, final_y = key_positions[-1]
-    for j in range(4):  # A few points on the final key
-        x = final_x + (j - 2) * 0.005
-        y = final_y + (j - 2) * 0.005
+    for j in range(20):  # More points on the final key
+        x = final_x + (j - 10) * 0.002
+        y = final_y + (j - 10) * 0.002
         nearest = find_nearest_key(x, y, layout)
         test_points.append((x, y, nearest))
 
@@ -212,10 +210,19 @@ def run_decoder_beam_search(decoder_session, memory, src_mask):
             for i in range(min(beam_len, DECODER_SEQ_LENGTH)):
                 padded_tokens[i] = beam['tokens'][i]
 
+            # DEBUG: Show what tokens are being fed to decoder
+            if step <= 2:  # Only show first 3 steps
+                print(f"\n   === Step {step}, Beam tokens: {beam['tokens']} ===")
+                print(f"   Padded tokens (first 10): {padded_tokens[:10]}")
+
             # Create target_padding_mask (BOOLEAN - True where PAD)
             target_padding_mask = np.zeros(DECODER_SEQ_LENGTH, dtype=bool)
             for i in range(beam_len, DECODER_SEQ_LENGTH):
                 target_padding_mask[i] = True  # Mark padded positions
+
+            # DEBUG: Show mask state
+            if step <= 2:
+                print(f"   Padding mask (first 10): {target_padding_mask[:10]}")
 
             # Create target_causal_mask (FLOAT32 - 0.0 allowed, -1e9 blocked)
             # Shape: [dec_seq, dec_seq]
@@ -232,8 +239,9 @@ def run_decoder_beam_search(decoder_session, memory, src_mask):
                 print(f"     Causal mask[0]: {target_causal_mask[0][:5]} (first 5 of row 0)")
                 print(f"     Causal mask[1]: {target_causal_mask[1][:5]} (first 5 of row 1)")
 
-            # Create source mask (BOOLEAN - True where PAD)
-            src_mask_decoder = np.zeros(memory.shape[1], dtype=bool)
+            # --- DEBUG: Override src_mask to ensure attention is possible ---
+            # This mask tells the decoder that NO encoder outputs are padding.
+            debug_src_mask = np.full(src_mask.shape, False, dtype=bool)
 
             try:
                 # Run decoder with v3 separate masks
@@ -242,7 +250,7 @@ def run_decoder_beam_search(decoder_session, memory, src_mask):
                     'target_tokens': padded_tokens.reshape(1, DECODER_SEQ_LENGTH),
                     'target_padding_mask': target_padding_mask.reshape(1, DECODER_SEQ_LENGTH),
                     'target_causal_mask': target_causal_mask,  # 2D, no batch dimension per config
-                    'src_mask': src_mask_decoder.reshape(1, -1)
+                    'src_mask': debug_src_mask  # Use debug mask - all False (no padding)
                 }
 
                 decoder_output = decoder_session.run(None, decoder_inputs)
@@ -266,9 +274,10 @@ def run_decoder_beam_search(decoder_session, memory, src_mask):
                 # Get top k
                 top_k = np.argsort(probs)[::-1][:BEAM_WIDTH]
 
-                # Debug: Show what tokens are being predicted
-                if step == 0:
-                    print(f"\n   Step {step} top predictions:")
+                # Debug: Show what tokens are being predicted (only for first beam at each step)
+                is_first_beam_in_step = (beam == beams[0])
+                if step <= 1 and is_first_beam_in_step:
+                    print(f"\n   Step {step} (after tokens {beam['tokens']}) top predictions:")
                     idx_to_char = {i + 4: chr(ord('a') + i) for i in range(26)}
                     idx_to_char.update({0: '<pad>', 1: '<unk>', 2: '<sos>', 3: '<eos>'})
                     for i in range(min(5, len(top_k))):
@@ -338,21 +347,42 @@ def main():
         print("❌ Failed to load models")
         sys.exit(1)
     
-    # Create test data
-    test_points = create_test_swipe()
-    print(f"\n📝 Created test swipe: {len(test_points)} points")
-    
-    # Create encoder inputs
-    encoder_inputs = create_encoder_inputs(test_points)
-    
-    # Run encoder
-    memory = run_encoder(encoder_session, encoder_inputs)
-    if memory is None:
-        print("❌ Encoder failed")
+    # --- START ENCODER DIAGNOSTIC ---
+    print("\n--- Running Encoder Diagnostic ---")
+
+    # 1. Generate and run for "the"
+    print("\n1. Processing swipe for 'the'...")
+    points_the = create_test_swipe(word="the")
+    inputs_the = create_encoder_inputs(points_the)
+    memory_the = run_encoder(encoder_session, inputs_the)
+
+    # 2. Generate and run for "sad"
+    print("\n2. Processing swipe for 'sad'...")
+    points_sad = create_test_swipe(word="sad")
+    inputs_sad = create_encoder_inputs(points_sad)
+    memory_sad = run_encoder(encoder_session, inputs_sad)
+
+    # 3. Compare memory tensors
+    if memory_the is not None and memory_sad is not None:
+        if np.array_equal(memory_the, memory_sad):
+            print("\n\n❌ DIAGNOSIS: Encoder output is IDENTICAL for different inputs.")
+            print("   This points to a problem with the encoder.onnx model itself.")
+            sys.exit(1)
+        else:
+            print("\n\n✅ DIAGNOSIS: Encoder output is DIFFERENT for different inputs.")
+            print(f"   Mean absolute difference: {np.mean(np.abs(memory_the - memory_sad)):.6f}")
+            print("   The problem is likely within the decoder or its inputs.")
+    else:
+        print("❌ Encoder run failed, cannot perform diagnostic.")
         sys.exit(1)
-    
+
+    # Proceed with decoding using one of the results
+    memory = memory_the
+    src_mask = inputs_the['src_mask']
+    # --- END ENCODER DIAGNOSTIC ---
+
     # Run decoder
-    beams = run_decoder_beam_search(decoder_session, memory, encoder_inputs['src_mask'])
+    beams = run_decoder_beam_search(decoder_session, memory, src_mask)
     
     # Convert to words
     words = beams_to_words(beams)
