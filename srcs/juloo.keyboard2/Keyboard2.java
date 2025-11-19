@@ -479,14 +479,6 @@ public class Keyboard2 extends InputMethodService
     _keyboardView.setKeyboard(current_layout());
     _keyeventhandler.started(info);
 
-    // Set neural key positions after view is measured (CRITICAL for accurate key detection)
-    _keyboardView.post(new Runnable() {
-      @Override
-      public void run() {
-        setNeuralKeyboardLayout();
-      }
-    });
-
     // Setup prediction views (v1.32.400: extracted prediction/swipe setup logic)
     // Handles initialization, suggestion bar creation, neural engine dimensions, and cleanup
     PredictionViewSetup.SetupResult predictionSetup = PredictionViewSetup.create(
@@ -545,13 +537,6 @@ public class Keyboard2 extends InputMethodService
   {
     refreshSubtypeImm();
     _keyboardView.setKeyboard(current_layout());
-    // Update neural key positions after layout change
-    _keyboardView.post(new Runnable() {
-      @Override
-      public void run() {
-        setNeuralKeyboardLayout();
-      }
-    });
   }
 
   @Override
