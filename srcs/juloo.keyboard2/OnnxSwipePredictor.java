@@ -1619,49 +1619,26 @@ public class OnnxSwipePredictor
         {
           BeamSearchState beam = activeBeams.get(b);
 
-          // Get logits for last valid position
+          // Get log probs for last valid position
+          // CRITICAL FIX v1.32.492: Decoder outputs LOG PROBS, not raw logits!
+          // Do NOT apply softmax - use log probs directly like Python does
           int currentPos = beam.tokens.size() - 1;
           if (currentPos >= 0 && currentPos < DECODER_SEQ_LENGTH)
           {
-            float[] vocabLogits = logits3D[b][currentPos];
+            float[] logProbs = logits3D[b][currentPos];
 
-            // Apply softmax
-            // OPTIMIZATION v1.32.489: Reuse pre-allocated probs array if possible
-            float[] probs;
-            if (_preallocProbs != null && _preallocProbs.length >= vocabSize)
-            {
-              probs = _preallocProbs;
-            }
-            else
-            {
-              probs = new float[vocabSize];
-            }
-
-            float maxLogit = vocabLogits[0];
-            for (int i = 1; i < Math.min(vocabLogits.length, vocabSize); i++) {
-              if (vocabLogits[i] > maxLogit) maxLogit = vocabLogits[i];
-            }
-
-            float sumExp = 0.0f;
-            for (int i = 0; i < vocabSize; i++) {
-              float exp = (float)Math.exp(vocabLogits[i] - maxLogit);
-              probs[i] = exp;
-              sumExp += exp;
-            }
-            for (int i = 0; i < vocabSize; i++) {
-              probs[i] = probs[i] / sumExp;
-            }
-
-            // Get top k tokens
-            int[] topK = getTopKIndices(probs, beamWidth);
+            // Get top k tokens by highest log prob (higher is better)
+            int[] topK = getTopKIndices(logProbs, beamWidth);
 
             // Create new beams
             for (int idx : topK)
             {
               BeamSearchState newBeam = new BeamSearchState(beam);
               newBeam.tokens.add((long)idx);
-              // CRITICAL: Subtract log prob (negative log likelihood) - lower score is better
-              newBeam.score -= Math.log(probs[idx] + 1e-10);
+              // CRITICAL FIX: Add log prob directly (higher log prob = better)
+              // Python does: new_score = score + log_prob (sorting descending)
+              // We do: score = -sum(log_probs), sorting ascending (lower is better)
+              newBeam.score -= logProbs[idx];  // Subtract log prob (which is negative)
               newBeam.finished = (idx == EOS_IDX || idx == PAD_IDX);
               candidates.add(newBeam);
             }
