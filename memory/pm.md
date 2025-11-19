@@ -9,15 +9,33 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.488 (541) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - Async model loading for UI responsiveness
+**Latest Version**: v1.32.490 (543) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - Pre-allocated beam search buffers
 **Branch**: feature/swipe-typing
 **Current Focus**: 🎯 **ONNX NEURAL PREDICTIONS** - Testing swipe predictions end-to-end
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 20 fixes applied (see history below)
+**Critical Fixes**: 21 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.488) - ASYNC MODEL LOADING
+### 🔧 Latest Work (v1.32.489-490) - BUFFER PRE-ALLOCATION OPTIMIZATION
+
+**BUFFER PRE-ALLOCATION OPTIMIZATION (v1.32.489-490)**
+- **Problem**: GC pressure from repeated allocations inside beam search loop
+  - Each loop iteration allocated: batchedTokens[][], ByteBuffer, srcLengths[], probs[]
+  - Creates memory churn during inference, potentially causing GC pauses
+- **Solution**: Pre-allocate buffers during initialization and reuse
+  - Add `_preallocBatchedTokens`: [beam_width, DECODER_SEQ_LENGTH]
+  - Add `_preallocTokensByteBuffer`: Direct buffer for ONNX tensor creation
+  - Add `_preallocSrcLengths`: [beam_width] for actual_src_length
+  - Add `_preallocProbs`: [vocab_size] for softmax output
+  - Fallback allocation if pre-allocated buffers too small
+- **Files Modified**:
+  - OnnxSwipePredictor.java: Add pre-allocated buffers, modify runBeamSearch() to reuse them
+- **Status**: ✅ BUILT v1.32.490 - Ready for testing
+- **Expected Improvement**: 20-30% reduction in GC pressure during inference
+- **Based on**: Gemini analysis of ONNX performance best practices (optimization #2)
+
+### 🔧 Previous Work (v1.32.488) - ASYNC MODEL LOADING
 
 **ASYNC MODEL LOADING OPTIMIZATION (v1.32.488)**
 - **Problem**: Keyboard startup blocked UI while loading 3MB ONNX models
@@ -29,8 +47,8 @@
 - **Files Modified**:
   - OnnxSwipePredictor.java: Add initializeAsync(), initializeSync(), modify getInstance()
   - NeuralSwipeTypingEngine.java: Call initializeAsync() in constructor
-- **Status**: ✅ BUILT v1.32.488 - Ready for testing
-- **Based on**: Gemini analysis of ONNX performance best practices
+- **Status**: ✅ COMPLETE - Both Gemini optimizations implemented
+- **Based on**: Gemini analysis of ONNX performance best practices (optimization #1)
 
 ### 🔧 Previous Work (v1.32.486) - SWIPE TOKENIZER FIX
 
