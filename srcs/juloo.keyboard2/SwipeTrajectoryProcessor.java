@@ -344,43 +344,73 @@ public class SwipeTrajectoryProcessor
 
   /**
    * Detect nearest key using grid-based approach with QWERTY layout
-   * Matches CLI test logic that achieves 50% accuracy
+   * MUST MATCH Python KeyboardGrid exactly:
+   * - 3 rows (height = 1/3 each)
+   * - key_w = 0.1
+   * - row offsets: top=0.0, mid=0.05, bot=0.15
    */
   private int detectKeyFromQwertyGrid(PointF point)
   {
-    // QWERTY layout (same as CLI test)
-    String row1 = "qwertyuiop";
-    String row2 = "asdfghjkl";
-    String row3 = "zxcvbnm";
+    // QWERTY layout rows
+    String row0 = "qwertyuiop";  // 10 keys, x starts at 0.0
+    String row1 = "asdfghjkl";   // 9 keys, x starts at 0.05
+    String row2 = "zxcvbnm";     // 7 keys, x starts at 0.15
 
-    float keyWidth = _keyboardWidth / 10f;
-    float keyHeight = _keyboardHeight / 4f;
+    // Normalize to [0,1] - matches Python KeyboardGrid
+    float nx = point.x / _keyboardWidth;
+    float ny = point.y / _keyboardHeight;
 
-    // Determine row (with staggered offset matching real keyboards)
-    int row = (int)(point.y / keyHeight);
-    if (row < 0) row = 0;
-    if (row > 2) row = 2;
+    // Clamp to [0,1]
+    nx = Math.max(0f, Math.min(1f, nx));
+    ny = Math.max(0f, Math.min(1f, ny));
 
-    // Determine column with row-specific offsets
-    float xOffset = 0;
-    if (row == 1) xOffset = keyWidth * 0.25f; // ASDF row offset
-    if (row == 2) xOffset = keyWidth * 0.75f; // ZXCV row offset
+    // Grid dimensions matching Python
+    float keyWidth = 0.1f;   // 1/10
+    float rowHeight = 1.0f / 3.0f;  // 3 rows only!
 
-    int col = (int)((point.x - xOffset) / keyWidth);
+    // Row offsets (absolute in normalized space)
+    float row0_x0 = 0.0f;
+    float row1_x0 = 0.05f;
+    float row2_x0 = 0.15f;
 
-    // Get character from appropriate row
-    char ch;
-    if (row == 0 && col >= 0 && col < row1.length()) {
-      ch = row1.charAt(col);
-    } else if (row == 1 && col >= 0 && col < row2.length()) {
-      ch = row2.charAt(col);
-    } else if (row == 2 && col >= 0 && col < row3.length()) {
-      ch = row3.charAt(col);
-    } else {
-      ch = 'a'; // Default fallback
+    // Find nearest key by checking distance to each key center
+    char nearestKey = 'a';
+    float minDist = Float.MAX_VALUE;
+
+    // Check row 0 (qwertyuiop)
+    for (int i = 0; i < row0.length(); i++) {
+      float cx = row0_x0 + i * keyWidth + keyWidth / 2.0f;
+      float cy = 0.0f * rowHeight + rowHeight / 2.0f;
+      float dist = (nx - cx) * (nx - cx) + (ny - cy) * (ny - cy);
+      if (dist < minDist) {
+        minDist = dist;
+        nearestKey = row0.charAt(i);
+      }
     }
 
-    return charToTokenIndex(ch);
+    // Check row 1 (asdfghjkl)
+    for (int i = 0; i < row1.length(); i++) {
+      float cx = row1_x0 + i * keyWidth + keyWidth / 2.0f;
+      float cy = 1.0f * rowHeight + rowHeight / 2.0f;
+      float dist = (nx - cx) * (nx - cx) + (ny - cy) * (ny - cy);
+      if (dist < minDist) {
+        minDist = dist;
+        nearestKey = row1.charAt(i);
+      }
+    }
+
+    // Check row 2 (zxcvbnm)
+    for (int i = 0; i < row2.length(); i++) {
+      float cx = row2_x0 + i * keyWidth + keyWidth / 2.0f;
+      float cy = 2.0f * rowHeight + rowHeight / 2.0f;
+      float dist = (nx - cx) * (nx - cx) + (ny - cy) * (ny - cy);
+      if (dist < minDist) {
+        minDist = dist;
+        nearestKey = row2.charAt(i);
+      }
+    }
+
+    return charToTokenIndex(nearestKey);
   }
 
   /**
