@@ -9,15 +9,28 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.481 (534) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - Resilient settings handling
+**Latest Version**: v1.32.482 (535) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - Startup preference repair
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **RESILIENT SETTINGS** - App gracefully handles corrupted preferences
+**Current Focus**: 🎯 **STARTUP REPAIR** - Corrupted preferences fixed automatically on load
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 15 fixes applied (see history below)
+**Critical Fixes**: 16 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.481) - RESILIENT SETTINGS HANDLING
+### 🔧 Latest Work (v1.32.482) - STARTUP PREFERENCE REPAIR
+
+**STARTUP PREFERENCE REPAIR (v1.32.482) - CRITICAL**
+- **Problem**: Settings page crashes even after import fix because corrupted values already stored
+- **Solution**: Add `repairCorruptedFloatPreferences()` that runs on Config load
+  - Checks all 22 known float preferences
+  - Detects if stored as wrong type (Integer/String)
+  - Converts to Float and saves back to SharedPreferences
+  - Logs repairs for debugging
+- **Files Modified**:
+  - Config.java: Added repairCorruptedFloatPreferences() called from constructor
+- **Status**: ✅ BUILT v1.32.482 - Settings page should now open after repair
+
+### 🔧 Previous Work (v1.32.481) - RESILIENT SETTINGS HANDLING
 
 **RESILIENT SETTINGS FIX (v1.32.481) - CRITICAL**
 - **Problem**: App crashes with ClassCastException when settings contain corrupted Float→Integer values

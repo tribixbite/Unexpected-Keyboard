@@ -149,6 +149,8 @@ public final class Config
   private Config(SharedPreferences prefs, Resources res, IKeyEventHandler h, Boolean foldableUnfolded)
   {
     _prefs = prefs;
+    // Repair any corrupted float preferences before loading
+    repairCorruptedFloatPreferences(prefs);
     // static values
     marginTop = res.getDimension(R.dimen.margin_top);
     keyPadding = res.getDimension(R.dimen.key_padding);
@@ -466,6 +468,83 @@ public final class Config
         android.util.Log.w("Config", "Invalid number format for " + key + ": " + stringValue + ", using default: " + defaultValue);
         return defaultValue;
       }
+    }
+  }
+
+  /**
+   * Repair corrupted float preferences that were imported as integers.
+   * This runs on startup before any preference UI loads, fixing the stored values.
+   */
+  private static void repairCorruptedFloatPreferences(SharedPreferences prefs)
+  {
+    // All known float preferences with their default values
+    String[][] floatPrefs = {
+      {"character_size", "1.15"},
+      {"key_vertical_margin", "1.5"},
+      {"key_horizontal_margin", "2.0"},
+      {"custom_border_line_width", "0.0"},
+      {"prediction_context_boost", "2.0"},
+      {"prediction_frequency_scale", "1000.0"},
+      {"autocorrect_char_match_threshold", "0.67"},
+      {"neural_confidence_threshold", "0.1"},
+      {"swipe_rare_words_penalty", "0.75"},
+      {"swipe_common_words_boost", "1.3"},
+      {"swipe_top5000_boost", "1.0"},
+      // SwipeAdvancedSettings floats
+      {"gaussian_sigma_x", "0.4"},
+      {"gaussian_sigma_y", "0.35"},
+      {"gaussian_min_prob", "0.01"},
+      {"sakoe_chiba_width", "0.2"},
+      {"calibration_weight", "0.7"},
+      {"calibration_boost", "0.8"},
+      {"min_path_length_ratio", "0.3"},
+      {"max_path_length_ratio", "3.0"},
+      {"loop_threshold", "0.15"},
+      {"turning_point_threshold", "30.0"},
+      {"ngram_smoothing", "0.1"}
+    };
+
+    SharedPreferences.Editor editor = prefs.edit();
+    boolean needsCommit = false;
+
+    for (String[] pref : floatPrefs)
+    {
+      String key = pref[0];
+      float defaultValue = Float.parseFloat(pref[1]);
+
+      try {
+        // Try to read as float - if this works, no repair needed
+        prefs.getFloat(key, defaultValue);
+      } catch (ClassCastException e) {
+        // Value is corrupted (stored as wrong type)
+        try {
+          // Try reading as integer and convert
+          int intValue = prefs.getInt(key, (int)defaultValue);
+          float floatValue = (float)intValue;
+          editor.putFloat(key, floatValue);
+          needsCommit = true;
+          android.util.Log.w("Config", "Repaired corrupted preference " + key + ": int " + intValue + " → float " + floatValue);
+        } catch (ClassCastException e2) {
+          // Try reading as string and convert
+          try {
+            String stringValue = prefs.getString(key, String.valueOf(defaultValue));
+            float floatValue = Float.parseFloat(stringValue);
+            editor.putFloat(key, floatValue);
+            needsCommit = true;
+            android.util.Log.w("Config", "Repaired corrupted preference " + key + ": string \"" + stringValue + "\" → float " + floatValue);
+          } catch (Exception e3) {
+            // Give up and use default
+            editor.putFloat(key, defaultValue);
+            needsCommit = true;
+            android.util.Log.w("Config", "Reset corrupted preference " + key + " to default: " + defaultValue);
+          }
+        }
+      }
+    }
+
+    if (needsCommit) {
+      editor.apply();
+      android.util.Log.i("Config", "Applied preference repairs");
     }
   }
 
