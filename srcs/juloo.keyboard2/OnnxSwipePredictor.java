@@ -658,7 +658,7 @@ public class OnnxSwipePredictor
     try
     {
       // Pre-allocate arrays for decoder sequence length (must match model_config.json max_word_len)
-      int decoderSeqLength = 25; // MUST match model_config.json max_word_len
+      int decoderSeqLength = 20; // MUST match actual model export (not model_config.json)
       _reusableTokensArray = new long[decoderSeqLength];
       _reusableTargetMaskArray = new boolean[1][decoderSeqLength];
       _reusableTokensBuffer = java.nio.LongBuffer.allocate(decoderSeqLength);
@@ -753,7 +753,7 @@ public class OnnxSwipePredictor
         _pooledSrcMaskArray = new boolean[newCapacity][memorySeqLen];
 
         // Reallocate ByteBuffer for tokens (need to recreate due to fixed size)
-        final int DECODER_SEQ_LENGTH = 25; // MUST match model_config.json max_word_len
+        final int DECODER_SEQ_LENGTH = 20; // MUST match actual model export
         int tokensByteBufferSize = newCapacity * DECODER_SEQ_LENGTH * 8;
         _pooledTokensByteBuffer = java.nio.ByteBuffer.allocateDirect(tokensByteBufferSize);
         _pooledTokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
@@ -984,7 +984,7 @@ public class OnnxSwipePredictor
       try
       {
         // Create fresh tensors like CLI test (no reusable buffers)
-        final int DECODER_SEQ_LENGTH = 25; // MUST match model_config.json max_word_len
+        final int DECODER_SEQ_LENGTH = 20; // MUST match actual model export
 
         // Pad sequence to DECODER_SEQ_LENGTH (V4 expects int32 for target_tokens)
         int[] tgtTokens = new int[DECODER_SEQ_LENGTH];
@@ -1087,8 +1087,7 @@ public class OnnxSwipePredictor
     // Update neural parameters from config
     if (config != null)
     {
-      int requestedBeamWidth = config.neural_beam_width != 0 ? config.neural_beam_width : DEFAULT_BEAM_WIDTH;
-      _beamWidth = Math.min(requestedBeamWidth, 8); // Clamp to 8 to prevent ONNX reshape errors
+      _beamWidth = config.neural_beam_width != 0 ? config.neural_beam_width : DEFAULT_BEAM_WIDTH;
       _maxLength = config.neural_max_length != 0 ? config.neural_max_length : DEFAULT_MAX_LENGTH;
       _confidenceThreshold = config.neural_confidence_threshold != 0 ?
         config.neural_confidence_threshold : DEFAULT_CONFIDENCE_THRESHOLD;
@@ -1454,7 +1453,7 @@ public class OnnxSwipePredictor
     // Beam search parameters matching CLI test exactly
     int beamWidth = _beamWidth;
     int maxLength = _maxLength;
-    final int DECODER_SEQ_LEN = 25; // Fixed decoder sequence length - MUST match model_config.json max_word_len
+    final int DECODER_SEQ_LEN = 20; // Fixed decoder sequence length - MUST match actual model export
     int vocabSize = _tokenizer.getVocabSize();
 
     // Get memory from encoder output using proper ONNX API
