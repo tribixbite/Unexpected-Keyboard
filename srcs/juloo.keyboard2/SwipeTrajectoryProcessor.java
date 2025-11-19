@@ -106,19 +106,14 @@ public class SwipeTrajectoryProcessor
       return new TrajectoryFeatures();
     }
 
-    // Log.d(TAG, String.format("🔬 Extracting features from %d raw points", coordinates.size()));
+    // CRITICAL: Use raw coordinates directly - model was trained on raw data
+    // DO NOT filter duplicates - it corrupts actual_length and changes what model sees
+    // (v1.32.470 fix)
 
-    // 1. Filter duplicate starting points (FIX #34 from cleverkeys)
-    List<PointF> filteredCoords = filterDuplicateStartingPoints(coordinates);
-    if (filteredCoords.size() < coordinates.size()) {
-      // Log.d(TAG, String.format("🔧 Filtered %d duplicate starting points (%d → %d)",
-        // coordinates.size() - filteredCoords.size(), coordinates.size(), filteredCoords.size()));
-    }
+    // 1. Normalize coordinates (0-1 range)
+    List<PointF> normalizedCoords = normalizeCoordinates(coordinates);
 
-    // 2. Normalize coordinates FIRST (0-1 range) - matches cleverkeys
-    List<PointF> normalizedCoords = normalizeCoordinates(filteredCoords);
-
-    // 3. Apply resampling if sequence exceeds maxSequenceLength
+    // 2. Apply resampling if sequence exceeds maxSequenceLength
     List<PointF> processedCoords = normalizedCoords;
 
     if (normalizedCoords.size() > maxSequenceLength && _resamplingMode != SwipeResampler.ResamplingMode.TRUNCATE)
@@ -149,45 +144,36 @@ public class SwipeTrajectoryProcessor
       }
     }
 
-    // 4. Detect nearest keys from FINAL processed coordinates (already normalized!)
+    // 3. Detect nearest keys from FINAL processed coordinates (already normalized!)
     // CRITICAL: Must happen AFTER resampling to maintain point-key correspondence
     List<Integer> processedKeys = detectNearestKeys(processedCoords);
 
-    // 5. Calculate velocities and accelerations on ACTUAL trajectory (before padding)
-    // CRITICAL: Training calculates features first, then pads feature array with zeros
-    // If we pad coordinates first, we get velocity spikes at padding boundary!
+    // 4. Calculate velocities and accelerations using TrajectoryFeatureCalculator (v1.32.472)
+    // CRITICAL: Must match Python training code exactly!
+    // - Velocity = position_change / time_change
+    // - Acceleration = velocity_change / time_change
+    // - All clipped to [-10, 10]
     int actualLength = processedCoords.size();
     List<TrajectoryPoint> points = new ArrayList<>();
 
-    for (int i = 0; i < actualLength; i++)
+    // Use Kotlin TrajectoryFeatureCalculator for correct feature calculation
+    List<TrajectoryFeatureCalculator.FeaturePoint> featurePoints =
+        TrajectoryFeatureCalculator.INSTANCE.calculateFeatures(processedCoords, timestamps);
+
+    // Convert to TrajectoryPoint list
+    for (TrajectoryFeatureCalculator.FeaturePoint fp : featurePoints)
     {
       TrajectoryPoint point = new TrajectoryPoint();
-      point.x = processedCoords.get(i).x;
-      point.y = processedCoords.get(i).y;
-
-      if (i == 0) {
-        point.vx = 0.0f;
-        point.vy = 0.0f;
-        point.ax = 0.0f;
-        point.ay = 0.0f;
-      } else {
-        TrajectoryPoint prev = points.get(i - 1);
-        point.vx = point.x - prev.x;
-        point.vy = point.y - prev.y;
-
-        if (i == 1) {
-          point.ax = 0.0f;
-          point.ay = 0.0f;
-        } else {
-          point.ax = point.vx - prev.vx;
-          point.ay = point.vy - prev.vy;
-        }
-      }
-
+      point.x = fp.getX();
+      point.y = fp.getY();
+      point.vx = fp.getVx();
+      point.vy = fp.getVy();
+      point.ax = fp.getAx();
+      point.ay = fp.getAy();
       points.add(point);
     }
 
-    // 6. Truncate or pad features to maxSequenceLength
+    // 5. Truncate or pad features to maxSequenceLength
     // Training: traj_features = np.pad(traj_features, ((0, pad_len), (0, 0)), mode="constant")
     if (points.size() > maxSequenceLength) {
       // Truncate
@@ -206,7 +192,7 @@ public class SwipeTrajectoryProcessor
       }
     }
 
-    // 7. Truncate or pad nearest_keys with PAD token (0)
+    // 6. Truncate or pad nearest_keys with PAD token (0)
     // Training: nearest_keys = nearest_keys + [self.tokenizer.pad_idx] * pad_len
     List<Integer> finalNearestKeys;
     if (processedKeys.size() >= maxSequenceLength) {
@@ -238,38 +224,6 @@ public class SwipeTrajectoryProcessor
       // points.size(), finalNearestKeys.size(), maxSequenceLength));
 
     return features;
-  }
-
-  /**
-   * Filter duplicate starting points to prevent zero velocity (FIX #34 from cleverkeys)
-   * Android may report same coordinates multiple times before finger movement detected
-   */
-  private List<PointF> filterDuplicateStartingPoints(List<PointF> coordinates)
-  {
-    if (coordinates.isEmpty()) return coordinates;
-
-    float threshold = 1f; // 1 pixel tolerance
-    List<PointF> filtered = new ArrayList<>();
-    filtered.add(coordinates.get(0));
-
-    // Skip consecutive duplicates at the start
-    int i = 1;
-    while (i < coordinates.size()) {
-      PointF prev = filtered.get(filtered.size() - 1);
-      PointF curr = coordinates.get(i);
-
-      float dx = Math.abs(curr.x - prev.x);
-      float dy = Math.abs(curr.y - prev.y);
-
-      // If this point is different, keep it and all remaining points
-      if (dx > threshold || dy > threshold) {
-        filtered.addAll(coordinates.subList(i, coordinates.size()));
-        break;
-      }
-      i++;
-    }
-
-    return filtered;
   }
 
   /**

@@ -454,9 +454,12 @@ public class OnnxSwipePredictor
 
           logDebug("📍 First point: " + firstDetail);
           logDebug("📍 Last point: " + lastDetail);
+
+          // Log actualLength to verify it matches input coordinate count
+          logDebug(String.format("📏 ACTUAL_LENGTH: %d (encoder/decoder mask threshold)\n", features.actualLength));
         }
       }
-      
+
       // Run encoder inference with proper ONNX API
       OnnxTensor trajectoryTensor = null;
       OnnxTensor nearestKeysTensor = null;
@@ -593,8 +596,8 @@ public class OnnxSwipePredictor
   {
     try
     {
-      // Pre-allocate arrays for decoder sequence length (typically 20)
-      int decoderSeqLength = 20; // Standard sequence length for decoder
+      // Pre-allocate arrays for decoder sequence length (must match model_config.json max_word_len)
+      int decoderSeqLength = 25; // MUST match model_config.json max_word_len
       _reusableTokensArray = new long[decoderSeqLength];
       _reusableTargetMaskArray = new boolean[1][decoderSeqLength];
       _reusableTokensBuffer = java.nio.LongBuffer.allocate(decoderSeqLength);
@@ -674,7 +677,7 @@ public class OnnxSwipePredictor
         _pooledSrcMaskArray = new boolean[newCapacity][memorySeqLen];
 
         // Reallocate ByteBuffer for tokens (need to recreate due to fixed size)
-        final int DECODER_SEQ_LENGTH = 20; // Fixed decoder sequence length
+        final int DECODER_SEQ_LENGTH = 25; // MUST match model_config.json max_word_len
         int tokensByteBufferSize = newCapacity * DECODER_SEQ_LENGTH * 8;
         _pooledTokensByteBuffer = java.nio.ByteBuffer.allocateDirect(tokensByteBufferSize);
         _pooledTokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
@@ -905,7 +908,7 @@ public class OnnxSwipePredictor
       try
       {
         // Create fresh tensors like CLI test (no reusable buffers)
-        final int DECODER_SEQ_LENGTH = 20;
+        final int DECODER_SEQ_LENGTH = 25; // MUST match model_config.json max_word_len
 
         // Pad sequence to DECODER_SEQ_LENGTH (V4 expects int32 for target_tokens)
         int[] tgtTokens = new int[DECODER_SEQ_LENGTH];
@@ -1374,7 +1377,7 @@ public class OnnxSwipePredictor
     // Beam search parameters matching CLI test exactly
     int beamWidth = _beamWidth;
     int maxLength = _maxLength;
-    final int DECODER_SEQ_LENGTH = 20; // Fixed decoder sequence length like CLI
+    final int DECODER_SEQ_LENGTH = 25; // Fixed decoder sequence length - MUST match model_config.json max_word_len
     int vocabSize = _tokenizer.getVocabSize();
 
     // Get memory from encoder output using proper ONNX API
