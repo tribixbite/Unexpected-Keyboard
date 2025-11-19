@@ -9,17 +9,62 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.469 (522) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - ANALYSIS & KOTLIN EXTRACTION
+**Latest Version**: v1.32.472 (525) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - CRITICAL FEATURE CALCULATION FIX
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **KEY DETECTION DEBUGGING** - Thorough analysis of coordinate flow + Kotlin extraction
-**Refactoring Progress**: Phase 4 COMPLETE! + New Kotlin extraction (CoordinateNormalizer.kt)
+**Current Focus**: 🎯 **FEATURE CALCULATION FIX** - Velocity/acceleration now matches Python training
+**Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 11 fixes applied (see history below)
+**Critical Fixes**: 12 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.467-469) - THOROUGH ANALYSIS & KOTLIN EXTRACTION
+### 🔧 Latest Work (v1.32.470-472) - CRITICAL FEATURE CALCULATION FIX
 
-**KEY DETECTION DEBUGGING (v1.32.467-469) - IN PROGRESS**
+**VELOCITY/ACCELERATION FIX (v1.32.472) - CRITICAL**
+- **Problem**: 'only' outputs 'onlo', 'zen' outputs 'cen', 'y' and 'z' not detected
+- **Root Cause Discovery** (via test_alpha_model.py analysis):
+  1. **Velocity calculation was completely WRONG**:
+     - Java: `vx = x - prev_x` (just position difference)
+     - Python: `vx = (x - prev_x) / dt` (position change / time change)
+  2. **Acceleration calculation was wrong**:
+     - Java: `ax = vx - prev_vx` (just velocity difference)
+     - Python: `ax = (vx - prev_vx) / dt` (velocity change / time change)
+  3. **No clipping** to [-10, 10] range
+  4. **DECODER_SEQ_LENGTH = 20** but should be **25** (max_word_len)
+
+- **Fix**: Created TrajectoryFeatureCalculator.kt with Python-matching implementation
+  ```kotlin
+  // Correct velocity calculation
+  for (i in 1 until n) {
+      vx[i] = (xs[i] - xs[i - 1]) / dt[i]  // CRITICAL: divide by dt
+      vy[i] = (ys[i] - ys[i - 1]) / dt[i]
+  }
+
+  // Correct acceleration calculation
+  for (i in 1 until n) {
+      ax[i] = (vx[i] - vx[i - 1]) / dt[i]  // CRITICAL: divide by dt
+      ay[i] = (vy[i] - vy[i - 1]) / dt[i]
+  }
+
+  // Clip to [-10, 10]
+  vx[i] = vx[i].coerceIn(-10f, 10f)
+  ```
+
+- **Files Modified/Created**:
+  - TrajectoryFeatureCalculator.kt: NEW - Correct Python-matching feature calculation
+  - SwipeTrajectoryProcessor.java: Integrated TrajectoryFeatureCalculator
+  - OnnxSwipePredictor.java: Fixed DECODER_SEQ_LENGTH from 20 to 25 (4 locations)
+
+- **Status**: ✅ BUILT v1.32.472 - Ready for testing
+
+**DUPLICATE FILTERING REMOVAL (v1.32.470-471)**
+- **Problem**: actualLength was corrupted by `filterDuplicateStartingPoints()`
+- **Root Cause**: Model was trained on RAW data, not filtered data
+- **Fix**: Removed entire `filterDuplicateStartingPoints()` method
+- **Status**: ✅ FIXED
+
+### 🔧 Previous Work (v1.32.467-469) - THOROUGH ANALYSIS & KOTLIN EXTRACTION
+
+**KEY DETECTION DEBUGGING (v1.32.467-469)**
 - **Problem**: 'only' outputs 'onlo', 'zen' outputs 'cen'
 - **Key Observations**:
   - Both 'y' and 'o' are top row keys (Y=0.167) but different X (0.55 vs 0.85)
