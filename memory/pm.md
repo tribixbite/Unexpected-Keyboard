@@ -9,15 +9,47 @@
 
 ## 🔥 Current Status (2025-11-18 - UPDATED)
 
-**Latest Version**: v1.32.454 (507) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - V4 ONNX INTERFACE DEPLOYED
+**Latest Version**: v1.32.464 (517) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - QWERTY BOUNDS FIX DEPLOYED
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **V4 MODEL INTERFACE** - Internal masking, simplified Java side
+**Current Focus**: 🎯 **Y-AXIS NORMALIZATION FIX** - Correct QWERTY area bounds for key detection
 **Refactoring Progress**: Phase 4 COMPLETE! (Phase 1: 3/3 ✅, Phase 2: 2/2 ✅, Phase 3: 2/2 ✅, Phase 4: COMPLETE ✅)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 8 fixes applied (V4 interface, Keyboard layout, Debug logging, Tokenizer, Mask types, ONNX cross-attention)
+**Critical Fixes**: 9 fixes applied (QWERTY bounds, V4 interface, Keyboard layout, Debug logging, Tokenizer, Mask types, ONNX cross-attention)
 
-### 🔧 Latest Work (v1.32.454) - V4 ONNX MODEL INTERFACE
+### 🔧 Latest Work (v1.32.464) - QWERTY AREA BOUNDS FIX
+
+**Y-AXIS NORMALIZATION FIX (v1.32.464) - CRITICAL**
+- **Problem**: Keys 'x', 'z' never detected; 'your' outputs as 'hour'
+- **Root Cause**: Y-coordinates normalized over full keyboard view height (including suggestion bar, number row) instead of just QWERTY key area
+- **Analysis by Gemini 2.5 Pro**:
+  - KeyboardGrid.kt implementation is correct (row heights, offsets match Python)
+  - Issue is upstream in coordinate normalization
+  - QWERTY bottom row y-center = 0.833, but normalized y never exceeds ~0.6
+  - 'y' at y=0.167 being detected as 'h' at y=0.5 due to compression
+- **Fix**: Add QWERTY area bounds tracking and use for Y normalization
+  ```java
+  // SwipeTrajectoryProcessor.java - new bounds
+  private float _qwertyAreaTop = 0.0f;
+  private float _qwertyAreaHeight = 0.0f;
+
+  // Normalize Y over QWERTY area only
+  y = (point.y - _qwertyAreaTop) / _qwertyAreaHeight;
+  ```
+- **Files Modified**:
+  - SwipeTrajectoryProcessor.java: Add QWERTY bounds, update normalization
+  - OnnxSwipePredictor.java: Add setQwertyAreaBounds()
+  - NeuralSwipeTypingEngine.java: Propagate setQwertyAreaBounds()
+  - NeuralLayoutHelper.java: Calculate bounds from q/m key positions
+  - KeyboardGrid.kt: Add debug methods (getDetailedDetection, getKeyRow)
+  - Keyboard2.java: Connect debug logger to PredictionCoordinator
+  - PredictionCoordinator.java: Add debug logger support
+- **Also Fixed**:
+  - Debug logging now appears in SwipeDebugActivity (was only going to logcat)
+  - Key detection logs show detailed info (keyboard size, detected sequence, coordinates)
+- **Status**: ✅ BUILT v1.32.464 - Ready for testing
+
+### 🔧 Previous Work (v1.32.454) - V4 ONNX MODEL INTERFACE
 
 **V4 INTERFACE UPDATE (v1.32.454) - CRITICAL**
 - **Problem**: OrtException - "Unknown input name src_mask, expected one of [trajectory_features, nearest_keys, actual_length]"
