@@ -157,9 +157,9 @@ public class OptimizedVocabulary
         confidenceWeight = predictionSource / 100.0f;  // 0-100 slider → 0.0-1.0 weight
         frequencyWeight = 1.0f - confidenceWeight;     // Complementary weight
 
-        commonBoost = prefs.getFloat("swipe_common_words_boost", COMMON_WORDS_BOOST);
-        top5000Boost = prefs.getFloat("swipe_top5000_boost", TOP5000_BOOST);
-        rarePenalty = prefs.getFloat("swipe_rare_words_penalty", RARE_WORDS_PENALTY);
+        commonBoost = Config.safeGetFloat(prefs, "swipe_common_words_boost", COMMON_WORDS_BOOST);
+        top5000Boost = Config.safeGetFloat(prefs, "swipe_top5000_boost", TOP5000_BOOST);
+        rarePenalty = Config.safeGetFloat(prefs, "swipe_rare_words_penalty", RARE_WORDS_PENALTY);
 
         // Read autocorrect configuration (v1.33.4: beam autocorrect only, final autocorrect handled separately)
         swipeAutocorrectEnabled = prefs.getBoolean("swipe_beam_autocorrect_enabled", true);
@@ -167,7 +167,7 @@ public class OptimizedVocabulary
         prefixLength = prefs.getInt("autocorrect_prefix_length", 2);
         maxBeamCandidates = prefs.getInt("autocorrect_max_beam_candidates", 3);
         minWordLength = prefs.getInt("autocorrect_min_word_length", 3);
-        charMatchThreshold = prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
+        charMatchThreshold = Config.safeGetFloat(prefs, "autocorrect_char_match_threshold", 0.67f);
 
         // v1.33.6: Fuzzy matching algorithm selection (edit_distance or positional)
         String fuzzyMatchMode = prefs.getString("swipe_fuzzy_match_mode", "edit_distance");

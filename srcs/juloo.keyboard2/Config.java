@@ -181,12 +181,12 @@ public final class Config
     {
       if ("landscape".equals(show_numpad_s))
         show_numpad = true;
-      keyboardHeightPercent = _prefs.getInt(foldable_unfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape", 50);
+      keyboardHeightPercent = safeGetInt(_prefs, foldable_unfolded ? "keyboard_height_landscape_unfolded" : "keyboard_height_landscape", 50);
       characterSizeScale = 1.25f;
     }
     else
     {
-      keyboardHeightPercent = _prefs.getInt(foldable_unfolded ? "keyboard_height_unfolded" : "keyboard_height", 35);
+      keyboardHeightPercent = safeGetInt(_prefs, foldable_unfolded ? "keyboard_height_unfolded" : "keyboard_height", 35);
     }
     layouts = LayoutsPreference.load_from_preferences(res, _prefs);
     inverse_numpad = _prefs.getString("numpad_layout", "default").equals("low_first");
@@ -204,19 +204,19 @@ public final class Config
     float slider_sensitivity = Float.valueOf(_prefs.getString("slider_sensitivity", "30")) / 100.f;
     slide_step_px = slider_sensitivity * swipe_scaling;
     vibrate_custom = _prefs.getBoolean("vibrate_custom", false);
-    vibrate_duration = _prefs.getInt("vibrate_duration", 20);
-    longPressTimeout = _prefs.getInt("longpress_timeout", 600);
-    longPressInterval = _prefs.getInt("longpress_interval", 65);
+    vibrate_duration = safeGetInt(_prefs, "vibrate_duration", 20);
+    longPressTimeout = safeGetInt(_prefs, "longpress_timeout", 600);
+    longPressInterval = safeGetInt(_prefs, "longpress_interval", 65);
     keyrepeat_enabled = _prefs.getBoolean("keyrepeat_enabled", true);
     margin_bottom = get_dip_pref_oriented(dm, "margin_bottom", 7, 3);
     key_vertical_margin = get_dip_pref(dm, "key_vertical_margin", 1.5f) / 100;
     key_horizontal_margin = get_dip_pref(dm, "key_horizontal_margin", 2) / 100;
     // Label brightness is used as the alpha channel
-    labelBrightness = _prefs.getInt("label_brightness", 100) * 255 / 100;
+    labelBrightness = safeGetInt(_prefs, "label_brightness", 100) * 255 / 100;
     // Keyboard opacity
-    keyboardOpacity = _prefs.getInt("keyboard_opacity", 100) * 255 / 100;
-    keyOpacity = _prefs.getInt("key_opacity", 100) * 255 / 100;
-    keyActivatedOpacity = _prefs.getInt("key_activated_opacity", 100) * 255 / 100;
+    keyboardOpacity = safeGetInt(_prefs, "keyboard_opacity", 100) * 255 / 100;
+    keyOpacity = safeGetInt(_prefs, "key_opacity", 100) * 255 / 100;
+    keyActivatedOpacity = safeGetInt(_prefs, "key_activated_opacity", 100) * 255 / 100;
     // keyboard border settings
     borderConfig = _prefs.getBoolean("border_config", false);
     customBorderRadius = _prefs.getInt("custom_border_radius", 0) / 100.f;
@@ -226,7 +226,7 @@ public final class Config
       get_dip_pref_oriented(dm, "horizontal_margin", 3, 28);
     double_tap_lock_shift = _prefs.getBoolean("lock_double_tap", false);
     characterSize =
-      _prefs.getFloat("character_size", 1.15f)
+      safeGetFloat(_prefs, "character_size", 1.15f)
       * characterSizeScale;
     theme = getThemeId(res, _prefs.getString("theme", ""));
     autocapitalisation = _prefs.getBoolean("autocapitalisation", true);
@@ -234,8 +234,8 @@ public final class Config
     extra_keys_param = ExtraKeysPreference.get_extra_keys(_prefs);
     extra_keys_custom = CustomExtraKeysPreference.get(_prefs);
     selected_number_layout = NumberLayout.of_string(_prefs.getString("number_entry_layout", "pin"));
-    current_layout_narrow = _prefs.getInt("current_layout_portrait", 0);
-    current_layout_wide = _prefs.getInt("current_layout_landscape", 0);
+    current_layout_narrow = safeGetInt(_prefs, "current_layout_portrait", 0);
+    current_layout_wide = safeGetInt(_prefs, "current_layout_landscape", 0);
     circle_sensitivity = Integer.valueOf(_prefs.getString("circle_sensitivity", "2"));
     clipboard_history_enabled = _prefs.getBoolean("clipboard_history_enabled", false);
     try {
@@ -264,13 +264,13 @@ public final class Config
     suggestion_bar_opacity = safeGetInt(_prefs, "suggestion_bar_opacity", 90);
 
     // Word prediction scoring weights
-    prediction_context_boost = _prefs.getFloat("prediction_context_boost", 2.0f);
-    prediction_frequency_scale = _prefs.getFloat("prediction_frequency_scale", 1000.0f);
+    prediction_context_boost = safeGetFloat(_prefs, "prediction_context_boost", 2.0f);
+    prediction_frequency_scale = safeGetFloat(_prefs, "prediction_frequency_scale", 1000.0f);
 
     // Auto-correction settings
     autocorrect_enabled = _prefs.getBoolean("autocorrect_enabled", true);
     autocorrect_min_word_length = safeGetInt(_prefs, "autocorrect_min_word_length", 3);
-    autocorrect_char_match_threshold = _prefs.getFloat("autocorrect_char_match_threshold", 0.67f);
+    autocorrect_char_match_threshold = safeGetFloat(_prefs, "autocorrect_char_match_threshold", 0.67f);
     autocorrect_confidence_min_frequency = safeGetInt(_prefs, "autocorrect_confidence_min_frequency", 500);
 
     // Fuzzy matching configuration (swipe autocorrect) - v1.33+
@@ -290,9 +290,9 @@ public final class Config
     swipe_confidence_weight = predictionSource / 100.0f;
     swipe_frequency_weight = 1.0f - swipe_confidence_weight;
 
-    swipe_common_words_boost = _prefs.getFloat("swipe_common_words_boost", 1.3f);
-    swipe_top5000_boost = _prefs.getFloat("swipe_top5000_boost", 1.0f);
-    swipe_rare_words_penalty = _prefs.getFloat("swipe_rare_words_penalty", 0.75f);
+    swipe_common_words_boost = safeGetFloat(_prefs, "swipe_common_words_boost", 1.3f);
+    swipe_top5000_boost = safeGetFloat(_prefs, "swipe_top5000_boost", 1.0f);
+    swipe_rare_words_penalty = safeGetFloat(_prefs, "swipe_rare_words_penalty", 0.75f);
 
     // Short gesture configuration
     short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true);
@@ -304,7 +304,7 @@ public final class Config
     // Reduced from 8 to 2 beams for 4x speedup while keeping max_length for long words
     neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 2);
     neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);
-    neural_confidence_threshold = _prefs.getFloat("neural_confidence_threshold", 0.1f);
+    neural_confidence_threshold = safeGetFloat(_prefs, "neural_confidence_threshold", 0.1f);
     termux_mode_enabled = _prefs.getBoolean("termux_mode_enabled", false);
     swipe_debug_detailed_logging = _prefs.getBoolean("swipe_debug_detailed_logging", false);
     swipe_debug_show_raw_output = _prefs.getBoolean("swipe_debug_show_raw_output", true);
@@ -371,7 +371,18 @@ public final class Config
   {
     float value;
     try { value = _prefs.getInt(pref_name, -1); }
-    catch (Exception e) { value = _prefs.getFloat(pref_name, -1f); }
+    catch (Exception e) {
+      // Try float, then string, with safe fallback
+      try { value = _prefs.getFloat(pref_name, -1f); }
+      catch (Exception e2) {
+        try {
+          String stringValue = _prefs.getString(pref_name, String.valueOf(def));
+          value = Float.parseFloat(stringValue);
+        } catch (Exception e3) {
+          value = -1f;
+        }
+      }
+    }
     if (value < 0f)
       value = def;
     return (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, dm));
@@ -454,6 +465,36 @@ public final class Config
       } catch (NumberFormatException nfe) {
         android.util.Log.w("Config", "Invalid number format for " + key + ": " + stringValue + ", using default: " + defaultValue);
         return defaultValue;
+      }
+    }
+  }
+
+  /**
+   * Safely get float preference, handling corrupted values from bad imports.
+   * Tries Float → Integer → String conversions before using default.
+   * Public so other classes (OptimizedVocabulary, SwipeAdvancedSettings, etc.) can use it.
+   */
+  public static float safeGetFloat(SharedPreferences prefs, String key, float defaultValue)
+  {
+    try {
+      return prefs.getFloat(key, defaultValue);
+    } catch (ClassCastException e) {
+      // Try reading as Integer (common corruption from JSON import)
+      try {
+        int intValue = prefs.getInt(key, (int)defaultValue);
+        android.util.Log.w("Config", "Float preference " + key + " was stored as int: " + intValue);
+        return (float)intValue;
+      } catch (ClassCastException e2) {
+        // Try reading as String
+        try {
+          String stringValue = prefs.getString(key, String.valueOf(defaultValue));
+          float parsed = Float.parseFloat(stringValue);
+          android.util.Log.w("Config", "Float preference " + key + " was stored as string: " + stringValue);
+          return parsed;
+        } catch (Exception e3) {
+          android.util.Log.w("Config", "Corrupted float preference " + key + ", using default: " + defaultValue);
+          return defaultValue;
+        }
       }
     }
   }

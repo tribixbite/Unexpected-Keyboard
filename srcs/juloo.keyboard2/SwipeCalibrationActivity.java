@@ -175,11 +175,11 @@ public class SwipeCalibrationActivity extends Activity
     _keyboardHeight = (int)(_screenHeight * keyboardHeightPercent);
     Log.d(TAG, "Calculated keyboard height: " + _keyboardHeight + " pixels (" + keyboardHeightPref + "% of " + _screenHeight + ")");
     
-    // Load user's text and margin settings  
-    _characterSize = prefs.getFloat("character_size", 1.15f);
+    // Load user's text and margin settings
+    _characterSize = Config.safeGetFloat(prefs, "character_size", 1.15f);
     _labelTextSize = 0.33f;
-    _keyVerticalMargin = prefs.getFloat("key_vertical_margin", 1.5f) / 100;
-    _keyHorizontalMargin = prefs.getFloat("key_horizontal_margin", 2.0f) / 100;
+    _keyVerticalMargin = Config.safeGetFloat(prefs, "key_vertical_margin", 1.5f) / 100;
+    _keyHorizontalMargin = Config.safeGetFloat(prefs, "key_horizontal_margin", 2.0f) / 100;
     
     // Load contraction mappings for apostrophe display
     loadContractionMappings();

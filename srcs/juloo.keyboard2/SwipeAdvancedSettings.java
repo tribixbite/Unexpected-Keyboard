@@ -57,25 +57,25 @@ public class SwipeAdvancedSettings
   
   private void loadSettings()
   {
-    _gaussianSigmaXFactor = _prefs.getFloat("gaussian_sigma_x", 0.4f);
-    _gaussianSigmaYFactor = _prefs.getFloat("gaussian_sigma_y", 0.35f);
-    _gaussianMinProbability = _prefs.getFloat("gaussian_min_prob", 0.01f);
-    
+    _gaussianSigmaXFactor = Config.safeGetFloat(_prefs, "gaussian_sigma_x", 0.4f);
+    _gaussianSigmaYFactor = Config.safeGetFloat(_prefs, "gaussian_sigma_y", 0.35f);
+    _gaussianMinProbability = Config.safeGetFloat(_prefs, "gaussian_min_prob", 0.01f);
+
     _dtwSamplingPoints = _prefs.getInt("dtw_sampling_points", 200);
-    _sakoeChibaBandWidth = _prefs.getFloat("sakoe_chiba_width", 0.2f);
-    
-    _calibrationWeight = _prefs.getFloat("calibration_weight", 0.7f);
-    _calibrationBoost = _prefs.getFloat("calibration_boost", 0.8f);
-    
-    _minPathLengthRatio = _prefs.getFloat("min_path_length_ratio", 0.3f);
-    _maxPathLengthRatio = _prefs.getFloat("max_path_length_ratio", 3.0f);
-    
-    _loopDetectionThreshold = _prefs.getFloat("loop_threshold", 0.15f);
+    _sakoeChibaBandWidth = Config.safeGetFloat(_prefs, "sakoe_chiba_width", 0.2f);
+
+    _calibrationWeight = Config.safeGetFloat(_prefs, "calibration_weight", 0.7f);
+    _calibrationBoost = Config.safeGetFloat(_prefs, "calibration_boost", 0.8f);
+
+    _minPathLengthRatio = Config.safeGetFloat(_prefs, "min_path_length_ratio", 0.3f);
+    _maxPathLengthRatio = Config.safeGetFloat(_prefs, "max_path_length_ratio", 3.0f);
+
+    _loopDetectionThreshold = Config.safeGetFloat(_prefs, "loop_threshold", 0.15f);
     _loopMinPoints = _prefs.getInt("loop_min_points", 5);
-    
-    _turningPointThreshold = _prefs.getFloat("turning_point_threshold", 30.0f);
-    
-    _ngramSmoothingFactor = _prefs.getFloat("ngram_smoothing", 0.1f);
+
+    _turningPointThreshold = Config.safeGetFloat(_prefs, "turning_point_threshold", 30.0f);
+
+    _ngramSmoothingFactor = Config.safeGetFloat(_prefs, "ngram_smoothing", 0.1f);
     _contextWindowSize = _prefs.getInt("context_window", 2);
   }
   

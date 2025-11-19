@@ -9,15 +9,29 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.480 (533) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - Settings import crash fix
+**Latest Version**: v1.32.481 (534) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - Resilient settings handling
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **SETTINGS IMPORT FIX** - Float preferences now imported correctly
+**Current Focus**: 🎯 **RESILIENT SETTINGS** - App gracefully handles corrupted preferences
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 14 fixes applied (see history below)
+**Critical Fixes**: 15 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.478-480) - SETTINGS IMPORT CRASH FIX
+### 🔧 Latest Work (v1.32.481) - RESILIENT SETTINGS HANDLING
+
+**RESILIENT SETTINGS FIX (v1.32.481) - CRITICAL**
+- **Problem**: App crashes with ClassCastException when settings contain corrupted Float→Integer values
+- **Solution**: Make all float preference reads resilient with `safeGetFloat()` helper
+  - Tries Float → Integer → String conversions before using default
+  - Logs warnings but continues loading gracefully
+- **Files Modified**:
+  - Config.java: Added public `safeGetFloat()`, updated all `getFloat()` calls (8 preferences)
+  - OptimizedVocabulary.java: Use safeGetFloat for swipe boosts (4 preferences)
+  - SwipeAdvancedSettings.java: Use safeGetFloat for all float settings (11 preferences)
+  - SwipeCalibrationActivity.java: Use safeGetFloat for margins (3 preferences)
+- **Status**: ✅ BUILT v1.32.481 - App now loads gracefully even with corrupted settings
+
+### 🔧 Previous Work (v1.32.478-480) - SETTINGS IMPORT CRASH FIX
 
 **SETTINGS IMPORT CRASH FIX (v1.32.480) - CRITICAL**
 - **Problem**: Importing exported settings caused ClassCastException crash
