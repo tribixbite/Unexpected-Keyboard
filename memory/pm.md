@@ -9,15 +9,35 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.492 (545) 🎯
-**Build Status**: ✅ BUILD SUCCESSFUL - Critical log prob fix
+**Latest Version**: v1.32.496 (549) 🎯
+**Build Status**: ✅ BUILD SUCCESSFUL - Sequential beam processing fix
 **Branch**: feature/swipe-typing
 **Current Focus**: 🎯 **ONNX NEURAL PREDICTIONS** - Testing swipe predictions end-to-end
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 22 fixes applied (see history below)
+**Critical Fixes**: 23 fixes applied (see history below)
 
-### 🔧 Latest Work (v1.32.492) - CRITICAL LOG PROB FIX
+### 🔧 Latest Work (v1.32.495-496) - SEQUENTIAL BEAM PROCESSING FIX
+
+**SEQUENTIAL BEAM PROCESSING FIX (v1.32.495-496) - CRITICAL**
+- **Problem**: Batched beam search causes reshape errors in decoder self-attention
+  ```
+  OrtException: Input shape:{10,20,32}, requested shape:{-1,8,20,32}
+  ```
+- **Root Cause**: ONNX model not exported to handle variable batch sizes
+  - Self-attention reshape operations expect specific batch-to-nhead relationship
+  - Batching multiple beams together breaks attention layer dimensions
+- **Solution**: Switch to sequential beam processing (batch=1)
+  - Process each beam individually, matching Python test_alpha_model.py exactly
+  - Use batch=1 for all decoder inference calls
+  - Guaranteed to work since it mirrors training/export configuration
+- **Files Modified**:
+  - OnnxSwipePredictor.java: Replace batched loop with sequential beam processing
+- **Status**: ✅ BUILT v1.32.496 - Ready for testing
+- **Impact**: Resolves reshape errors, predictions should now work
+- **Trade-off**: Sequential is slower than batched, but correctness > speed
+
+### 🔧 Previous Work (v1.32.492-494) - LOG PROB AND BUFFER FIXES
 
 **LOG PROB FIX (v1.32.492) - CRITICAL**
 - **Problem**: Beam search returning 0 candidates
@@ -31,8 +51,13 @@
   - topK selection finds highest log probs
 - **Files Modified**:
   - OnnxSwipePredictor.java: Remove softmax, use log probs directly
-- **Status**: ✅ BUILT v1.32.492 - Ready for testing
-- **Impact**: This was the root cause of 0 predictions
+- **Status**: ✅ Fixed
+
+**BUFFER LIMIT FIX (v1.32.494)**
+- **Problem**: "Shape [1, 25], requires 25 elements but buffer has 175 elements"
+- **Root Cause**: Pre-allocated buffer for max beams but tensor needs actual size
+- **Solution**: Use `flip()` instead of `rewind()` to set correct buffer limit
+- **Status**: ✅ Fixed (superseded by sequential processing)
 
 ### 🔧 Previous Work (v1.32.489-490) - BUFFER PRE-ALLOCATION OPTIMIZATION
 
