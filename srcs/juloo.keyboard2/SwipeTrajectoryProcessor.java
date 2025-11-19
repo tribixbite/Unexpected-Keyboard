@@ -285,28 +285,16 @@ public class SwipeTrajectoryProcessor
 
     for (PointF point : coordinates)
     {
-      if (_keyPositions != null && !_keyPositions.isEmpty()) {
-        // Use actual keyboard layout positions - find nearest key
-        char closestChar = findNearestKey(point);
-        // Convert character to token index (a-z mapping to tokens 4-29)
-        int tokenIndex = charToTokenIndex(closestChar);
-        nearestKeys.add(tokenIndex);
-
-        // Build debug sequence (deduplicate consecutive chars for readability)
-        if (closestChar != lastDebugChar) {
-          debugKeySeq.append(closestChar);
-          lastDebugChar = closestChar;
-        }
-      } else {
-        // Fallback: use grid detection
-        int tokenIndex = detectKeyFromQwertyGrid(point);
-        nearestKeys.add(tokenIndex);
-        // Convert back to char for debug display
-        char debugChar = tokenIndex >= 4 && tokenIndex <= 29 ? (char)('a' + (tokenIndex - 4)) : '?';
-        if (debugChar != lastDebugChar) {
-          debugKeySeq.append(debugChar);
-          lastDebugChar = debugChar;
-        }
+      // ALWAYS use Python KeyboardGrid for nearest key detection
+      // The model was trained on this specific grid layout, NOT real keyboard positions
+      // Using real positions causes key mismatches (e.g., 'x' detected as 'd')
+      int tokenIndex = detectKeyFromQwertyGrid(point);
+      nearestKeys.add(tokenIndex);
+      // Convert back to char for debug display
+      char debugChar = tokenIndex >= 4 && tokenIndex <= 29 ? (char)('a' + (tokenIndex - 4)) : '?';
+      if (debugChar != lastDebugChar) {
+        debugKeySeq.append(debugChar);
+        lastDebugChar = debugChar;
       }
     }
 
