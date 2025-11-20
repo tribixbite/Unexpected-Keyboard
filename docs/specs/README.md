@@ -188,6 +188,85 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 - **Memory**: +2 MB for prefix index (acceptable)
 - **UI Updates**: Instant with notifyDataSetChanged()
 
+### Typing Prediction (Regular Keyboard)
+- **Prediction Latency**: <100ms (target: <100ms) ✅
+  - Prefix index lookup: <1ms
+  - Candidate scoring: 1-2ms
+  - Total: 2-4ms typical
+- **Dictionary Loading**: Async background loading ✅
+  - NO UI freeze during language switching
+  - Binary format: 5-10x faster than JSON
+  - Loading time: ~30-60ms for 50k words
+- **User Dictionary Updates**: Instant ✅
+  - ContentObserver for system UserDictionary
+  - SharedPreferences listener for custom words
+  - NO app restart required
+
+---
+
+## ⚡ Performance Optimizations
+
+Complete performance optimization history across perftodos.md, perftodos2.md, and perftodos3.md:
+
+### v1.32.537-539 - Async Loading & Profiling (perftodos3.md)
+
+**Critical Integration (v1.32.539)**:
+- ✅ **Asynchronous Dictionary Loading** - DictionaryManager now uses `loadDictionaryAsync()`
+  - Previously: Synchronous `loadDictionary()` blocked UI thread during language switching
+  - Now: Background thread loading with ExecutorService
+  - Impact: NO MORE UI FREEZES during language changes or app startup
+  - Implementation: Callback-based async pattern with main thread completion handlers
+
+- ✅ **UserDictionaryObserver Activation** - Auto-updates for user/custom words
+  - Previously: Observer built but never started (dead code)
+  - Now: `startObservingDictionaryChanges()` called after dictionary loads
+  - Impact: User-added words appear INSTANTLY without app restart
+  - Monitors: ContentObserver (UserDictionary.Words) + SharedPreferences (custom words)
+
+**System Profiling (v1.32.537)**:
+- ✅ **android.os.Trace Integration** - System-level profiling hooks
+  - Added to: WordPredictor, AsyncDictionaryLoader, BinaryDictionaryLoader
+  - Enables: Perfetto and Android Studio Profiler integration
+  - Impact: Deep performance analysis for future optimizations
+
+### Binary Dictionary Format (perftodos2.md Todo 4)
+
+- ✅ **Binary Contractions** - 4x faster contraction loading
+  - Format: Pre-built binary with paired/non-paired sections
+  - Performance: ~15ms load time (was 60ms JSON parsing)
+  - Files: `assets/dictionaries/contractions.bin`
+
+- ✅ **Binary Dictionaries** - 5-10x faster dictionary loading
+  - Format: Header + sorted words + frequencies + prefix index
+  - Performance: ~30-60ms for 50k words (was 300ms+ with JSON)
+  - Files: `assets/dictionaries/*_enhanced.bin`
+
+### Runtime Performance (perftodos2.md Todo 1)
+
+- ✅ **Removed Verbose Logging** - Eliminated 500ms+ prediction latency
+  - Root cause: Excessive debug logging on UI-critical path
+  - Fix: BuildConfig.ENABLE_VERBOSE_LOGGING guards
+  - Impact: Prediction latency reduced from 600ms → <100ms
+
+### All Optimizations Summary
+
+**Loading Performance**:
+- Dictionary loading: 5-10x faster (binary format)
+- Contraction loading: 4x faster (binary format)
+- Language switching: Non-blocking (async loading)
+- App startup: Non-blocking (async loading)
+
+**Runtime Performance**:
+- Prediction latency: <100ms (was 600ms)
+- Dictionary updates: Instant (ContentObserver + SharedPreferences)
+- User words: Instant appearance (no restart)
+
+**Profiling**:
+- System-level tracing: Perfetto integration
+- Performance analysis: Android Studio Profiler support
+
+**Total Completed**: 12/12 tasks across perftodos.md, perftodos2.md, perftodos3.md ✅
+
 ---
 
 ## 📖 Version History

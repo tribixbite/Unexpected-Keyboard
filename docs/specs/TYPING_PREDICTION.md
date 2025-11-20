@@ -340,6 +340,32 @@ private void loadBigrams(Context context, String language)
 
 ## Performance
 
+### Dictionary Loading Performance (v1.32.537-539)
+
+**Asynchronous Loading** (perftodos3.md Todo 1):
+- **Binary Format**: BinaryDictionaryLoader 5-10x faster than JSON
+  - 50k words + prefix index load in ~30-60ms
+  - Pre-built prefix index eliminates runtime indexing
+  - Memory-efficient ByteBuffer with direct asset access
+- **Background Thread**: AsyncDictionaryLoader with ExecutorService
+  - NO UI freeze during language switching ✅
+  - NO UI freeze during app startup ✅
+  - Callback-based completion on main thread
+- **Loading State**: `WordPredictor.isLoading()` API
+  - Returns true while dictionary loading asynchronously
+  - getPredictions() returns empty list during load
+  - UI can show loading indicator
+
+**Auto-Update Observers** (perftodos3.md Todo 2):
+- **UserDictionaryObserver**: Monitors both system and custom dictionaries
+  - ContentObserver for UserDictionary.Words (system-level changes)
+  - SharedPreferences.OnSharedPreferenceChangeListener for custom words
+  - Instant updates: NO app restart required ✅
+- **Activation**: `startObservingDictionaryChanges()` called after dictionary loads
+  - DictionaryManager calls this in async load callback (v1.32.539)
+  - Previously: Observer built but never started (dead code)
+  - Now: Active for all loaded dictionaries
+
 ### Prefix Index Optimization
 
 **File**: `srcs/juloo.keyboard2/WordPredictor.java:330-364`

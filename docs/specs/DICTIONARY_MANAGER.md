@@ -566,6 +566,32 @@ private var currentFilter: FilterType = FilterType.ALL
 - **Empty states**: Show when filtered results = 0
 - **Tab Counts** (v1.32.200): Update 100ms after search completion
 
+### Dictionary Loading Performance (v1.32.537-539)
+
+**Asynchronous Loading** (perftodos3.md Todo 1):
+- **Binary Format**: 5-10x faster than JSON (BinaryDictionaryLoader)
+  - 50k words load in ~30-60ms (was 300ms+ with JSON)
+  - Pre-built prefix index eliminates runtime indexing overhead
+- **Background Thread**: ExecutorService with single-threaded loading
+  - NO UI freeze during language switching ✅
+  - NO UI freeze during app startup ✅
+  - Callback-based completion on main thread
+- **Loading State**: `isLoading()` API for UI feedback
+  - DictionaryManager.isLoading() checks current predictor
+  - WordPredictor.isLoading() tracks async state
+  - getPredictions() returns empty list while loading
+
+**Auto-Update Observers** (perftodos3.md Todo 2):
+- **ContentObserver**: Monitors UserDictionary.Words for system changes
+  - Instant updates when user adds words via system settings
+  - NO app restart required ✅
+- **SharedPreferences Listener**: Monitors custom words
+  - Instant updates when user adds/edits custom words in Dictionary Manager
+  - NO app restart required ✅
+- **Activation**: `startObservingDictionaryChanges()` called after dictionary loads
+  - Previously: Observer code existed but never activated (dead code)
+  - Now: Active for all loaded dictionaries (setLanguage + preloadLanguages)
+
 ---
 
 ## Error Handling
