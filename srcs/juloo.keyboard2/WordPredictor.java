@@ -499,24 +499,33 @@ public class WordPredictor
       }
 
       @Override
-      public void onLoadComplete(Map<String, Integer> dictionary,
-                                  Map<String, Set<String>> prefixIndex)
+      public Set<String> onLoadCustomWords(Context ctx,
+                                             Map<String, Integer> dictionary,
+                                             Map<String, Set<String>> prefixIndex)
       {
-        // OPTIMIZATION v4 (perftodos4.md): Load custom words into NEW maps before swap
-        // This allows all expensive operations to happen on the background thread,
-        // then swap the entire maps atomically on the main thread (O(1) instead of O(n))
+        // OPTIMIZATION v4 (perftodos4.md): This runs on BACKGROUND THREAD!
+        // Load custom words into the maps before they're swapped on main thread
 
-        // Load custom words and user dictionary into the NEW dictionary map
-        Set<String> customWords = loadCustomAndUserWordsIntoMap(context, dictionary);
+        Set<String> customWords = loadCustomAndUserWordsIntoMap(ctx, dictionary);
 
-        // Add custom words to the NEW prefix index
+        // Add custom words to prefix index
         if (!customWords.isEmpty())
         {
           addToPrefixIndexForMap(customWords, prefixIndex);
         }
 
-        // ATOMIC SWAP: Replace entire maps in O(1) operation on main thread
-        // This is 50x faster than clear() + putAll() which takes 10-50ms for 50k words
+        return customWords;
+      }
+
+      @Override
+      public void onLoadComplete(Map<String, Integer> dictionary,
+                                  Map<String, Set<String>> prefixIndex)
+      {
+        // OPTIMIZATION v4 (perftodos4.md): ATOMIC SWAP on main thread
+        // All expensive operations (loading, custom words, prefix indexing) happened on background thread
+        // This callback just swaps the maps atomically in O(1) time
+
+        // ATOMIC SWAP: Replace entire maps in <1ms operation on main thread
         _dictionary.set(dictionary);
         _prefixIndex.set(prefixIndex);
 

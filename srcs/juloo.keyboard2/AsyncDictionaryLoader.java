@@ -72,10 +72,26 @@ public class AsyncDictionaryLoader
     void onLoadStarted(String language);
 
     /**
+     * Called on BACKGROUND THREAD after dictionary is loaded but before callback.
+     * Use this to load custom/user words into the maps before they're swapped.
+     *
+     * OPTIMIZATION v4 (perftodos4.md): This runs on background thread to avoid
+     * blocking main thread with custom word loading.
+     *
+     * @param context Android context for accessing SharedPreferences and ContentProvider
+     * @param dictionary The loaded dictionary map (modify in place)
+     * @param prefixIndex The loaded prefix index (modify in place)
+     * @return Set of custom words loaded (for logging)
+     */
+    Set<String> onLoadCustomWords(Context context,
+                                    Map<String, Integer> dictionary,
+                                    Map<String, Set<String>> prefixIndex);
+
+    /**
      * Called on main thread when loading completes successfully.
      *
-     * @param dictionary Map of words to frequencies
-     * @param prefixIndex Map of prefixes to matching words
+     * @param dictionary Map of words to frequencies (includes custom words)
+     * @param prefixIndex Map of prefixes to matching words (includes custom words)
      */
     void onLoadComplete(Map<String, Integer> dictionary,
                         Map<String, Set<String>> prefixIndex);
@@ -179,7 +195,12 @@ public class AsyncDictionaryLoader
         Log.i(TAG, String.format("Dictionary loaded in %dms on background thread: %d words, %d prefixes",
           loadTime, dictionary.size(), prefixIndex.size()));
 
-        // Notify success on main thread
+        // OPTIMIZATION v4 (perftodos4.md): Load custom words on BACKGROUND THREAD
+        // This prevents blocking the main thread with SharedPreferences and ContentProvider access
+        Set<String> customWords = callback.onLoadCustomWords(context, dictionary, prefixIndex);
+        Log.i(TAG, String.format("Loaded %d custom/user words on background thread", customWords.size()));
+
+        // Notify success on main thread (maps already include custom words)
         _mainHandler.post(() -> callback.onLoadComplete(dictionary, prefixIndex));
       }
       catch (final Exception e)
