@@ -1733,6 +1733,22 @@ public class OnnxSwipePredictor
       candidates.sort((a, b) -> Float.compare(a.score, b.score)); // Lower score is better (negative log prob)
       beams = candidates.subList(0, Math.min(candidates.size(), beamWidth));
 
+      // OPTIMIZATION v1.32.515: Score-gap early stopping
+      // If top beam is significantly better than 2nd beam, stop early (confident prediction)
+      if (beams.size() >= 2 && step >= 3) // Wait at least 3 steps for meaningful scores
+      {
+        float topScore = beams.get(0).score;
+        float secondScore = beams.get(1).score;
+        float scoreGap = secondScore - topScore; // Gap between top and 2nd (higher = more confident)
+
+        // If top beam finished and score gap > 2.0 (e^2 ≈ 7.4x more likely), stop early
+        if (beams.get(0).finished && scoreGap > 2.0f)
+        {
+          logDebug("⚡ Score-gap early stop at step " + step + " (gap=" + String.format("%.2f", scoreGap) + ")\n");
+          break;
+        }
+      }
+
       // Check if all beams finished - matches CLI line 235
       boolean allFinished = true;
       int finishedCount = 0;
