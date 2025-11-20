@@ -9,16 +9,52 @@
 
 ## 🔥 Current Status (2025-11-20 - UPDATED)
 
-**Latest Version**: v1.32.537 (589) 🎯
-**Build Status**: ✅ ALL PERFORMANCE OPTIMIZATIONS COMPLETE! + TRACE PROFILING
+**Latest Version**: v1.32.539 (591) 🎯
+**Build Status**: ✅ ASYNC LOADING NOW ACTIVE! Critical integration complete
 **Branch**: feature/swipe-typing
-**Current Focus**: ✨ ALL PERFTODOS FULLY COMPLETED (v1, v2, v3) ✨
+**Current Focus**: ✨ AsyncDictionaryLoader & UserDictionaryObserver ACTIVATED ✨
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 37 fixes applied (see history below)
-**Performance**: Prediction <100ms | Model loading 236ms | Dictionary async | Contractions 4x faster | Perfetto profiling enabled
+**Critical Fixes**: 40 fixes applied (see history below)
+**Performance**: NO UI FREEZES | Async dict loading | Instant word updates | Perfetto profiling enabled
 
-### 🔧 Latest Work (v1.32.528-537) - COMPLETE PERFORMANCE OVERHAUL (perftodos.md + v2 + v3)
+### 🔧 Latest Work (v1.32.528-539) - COMPLETE PERFORMANCE OVERHAUL + CRITICAL ACTIVATION FIX
+
+**ASYNC LOADING ACTIVATION (perftodos3.md v2 Todos 1-2) - v1.32.539** 🚨
+- **CRITICAL DISCOVERY**: AsyncDictionaryLoader and UserDictionaryObserver were BUILT but NEVER ACTIVATED!
+  - DictionaryManager was calling SYNCHRONOUS loadDictionary() [BLOCKS UI]
+  - startObservingDictionaryChanges() was never called
+  - All the async infrastructure was "dead code"
+
+- **Problem**: UI freezes during language switching and app startup
+  - setLanguage() blocked UI thread while parsing JSON dictionaries
+  - User-added words didn't appear until app restart
+  - No automatic updates when UserDictionary changed
+
+- **Solution - DictionaryManager Integration**:
+  1. Modified setLanguage() to use loadDictionaryAsync():
+     - Dictionary loads on background thread (AsyncDictionaryLoader)
+     - Callback activates UserDictionaryObserver when complete
+     - NO MORE UI FREEZES during language switching
+
+  2. Modified preloadLanguages() to use async loading:
+     - All preloaded languages use background threads
+     - Each gets its own observer activated
+
+  3. Added isLoading() state check:
+     - getPredictions() returns empty list while loading
+     - Prevents predictions from uninitialized dictionary
+     - UI can check DictionaryManager.isLoading()
+
+- **Performance Results**:
+  - ✅ NO MORE UI FREEZES during language switching
+  - ✅ NO MORE UI FREEZES during app startup
+  - ✅ UserDictionaryObserver NOW ACTIVE - instant word updates
+  - ✅ Custom/user words appear without restart
+  - ✅ ContentObserver watches UserDictionary.Words
+  - ✅ SharedPreferences listener watches custom words
+
+- **Impact**: The async infrastructure from perftodos.md is FINALLY WORKING!
 
 **PREDICTION LATENCY CRISIS FIX (perftodos2.md Todos 1-3) - v1.32.533-535** 🚨
 - **Problem**: Swipe prediction latency REGRESSED from <100ms to ~600ms
