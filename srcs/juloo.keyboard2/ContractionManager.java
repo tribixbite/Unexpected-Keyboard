@@ -187,6 +187,101 @@ public class ContractionManager
   }
 
   /**
+   * Generates a possessive form for a given word.
+   *
+   * OPTIMIZATION v5 (perftodos5.md): Rule-based possessive generation.
+   * Instead of storing 1700+ possessive entries, generate them dynamically.
+   *
+   * Rules:
+   * - Most words: add 's (cat -> cat's, dog -> dog's)
+   * - Words ending in 's': add 's (Charles -> Charles's) [modern style]
+   * - Never generate for pronouns/function words (handled by contractions)
+   *
+   * @param word Base word to make possessive
+   * @return Possessive form (word + 's)
+   *
+   * Examples:
+   * - generatePossessive("cat") -> "cat's"
+   * - generatePossessive("dog") -> "dog's"
+   * - generatePossessive("James") -> "James's"
+   */
+  public String generatePossessive(String word)
+  {
+    if (word == null || word.isEmpty())
+    {
+      return null;
+    }
+
+    String wordLower = word.toLowerCase();
+
+    // Don't generate possessives for known contractions
+    // (e.g., don't turn "don't" into "don't's")
+    if (isKnownContraction(wordLower))
+    {
+      return null;
+    }
+
+    // Don't generate for function words/pronouns that have special contractions
+    // These are already handled by the true contractions in the binary file
+    Set<String> functionWords = new HashSet<>();
+    functionWords.add("i");
+    functionWords.add("you");
+    functionWords.add("he");
+    functionWords.add("she");
+    functionWords.add("it");
+    functionWords.add("we");
+    functionWords.add("they");
+    functionWords.add("who");
+    functionWords.add("what");
+    functionWords.add("that");
+    functionWords.add("there");
+    functionWords.add("here");
+    functionWords.add("will");
+    functionWords.add("would");
+    functionWords.add("shall");
+    functionWords.add("should");
+    functionWords.add("can");
+    functionWords.add("could");
+    functionWords.add("may");
+    functionWords.add("might");
+    functionWords.add("must");
+    functionWords.add("do");
+    functionWords.add("does");
+    functionWords.add("did");
+    functionWords.add("is");
+    functionWords.add("am");
+    functionWords.add("are");
+    functionWords.add("was");
+    functionWords.add("were");
+    functionWords.add("have");
+    functionWords.add("has");
+    functionWords.add("had");
+    functionWords.add("let");
+
+    if (functionWords.contains(wordLower))
+    {
+      return null;
+    }
+
+    // Generate possessive: word + 's
+    // Modern style: even words ending in 's' get 's (James's, not James')
+    return word + "'s";
+  }
+
+  /**
+   * Checks if a word should have a possessive variant generated.
+   *
+   * OPTIMIZATION v5 (perftodos5.md): Determine if possessive makes sense.
+   *
+   * @param word Word to check
+   * @return true if possessive should be generated
+   */
+  public boolean shouldGeneratePossessive(String word)
+  {
+    return generatePossessive(word) != null;
+  }
+
+  /**
    * Loads non-paired contractions from contractions_non_paired.json.
    *
    * Format: {"dont": "don't", "cant": "can't", ...}

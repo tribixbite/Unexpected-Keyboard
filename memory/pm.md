@@ -9,16 +9,59 @@
 
 ## 🔥 Current Status (2025-11-20 - UPDATED)
 
-**Latest Version**: v1.32.542 (594) 🎯
-**Build Status**: ✅ PERFTODOS4 COMPLETE! All loading on background thread
+**Latest Version**: v1.32.543 (595) 🎯
+**Build Status**: ✅ PERFTODOS5 IN PROGRESS! Contraction system optimization
 **Branch**: feature/swipe-typing
-**Current Focus**: ✨ Zero Main Thread Blocking (perftodos4.md FIXED & Complete!) ✨
+**Current Focus**: ✨ Hybrid Contraction System (perftodos5.md) - 96.6% file size reduction ✨
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
 **Critical Fixes**: 40 fixes applied (see history below)
-**Performance**: NO UI FREEZES | Atomic dict swapping | <1ms main thread | Instant word updates | Perfetto profiling
+**Performance**: NO UI FREEZES | Atomic dict swapping | <1ms main thread | Instant word updates | 88% contraction binary reduction
 
-### 🔧 Latest Work (v1.32.528-542) - COMPLETE PERFORMANCE OVERHAUL + LOCK-FREE OPTIMIZATION
+### 🔧 Latest Work (v1.32.543) - CONTRACTION SYSTEM OPTIMIZATION (perftodos5.md)
+
+**HYBRID CONTRACTION SYSTEM (perftodos5.md Todos 1-4) - v1.32.543** 📦
+- **Goal**: Replace bloated possessive list with rule-based generation
+- **Problem**: contraction_pairings.json was 150KB with 1787 entries, 96% were simple possessives
+  - Simple possessives: predictable forms like "cat's", "dog's", "aaron's"
+  - True contractions: irregular forms like "don't", "won't", "aren't"
+  - Binary file (contractions.bin) was 13KB
+
+- **Solution - Audit and Clean**:
+  1. Created scripts/audit_contractions.py to classify contractions
+     - TRUE_CONTRACTION_BASES: pronouns, function words, auxiliary verbs
+     - is_true_contraction(): checks if base word is pronoun/function word
+     - Separates 70 true contractions from 1717 simple possessives
+  2. Generated contraction_pairings_cleaned.json (5.1KB, 70 entries only)
+  3. Kept possessives_audit.txt (105KB) as verification log
+  4. Regenerated contractions.bin with cleaned data
+
+- **File Size Reductions**:
+  - JSON: 150KB → 5.1KB (96.6% reduction!)
+  - Binary: 13KB → 1.5KB (88% reduction!)
+  - Total entries: 1787 → 133 (64 non-paired + 69 paired)
+
+- **Rule-Based Possessive Generation**:
+  - Added ContractionManager.generatePossessive(String word)
+    - Returns word + 's for most words
+    - Returns null for pronouns/function words (handled by true contractions)
+    - Returns null for known contractions (don't -> don't's is invalid)
+  - Added ContractionManager.shouldGeneratePossessive(String word)
+    - Checks if possessive generation makes sense for the word
+
+- **Implementation Details**:
+  - scripts/audit_contractions.py: Classification logic
+  - assets/dictionaries/contraction_pairings_cleaned.json: 70 true contractions
+  - assets/dictionaries/possessives_audit.txt: 1717 removed possessives log
+  - assets/dictionaries/contractions.bin: Regenerated (1.5KB)
+  - srcs/juloo.keyboard2/ContractionManager.java: Added generatePossessive() methods
+
+- **Next Steps**:
+  - TODO: Integrate possessive generation into prediction pipeline
+  - TODO: Test that possessives appear in predictions (cat -> cat's)
+  - TODO: Verify true contractions still work (don't, won't, etc.)
+
+### 🔧 Previous Work (v1.32.528-542) - COMPLETE PERFORMANCE OVERHAUL + LOCK-FREE OPTIMIZATION
 
 **CRITICAL FIX: Custom Word Loading on Background Thread (perftodos4.md) - v1.32.542** 🚨
 - **Bug in v1.32.541**: Custom word loading moved to MAIN THREAD (regression!)
