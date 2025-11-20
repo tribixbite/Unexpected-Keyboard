@@ -7,6 +7,20 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :copyLayoutDefinitions UP-TO-DATE
 > Task :copyRawQwertyUS UP-TO-DATE
 
+> Task :generateBinaryContractions
+Generating binary contractions: contractions.bin
+Converting contractions to binary format...
+Loaded 64 non-paired contractions from contractions_non_paired.json
+Loaded 1183 paired contractions from contraction_pairings.json
+
+Written binary contractions: contractions.bin
+  Non-paired: 64
+  Paired: 1183
+  Total known: 1247
+  File size: 12,331 bytes
+
+✓ Binary contractions generated successfully!
+
 > Task :generateBinaryDictionaries
 Binary dictionary up-to-date: en_enhanced.bin
 
@@ -29,21 +43,21 @@ Generated version info:  ()
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
-> Task :mergeDebugResources
 > Task :processDebugManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
+> Task :mergeDebugResources
 > Task :compileDebugShaders NO-SOURCE
-> Task :processDebugManifestForPackage
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :compressDebugAssets FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
+> Task :compressDebugAssets
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -61,6 +75,7 @@ Generated version info:  ()
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
+
 > Task :compileDebugKotlin
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardGrid.kt:158:26 Variable 'pos' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:105:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
@@ -92,5 +107,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 3m 30s
-41 actionable tasks: 33 executed, 8 from cache
+BUILD SUCCESSFUL in 1m 37s
+42 actionable tasks: 35 executed, 7 from cache

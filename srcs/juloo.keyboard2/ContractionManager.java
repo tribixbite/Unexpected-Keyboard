@@ -39,6 +39,7 @@ public class ContractionManager
   // Used to identify contractions in predictions and prevent unwanted autocorrect
   private final Set<String> _knownContractions;
 
+  private final Context _context;
   private final AssetManager _assetManager;
 
   /**
@@ -50,15 +51,20 @@ public class ContractionManager
   {
     _nonPairedContractions = new HashMap<>();
     _knownContractions = new HashSet<>();
+    _context = context;
     _assetManager = context.getAssets();
   }
 
   /**
-   * Loads contraction mappings from JSON files in assets/dictionaries/.
+   * Loads contraction mappings from assets/dictionaries/.
    *
-   * This method reads:
-   * - contractions_non_paired.json: Apostrophe-free forms -> contractions
-   * - contraction_pairings.json: Base words -> contraction variants
+   * OPTIMIZATION v1 (perftodos2.md Todo 4): Uses binary format for faster loading.
+   *
+   * Strategy:
+   * 1. Try binary format first (contractions.bin) - fastest
+   * 2. Fall back to JSON if binary doesn't exist or fails
+   *
+   * Binary format is 3-5x faster than JSON parsing.
    *
    * Must be called before using isKnownContraction() or getNonPairedMapping().
    */
@@ -66,6 +72,21 @@ public class ContractionManager
   {
     try
     {
+      // Try binary format first (fastest)
+      if (loadBinaryContractions())
+      {
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING)
+        {
+          Log.d(TAG, "Loaded contractions from binary format");
+        }
+        return;
+      }
+
+      // Fall back to JSON format (slower, but always works)
+      if (BuildConfig.ENABLE_VERBOSE_LOGGING)
+      {
+        Log.d(TAG, "Binary format not available, loading from JSON");
+      }
       loadNonPairedContractions();
       loadPairedContractions();
 
@@ -75,6 +96,40 @@ public class ContractionManager
     catch (Exception e)
     {
       Log.e(TAG, "Failed to load contraction mappings", e);
+    }
+  }
+
+  /**
+   * Load contractions from optimized binary format.
+   *
+   * OPTIMIZATION v1 (perftodos2.md Todo 4): Fast binary loading without JSON parsing.
+   *
+   * @return true if loaded successfully, false if binary doesn't exist or failed
+   */
+  private boolean loadBinaryContractions()
+  {
+    try
+    {
+      BinaryContractionLoader.ContractionData data =
+        BinaryContractionLoader.loadContractions(_context, "dictionaries/contractions.bin");
+
+      if (data == null)
+      {
+        return false;
+      }
+
+      _nonPairedContractions.putAll(data.nonPairedContractions);
+      _knownContractions.addAll(data.knownContractions);
+
+      return true;
+    }
+    catch (Exception e)
+    {
+      if (BuildConfig.ENABLE_VERBOSE_LOGGING)
+      {
+        Log.d(TAG, "Binary contractions not available: " + e.getMessage());
+      }
+      return false;
     }
   }
 

@@ -35,8 +35,8 @@ android {
     applicationId "juloo.keyboard2"
     minSdk 21
     targetSdkVersion 35
-    versionCode 587
-    versionName "1.32.535"
+    versionCode 588
+    versionName "1.32.536"
   }
 
   buildFeatures {
@@ -219,6 +219,34 @@ tasks.register('generateBinaryDictionaries') {
   }
 }
 
+tasks.register('generateBinaryContractions') {
+  description 'Generate optimized binary contractions from JSON sources (perftodos2.md Todo 4)'
+  doLast {
+    def dictDir = file("assets/dictionaries")
+    def nonPairedFile = new File(dictDir, "contractions_non_paired.json")
+    def pairedFile = new File(dictDir, "contraction_pairings.json")
+    def binFile = new File(dictDir, "contractions.bin")
+
+    // Only regenerate if either JSON is newer than binary, or binary doesn't exist
+    def needsRegenerate = !binFile.exists() ||
+                          nonPairedFile.lastModified() > binFile.lastModified() ||
+                          pairedFile.lastModified() > binFile.lastModified()
+
+    if (needsRegenerate) {
+      println "Generating binary contractions: ${binFile.name}"
+      exec {
+        workingDir = projectDir
+        commandLine "python", "scripts/generate_binary_contractions.py",
+                    nonPairedFile.absolutePath,
+                    pairedFile.absolutePath,
+                    binFile.absolutePath
+      }
+    } else {
+      println "Binary contractions up-to-date: ${binFile.name}"
+    }
+  }
+}
+
 tasks.register('generateVersionInfo') {
   doLast {
     def gitCommit = 'git rev-parse --short HEAD'.execute().text.trim()
@@ -245,6 +273,7 @@ tasks.named("preBuild") {
   dependsOn += "copyRawQwertyUS"
   dependsOn += "copyLayoutDefinitions"
   dependsOn += "generateBinaryDictionaries"
+  dependsOn += "generateBinaryContractions"
   dependsOn += "generateVersionInfo"
 }
 
