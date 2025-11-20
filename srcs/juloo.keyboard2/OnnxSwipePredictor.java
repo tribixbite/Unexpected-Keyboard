@@ -1171,6 +1171,8 @@ public class OnnxSwipePredictor
         }
 
         _currentModelVersion = newModelVersion;
+        _currentEncoderPath = newEncoderPath;
+        _currentDecoderPath = newDecoderPath;
         _isInitialized = false;
         _isModelLoaded = false;
 
@@ -1178,6 +1180,12 @@ public class OnnxSwipePredictor
         // This ensures settings UI shows correct model status right away
         Log.d(TAG, "Triggering immediate model reinitialization...");
         initialize();
+      }
+      else
+      {
+        // No reinitialization needed, but update stored paths to prevent false positives
+        _currentEncoderPath = newEncoderPath;
+        _currentDecoderPath = newDecoderPath;
       }
 
       // Update max sequence length override

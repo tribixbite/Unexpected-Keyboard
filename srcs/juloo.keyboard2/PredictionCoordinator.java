@@ -40,6 +40,7 @@ public class PredictionCoordinator
   private WordPredictor _wordPredictor;
   private NeuralSwipeTypingEngine _neuralEngine;
   private AsyncPredictionHandler _asyncPredictionHandler;
+  private volatile boolean _isInitializingNeuralEngine = false; // v1.32.529: Track initialization state
 
   // Supporting services
   private SwipeMLDataStore _mlDataStore;
@@ -101,11 +102,19 @@ public class PredictionCoordinator
 
   /**
    * Initializes neural engine for swipe typing.
+   * OPTIMIZATION v1.32.529: Marked synchronized to ensure single initialization
    */
-  private void initializeNeuralEngine()
+  private synchronized void initializeNeuralEngine()
   {
+    // Skip if already initialized or initializing
+    if (_neuralEngine != null || _isInitializingNeuralEngine)
+    {
+      return;
+    }
+
     try
     {
+      _isInitializingNeuralEngine = true;
       _neuralEngine = new NeuralSwipeTypingEngine(_context, _config);
 
       // Set debug logger before initialization so logs appear during model loading
@@ -135,6 +144,23 @@ public class PredictionCoordinator
       Log.e(TAG, "Failed to initialize neural engine", e);
       _neuralEngine = null;
       _asyncPredictionHandler = null;
+    }
+    finally
+    {
+      _isInitializingNeuralEngine = false;
+    }
+  }
+
+  /**
+   * Ensures neural engine is initialized before use.
+   * OPTIMIZATION v1.32.529: Lazy initialization on first swipe if not already loaded
+   */
+  public synchronized void ensureNeuralEngineReady()
+  {
+    if (_config.swipe_typing_enabled && _neuralEngine == null && !_isInitializingNeuralEngine)
+    {
+      Log.d(TAG, "Lazy-loading neural engine on first swipe...");
+      initializeNeuralEngine();
     }
   }
 

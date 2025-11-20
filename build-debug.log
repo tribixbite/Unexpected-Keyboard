@@ -7,6 +7,9 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :copyLayoutDefinitions UP-TO-DATE
 > Task :copyRawQwertyUS UP-TO-DATE
 
+> Task :generateBinaryDictionaries
+Binary dictionary up-to-date: en_enhanced.bin
+
 > Task :generateVersionInfo
 Generated version info:  ()
 
@@ -30,20 +33,20 @@ Generated version info:  ()
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugResources
 > Task :mergeDebugAssets
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :compressDebugAssets FROM-CACHE
-> Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeDebugJniLibFolders
-> Task :checkDebugDuplicateClasses
-> Task :mergeExtDexDebug FROM-CACHE
+> Task :mergeDebugResources
 > Task :processDebugManifestForPackage
-> Task :mergeDebugNativeLibs
+> Task :checkDebugDuplicateClasses
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :compressDebugAssets
 > Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
 /data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
@@ -89,5 +92,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 56s
-39 actionable tasks: 31 executed, 8 from cache
+BUILD SUCCESSFUL in 43s
+40 actionable tasks: 33 executed, 7 from cache

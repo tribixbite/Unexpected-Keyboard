@@ -864,7 +864,11 @@ public class InputCoordinator
     {
       return;
     }
-    
+
+    // OPTIMIZATION v1.32.529: Ensure neural engine is loaded before first swipe
+    // If not loaded in onCreate (rare edge case), lazy-load synchronously now
+    _predictionCoordinator.ensureNeuralEngineReady();
+
     if (_predictionCoordinator.getNeuralEngine() == null)
     {
       // Fallback to word predictor if engine not initialized

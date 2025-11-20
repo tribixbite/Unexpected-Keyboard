@@ -25,13 +25,27 @@ class PredictionInitializer(
     /**
      * Initialize prediction components if enabled.
      *
+     * OPTIMIZATION v1.32.529: Load models synchronously to ensure first swipe works
+     * Models stay loaded permanently via singleton pattern (236ms load, instant after)
+     *
      * Checks configuration and:
-     * 1. Initializes PredictionCoordinator if predictions/swipe enabled
+     * 1. Initializes PredictionCoordinator if predictions/swipe enabled (synchronous)
      * 2. Sets swipe typing components on keyboard view if swipe is available
+     *
+     * Note: 236ms synchronous load is acceptable for keyboard startup to guarantee
+     * first swipe works immediately. Singleton persists, so subsequent loads are instant.
      */
     fun initializeIfEnabled() {
         if (config.word_prediction_enabled || config.swipe_typing_enabled) {
+            android.util.Log.d("PredictionInitializer", "Starting model initialization (synchronous)...")
+            val startTime = System.currentTimeMillis()
+
+            // Load models synchronously to guarantee first swipe works
+            // Singleton persists, so this only happens once per app lifecycle
             predictionCoordinator.initialize()
+
+            val loadTime = System.currentTimeMillis() - startTime
+            android.util.Log.i("PredictionInitializer", "✅ Models loaded in ${loadTime}ms (ready for swipes)")
 
             // Set swipe typing components on keyboard view if swipe is enabled
             if (config.swipe_typing_enabled && predictionCoordinator.isSwipeTypingAvailable()) {

@@ -35,8 +35,8 @@ android {
     applicationId "juloo.keyboard2"
     minSdk 21
     targetSdkVersion 35
-    versionCode 579
-    versionName "1.32.527"
+    versionCode 582
+    versionName "1.32.530"
   }
 
   sourceSets {
@@ -186,6 +186,29 @@ tasks.register('compileComposeSequences') {
   }
 }
 
+tasks.register('generateBinaryDictionaries') {
+  description 'Generate optimized binary dictionaries from JSON sources'
+  doLast {
+    def dictDir = file("assets/dictionaries")
+    def jsonFiles = dictDir.listFiles().findAll { it.name.endsWith(".json") && !it.name.contains("contraction") }
+
+    jsonFiles.each { jsonFile ->
+      def binFile = new File(dictDir, jsonFile.name.replace(".json", ".bin"))
+
+      // Only regenerate if JSON is newer than binary, or binary doesn't exist
+      if (!binFile.exists() || jsonFile.lastModified() > binFile.lastModified()) {
+        println "Generating binary dictionary: ${binFile.name}"
+        exec {
+          workingDir = projectDir
+          commandLine "python", "scripts/generate_binary_dict.py", jsonFile.absolutePath, binFile.absolutePath
+        }
+      } else {
+        println "Binary dictionary up-to-date: ${binFile.name}"
+      }
+    }
+  }
+}
+
 tasks.register('generateVersionInfo') {
   doLast {
     def gitCommit = 'git rev-parse --short HEAD'.execute().text.trim()
@@ -193,7 +216,7 @@ tasks.register('generateVersionInfo') {
     def gitDate = 'git log -1 --format=%cd --date=short'.execute().text.trim()
     def buildDate = new Date().format('yyyy-MM-dd HH:mm:ss')
     def buildNumber = System.currentTimeMillis().toString()
-    
+
     def versionFile = file("build/generated-resources/raw/version_info.txt")
     versionFile.parentFile.mkdirs()
     versionFile.text = """commit=$gitCommit
@@ -202,7 +225,7 @@ commit_date=$gitDate
 build_date=$buildDate
 build_number=$buildNumber
 """
-    
+
     println "Generated version info: $gitCommit ($gitDate)"
   }
 }
@@ -211,6 +234,7 @@ tasks.named("preBuild") {
   dependsOn += "initDebugKeystore"
   dependsOn += "copyRawQwertyUS"
   dependsOn += "copyLayoutDefinitions"
+  dependsOn += "generateBinaryDictionaries"
   dependsOn += "generateVersionInfo"
 }
 
