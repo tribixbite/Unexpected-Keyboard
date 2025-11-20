@@ -770,24 +770,8 @@ public class Keyboard2View extends View
     canvas.drawRoundRect(_tmpRect, r, r, tc.bg_paint);
     if (w > 0.f)
     {
-      float overlap = r - r * 0.85f + w; // sin(45°)
-      drawBorder(canvas, x, y, x + overlap, y + keyH, tc.border_left_paint, tc);
-      drawBorder(canvas, x + keyW - overlap, y, x + keyW, y + keyH, tc.border_right_paint, tc);
-      drawBorder(canvas, x, y, x + keyW, y + overlap, tc.border_top_paint, tc);
-      drawBorder(canvas, x, y + keyH - overlap, x + keyW, y + keyH, tc.border_bottom_paint, tc);
+      canvas.drawRoundRect(_tmpRect, r, r, tc.border_paint);
     }
-  }
-
-  /** Clip to draw a border at a time. This allows to call [drawRoundRect]
-      several time with the same parameters but a different Paint. */
-  void drawBorder(Canvas canvas, float clipl, float clipt, float clipr,
-      float clipb, Paint paint, Theme.Computed.Key tc)
-  {
-    float r = tc.border_radius;
-    canvas.save();
-    canvas.clipRect(clipl, clipt, clipr, clipb);
-    canvas.drawRoundRect(_tmpRect, r, r, paint);
-    canvas.restore();
   }
 
   private int labelColor(KeyValue k, boolean isKeyDown, boolean sublabel)

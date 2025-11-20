@@ -125,10 +125,7 @@ public class Theme
     public static final class Key
     {
       public final Paint bg_paint = new Paint();
-      public final Paint border_left_paint;
-      public final Paint border_top_paint;
-      public final Paint border_right_paint;
-      public final Paint border_bottom_paint;
+      public final Paint border_paint;
       public final float border_width;
       public final float border_radius;
       final Paint _label_paint;
@@ -151,10 +148,7 @@ public class Theme
           border_width = activated ? theme.keyBorderWidthActivated : theme.keyBorderWidth;
         }
         bg_paint.setAlpha(activated ? config.keyActivatedOpacity : config.keyOpacity);
-        border_left_paint = init_border_paint(config, border_width, theme.keyBorderColorLeft);
-        border_top_paint = init_border_paint(config, border_width, theme.keyBorderColorTop);
-        border_right_paint = init_border_paint(config, border_width, theme.keyBorderColorRight);
-        border_bottom_paint = init_border_paint(config, border_width, theme.keyBorderColorBottom);
+        border_paint = init_border_paint(config, border_width, theme.keyBorderColorTop);
         _label_paint = init_label_paint(config, null);
         _special_label_paint = init_label_paint(config, _key_font);
         _sublabel_paint = init_label_paint(config, null);

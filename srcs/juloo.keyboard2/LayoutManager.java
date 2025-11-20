@@ -2,6 +2,7 @@ package juloo.keyboard2;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.util.LruCache;
 import android.view.inputmethod.EditorInfo;
 import android.text.InputType;
 
@@ -40,6 +41,7 @@ public class LayoutManager
   // Layout state
   private KeyboardData _currentSpecialLayout;
   private KeyboardData _localeTextLayout;
+  private final LruCache<Integer, KeyboardData> _keyboardDataCache;
 
   /**
    * Creates a new LayoutManager.
@@ -53,6 +55,7 @@ public class LayoutManager
     _context = context;
     _config = config;
     _localeTextLayout = localeTextLayout;
+    _keyboardDataCache = new LruCache<>(10);
   }
 
   /**
@@ -174,7 +177,12 @@ public class LayoutManager
    */
   public KeyboardData loadLayout(int layoutId)
   {
-    return KeyboardData.load(_context.getResources(), layoutId);
+    KeyboardData keyboardData = _keyboardDataCache.get(layoutId);
+    if (keyboardData == null) {
+      keyboardData = KeyboardData.load(_context.getResources(), layoutId);
+      _keyboardDataCache.put(layoutId, keyboardData);
+    }
+    return keyboardData;
   }
 
   /**
@@ -186,7 +194,7 @@ public class LayoutManager
   public KeyboardData loadNumpad(int layoutId)
   {
     return LayoutModifier.modify_numpad(
-        KeyboardData.load(_context.getResources(), layoutId),
+        loadLayout(layoutId),
         current_layout_unmodified());
   }
 
@@ -199,7 +207,7 @@ public class LayoutManager
   public KeyboardData loadPinentry(int layoutId)
   {
     return LayoutModifier.modify_pinentry(
-        KeyboardData.load(_context.getResources(), layoutId),
+        loadLayout(layoutId),
         current_layout_unmodified());
   }
 

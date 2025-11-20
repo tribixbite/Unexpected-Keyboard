@@ -556,11 +556,16 @@ public class OnnxSwipePredictor
           long encoderTime = System.nanoTime() - encoderStartTime;
           // logDebug("⏱️ Encoder inference: " + (encoderTime / 1_000_000.0) + "ms");
           
-          // Run beam search decoding with timing
-          long beamSearchStartTime = System.nanoTime();
-          List<BeamSearchCandidate> candidates = runBeamSearch(encoderResults, features.actualLength, features);
-          long beamSearchTime = System.nanoTime() - beamSearchStartTime;
-          // logDebug("⏱️ Beam search total: " + (beamSearchTime / 1_000_000.0) + "ms");
+          // Run beam search or greedy search decoding with timing
+          long searchStartTime = System.nanoTime();
+          List<BeamSearchCandidate> candidates;
+          if (_config != null && _config.neural_greedy_search) {
+              candidates = runGreedySearch((OnnxTensor) encoderResults.get(0), features.actualLength, _maxLength);
+          } else {
+              candidates = runBeamSearch(encoderResults, features.actualLength, features);
+          }
+          long searchTime = System.nanoTime() - searchStartTime;
+          // logDebug("⏱️ Search total: " + (searchTime / 1_000_000.0) + "ms");
           
           // Post-processing with timing
           long postprocessStartTime = System.nanoTime();
@@ -573,7 +578,7 @@ public class OnnxSwipePredictor
           // logDebug("📊 Performance breakdown: Total=" + (totalTime / 1_000_000.0) +
             // "ms (Preprocess=" + (preprocessTime / 1_000_000.0) +
             // "ms, Encoder=" + (encoderTime / 1_000_000.0) +
-            // "ms, BeamSearch=" + (beamSearchTime / 1_000_000.0) +
+            // "ms, Search=" + (searchTime / 1_000_000.0) +
             // "ms, Postprocess=" + (postprocessTime / 1_000_000.0) + "ms)");
           
           return result;
@@ -1788,17 +1793,34 @@ public class OnnxSwipePredictor
   
   private int[] getTopKIndices(float[] array, int k)
   {
-    List<IndexValue> indexed = new ArrayList<>();
-    for (int i = 0; i < array.length; i++)
-    {
-      indexed.add(new IndexValue(i, array[i]));
+    // OPTIMIZED: O(k*n) with no allocations instead of O(n log n) with ArrayList
+    // For small k (beam_width=2) and small n (vocab=30), this is much faster
+    int actualK = Math.min(k, array.length);
+    int[] result = new int[actualK];
+    float[] resultValues = new float[actualK];
+
+    // Initialize with very negative values
+    for (int i = 0; i < actualK; i++) {
+      resultValues[i] = Float.NEGATIVE_INFINITY;
+      result[i] = -1;
     }
-    
-    indexed.sort((a, b) -> Float.compare(b.value, a.value));
-    
-    int[] result = new int[Math.min(k, indexed.size())];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = indexed.get(i).index;
+
+    // Find top k in single pass
+    for (int i = 0; i < array.length; i++) {
+      float val = array[i];
+      // Check if this value should be in top k
+      for (int j = 0; j < actualK; j++) {
+        if (val > resultValues[j]) {
+          // Shift lower values down
+          for (int m = actualK - 1; m > j; m--) {
+            resultValues[m] = resultValues[m - 1];
+            result[m] = result[m - 1];
+          }
+          resultValues[j] = val;
+          result[j] = i;
+          break;
+        }
+      }
     }
     return result;
   }
