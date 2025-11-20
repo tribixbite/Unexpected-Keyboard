@@ -56,6 +56,31 @@
 
 - **Impact**: The async infrastructure from perftodos.md is FINALLY WORKING!
 
+**DOCUMENTATION UPDATES (v1.32.539)** 📚
+- Updated docs/specs/README.md:
+  - Added Typing Prediction performance metrics
+  - Added comprehensive Performance Optimizations section
+  - Documented complete 12/12 task completion (perftodos.md → perftodos3.md)
+  - Covered async loading, binary format, profiling, and runtime improvements
+
+- Updated docs/specs/DICTIONARY_MANAGER.md:
+  - Added Dictionary Loading Performance section
+  - Documented async loading implementation (ExecutorService, callbacks)
+  - Documented UserDictionaryObserver activation pattern
+  - Explained ContentObserver + SharedPreferences monitoring
+
+- Updated docs/specs/TYPING_PREDICTION.md:
+  - Added Dictionary Loading Performance section
+  - Documented BinaryDictionaryLoader integration
+  - Documented UserDictionaryObserver activation
+  - Noted dead code activation (critical discovery from perftodos3.md v2)
+
+- All specs now accurately reflect:
+  - NO UI freezes during language switching/startup
+  - Instant user/custom word updates (no restart)
+  - 5-10x faster binary dictionary loading
+  - System-level Perfetto profiling enabled
+
 **PREDICTION LATENCY CRISIS FIX (perftodos2.md Todos 1-3) - v1.32.533-535** 🚨
 - **Problem**: Swipe prediction latency REGRESSED from <100ms to ~600ms
 - **Root Cause**: Excessive logging in performance-critical prediction loop
