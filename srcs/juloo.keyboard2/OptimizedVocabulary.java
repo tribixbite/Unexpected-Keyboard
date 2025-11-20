@@ -215,8 +215,22 @@ public class OptimizedVocabulary
       // Skip invalid word formats
       if (!word.matches("^[a-z]+$"))
       {
-        if (debugMode) detailedLog.append(String.format("❌ \"%s\" - INVALID FORMAT (not a-z)\n", candidate.word));
+        if (debugMode) detailedLog.append(String.format("  ❌ \"%s\" - invalid format (not a-z only)\n", word));
         continue;
+      }
+
+      // v1.32.513: Filter by starting letter accuracy (autocorrect_prefix_length setting)
+      // If prefixLength > 0 and we have a firstChar, ensure prediction starts with correct prefix
+      if (prefixLength > 0 && swipeStats.firstChar != '\0' && word.length() > 0)
+      {
+        char expectedFirst = Character.toLowerCase(swipeStats.firstChar);
+        char actualFirst = word.charAt(0);
+        if (actualFirst != expectedFirst)
+        {
+          if (debugMode) detailedLog.append(String.format("  ❌ \"%s\" - wrong starting letter (expected '%c', got '%c')\n",
+            word, expectedFirst, actualFirst));
+          continue;
+        }
       }
 
       // FILTER OUT DISABLED WORDS (Dictionary Manager integration)
@@ -1117,13 +1131,15 @@ public class OptimizedVocabulary
     public final int expectedLength;
     public final float pathLength;
     public final float speed;
+    public final char firstChar; // First character of swipe path for prefix filtering
     public final char lastChar;  // Last character of swipe path for contraction filtering
 
-    public SwipeStats(int expectedLength, float pathLength, float speed, char lastChar)
+    public SwipeStats(int expectedLength, float pathLength, float speed, char firstChar, char lastChar)
     {
       this.expectedLength = expectedLength;
       this.pathLength = pathLength;
       this.speed = speed;
+      this.firstChar = firstChar;
       this.lastChar = lastChar;
     }
   }

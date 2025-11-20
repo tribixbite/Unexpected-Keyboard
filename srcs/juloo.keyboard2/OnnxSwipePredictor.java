@@ -1975,11 +1975,19 @@ public class OnnxSwipePredictor
       lastChar = input.keySequence.charAt(input.keySequence.length() - 1);
     }
 
+    // Get first character for prefix filtering (Starting Letter Accuracy)
+    char firstChar = '\0';
+    if (input != null && input.keySequence != null && input.keySequence.length() > 0)
+    {
+      firstChar = input.keySequence.charAt(0);
+    }
+
     // Apply vocabulary filtering with fast-path optimization
     OptimizedVocabulary.SwipeStats swipeStats = new OptimizedVocabulary.SwipeStats(
       input != null && input.keySequence != null ? input.keySequence.length() : 0,
       input != null ? input.pathLength : 0,
       input != null ? input.averageVelocity : 0,
+      firstChar,
       lastChar
     );
     List<OptimizedVocabulary.FilteredPrediction> filtered = _vocabulary.filterPredictions(vocabCandidates, swipeStats);
