@@ -1531,11 +1531,6 @@ public class OnnxSwipePredictor
         {
           int numActiveBeams = activeBeams.size();
 
-          // Get memory shape from encoder output
-          long[] memoryShape = memory.getInfo().getShape(); // [1, seq_len, hidden_dim]
-          int memorySeqLen = (int)memoryShape[1];
-          int hiddenDim = (int)memoryShape[2];
-
           // Prepare batched token arrays
           int[][] batchedTokens = new int[numActiveBeams][DECODER_SEQ_LEN];
           for (int b = 0; b < numActiveBeams; b++)
@@ -1558,26 +1553,16 @@ public class OnnxSwipePredictor
           OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
             java.nio.IntBuffer.wrap(flatTokens), new long[]{numActiveBeams, DECODER_SEQ_LEN});
 
-          // Replicate memory for all beams
-          float[][][] memoryData = (float[][][])memory.getValue();
-          float[][][] replicatedMemory = new float[numActiveBeams][memorySeqLen][hiddenDim];
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            for (int s = 0; s < memorySeqLen; s++)
-            {
-              System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
-            }
-          }
-          OnnxTensor batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
-
-          // Create batched actual_src_length
-          int[] srcLengths = new int[numActiveBeams];
-          Arrays.fill(srcLengths, actualSrcLength);
-          OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, srcLengths);
+          // OPTIMIZATION: Pass single actual_src_length (scalar) instead of array
+          // The decoder should handle broadcasting internally
+          OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment,
+            new int[]{actualSrcLength});
 
           // Run batched decoder inference
+          // OPTIMIZATION: Use original memory tensor - let ONNX handle broadcasting
+          // instead of replicating 250*256 floats for each beam
           Map<String, OnnxTensor> decoderInputs = new HashMap<>();
-          decoderInputs.put("memory", batchedMemoryTensor);
+          decoderInputs.put("memory", memory);
           decoderInputs.put("target_tokens", targetTokensTensor);
           decoderInputs.put("actual_src_length", actualSrcLengthTensor);
 
@@ -1611,7 +1596,6 @@ public class OnnxSwipePredictor
           // Cleanup
           targetTokensTensor.close();
           actualSrcLengthTensor.close();
-          batchedMemoryTensor.close();
           decoderOutput.close();
         }
         catch (Exception e)
