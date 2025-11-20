@@ -391,6 +391,32 @@ public class WordPredictor
   }
 
   /**
+   * Remove words from prefix index (for incremental updates)
+   * OPTIMIZATION: Allows removing custom/user words without full rebuild
+   */
+  private void removeFromPrefixIndex(Set<String> words)
+  {
+    for (String word : words)
+    {
+      int maxLen = Math.min(PREFIX_INDEX_MAX_LENGTH, word.length());
+      for (int len = 1; len <= maxLen; len++)
+      {
+        String prefix = word.substring(0, len);
+        Set<String> prefixWords = _prefixIndex.get(prefix);
+        if (prefixWords != null)
+        {
+          prefixWords.remove(word);
+          // Clean up empty prefix sets to save memory
+          if (prefixWords.isEmpty())
+          {
+            _prefixIndex.remove(prefix);
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Load custom words and Android user dictionary into predictions
    * Called during dictionary initialization for performance
    */

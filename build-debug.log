@@ -23,29 +23,29 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :mergeDebugResources
-> Task :processDebugManifestForPackage
-> Task :checkDebugDuplicateClasses
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :compressDebugAssets FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeExtDexDebug FROM-CACHE
-> Task :compressDebugAssets
-> Task :mergeLibDexDebug FROM-CACHE
+> Task :checkDebugDuplicateClasses
 > Task :mergeDebugJniLibFolders
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :mergeLibDexDebug FROM-CACHE
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -92,5 +92,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 43s
-40 actionable tasks: 33 executed, 7 from cache
+BUILD SUCCESSFUL in 47s
+40 actionable tasks: 32 executed, 8 from cache
