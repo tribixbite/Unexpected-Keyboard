@@ -38,7 +38,15 @@ public class WordPredictor
   // Static flag to signal all WordPredictor instances need to reload custom/user/disabled words
   private static volatile boolean _needsReload = false;
   private long _lastReloadTime = 0;
-  
+
+  // OPTIMIZATION: Async loading state
+  private volatile boolean _isLoading = false;
+  private AsyncDictionaryLoader _asyncLoader;
+
+  // OPTIMIZATION: UserDictionary and custom words observer
+  private UserDictionaryObserver _dictionaryObserver;
+  private boolean _observerActive = false;
+
   public WordPredictor()
   {
     _dictionary = new HashMap<>();
@@ -50,6 +58,7 @@ public class WordPredictor
     _config = null;
     _context = null;
     _disabledWords = new HashSet<>();
+    _asyncLoader = new AsyncDictionaryLoader();
   }
 
   /**
@@ -59,6 +68,96 @@ public class WordPredictor
   {
     _context = context;
     loadDisabledWords();
+
+    // Initialize dictionary observer for automatic updates
+    if (_dictionaryObserver == null && context != null)
+    {
+      _dictionaryObserver = new UserDictionaryObserver(context);
+      _dictionaryObserver.setChangeListener(new UserDictionaryObserver.ChangeListener()
+      {
+        @Override
+        public void onUserDictionaryChanged(Map<String, Integer> addedWords, Set<String> removedWords)
+        {
+          handleIncrementalUpdate(addedWords, removedWords);
+        }
+
+        @Override
+        public void onCustomWordsChanged(Map<String, Integer> addedOrModified, Set<String> removed)
+        {
+          handleIncrementalUpdate(addedOrModified, removed);
+        }
+      });
+    }
+  }
+
+  /**
+   * Start observing UserDictionary and custom words for changes.
+   *
+   * OPTIMIZATION: Enables automatic incremental updates without polling.
+   * Call this after dictionary is loaded to receive change notifications.
+   */
+  public void startObservingDictionaryChanges()
+  {
+    if (_dictionaryObserver != null && !_observerActive)
+    {
+      _dictionaryObserver.start();
+      _observerActive = true;
+      android.util.Log.d("WordPredictor", "Started observing dictionary changes");
+    }
+  }
+
+  /**
+   * Stop observing dictionary changes.
+   * Call this when WordPredictor is no longer needed.
+   */
+  public void stopObservingDictionaryChanges()
+  {
+    if (_dictionaryObserver != null && _observerActive)
+    {
+      _dictionaryObserver.stop();
+      _observerActive = false;
+      android.util.Log.d("WordPredictor", "Stopped observing dictionary changes");
+    }
+  }
+
+  /**
+   * Handle incremental dictionary updates.
+   *
+   * OPTIMIZATION: Updates dictionary and prefix index without full rebuild.
+   *
+   * @param addedOrModified Words to add or update (word -> frequency)
+   * @param removed Words to remove
+   */
+  private void handleIncrementalUpdate(Map<String, Integer> addedOrModified, Set<String> removed)
+  {
+    boolean hasChanges = false;
+
+    // Remove words
+    if (removed != null && !removed.isEmpty())
+    {
+      for (String word : removed)
+      {
+        _dictionary.remove(word);
+      }
+      removeFromPrefixIndex(removed);
+      hasChanges = true;
+    }
+
+    // Add or modify words
+    if (addedOrModified != null && !addedOrModified.isEmpty())
+    {
+      _dictionary.putAll(addedOrModified);
+      addToPrefixIndex(addedOrModified.keySet());
+      hasChanges = true;
+    }
+
+    if (hasChanges)
+    {
+      android.util.Log.i("WordPredictor", String.format(
+        "Incremental dictionary update: +%d words, -%d words",
+        addedOrModified != null ? addedOrModified.size() : 0,
+        removed != null ? removed.size() : 0));
+    }
   }
 
   /**
@@ -351,6 +450,101 @@ public class WordPredictor
 
     // Set the N-gram model language to match the dictionary
     setLanguage(language);
+  }
+
+  /**
+   * Load dictionary asynchronously on background thread.
+   *
+   * OPTIMIZATION: Prevents UI freezes during dictionary loading.
+   * The callback will be invoked on the main thread when loading completes.
+   *
+   * @param context Android context for asset access
+   * @param language Language code (e.g., "en")
+   * @param callback Callback for load completion (optional, can be null)
+   */
+  public void loadDictionaryAsync(final Context context, final String language, final Runnable callback)
+  {
+    if (_isLoading)
+    {
+      android.util.Log.w("WordPredictor", "Dictionary already loading, ignoring request");
+      return;
+    }
+
+    _asyncLoader.loadDictionaryAsync(context, language, new AsyncDictionaryLoader.LoadCallback()
+    {
+      @Override
+      public void onLoadStarted(String lang)
+      {
+        _isLoading = true;
+        android.util.Log.d("WordPredictor", "Started async dictionary load: " + lang);
+      }
+
+      @Override
+      public void onLoadComplete(Map<String, Integer> dictionary,
+                                  Map<String, Set<String>> prefixIndex)
+      {
+        // Update dictionary and prefix index on main thread
+        _dictionary.clear();
+        _dictionary.putAll(dictionary);
+        _prefixIndex.clear();
+        _prefixIndex.putAll(prefixIndex);
+
+        // Load custom words and user dictionary (synchronous, but fast)
+        loadCustomAndUserWords(context);
+
+        // Rebuild prefix index to include custom words
+        buildPrefixIndex();
+
+        // Set the N-gram model language
+        setLanguage(language);
+
+        _isLoading = false;
+        android.util.Log.i("WordPredictor", String.format(
+          "Async dictionary load complete: %d words, %d prefixes",
+          _dictionary.size(), _prefixIndex.size()));
+
+        if (callback != null)
+        {
+          callback.run();
+        }
+      }
+
+      @Override
+      public void onLoadFailed(String lang, Exception error)
+      {
+        _isLoading = false;
+        android.util.Log.e("WordPredictor", "Async dictionary load failed: " + lang, error);
+
+        // Fall back to synchronous loading
+        android.util.Log.d("WordPredictor", "Falling back to synchronous dictionary load");
+        loadDictionary(context, lang);
+
+        if (callback != null)
+        {
+          callback.run();
+        }
+      }
+    });
+  }
+
+  /**
+   * Check if dictionary is currently loading.
+   *
+   * @return true if dictionary is loading asynchronously
+   */
+  public boolean isLoading()
+  {
+    return _isLoading;
+  }
+
+  /**
+   * Check if dictionary is ready for predictions.
+   *
+   * @return true if dictionary is loaded and ready
+   */
+  public boolean isReady()
+  {
+    return !_isLoading && !_dictionary.isEmpty();
   }
 
   /**

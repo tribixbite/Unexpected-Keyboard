@@ -97,7 +97,10 @@ public class PredictionCoordinator
     _wordPredictor.setUserAdaptationManager(_adaptationManager);
     _wordPredictor.loadDictionary(_context, "en");
 
-    Log.d(TAG, "WordPredictor initialized");
+    // OPTIMIZATION: Start observing dictionary changes for automatic updates
+    _wordPredictor.startObservingDictionaryChanges();
+
+    Log.d(TAG, "WordPredictor initialized with automatic update observation");
   }
 
   /**
@@ -312,6 +315,12 @@ public class PredictionCoordinator
     {
       _asyncPredictionHandler.shutdown();
       _asyncPredictionHandler = null;
+    }
+
+    // Stop observing dictionary changes
+    if (_wordPredictor != null)
+    {
+      _wordPredictor.stopObservingDictionaryChanges();
     }
 
     // Clean up engines
