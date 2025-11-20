@@ -170,11 +170,17 @@ public class SuggestionHandler
       return;
     }
 
+    // OPTIMIZATION v5 (perftodos5.md): Augment predictions with possessives
+    // Generate possessive forms for top predictions and add them to the list
+    List<String> augmentedPredictions = new ArrayList<>(predictions);
+    List<Integer> augmentedScores = new ArrayList<>(scores != null ? scores : new ArrayList<>());
+    augmentPredictionsWithPossessives(augmentedPredictions, augmentedScores);
+
     // Update suggestion bar (scores are already integers from neural system)
     if (_suggestionBar != null)
     {
       _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
-      _suggestionBar.setSuggestionsWithScores(predictions, scores);
+      _suggestionBar.setSuggestionsWithScores(augmentedPredictions, augmentedScores);
 
       // Auto-insert top (highest scoring) prediction immediately after swipe completes
       // This enables rapid consecutive swiping without manual taps
@@ -812,5 +818,67 @@ public class SuggestionHandler
     // Clear tracking
     _contextTracker.clearLastAutoInsertedWord();
     _contextTracker.setLastCommitSource(PredictionSource.UNKNOWN);
+  }
+
+  /**
+   * Augment predictions with possessive forms.
+   *
+   * OPTIMIZATION v5 (perftodos5.md): Generate possessives dynamically instead of storing 1700+ entries.
+   * For each top prediction (limit to first 3-5), generate possessive form if applicable.
+   *
+   * @param predictions List of predictions to augment (modified in-place)
+   * @param scores List of scores corresponding to predictions (modified in-place)
+   */
+  private void augmentPredictionsWithPossessives(List<String> predictions, List<Integer> scores)
+  {
+    if (predictions == null || predictions.isEmpty())
+    {
+      return;
+    }
+
+    // Generate possessives for top 3 predictions only (avoid clutter)
+    int limit = Math.min(3, predictions.size());
+    List<String> possessivesToAdd = new ArrayList<>();
+    List<Integer> possessiveScores = new ArrayList<>();
+
+    for (int i = 0; i < limit; i++)
+    {
+      String word = predictions.get(i);
+      String possessive = _contractionManager.generatePossessive(word);
+
+      if (possessive != null)
+      {
+        // Don't add if possessive already exists in predictions
+        boolean alreadyExists = false;
+        for (String pred : predictions)
+        {
+          if (pred.equalsIgnoreCase(possessive))
+          {
+            alreadyExists = true;
+            break;
+          }
+        }
+
+        if (!alreadyExists)
+        {
+          possessivesToAdd.add(possessive);
+          // Slightly lower score than base word (base word is more common)
+          int baseScore = (i < scores.size()) ? scores.get(i) : 128;
+          possessiveScores.add(baseScore - 10); // 10 points lower than base
+        }
+      }
+    }
+
+    // Add possessives to the end of predictions list
+    if (!possessivesToAdd.isEmpty())
+    {
+      predictions.addAll(possessivesToAdd);
+      scores.addAll(possessiveScores);
+
+      if (BuildConfig.ENABLE_VERBOSE_LOGGING)
+      {
+        Log.d(TAG, String.format("Added %d possessive forms to predictions", possessivesToAdd.size()));
+      }
+    }
   }
 }
