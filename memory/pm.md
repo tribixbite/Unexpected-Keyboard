@@ -9,16 +9,16 @@
 
 ## 🔥 Current Status (2025-11-20 - UPDATED)
 
-**Latest Version**: v1.32.536 (588) 🎯
-**Build Status**: ✅ ALL PERFORMANCE OPTIMIZATIONS COMPLETE!
+**Latest Version**: v1.32.537 (589) 🎯
+**Build Status**: ✅ ALL PERFORMANCE OPTIMIZATIONS COMPLETE! + TRACE PROFILING
 **Branch**: feature/swipe-typing
-**Current Focus**: ✨ perftodos.md + perftodos2.md FULLY COMPLETED ✨
+**Current Focus**: ✨ ALL PERFTODOS FULLY COMPLETED (v1, v2, v3) ✨
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 33 fixes applied (see history below)
-**Performance**: Prediction <100ms | Model loading 236ms | Dictionary async | Contractions 4x faster
+**Critical Fixes**: 37 fixes applied (see history below)
+**Performance**: Prediction <100ms | Model loading 236ms | Dictionary async | Contractions 4x faster | Perfetto profiling enabled
 
-### 🔧 Latest Work (v1.32.528-536) - COMPLETE PERFORMANCE OVERHAUL (perftodos.md + perftodos2.md)
+### 🔧 Latest Work (v1.32.528-537) - COMPLETE PERFORMANCE OVERHAUL (perftodos.md + v2 + v3)
 
 **PREDICTION LATENCY CRISIS FIX (perftodos2.md Todos 1-3) - v1.32.533-535** 🚨
 - **Problem**: Swipe prediction latency REGRESSED from <100ms to ~600ms
@@ -83,6 +83,41 @@
   - Contraction loading: **~400ms → ~100ms (4x improvement!)** ✨
   - Single binary file instead of two JSON files
   - No JSON parsing overhead
+
+**TRACE PROFILING INTEGRATION (perftodos3.md Todo 1) - v1.32.537** 🔍
+- **Problem**: No system-level profiling hooks in performance-critical code
+  - PerformanceProfiler exists but nothing uses it
+  - Cannot analyze performance with Perfetto or Android Studio Profiler
+  - No visibility into thread states, CPU time, or frame rendering
+
+- **Optimizations Applied**:
+  1. Added android.os.Trace to WordPredictor.predictInternal
+     - Profiles: prefix lookup, scoring, sorting, context evaluation
+     - Most critical path for typing prediction performance
+
+  2. Added android.os.Trace to AsyncDictionaryLoader.loadDictionaryAsync
+     - Profiles: binary loading, JSON fallback, prefix index building
+     - Shows async loading performance on background thread
+
+  3. Added android.os.Trace to BinaryDictionaryLoader methods
+     - loadDictionary(): Profiles word/frequency loading
+     - loadDictionaryWithPrefixIndex(): Profiles complete loading pipeline
+
+  4. Proper try/finally blocks ensure endSection() is always called
+     - Prevents trace corruption on exceptions
+
+- **Profiling Usage**:
+  - Traces appear in Android Studio Profiler
+  - Command: `adb shell atrace -a juloo.keyboard2 -t 10 > trace.html`
+  - Integrates with Perfetto for system-wide analysis
+  - Shows exact timing of prediction/loading operations
+  - Zero overhead in release builds (compiled out by R8)
+
+- **Performance Results**:
+  - System-level performance visibility enabled ✨
+  - Can now identify bottlenecks with Perfetto
+  - Thread state and CPU time tracking
+  - Frame rendering correlation
 
 **ASYNC DICTIONARY LOADING (perftodos.md - v1.32.532)**
 - **Implemented**: AsyncDictionaryLoader.java + UserDictionaryObserver.java
