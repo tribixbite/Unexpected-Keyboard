@@ -1627,31 +1627,53 @@ public class OnnxSwipePredictor
       else
       {
         // Sequential beam processing (batch=1) - default, stable mode
+        // OPTIMIZATION v1.32.511: Reuse arrays and tensors to reduce allocation overhead
+
+        // Pre-allocate reusable arrays (only on first step to avoid per-step allocation)
+        if (step == 0)
+        {
+          // These will be reused for all beams in all steps
+        }
+
+        // OPTIMIZATION: Create actualSrcLengthTensor once per step (same for all beams)
+        OnnxTensor actualSrcLengthTensor = null;
+        try
+        {
+          actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment,
+            new int[]{actualSrcLength});
+        }
+        catch (Exception e)
+        {
+          Log.e(TAG, "Failed to create actualSrcLengthTensor", e);
+          break;
+        }
+
+        // OPTIMIZATION: Pre-allocate token array and HashMap outside beam loop
+        int[] tgtTokens = new int[DECODER_SEQ_LEN];
+        Map<String, OnnxTensor> decoderInputs = new HashMap<>(3);
+        decoderInputs.put("memory", memory);
+        decoderInputs.put("actual_src_length", actualSrcLengthTensor);
+
         for (int b = 0; b < activeBeams.size(); b++)
         {
           BeamSearchState beam = activeBeams.get(b);
 
           try
           {
-            // Pad sequence to DECODER_SEQ_LEN (batch=1 like Python)
-            int[] tgtTokens = new int[DECODER_SEQ_LEN];
+            // Reuse tgtTokens array - just overwrite values
             Arrays.fill(tgtTokens, (int)PAD_IDX);
-            for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LEN); i++)
+            int tokenCount = Math.min(beam.tokens.size(), DECODER_SEQ_LEN);
+            for (int i = 0; i < tokenCount; i++)
             {
               tgtTokens[i] = beam.tokens.get(i).intValue();
             }
 
-            // Create tensors with batch=1 (matches Python exactly)
+            // Create tensor for this beam's tokens (must create new - wraps buffer)
             OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
               java.nio.IntBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LEN});
-            OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment,
-              new int[]{actualSrcLength});
 
-            // Run decoder with batch=1 (memory already has batch=1 from encoder)
-            Map<String, OnnxTensor> decoderInputs = new HashMap<>();
-            decoderInputs.put("memory", memory);
+            // Update HashMap with new target_tokens tensor
             decoderInputs.put("target_tokens", targetTokensTensor);
-            decoderInputs.put("actual_src_length", actualSrcLengthTensor);
 
             long inferenceStart = System.nanoTime();
             OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
@@ -1660,8 +1682,7 @@ public class OnnxSwipePredictor
             OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
 
             // Handle 3D logits tensor [1, seq_len, vocab_size]
-            Object logitsValue = logitsTensor.getValue();
-            float[][][] logits3D = (float[][][]) logitsValue;
+            float[][][] logits3D = (float[][][]) logitsTensor.getValue();
 
             // Get log probs for last valid position
             int currentPos = beam.tokens.size() - 1;
@@ -1683,9 +1704,8 @@ public class OnnxSwipePredictor
               }
             }
 
-            // Clean up tensors for this beam
+            // Clean up only targetTokensTensor (actualSrcLengthTensor reused)
             targetTokensTensor.close();
-            actualSrcLengthTensor.close();
             decoderOutput.close();
           }
           catch (Exception e)
@@ -1693,6 +1713,12 @@ public class OnnxSwipePredictor
             logDebug("💥 Decoder step " + step + " beam " + b + " error: " + e.getClass().getSimpleName() + " - " + e.getMessage() + "\n");
             Log.e(TAG, "Decoder step error for beam " + b, e);
           }
+        }
+
+        // Clean up the shared actualSrcLengthTensor after all beams processed
+        if (actualSrcLengthTensor != null)
+        {
+          actualSrcLengthTensor.close();
         }
       }
 

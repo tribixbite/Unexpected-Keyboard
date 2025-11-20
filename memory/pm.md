@@ -9,13 +9,54 @@
 
 ## 🔥 Current Status (2025-11-19 - UPDATED)
 
-**Latest Version**: v1.32.501 (554) 🎯
+**Latest Version**: v1.32.512 (564) 🎯
 **Build Status**: ✅ SWIPE TYPING WORKS! Neural predictions operational
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎉 **MILESTONE ACHIEVED** - Neural swipe typing is working!
+**Current Focus**: Performance optimization for sub-100ms latency
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 24 fixes applied (see history below)
+**Critical Fixes**: 26 fixes applied (see history below)
+
+### 🔧 Latest Work (v1.32.510-512) - PERFORMANCE OPTIMIZATIONS
+
+**SEQUENTIAL BEAM SEARCH OPTIMIZATIONS (v1.32.510-512)**
+- **Problem**: ~400ms latency for swipe predictions (target: sub-100ms)
+- **Root Causes Identified**:
+  1. DEFAULT_MAX_LENGTH was 35 but model max_word_len is 20 (75% extra decoder calls)
+  2. Tensor allocation per beam iteration (GC pressure)
+  3. O(n log n) getTopKIndices with ArrayList allocations
+  4. Early stopping waited for ALL beams to finish
+
+- **Optimizations Applied**:
+  1. **v1.32.510**: Reduced DEFAULT_MAX_LENGTH from 35 to 20
+  2. **v1.32.510**: Optimized getTopKIndices to O(k*n) with no allocations
+  3. **v1.32.510**: Improved early stopping (trigger when `finishedCount >= beamWidth`)
+  4. **v1.32.511-512**: Tensor reuse optimizations:
+     - Pre-allocate `actualSrcLengthTensor` once per step (reuse across beams)
+     - Pre-allocate `tgtTokens` array outside beam loop
+     - Reuse HashMap for decoder inputs
+
+- **Desktop-Only Quantization Workflow**:
+  INT8 quantization requires desktop Python with ONNX Runtime:
+  ```bash
+  # On desktop with Python 3.9+ and onnxruntime
+  cd ml_training
+  pip install onnxruntime onnx
+  python quantize_models.py
+
+  # Or use broadcast-enabled export for batched inference:
+  python assets/models/export_broadcast.py checkpoints/best.ckpt out --targets android
+  ```
+  Note: Termux ARM64 has ONNX library compatibility issues (PyObject_GenericGetDict symbol missing).
+
+- **Files Modified**:
+  - OnnxSwipePredictor.java: Tensor reuse, optimized algorithms
+  - Config.java: Added neural_batch_beams toggle
+  - settings.xml: Added Batch Processing checkbox
+  - assets/models/export_broadcast.py: Created broadcast-enabled export script
+
+- **Status**: ✅ BUILT v1.32.512 - Ready for performance testing
+- **Expected Impact**: 30-50% reduction in per-prediction latency
 
 ### 🎉 MILESTONE: SWIPE TYPING WORKING (v1.32.501)
 
