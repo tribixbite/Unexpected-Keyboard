@@ -112,6 +112,8 @@ public class AsyncDictionaryLoader
 
     // Submit loading task to background thread
     _currentTask = EXECUTOR.submit(() -> {
+      // OPTIMIZATION v3 (perftodos3.md): Use android.os.Trace for system-level profiling
+      android.os.Trace.beginSection("AsyncDictionaryLoader.loadDictionaryAsync");
       try
       {
         long startTime = System.currentTimeMillis();
@@ -185,6 +187,10 @@ public class AsyncDictionaryLoader
         Log.e(TAG, "Dictionary loading failed: " + language, e);
         // Notify failure on main thread
         _mainHandler.post(() -> callback.onLoadFailed(language, e));
+      }
+      finally
+      {
+        android.os.Trace.endSection();
       }
     });
   }

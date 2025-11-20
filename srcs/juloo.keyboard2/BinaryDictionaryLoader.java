@@ -71,6 +71,10 @@ public class BinaryDictionaryLoader
    */
   public static Map<String, Integer> loadDictionary(Context context, String filename)
   {
+    // OPTIMIZATION v3 (perftodos3.md): Use android.os.Trace for system-level profiling
+    android.os.Trace.beginSection("BinaryDictionaryLoader.loadDictionary");
+    try {
+
     long startTime = System.currentTimeMillis();
 
     try
@@ -138,6 +142,10 @@ public class BinaryDictionaryLoader
       Log.e(TAG, "Failed to load binary dictionary: " + filename, e);
       return null;
     }
+
+    } finally {
+      android.os.Trace.endSection();
+    }
   }
 
   /**
@@ -158,6 +166,10 @@ public class BinaryDictionaryLoader
     Map<String, Integer> outDictionary,
     Map<String, Set<String>> outPrefixIndex)
   {
+    // OPTIMIZATION v3 (perftodos3.md): Use android.os.Trace for system-level profiling
+    android.os.Trace.beginSection("BinaryDictionaryLoader.loadDictionaryWithPrefixIndex");
+    try {
+
     long startTime = System.currentTimeMillis();
 
     try
@@ -251,6 +263,10 @@ public class BinaryDictionaryLoader
     {
       Log.e(TAG, "Failed to load binary dictionary with prefix index: " + filename, e);
       return false;
+    }
+
+    } finally {
+      android.os.Trace.endSection();
     }
   }
 

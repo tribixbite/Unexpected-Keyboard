@@ -819,7 +819,9 @@ public class WordPredictor
     // Check if dictionary changes require reload
     checkAndReload();
 
-    PerformanceProfiler.start("Type.predictWordsWithScores");
+    // OPTIMIZATION v3 (perftodos3.md): Use android.os.Trace for system-level profiling
+    android.os.Trace.beginSection("WordPredictor.predictInternal");
+    try {
 
     // UNIFIED SCORING with EARLY FUSION
     // Context is applied to ALL candidates BEFORE selecting top N
@@ -895,8 +897,11 @@ public class WordPredictor
       android.util.Log.d("WordPredictor", "Scores: " + scores);
     }
 
-    PerformanceProfiler.end("Type.predictWordsWithScores");
     return new PredictionResult(predictions, scores);
+
+    } finally {
+      android.os.Trace.endSection();
+    }
   }
   
   /**

@@ -8,18 +8,7 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 > Task :copyRawQwertyUS UP-TO-DATE
 
 > Task :generateBinaryContractions
-Generating binary contractions: contractions.bin
-Converting contractions to binary format...
-Loaded 64 non-paired contractions from contractions_non_paired.json
-Loaded 1183 paired contractions from contraction_pairings.json
-
-Written binary contractions: contractions.bin
-  Non-paired: 64
-  Paired: 1183
-  Total known: 1247
-  File size: 12,331 bytes
-
-✓ Binary contractions generated successfully!
+Binary contractions up-to-date: contractions.bin
 
 > Task :generateBinaryDictionaries
 Binary dictionary up-to-date: en_enhanced.bin
@@ -37,8 +26,8 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
-> Task :mapDebugSourceSetPaths
 > Task :checkDebugAarMetadata
+> Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
@@ -46,21 +35,21 @@ Generated version info:  ()
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
-> Task :mergeDebugResources
 > Task :compileDebugShaders NO-SOURCE
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :processDebugManifestForPackage
+> Task :mergeDebugResources
+> Task :compressDebugAssets FROM-CACHE
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :compressDebugAssets
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -107,5 +96,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 37s
-42 actionable tasks: 35 executed, 7 from cache
+BUILD SUCCESSFUL in 1m 27s
+42 actionable tasks: 34 executed, 8 from cache

@@ -1,53 +1,90 @@
-# Performance Todos v3: Final Tasks
+# Performance Todos v3: Final Integration and Polish
 
-This document lists the final remaining performance optimization tasks. The critical latency issues and major loading-time bottlenecks identified in `perftodos.md` and `perftodos2.md` have been successfully addressed.
+This document reflects a detailed re-assessment of the performance optimizations. While many underlying components were built, they were not fully integrated into the application's logic. This list contains the final, critical steps required to make those optimizations active.
 
----
+## I. Summary of Verification
 
-## I. Summary of Completed Work
+A deep-dive review revealed that while performant components like `AsyncDictionaryLoader` and `UserDictionaryObserver` were created, **they are not currently being used by the `DictionaryManager`**. The application is still using slow, synchronous loading for dictionaries and is not listening for automatic updates.
 
-*   **Prediction Latency:** The critical swipe prediction latency has been resolved by removing expensive logging from the main prediction loop.
-*   **Dictionary Loading:** The main dictionary loading is now significantly faster, using an optimized binary format (`.bin`) and asynchronous execution.
-*   **Incremental Updates:** The dictionary loading process now correctly performs incremental updates for custom/user words, avoiding slow, full index rebuilds.
-*   **Contraction Loading:** The contraction data is now loaded from an optimized binary format, improving startup time.
+The critical runtime latency issue from `perftodos2.md` (caused by logging) has been resolved. The focus of this document is to correctly enable the loading-time optimizations.
 
 ---
 
 ## II. Outstanding Tasks
 
-There is one remaining low-priority task from the previous optimization lists.
+### Todo 1 (Critical): Integrate Asynchronous Dictionary Loading
 
-### Todo 1 (Recommended): Introduce Proper Profiling Hooks
+**Problem:** `DictionaryManager` still calls the blocking, synchronous `WordPredictor.loadDictionary()` when a language is changed. This will freeze the UI thread. The entire `AsyncDictionaryLoader` is currently unused ("dead code").
 
-**Problem:** The project uses a custom `PerformanceProfiler` class, which appears to just log to `logcat`. This is not a standard or effective way to analyze performance.
-
-**Solution:** Use the standard `android.os.Trace` API for profiling. This is the Android-native way to trace performance, and it integrates with powerful system-level tools like **Perfetto** and the **Android Studio Profiler**. This provides a much more accurate and detailed view of performance, including thread states, CPU time, and interactions with the rest of the system.
+**Solution:** Modify `DictionaryManager` to use `WordPredictor.loadDictionaryAsync` and handle its asynchronous callbacks.
 
 **Action Items:**
 
-*   In `WordPredictor.java` (and any other classes that use it), replace all calls to `PerformanceProfiler` with the `Trace` API.
+1.  **Modify `DictionaryManager.setLanguage`:**
+    *   When a `WordPredictor` is created for the first time, call `_currentPredictor.loadDictionaryAsync()`.
+    *   The UI needs to be able to handle a state where the predictor is loading. For example, `getPredictions` should return an empty list, and the suggestion bar should perhaps show a loading state if `_currentPredictor.isLoading()` is true.
+2.  **Implement Callbacks:**
+    *   The callback passed to `loadDictionaryAsync` is where the logic to enable the predictor and start the observer should live.
 
-    **Before:**
+    **Example `DictionaryManager.java` modification:**
     ```java
-    PerformanceProfiler.start("Type.predictWordsWithScores");
-    // ... code to measure ...
-    PerformanceProfiler.end("Type.predictWordsWithScores");
-    ```
-
-    **After:**
-    ```java
-    android.os.Trace.beginSection("WordPredictor.predictInternal");
-    try {
-        // ... code to measure ...
-    } finally {
-        android.os.Trace.endSection();
+    // In setLanguage method...
+    if (_currentPredictor == null) {
+        _currentPredictor = new WordPredictor();
+        _currentPredictor.setContext(_context);
+        
+        // Show loading state in UI here if possible
+        
+        final WordPredictor predictorToLoad = _currentPredictor;
+        predictorToLoad.loadDictionaryAsync(_context, languageCode, new Runnable() {
+            @Override
+            public void run() {
+                // This runs on the main thread when loading is complete
+                if (predictorToLoad.isReady()) {
+                    // NOW the predictor is ready.
+                    // Activate the observer (see Todo 2).
+                    predictorToLoad.startObservingDictionaryChanges();
+                    
+                    // Hide loading state in UI here
+                } else {
+                    // Handle load failure
+                }
+            }
+        });
+        
+        _predictors.put(languageCode, predictorToLoad);
     }
     ```
-    *(Note: Using a `try`/`finally` block is crucial to ensure that `endSection()` is always called, even if an exception occurs.)*
+3.  **Update `preloadLanguages`:** This method should also be updated to use the asynchronous loader.
 
-*   Apply this to key methods that are critical for performance, such as:
-    *   `WordPredictor.predictInternal`
-    *   `AsyncDictionaryLoader.loadDictionaryAsync`
-    *   `BinaryDictionaryLoader.loadDictionaryWithPrefixIndex`
+**Benefit:** This will finally eliminate the UI freeze when switching languages or on initial app startup.
 
-**Benefit:** Enables deep, system-level performance analysis to identify and diagnose any future bottlenecks with high precision.
+---
+
+### Todo 2 (Critical): Activate the User Dictionary Observer
+
+**Problem:** The `UserDictionaryObserver` is correctly implemented, but it is never started because `WordPredictor.startObservingDictionaryChanges()` is never called. User-added words will not appear in predictions until the app is restarted.
+
+**Solution:** Call `startObservingDictionaryChanges()` after a dictionary has been successfully loaded.
+
+**Action Item:**
+
+*   As shown in the example for **Todo 1**, the ideal place to activate the observer is inside the success callback of `loadDictionaryAsync`. This ensures that you only start observing for changes on a fully loaded and ready dictionary.
+
+**Benefit:** User and custom dictionary changes will be reflected in predictions almost instantly, without requiring an app restart or a manual refresh.
+
+---
+
+### Todo 3 (Recommended): Introduce Proper Profiling Hooks
+
+**Problem:** The project still uses a custom `PerformanceProfiler` class instead of the standard Android `Trace` API.
+
+**Solution:** Replace all calls to `PerformanceProfiler` with `android.os.Trace` to enable deep, system-level profiling with tools like Perfetto.
+
+**Action Items:**
+
+*   Replace `PerformanceProfiler.start(...)` with `android.os.Trace.beginSection(...)`.
+*   Replace `PerformanceProfiler.end(...)` with `android.os.Trace.endSection()`.
+*   Wrap the traced code in a `try/finally` block to guarantee that `endSection()` is always called.
+
+**Benefit:** Enables high-precision diagnosis of any future performance bottlenecks.
