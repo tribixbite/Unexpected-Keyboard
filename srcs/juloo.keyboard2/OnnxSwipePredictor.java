@@ -52,7 +52,7 @@ public class OnnxSwipePredictor
   // beam_width=8 * max_length=35 = 280 decoder inferences per swipe (too slow!)
   // beam_width=2 * max_length=35 = 70 decoder inferences per swipe (balanced)
   private static final int DEFAULT_BEAM_WIDTH = 2; // Mobile-optimized: 2 beams (was 8)
-  private static final int DEFAULT_MAX_LENGTH = 35; // Supports long words while maintaining speed  
+  private static final int DEFAULT_MAX_LENGTH = 20; // Must match model max_word_len (was 35)
   private static final float DEFAULT_CONFIDENCE_THRESHOLD = 0.1f;
   
   // Proper beam search parameters - no aggressive optimizations that break quality
@@ -1487,10 +1487,12 @@ public class OnnxSwipePredictor
     long beamSearchStart = System.nanoTime();
     long totalInferenceTime = 0;
     long totalTensorTime = 0;
+    boolean useBatched = _config != null && _config.neural_batch_beams;
+    int step = 0;
 
     // OPTIMIZATION v1.32.416: Batched beam search loop for 8x speedup
     // Process all beams simultaneously in single decoder call instead of sequential processing
-    for (int step = 0; step < maxLength; step++)
+    for (; step < maxLength; step++)
     {
       List<BeamSearchState> candidates = new ArrayList<>();
       // PERFORMANCE: Only log every 5th step to reduce overhead
@@ -1519,9 +1521,6 @@ public class OnnxSwipePredictor
       }
 
       long tensorStart = System.nanoTime();
-
-      // Check if batched processing is enabled (experimental)
-      boolean useBatched = _config != null && _config.neural_batch_beams;
 
       if (useBatched)
       {
@@ -1718,12 +1717,7 @@ public class OnnxSwipePredictor
     
     // Performance summary
     long totalBeamSearchTime = (System.nanoTime() - beamSearchStart) / 1_000_000;
-    // logDebug("📊 Beam search performance:");
-    // logDebug("   Total time: " + totalBeamSearchTime + "ms");
-    // logDebug("   Total inference: " + totalInferenceTime + "ms (" +
-             // String.format("%.1f", (totalInferenceTime * 100.0 / totalBeamSearchTime)) + "%)");
-    // logDebug("   Total tensor creation: " + totalTensorTime + "ms (" +
-             // String.format("%.1f", (totalTensorTime * 100.0 / totalBeamSearchTime)) + "%)");
+    logDebug("📊 Beam search: " + totalBeamSearchTime + "ms (inference: " + totalInferenceTime + "ms, tensor: " + totalTensorTime + "ms, steps: " + step + ", mode: " + (useBatched ? "batched" : "sequential") + ")\n");
     
     // Convert token sequences to words with detailed debugging
     List<BeamSearchCandidate> results = new ArrayList<>();
