@@ -102,7 +102,9 @@ public class WordPredictor
     {
       _dictionaryObserver.start();
       _observerActive = true;
-      android.util.Log.d("WordPredictor", "Started observing dictionary changes");
+      if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+        android.util.Log.d("WordPredictor", "Started observing dictionary changes");
+      }
     }
   }
 
@@ -116,7 +118,9 @@ public class WordPredictor
     {
       _dictionaryObserver.stop();
       _observerActive = false;
-      android.util.Log.d("WordPredictor", "Stopped observing dictionary changes");
+      if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+        android.util.Log.d("WordPredictor", "Stopped observing dictionary changes");
+      }
     }
   }
 
@@ -202,11 +206,14 @@ public class WordPredictor
   {
     if (_context != null)
     {
-      loadCustomAndUserWords(_context);
-      // Rebuild prefix index to include newly added custom/user words
+      Set<String> customWords = loadCustomAndUserWords(_context);
+      // NOTE: Full rebuild needed here because we don't track which words were removed
+      // Future optimization: track previous custom words to compute diff (added/removed)
       buildPrefixIndex();
       _lastReloadTime = System.currentTimeMillis();
-      android.util.Log.d("WordPredictor", "Reloaded custom and user dictionary words + rebuilt prefix index");
+      if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+        android.util.Log.d("WordPredictor", "Reloaded " + customWords.size() + " custom/user words + rebuilt prefix index");
+      }
     }
   }
 
@@ -433,19 +440,28 @@ public class WordPredictor
     }
 
     // Load custom words and user dictionary (additive to main dictionary)
-    loadCustomAndUserWords(context);
+    // OPTIMIZATION v2: Use incremental prefix index updates instead of full rebuild
+    Set<String> customWords = loadCustomAndUserWords(context);
 
-    // If binary format was used, we need to add custom words to prefix index
-    // If JSON/text was used, prefix index was already rebuilt with all words
-    if (loadedBinary)
+    // Add custom words to prefix index (incremental update)
+    if (!customWords.isEmpty())
     {
-      // Add custom words to existing prefix index (incremental update)
-      Set<String> customWords = new HashSet<>();
-      // Collect custom words that weren't in the base dictionary
-      // (loadCustomAndUserWords already added them to _dictionary)
-      // We'll rebuild the index to be safe, but this could be optimized later
-      buildPrefixIndex();
-      android.util.Log.d("WordPredictor", "Updated prefix index with custom words");
+      if (loadedBinary)
+      {
+        // Binary format: prefix index is pre-built, just add custom words
+        addToPrefixIndex(customWords);
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+          android.util.Log.d("WordPredictor", "Added " + customWords.size() + " custom words to prefix index incrementally");
+        }
+      }
+      else
+      {
+        // JSON/text format: prefix index needs full rebuild anyway (includes custom words)
+        buildPrefixIndex();
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+          android.util.Log.d("WordPredictor", "Built prefix index with custom words: " + _prefixIndex.size() + " prefixes");
+        }
+      }
     }
 
     // Set the N-gram model language to match the dictionary
@@ -490,10 +506,14 @@ public class WordPredictor
         _prefixIndex.putAll(prefixIndex);
 
         // Load custom words and user dictionary (synchronous, but fast)
-        loadCustomAndUserWords(context);
+        // OPTIMIZATION v2: Use incremental prefix index updates
+        Set<String> customWords = loadCustomAndUserWords(context);
 
-        // Rebuild prefix index to include custom words
-        buildPrefixIndex();
+        // Add custom words to prefix index incrementally (much faster than full rebuild)
+        if (!customWords.isEmpty())
+        {
+          addToPrefixIndex(customWords);
+        }
 
         // Set the N-gram model language
         setLanguage(language);
@@ -613,10 +633,17 @@ public class WordPredictor
   /**
    * Load custom words and Android user dictionary into predictions
    * Called during dictionary initialization for performance
+   *
+   * OPTIMIZATION v2: Returns the set of loaded words for incremental prefix index updates
+   *
+   * @param context Android context for accessing preferences and content providers
+   * @return Set of words that were added to the dictionary
    */
-  private void loadCustomAndUserWords(Context context)
+  private Set<String> loadCustomAndUserWords(Context context)
   {
-    if (context == null) return;
+    Set<String> loadedWords = new HashSet<>();
+
+    if (context == null) return loadedWords;
 
     try
     {
@@ -637,9 +664,12 @@ public class WordPredictor
             String word = keys.next().toLowerCase();
             int frequency = jsonObj.optInt(word, 1000);
             _dictionary.put(word, frequency);
+            loadedWords.add(word);  // Track loaded word
             customCount++;
           }
-          android.util.Log.d("WordPredictor", "Loaded " + customCount + " custom words");
+          if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            android.util.Log.d("WordPredictor", "Loaded " + customCount + " custom words");
+          }
         }
         catch (org.json.JSONException e)
         {
@@ -672,11 +702,14 @@ public class WordPredictor
             String word = cursor.getString(wordIndex).toLowerCase();
             int frequency = (freqIndex >= 0) ? cursor.getInt(freqIndex) : 1000;
             _dictionary.put(word, frequency);
+            loadedWords.add(word);  // Track loaded word
             userCount++;
           }
 
           cursor.close();
-          android.util.Log.d("WordPredictor", "Loaded " + userCount + " user dictionary words");
+          if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            android.util.Log.d("WordPredictor", "Loaded " + userCount + " user dictionary words");
+          }
         }
       }
       catch (Exception e)
@@ -688,6 +721,8 @@ public class WordPredictor
     {
       android.util.Log.e("WordPredictor", "Error loading custom/user words", e);
     }
+
+    return loadedWords;
   }
   
   /**
@@ -697,8 +732,10 @@ public class WordPredictor
   {
     // This method will be called from Keyboard2 to reset state
     // Dictionary remains loaded, just clears any internal state if needed
-    android.util.Log.d("WordPredictor", "===== PREDICTOR RESET CALLED =====");
-    android.util.Log.d("WordPredictor", "Stack trace: ", new Exception("Reset trace"));
+    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+      android.util.Log.d("WordPredictor", "===== PREDICTOR RESET CALLED =====");
+      android.util.Log.d("WordPredictor", "Stack trace: ", new Exception("Reset trace"));
+    }
   }
 
   /**
@@ -789,7 +826,10 @@ public class WordPredictor
     List<WordCandidate> candidates = new ArrayList<>();
     String lowerSequence = keySequence.toLowerCase();
 
-    android.util.Log.d("WordPredictor", "Predicting for: " + lowerSequence + " (len=" + lowerSequence.length() + ") with context: " + context);
+    // OPTIMIZATION: Verbose logging disabled in release builds for performance
+    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+      android.util.Log.d("WordPredictor", "Predicting for: " + lowerSequence + " (len=" + lowerSequence.length() + ") with context: " + context);
+    }
 
     int maxPredictions = MAX_PREDICTIONS_TYPING;
 
@@ -798,14 +838,18 @@ public class WordPredictor
     // Get candidate words from prefix index (only words starting with typed prefix)
     Set<String> candidateWords = getPrefixCandidates(lowerSequence);
 
-    android.util.Log.d("WordPredictor", "Prefix index lookup: " + candidateWords.size() + " candidates for prefix '" + lowerSequence + "'");
+    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+      android.util.Log.d("WordPredictor", "Prefix index lookup: " + candidateWords.size() + " candidates for prefix '" + lowerSequence + "'");
+    }
 
     for (String word : candidateWords)
     {
       // SKIP DISABLED WORDS - Filter out words disabled via Dictionary Manager
       if (isWordDisabled(word))
       {
-        android.util.Log.d("WordPredictor", "Skipping disabled word: " + word);
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+          android.util.Log.d("WordPredictor", "Skipping disabled word: " + word);
+        }
         continue;
       }
 
@@ -819,7 +863,11 @@ public class WordPredictor
       if (score > 0)
       {
         candidates.add(new WordCandidate(word, score));
-        android.util.Log.d("WordPredictor", "Candidate: " + word + " (score=" + score + ")");
+        // CRITICAL OPTIMIZATION: This log was called hundreds of times per prediction
+        // causing ~600ms latency. Now only enabled in debug builds.
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+          android.util.Log.d("WordPredictor", "Candidate: " + word + " (score=" + score + ")");
+        }
       }
     }
 
@@ -842,8 +890,10 @@ public class WordPredictor
       if (predictions.size() >= maxPredictions) break;
     }
 
-    android.util.Log.d("WordPredictor", "Final predictions (" + predictions.size() + "): " + predictions);
-    android.util.Log.d("WordPredictor", "Scores: " + scores);
+    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+      android.util.Log.d("WordPredictor", "Final predictions (" + predictions.size() + "): " + predictions);
+      android.util.Log.d("WordPredictor", "Scores: " + scores);
+    }
 
     PerformanceProfiler.end("Type.predictWordsWithScores");
     return new PredictionResult(predictions, scores);
