@@ -7,17 +7,48 @@
 
 ---
 
-## 🔥 Current Status (2025-11-19 - UPDATED)
+## 🔥 Current Status (2025-11-20 - UPDATED)
 
-**Latest Version**: v1.32.512 (564) 🎯
+**Latest Version**: v1.32.527 (577) 🎯
 **Build Status**: ✅ SWIPE TYPING WORKS! Neural predictions operational
 **Branch**: feature/swipe-typing
-**Current Focus**: Performance optimization for sub-100ms latency
+**Current Focus**: Model loading optimization achieved (700ms → 236ms)
 **Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
 **Critical Fixes**: 26 fixes applied (see history below)
+**Performance**: Inference 108-114ms | Model loading 236ms | Total startup ~350ms
 
-### 🔧 Latest Work (v1.32.510-512) - PERFORMANCE OPTIMIZATIONS
+### 🔧 Latest Work (v1.32.514-527) - MODEL LOADING & SETTINGS FIXES
+
+**MODEL LOADING OPTIMIZATION (v1.32.520-527)** ⚡
+- **Problem**: Model loading took ~700ms (vocabulary: 500ms, ONNX: 200ms)
+- **Root Causes Identified**:
+  1. JSON parsing + O(n log n) sorting of 50K vocabulary (500ms)
+  2. Contraction loading from JSON (400ms when not cached)
+  3. Unbuffered I/O causing 440ms disk access overhead
+
+- **Optimizations Applied**:
+  1. **v1.32.520**: Binary vocabulary cache format V1 (vocabulary only)
+  2. **v1.32.522**: Binary cache format V2 (vocabulary + contractions)
+  3. **v1.32.524**: Fixed cache save timing (after all components loaded)
+  4. **v1.32.526-527**: BufferedInputStream/BufferedOutputStream (64KB buffer)
+
+- **Performance Results**:
+  - Vocabulary loading: **500ms → 40ms (11x faster!)** ✨
+  - Total model loading: **700ms → 236ms (3x faster!)** ✨
+  - First load generates cache (~500ms), subsequent loads use binary cache (40ms)
+  - Cache format: Magic number (VOCB) + version + 50K words + 1744 contractions
+
+**SETTINGS & ACCURACY FIXES (v1.32.514-519)**
+- **v1.32.514**: Fixed "Starting Letter Accuracy" setting not working for neural predictions
+  - Added `firstChar` field to `SwipeStats` class
+  - Updated vocabulary filter to enforce prefix matching based on first detected key
+- **v1.32.517**: Score-gap early stopping (10-30% latency improvement for confident predictions)
+  - Stop beam search when top beam finished and gap > 2.0 from 2nd beam
+- **v1.32.518**: Optimized ONNX graph caching for 50-80% faster subsequent loads
+- **v1.32.519**: Added comprehensive timing instrumentation for profiling
+
+### 🔧 Previous Work (v1.32.510-512) - BEAM SEARCH OPTIMIZATIONS
 
 **SEQUENTIAL BEAM SEARCH OPTIMIZATIONS (v1.32.510-512)**
 - **Problem**: ~400ms latency for swipe predictions (target: sub-100ms)
