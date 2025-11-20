@@ -608,20 +608,38 @@ public class OnnxSwipePredictor
     try
     {
       OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
-      
+
       // OPTIMIZATION 1: Maximum graph optimization level (operator fusion, layout transforms)
       sessionOptions.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
       // logDebug("⚙️ Set optimization level to ALL_OPT for " + sessionName);
-      
+
       // OPTIMIZATION 2: Let ONNX Runtime determine optimal thread count for mobile
       sessionOptions.setIntraOpNumThreads(0); // Will be overridden by execution provider config
       // logDebug("🧵 Set intra-op threads to auto-detect for " + sessionName);
-      
+
       // OPTIMIZATION 3: Memory pattern optimization for repeated inference
       sessionOptions.setMemoryPatternOptimization(true);
       // logDebug("🧠 Enabled memory pattern optimization for " + sessionName);
-      
-      // OPTIMIZATION 4: Enable verbose logging for execution provider verification
+
+      // OPTIMIZATION 4: Cache optimized model graph to disk for faster subsequent loads
+      // First load: optimize + save to cache. Subsequent loads: load from cache (skip optimization)
+      if (_context != null)
+      {
+        try
+        {
+          java.io.File cacheDir = _context.getCacheDir();
+          String cacheFileName = "onnx_optimized_" + sessionName.toLowerCase() + ".ort";
+          java.io.File cacheFile = new java.io.File(cacheDir, cacheFileName);
+          sessionOptions.setOptimizedModelFilePath(cacheFile.getAbsolutePath());
+          Log.d(TAG, "📦 Optimized model cache: " + cacheFile.getAbsolutePath());
+        }
+        catch (Exception cacheError)
+        {
+          Log.w(TAG, "⚠️ Could not set optimized model cache: " + cacheError.getMessage());
+        }
+      }
+
+      // OPTIMIZATION 5: Enable verbose logging for execution provider verification
       try
       {
         sessionOptions.setSessionLogLevel(OrtLoggingLevel.ORT_LOGGING_LEVEL_VERBOSE);
@@ -631,10 +649,10 @@ public class OnnxSwipePredictor
       {
         // logDebug("⚠️ Verbose logging not available: " + logError.getMessage());
       }
-      
-      // OPTIMIZATION 5: Modern execution providers (QNN NPU priority for Samsung S25U)
+
+      // OPTIMIZATION 6: Modern execution providers (QNN NPU priority for Samsung S25U)
       boolean hardwareAcceleration = tryEnableHardwareAcceleration(sessionOptions, sessionName);
-      
+
       return sessionOptions;
     }
     catch (Exception e)
