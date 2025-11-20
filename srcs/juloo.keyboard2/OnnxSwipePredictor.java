@@ -1709,13 +1709,19 @@ public class OnnxSwipePredictor
 
       // Check if all beams finished - matches CLI line 235
       boolean allFinished = true;
+      int finishedCount = 0;
       for (BeamSearchState beam : beams) {
-        if (!beam.finished) allFinished = false;
+        if (beam.finished) {
+          finishedCount++;
+        } else {
+          allFinished = false;
+        }
       }
 
-      if (allFinished)
+      // Early stop if all beams finished OR we have enough finished beams
+      if (allFinished || finishedCount >= beamWidth)
       {
-        // logDebug("🏁 All beams finished at step " + step);
+        logDebug("🏁 Early stop at step " + step + " (" + finishedCount + "/" + beams.size() + " finished)\n");
         break;
       }
     }
