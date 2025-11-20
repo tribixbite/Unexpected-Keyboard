@@ -305,12 +305,19 @@ public class OnnxSwipePredictor
 
       // Load encoder model (using correct name from web demo)
       Log.d(TAG, "Loading encoder model from: " + encoderPath);
+      long encStartTime = System.currentTimeMillis();
       byte[] encoderModelData = loadModelFromAssets(encoderPath);
+      long encReadTime = System.currentTimeMillis() - encStartTime;
+      Log.i(TAG, "⏱️ Encoder read: " + encReadTime + "ms");
+
       if (encoderModelData != null)
       {
         // logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
+        long encSessionStart = System.currentTimeMillis();
         OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Encoder");
         _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
+        long encSessionTime = System.currentTimeMillis() - encSessionStart;
+        Log.i(TAG, "⏱️ Encoder session creation: " + encSessionTime + "ms");
 
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_encoderSession, "Encoder");
@@ -334,12 +341,19 @@ public class OnnxSwipePredictor
 
       // Load decoder model (using correct name from web demo)
       Log.d(TAG, "Loading decoder model from: " + decoderPath);
+      long decStartTime = System.currentTimeMillis();
       byte[] decoderModelData = loadModelFromAssets(decoderPath);
+      long decReadTime = System.currentTimeMillis() - decStartTime;
+      Log.i(TAG, "⏱️ Decoder read: " + decReadTime + "ms");
+
       if (decoderModelData != null)
       {
         // logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
+        long decSessionStart = System.currentTimeMillis();
         OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Decoder");
         _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
+        long decSessionTime = System.currentTimeMillis() - decSessionStart;
+        Log.i(TAG, "⏱️ Decoder session creation: " + decSessionTime + "ms");
         // logDebug("✅ Decoder session created successfully");
         // logDebug("   Inputs: " + _decoderSession.getInputNames());
         // logDebug("   Outputs: " + _decoderSession.getOutputNames());
@@ -355,16 +369,22 @@ public class OnnxSwipePredictor
         Log.e(TAG, "Failed to load decoder model data from: " + decoderPath);
       }
       Log.d(TAG, "Finished loading decoder model");
-      
+
       // Load tokenizer configuration
       Log.d(TAG, "Loading tokenizer");
+      long tokStart = System.currentTimeMillis();
       boolean tokenizerLoaded = _tokenizer.loadFromAssets(_context);
+      long tokTime = System.currentTimeMillis() - tokStart;
+      Log.i(TAG, "⏱️ Tokenizer load: " + tokTime + "ms");
       Log.d(TAG, "Tokenizer loaded: " + tokenizerLoaded);
       // logDebug("📝 Tokenizer loaded: " + tokenizerLoaded + " (vocab size: " + _tokenizer.getVocabSize() + ")");
-      
+
       // OPTIMIZATION: Load vocabulary for fast filtering
       Log.d(TAG, "Loading vocabulary");
+      long vocabStart = System.currentTimeMillis();
       boolean vocabularyLoaded = _vocabulary.loadVocabulary();
+      long vocabTime = System.currentTimeMillis() - vocabStart;
+      Log.i(TAG, "⏱️ Vocabulary load: " + vocabTime + "ms");
       Log.d(TAG, "Vocabulary loaded: " + vocabularyLoaded);
       // logDebug("📚 Vocabulary loaded: " + vocabularyLoaded + " (words: " + _vocabulary.getStats().totalWords + ")");
       

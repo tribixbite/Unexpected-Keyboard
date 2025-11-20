@@ -1,6 +1,7 @@
 package juloo.keyboard2;
 
 import android.content.res.Resources;
+import android.util.LruCache;
 import android.view.KeyEvent;
 import java.util.TreeMap;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ public final class LayoutModifier
   static KeyboardData.Row number_row_no_symbols;
   static KeyboardData.Row number_row_symbols;
   static KeyboardData num_pad;
+  private static LruCache<String, KeyboardData> _layoutCache = new LruCache<>(10);
 
   /** Update the layout according to the configuration.
    *  - Remove the switching key if it isn't needed
@@ -25,6 +27,12 @@ public final class LayoutModifier
    */
   public static KeyboardData modify_layout(KeyboardData kw)
   {
+    String cacheKey = (kw.name != null ? kw.name : "") + "_" + globalConfig.version;
+    KeyboardData cachedLayout = _layoutCache.get(cacheKey);
+    if (cachedLayout != null) {
+        return cachedLayout;
+    }
+
     // Extra keys are removed from the set as they are encountered during the
     // first iteration then automatically added.
     final TreeMap<KeyValue, KeyboardData.PreferredPos> extra_keys = new TreeMap<KeyValue, KeyboardData.PreferredPos>();
@@ -63,7 +71,7 @@ public final class LayoutModifier
       globalConfig.extra_keys_subtype.compute(extra_keys,
           new ExtraKeys.Query(kw.script, present));
     }
-    kw = kw.mapKeys(new KeyboardData.MapKeyValues() {
+    KeyboardData newKw = kw.mapKeys(new KeyboardData.MapKeyValues() {
       public KeyValue apply(KeyValue key, boolean localized)
       {
         if (localized && !extra_keys.containsKey(key))
@@ -74,15 +82,17 @@ public final class LayoutModifier
       }
     });
     if (added_numpad != null)
-      kw = kw.addNumPad(added_numpad);
+      newKw = newKw.addNumPad(added_numpad);
     // Add extra keys that are not on the layout (including 'loc' keys)
-    extra_keys_keyset.removeAll(kw_keys);
+    extra_keys_keyset.removeAll(newKw.getKeys().keySet());
     if (extra_keys.size() > 0)
-      kw = kw.addExtraKeys(extra_keys.entrySet().iterator());
+      newKw = newKw.addExtraKeys(extra_keys.entrySet().iterator());
     // Avoid adding extra keys to the number row
     if (added_number_row != null)
-      kw = kw.insert_row(added_number_row, 0);
-    return kw;
+      newKw = newKw.insert_row(added_number_row, 0);
+
+    _layoutCache.put(cacheKey, newKw);
+    return newKw;
   }
 
   /** Handle the numpad layout. The [main_kw] is used to adapt the numpad to

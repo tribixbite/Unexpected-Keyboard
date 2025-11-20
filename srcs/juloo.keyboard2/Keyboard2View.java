@@ -13,6 +13,7 @@ import android.inputmethodservice.InputMethodService;
 import android.os.Build.VERSION;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.LruCache;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -68,6 +69,7 @@ public class Keyboard2View extends View
 
   private Theme _theme;
   private Theme.Computed _tc;
+  private LruCache<String, Theme.Computed> _themeCache;
 
   private static RectF _tmpRect = new RectF();
 
@@ -85,6 +87,7 @@ public class Keyboard2View extends View
     _config = Config.globalConfig();
     _pointers = new Pointers(this, _config, getContext());
     _swipeRecognizer = _pointers._swipeRecognizer; // Share the recognizer
+    _themeCache = new LruCache<>(5);
 
     initSwipeTrailPaint();
     refresh_navigation_bar(context);
@@ -633,7 +636,14 @@ public class Keyboard2View extends View
     _marginRight = Math.max(_config.horizontal_margin, _insets_right);
     _marginBottom = _config.margin_bottom + _insets_bottom;
     _keyWidth = (width - _marginLeft - _marginRight) / _keyboard.keysWidth;
-    _tc = new Theme.Computed(_theme, _config, _keyWidth, _keyboard);
+    
+    String cacheKey = (_keyboard.name != null ? _keyboard.name : "") + "_" + _keyWidth;
+    _tc = _themeCache.get(cacheKey);
+    if (_tc == null) {
+        _tc = new Theme.Computed(_theme, _config, _keyWidth, _keyboard);
+        _themeCache.put(cacheKey, _tc);
+    }
+
     // Compute the size of labels based on the width or the height of keys. The
     // margin around keys is taken into account. Keys normal aspect ratio is
     // assumed to be 3/2 for a 10 columns layout. It's generally more, the

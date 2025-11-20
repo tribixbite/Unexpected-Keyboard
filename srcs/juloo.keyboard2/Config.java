@@ -147,6 +147,7 @@ public final class Config
       [get_current_layout()] and [set_current_layout()]. */
   int current_layout_narrow;
   int current_layout_wide;
+  public int version = 0;
 
   private Config(SharedPreferences prefs, Resources res, IKeyEventHandler h, Boolean foldableUnfolded)
   {
@@ -174,6 +175,7 @@ public final class Config
    */
   public void refresh(Resources res, Boolean foldableUnfolded)
   {
+    version++;
     DisplayMetrics dm = res.getDisplayMetrics();
     orientation_landscape = res.getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
     foldable_unfolded = foldableUnfolded;
