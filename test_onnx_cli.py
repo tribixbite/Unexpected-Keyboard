@@ -12,8 +12,8 @@ import os
 
 def setup_models():
     """Load ONNX models and create inference sessions"""
-    encoder_path = "assets/models/swipe_encoder_android.onnx"
-    decoder_path = "assets/models/swipe_decoder_android.onnx"
+    encoder_path = "assets/models/bs/swipe_encoder_android.onnx"
+    decoder_path = "assets/models/bs/swipe_decoder_android.onnx"
     
     if not os.path.exists(encoder_path):
         print(f"❌ Encoder model not found: {encoder_path}")
@@ -29,13 +29,15 @@ def setup_models():
     encoder_session = ort.InferenceSession(encoder_path)
     decoder_session = ort.InferenceSession(decoder_path)
     
-    print(f"✅ Encoder loaded - Inputs: {encoder_session.get_inputs()}")
+    print(f"✅ Encoder loaded")
     print(f"   Input names: {[inp.name for inp in encoder_session.get_inputs()]}")
     print(f"   Input shapes: {[inp.shape for inp in encoder_session.get_inputs()]}")
+    print(f"   Input types: {[inp.type for inp in encoder_session.get_inputs()]}")
     
-    print(f"✅ Decoder loaded - Inputs: {decoder_session.get_inputs()}")
+    print(f"✅ Decoder loaded")
     print(f"   Input names: {[inp.name for inp in decoder_session.get_inputs()]}")
     print(f"   Input shapes: {[inp.shape for inp in decoder_session.get_inputs()]}")
+    print(f"   Input types: {[inp.type for inp in decoder_session.get_inputs()]}")
     
     return encoder_session, decoder_session
 
@@ -106,13 +108,12 @@ def create_test_swipe(word="the"):
     return test_points
 
 def create_encoder_inputs(test_points):
-    """Create encoder input tensors for v3 model (250 seq len)"""
+    """Create encoder input tensors for v4 model (250 seq len)"""
     MAX_SEQUENCE_LENGTH = 250
     
     # Initialize arrays
     trajectory_data = np.zeros((MAX_SEQUENCE_LENGTH, 6), dtype=np.float32)
-    nearest_keys_data = np.zeros(MAX_SEQUENCE_LENGTH, dtype=np.int64)
-    src_mask_data = np.zeros(MAX_SEQUENCE_LENGTH, dtype=np.uint8)
+    nearest_keys_data = np.zeros(MAX_SEQUENCE_LENGTH, dtype=np.int32)
     
     # Character to index mapping (web demo style)
     char_to_idx = {chr(ord('a') + i): i + 4 for i in range(26)}
@@ -141,9 +142,6 @@ def create_encoder_inputs(test_points):
             
             # Nearest key
             nearest_keys_data[i] = char_to_idx.get(key, 1)  # 1 = UNK
-        
-        # Source mask: 1 for padded, 0 for real
-        src_mask_data[i] = 1 if i >= actual_length else 0
     
     print(f"📊 Encoder inputs created:")
     print(f"   Trajectory: shape {trajectory_data.shape}, actual_length: {actual_length}")
@@ -155,12 +153,11 @@ def create_encoder_inputs(test_points):
     idx_to_char.update({0: '<pad>', 1: '<unk>', 2: '<sos>', 3: '<eos>'})
     decoded = [idx_to_char.get(int(k), '?') for k in nearest_keys_data[:10]]
     print(f"   Decoded: {decoded}")
-    print(f"   Source mask: shape {src_mask_data.shape}, padded: {np.sum(src_mask_data)}")
     
     return {
         'trajectory_features': trajectory_data.reshape(1, MAX_SEQUENCE_LENGTH, 6),
         'nearest_keys': nearest_keys_data.reshape(1, MAX_SEQUENCE_LENGTH),
-        'src_mask': src_mask_data.reshape(1, MAX_SEQUENCE_LENGTH).astype(bool)
+        'actual_length': np.array([actual_length], dtype=np.int32)
     }
 
 def run_encoder(encoder_session, inputs):
@@ -178,8 +175,8 @@ def run_encoder(encoder_session, inputs):
         print(f"💥 Encoder failed: {e}")
         return None
 
-def run_decoder_beam_search(decoder_session, memory, src_mask):
-    """Run decoder with beam search using v3 separate masks"""
+def run_decoder_beam_search(decoder_session, memory, actual_src_length):
+    """Run decoder with beam search using v4 interface"""
     print("\n🔍 Running decoder beam search...")
 
     # Constants
@@ -203,87 +200,33 @@ def run_decoder_beam_search(decoder_session, memory, src_mask):
                 continue
 
             # Prepare decoder inputs
-            padded_tokens = np.zeros(DECODER_SEQ_LENGTH, dtype=np.int64)
+            padded_tokens = np.zeros(DECODER_SEQ_LENGTH, dtype=np.int32)
 
             # Copy beam tokens
             beam_len = len(beam['tokens'])
             for i in range(min(beam_len, DECODER_SEQ_LENGTH)):
                 padded_tokens[i] = beam['tokens'][i]
 
-            # DEBUG: Show what tokens are being fed to decoder
-            if step <= 2:  # Only show first 3 steps
-                print(f"\n   === Step {step}, Beam tokens: {beam['tokens']} ===")
-                print(f"   Padded tokens (first 10): {padded_tokens[:10]}")
-
-            # Create target_padding_mask (BOOLEAN - True where PAD)
-            target_padding_mask = np.zeros(DECODER_SEQ_LENGTH, dtype=bool)
-            for i in range(beam_len, DECODER_SEQ_LENGTH):
-                target_padding_mask[i] = True  # Mark padded positions
-
-            # DEBUG: Show mask state
-            if step <= 2:
-                print(f"   Padding mask (first 10): {target_padding_mask[:10]}")
-
-            # Create target_causal_mask (FLOAT32 - 0.0 allowed, -1e9 blocked)
-            # Shape: [dec_seq, dec_seq]
-            target_causal_mask = np.zeros((DECODER_SEQ_LENGTH, DECODER_SEQ_LENGTH), dtype=np.float32)
-            for i in range(DECODER_SEQ_LENGTH):
-                for j in range(DECODER_SEQ_LENGTH):
-                    if j > i:  # Mask future positions
-                        target_causal_mask[i, j] = -1e9
-
-            # Debug: Show masks for first beam only
-            if step == 0 and beam == beams[0]:
-                print(f"   Debug masks for first prediction:")
-                print(f"     Padding mask: {target_padding_mask[:5]} (first 5)")
-                print(f"     Causal mask[0]: {target_causal_mask[0][:5]} (first 5 of row 0)")
-                print(f"     Causal mask[1]: {target_causal_mask[1][:5]} (first 5 of row 1)")
-
-            # --- DEBUG: Override src_mask to ensure attention is possible ---
-            # This mask tells the decoder that NO encoder outputs are padding.
-            debug_src_mask = np.full(src_mask.shape, False, dtype=bool)
-
             try:
-                # Run decoder with v3 separate masks
+                # Run decoder with v4 interface
                 decoder_inputs = {
                     'memory': memory,
                     'target_tokens': padded_tokens.reshape(1, DECODER_SEQ_LENGTH),
-                    'target_padding_mask': target_padding_mask.reshape(1, DECODER_SEQ_LENGTH),
-                    'target_causal_mask': target_causal_mask,  # 2D, no batch dimension per config
-                    'src_mask': debug_src_mask  # Use debug mask - all False (no padding)
+                    'actual_src_length': actual_src_length
                 }
 
                 decoder_output = decoder_session.run(None, decoder_inputs)
                 logits = decoder_output[0]  # Shape: [1, 20, 30]
                 
-                print(f"   Decoder output logits shape: {logits.shape}")
-                
-                # Extract logits for next token position (web demo style)
+                # Extract logits for next token position
                 token_position = min(beam_len - 1, DECODER_SEQ_LENGTH - 1)
-                # Flatten and slice like web demo
-                logits_flat = logits.flatten()
-                start_idx = token_position * VOCAB_SIZE  
-                end_idx = start_idx + VOCAB_SIZE
-                relevant_logits = logits_flat[start_idx:end_idx]
-                
-                print(f"   Token position: {token_position}, extracted logits: {len(relevant_logits)}")
+                relevant_logits = logits[0, token_position, :]
                 
                 # Apply softmax
                 probs = softmax(relevant_logits)
 
                 # Get top k
                 top_k = np.argsort(probs)[::-1][:BEAM_WIDTH]
-
-                # Debug: Show what tokens are being predicted (only for first beam at each step)
-                is_first_beam_in_step = (beam == beams[0])
-                if step <= 1 and is_first_beam_in_step:
-                    print(f"\n   Step {step} (after tokens {beam['tokens']}) top predictions:")
-                    idx_to_char = {i + 4: chr(ord('a') + i) for i in range(26)}
-                    idx_to_char.update({0: '<pad>', 1: '<unk>', 2: '<sos>', 3: '<eos>'})
-                    for i in range(min(5, len(top_k))):
-                        token_id = int(top_k[i])
-                        char = idx_to_char.get(token_id, '?')
-                        print(f"      {i+1}. token={token_id} ({char}) prob={probs[token_id]:.4f}")
 
                 for idx in top_k:
                     new_beam = {
@@ -378,11 +321,11 @@ def main():
 
     # Proceed with decoding using one of the results
     memory = memory_the
-    src_mask = inputs_the['src_mask']
+    actual_src_length = inputs_the['actual_length']
     # --- END ENCODER DIAGNOSTIC ---
 
     # Run decoder
-    beams = run_decoder_beam_search(decoder_session, memory, src_mask)
+    beams = run_decoder_beam_search(decoder_session, memory, actual_src_length)
     
     # Convert to words
     words = beams_to_words(beams)

@@ -207,7 +207,7 @@ public class OnnxSwipePredictor
     
     try
     {
-      Log.d(TAG, "STARTING OnnxSwipePredictor.initialize()");
+      Log.d(TAG, "STARTING OnnxSwipePredictor.initialize()") ;
       // Log.d(TAG, "Loading ONNX models...");
       // logDebug("🔄 Loading ONNX transformer models...");
 
@@ -218,14 +218,17 @@ public class OnnxSwipePredictor
       switch (_currentModelVersion)
       {
         case "v2":
-          // OPTIMIZATION v6 (perftodos6.md): Use quantized INT8 models for better performance
-          // Quantized models are 4x smaller, faster inference, and enable NNAPI acceleration
-          encoderPath = "models/bs/swipe_encoder_android.onnx";
-          decoderPath = "models/bs/swipe_decoder_android.onnx";
+          // NOTE: Reverting to float32 models - "bs" broadcast models incompatible
+          // The bs/ models output nonsense (repeated characters) despite correct I/O signatures
+          // Issue: Broadcast-enabled models may require different inference logic
+          // NNAPI still enabled for hardware acceleration of float32 models
+          // TODO: Debug broadcast model compatibility or wait for properly quantized INT8 models
+          encoderPath = "models/swipe_encoder_android.onnx";
+          decoderPath = "models/swipe_decoder_android.onnx";
           _maxSequenceLength = 250;
-          _modelAccuracy = "N/A (quantized)";
-          _modelSource = "builtin-quantized";
-          Log.d(TAG, "Loading v2 quantized models (bs, INT8, NNAPI-optimized)");
+          _modelAccuracy = "80.6%";
+          _modelSource = "builtin";
+          Log.d(TAG, "Loading v2 models (float32 with NNAPI acceleration)");
           break;
 
         case "v1":
@@ -461,7 +464,7 @@ public class OnnxSwipePredictor
       // CRITICAL: Mark as initialized regardless of success/failure to prevent re-entry
       _isInitialized = true;
 
-      Log.d(TAG, "FINISHED OnnxSwipePredictor.initialize()");
+      Log.d(TAG, "FINISHED OnnxSwipePredictor.initialize()") ;
       return _isModelLoaded;
     }
     catch (Exception e)
@@ -1133,7 +1136,7 @@ public class OnnxSwipePredictor
           tgtTokens[i] = tokens.get(i).intValue();
         }
 
-        OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
+        OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
           java.nio.IntBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LENGTH});
         // V4 interface: decoder creates masks internally from actual_src_length
         OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{actualSrcLength});
@@ -1558,7 +1561,7 @@ public class OnnxSwipePredictor
     {
       if (i < features.nearestKeys.size())
       {
-        int tokenIndex = features.nearestKeys.get(i);  // Already a token index!
+        int tokenIndex = features.nearestKeys.get(i);
         buffer.put(tokenIndex);
       }
       else
@@ -1588,7 +1591,7 @@ public class OnnxSwipePredictor
     return OnnxTensor.createTensor(_ortEnvironment, maskData);
   }
   
-  private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult,
+  private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult, 
     int actualSrcLength, SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
   {
     if (_decoderSession == null)
@@ -1696,7 +1699,7 @@ public class OnnxSwipePredictor
             System.arraycopy(batchedTokens[b], 0, flatTokens, b * DECODER_SEQ_LEN, DECODER_SEQ_LEN);
           }
 
-          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
+          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
             java.nio.IntBuffer.wrap(flatTokens), new long[]{numActiveBeams, DECODER_SEQ_LEN});
 
           // Get memory dimensions for replication
@@ -1781,7 +1784,7 @@ public class OnnxSwipePredictor
         OnnxTensor actualSrcLengthTensor = null;
         try
         {
-          actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment,
+          actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, 
             new int[]{actualSrcLength});
         }
         catch (Exception e)
@@ -1811,7 +1814,7 @@ public class OnnxSwipePredictor
             }
 
             // Create tensor for this beam's tokens (must create new - wraps buffer)
-            OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment,
+            OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
               java.nio.IntBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LEN});
 
             // Update HashMap with new target_tokens tensor

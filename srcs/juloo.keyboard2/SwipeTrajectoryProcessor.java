@@ -115,6 +115,7 @@ public class SwipeTrajectoryProcessor
 
     // 2. Apply resampling if sequence exceeds maxSequenceLength
     List<PointF> processedCoords = normalizedCoords;
+    List<Long> processedTimestamps = timestamps;
 
     if (normalizedCoords.size() > maxSequenceLength && _resamplingMode != SwipeResampler.ResamplingMode.TRUNCATE)
     {
@@ -135,6 +136,16 @@ public class SwipeTrajectoryProcessor
       {
         processedCoords.add(new PointF(point[0], point[1]));
       }
+
+      // Resample timestamps as well to maintain correspondence
+      processedTimestamps = new ArrayList<>();
+      int origSize = timestamps.size();
+      int newSize = processedCoords.size();
+      for (int i = 0; i < newSize; i++) {
+        int origIdx = (int) ((long) i * (origSize - 1) / (newSize - 1));
+        processedTimestamps.add(timestamps.get(origIdx));
+      }
+
 
       // Only log if actually resampling occurred (performance: avoid string formatting when not needed)
       if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG))
@@ -157,25 +168,9 @@ public class SwipeTrajectoryProcessor
     List<TrajectoryPoint> points = new ArrayList<>();
 
     // Use Kotlin TrajectoryFeatureCalculator for correct feature calculation
-    // CRITICAL: Must use normalizedCoords (same size as timestamps), not processedCoords
-    // which may have been resampled to a different size. Python calculates features
-    // on full array then truncates, so we do the same.
+    // CRITICAL: Use processedCoords and processedTimestamps
     List<TrajectoryFeatureCalculator.FeaturePoint> featurePoints =
-        TrajectoryFeatureCalculator.INSTANCE.calculateFeatures(normalizedCoords, timestamps);
-
-    // If resampling occurred, we need to resample the features too
-    // For now, just use the processedCoords indices
-    if (processedCoords != normalizedCoords && processedCoords.size() < featurePoints.size()) {
-        // Resampling happened - subsample features uniformly
-        List<TrajectoryFeatureCalculator.FeaturePoint> resampledFeatures = new ArrayList<>();
-        int origSize = featurePoints.size();
-        int newSize = processedCoords.size();
-        for (int i = 0; i < newSize; i++) {
-            int origIdx = (int) ((long) i * (origSize - 1) / (newSize - 1));
-            resampledFeatures.add(featurePoints.get(origIdx));
-        }
-        featurePoints = resampledFeatures;
-    }
+        TrajectoryFeatureCalculator.INSTANCE.calculateFeatures(processedCoords, processedTimestamps);
 
     // Convert to TrajectoryPoint list
     for (TrajectoryFeatureCalculator.FeaturePoint fp : featurePoints)
