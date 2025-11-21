@@ -1549,12 +1549,11 @@ public class OnnxSwipePredictor
 
       if (_broadcastEnabled)
       {
-        Log.i(TAG, "✅ Broadcast-enabled models detected - memory will NOT be manually replicated");
-        Log.i(TAG, "   Decoder will expand memory internally for all beams");
+        Log.i(TAG, "✅ Broadcast-enabled models detected");
       }
       else
       {
-        Log.d(TAG, "Broadcast disabled - will manually replicate memory for all beams");
+        Log.d(TAG, "Broadcast disabled - manual memory replication");
       }
     }
     catch (IOException e)
@@ -1775,9 +1774,9 @@ public class OnnxSwipePredictor
             // For broadcast models, actual_src_length should also be single value
             actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{actualSrcLength});
 
-            if (step == 0)
+            if (step == 0 && _config != null && _config.swipe_debug_detailed_logging)
             {
-              Log.d(TAG, "🚀 Broadcast mode: memory [1, " + memorySeqLen + ", " + hiddenDim + "] will expand to " + numActiveBeams + " beams internally");
+              logDebug("🚀 Broadcast mode: memory [1, " + memorySeqLen + ", " + hiddenDim + "] → " + numActiveBeams + " beams\n");
             }
           }
           else
@@ -1805,6 +1804,19 @@ public class OnnxSwipePredictor
           decoderInputs.put("memory", batchedMemoryTensor);
           decoderInputs.put("target_tokens", targetTokensTensor);
           decoderInputs.put("actual_src_length", actualSrcLengthTensor);
+
+          // Debug logging when detailed pipeline logging enabled
+          if (step == 0 && _config != null && _config.swipe_debug_detailed_logging)
+          {
+            logDebug("=== DECODER INPUTS (step 0) ===\n");
+            logDebug("  memory: " + java.util.Arrays.toString(batchedMemoryTensor.getInfo().getShape()) + "\n");
+            logDebug("  target_tokens: " + java.util.Arrays.toString(targetTokensTensor.getInfo().getShape()) + "\n");
+            logDebug("  actual_src_length: " + java.util.Arrays.toString(actualSrcLengthTensor.getInfo().getShape()) + "\n");
+            logDebug("  actualSrcLength value: " + actualSrcLength + "\n");
+            logDebug("  numActiveBeams: " + numActiveBeams + "\n");
+            logDebug("  broadcastEnabled: " + _broadcastEnabled + "\n");
+            logDebug("  First beam tokens: " + java.util.Arrays.toString(java.util.Arrays.copyOf(flatTokens, Math.min(10, flatTokens.length))) + "\n");
+          }
 
           long inferenceStart = System.nanoTime();
           OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
