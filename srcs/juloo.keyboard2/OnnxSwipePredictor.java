@@ -219,14 +219,29 @@ public class OnnxSwipePredictor
       switch (_currentModelVersion)
       {
         case "v2":
-          // OPTIMIZATION v6 (perftodos6.md): Use quantized INT8 broadcast models with NNAPI
-          // Broadcast models expand memory internally - no manual replication needed
-          encoderPath = "models/bs/swipe_encoder_android.onnx";
-          decoderPath = "models/bs/swipe_decoder_android.onnx";
-          _maxSequenceLength = 250;
-          _modelAccuracy = "73.4%";  // INT8 quantized accuracy
-          _modelSource = "builtin-quantized";
-          Log.d(TAG, "Loading v2 quantized models (INT8, broadcast-enabled, NNAPI-optimized)");
+          // Check user preference for quantized vs float32 models
+          boolean useQuantized = (_config != null && _config.neural_use_quantized);
+
+          if (useQuantized)
+          {
+            // INT8 quantized models with broadcast support (experimental)
+            encoderPath = "models/bs/swipe_encoder_android.onnx";
+            decoderPath = "models/bs/swipe_decoder_android.onnx";
+            _maxSequenceLength = 250;
+            _modelAccuracy = "73.4%";
+            _modelSource = "builtin-quantized";
+            Log.d(TAG, "Loading v2 INT8 quantized models (broadcast-enabled, NNAPI-optimized)");
+          }
+          else
+          {
+            // Standard float32 models (default, more stable)
+            encoderPath = "models/swipe_encoder_android.onnx";
+            decoderPath = "models/swipe_decoder_android.onnx";
+            _maxSequenceLength = 250;
+            _modelAccuracy = "80.6%";
+            _modelSource = "builtin";
+            Log.d(TAG, "Loading v2 float32 models (standard, NNAPI-accelerated)");
+          }
           break;
 
         case "v1":

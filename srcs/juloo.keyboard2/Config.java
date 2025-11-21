@@ -125,6 +125,7 @@ public final class Config
 
   // Neural model versioning and resampling (v1.34+)
   public String neural_model_version; // "v2" (builtin), "v1", "v3" (external)
+  public boolean neural_use_quantized; // Use INT8 quantized models (faster) vs float32 (more accurate)
   public int neural_user_max_seq_length; // User-defined max sequence length (default: model default)
   public String neural_resampling_mode; // "truncate", "discard", "merge"
   public String neural_custom_encoder_path; // Path or content URI to custom encoder ONNX file
@@ -320,6 +321,7 @@ public final class Config
 
     // Neural model versioning and resampling (v1.34+)
     neural_model_version = _prefs.getString("neural_model_version", "v2"); // Default to v2 (builtin, 80.6% accuracy)
+    neural_use_quantized = _prefs.getBoolean("neural_use_quantized", false); // Default to float32 (more stable)
     neural_user_max_seq_length = safeGetInt(_prefs, "neural_user_max_seq_length", 0); // 0 = use model default
     neural_resampling_mode = _prefs.getString("neural_resampling_mode", "discard"); // Default to discard (best quality)
 

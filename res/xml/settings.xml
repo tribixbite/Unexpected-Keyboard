@@ -47,6 +47,7 @@
       <PreferenceScreen android:key="neural_model_config" android:title="Model Configuration" android:summary="Select model version and trajectory processing">
         <Preference android:key="neural_model_info" android:title="@string/pref_neural_model_info_title" android:summary="@string/pref_neural_model_info_summary" android:selectable="false"/>
         <ListPreference android:key="neural_model_version" android:title="@string/pref_neural_model_version_title" android:summary="@string/pref_neural_model_version_summary" android:defaultValue="v2" android:entries="@array/pref_neural_model_version_entries" android:entryValues="@array/pref_neural_model_version_values" android:dependency="neural_prediction_enabled"/>
+        <CheckBoxPreference android:key="neural_use_quantized" android:title="Use INT8 Quantized Models (Experimental)" android:summary="Faster inference but lower accuracy (73.4% vs 80.6%). May produce unstable predictions." android:defaultValue="false" android:dependency="neural_prediction_enabled"/>
         <Preference android:key="neural_load_encoder" android:title="@string/pref_neural_load_encoder_title" android:summary="@string/pref_neural_load_encoder_summary"/>
         <Preference android:key="neural_load_decoder" android:title="@string/pref_neural_load_decoder_title" android:summary="@string/pref_neural_load_decoder_summary"/>
         <Preference android:key="neural_external_models_info" android:title="@string/pref_neural_external_models_info_title" android:summary="@string/pref_neural_external_models_info_summary"/>
