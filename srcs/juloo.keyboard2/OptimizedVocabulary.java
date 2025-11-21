@@ -61,6 +61,22 @@ public class OptimizedVocabulary
   private boolean contractionsLoadedFromCache = false; // v1.32.522: Track if contractions cached
   private Context context;
 
+  // OPTIMIZATION Phase 1 FIX: Cache ALL config settings to avoid SharedPreferences reads on every swipe
+  // These are updated via updateConfig() when settings change
+  private boolean _debugMode = false;
+  private float _confidenceWeight = CONFIDENCE_WEIGHT;
+  private float _frequencyWeight = FREQUENCY_WEIGHT;
+  private float _commonBoost = COMMON_WORDS_BOOST;
+  private float _top5000Boost = TOP5000_BOOST;
+  private float _rarePenalty = RARE_WORDS_PENALTY;
+  private boolean _swipeAutocorrectEnabled = true;
+  private int _maxLengthDiff = 2;
+  private int _prefixLength = 2;
+  private int _maxBeamCandidates = 3;
+  private int _minWordLength = 3;
+  private float _charMatchThreshold = 0.67f;
+  private boolean _useEditDistance = true;
+
   public OptimizedVocabulary(Context context)
   {
     this.context = context;
@@ -69,6 +85,37 @@ public class OptimizedVocabulary
     this.disabledWords = new HashSet<>();
     this.contractionPairings = new HashMap<>();
     this.nonPairedContractions = new HashMap<>();
+  }
+
+  /**
+   * CRITICAL FIX: Update cached config settings to eliminate SharedPreferences reads in hot path
+   * Call this from NeuralSwipeTypingEngine.updateConfig() when settings change
+   */
+  public void updateConfig(Config config)
+  {
+    if (config == null) return;
+
+    _debugMode = config.swipe_debug_detailed_logging;
+
+    // Use pre-calculated weights from Config.java
+    _confidenceWeight = config.swipe_confidence_weight;
+    _frequencyWeight = config.swipe_frequency_weight;
+
+    // Boost/penalty values (use defaults if not set)
+    _commonBoost = config.swipe_common_words_boost > 0 ? config.swipe_common_words_boost : COMMON_WORDS_BOOST;
+    _top5000Boost = config.swipe_top5000_boost > 0 ? config.swipe_top5000_boost : TOP5000_BOOST;
+    _rarePenalty = config.swipe_rare_words_penalty > 0 ? config.swipe_rare_words_penalty : RARE_WORDS_PENALTY;
+
+    // Autocorrect settings
+    _swipeAutocorrectEnabled = config.swipe_beam_autocorrect_enabled;
+    _maxLengthDiff = config.autocorrect_max_length_diff;
+    _prefixLength = config.autocorrect_prefix_length;
+    _maxBeamCandidates = config.autocorrect_max_beam_candidates;
+    _minWordLength = config.autocorrect_min_word_length;
+    _charMatchThreshold = config.autocorrect_char_match_threshold;
+    _useEditDistance = "edit_distance".equals(config.swipe_fuzzy_match_mode);
+
+    Log.d(TAG, "Config cached: confidenceWeight=" + _confidenceWeight + ", autocorrect=" + _swipeAutocorrectEnabled);
   }
   
   /**
@@ -147,61 +194,21 @@ public class OptimizedVocabulary
       return convertToFiltered(rawPredictions);
     }
 
-    // DEBUG: Show all raw beam search candidates BEFORE filtering
-    // Enable debug mode if user has enabled "Detailed Pipeline Logging" in settings
-    boolean debugMode = android.util.Log.isLoggable(TAG, android.util.Log.DEBUG);
-
-    // v1.33+: Load ALL configurable parameters from preferences (OPTIMIZED: read once per swipe)
-    float confidenceWeight = CONFIDENCE_WEIGHT;  // default
-    float frequencyWeight = FREQUENCY_WEIGHT;    // default
-    float commonBoost = COMMON_WORDS_BOOST;      // default
-    float top5000Boost = TOP5000_BOOST;          // default
-    float rarePenalty = RARE_WORDS_PENALTY;      // default
-
-    // Autocorrect configuration (v1.33+: optimized to load once instead of inside loop)
-    boolean swipeAutocorrectEnabled = true;  // default
-    int maxLengthDiff = 2;
-    int prefixLength = 2;
-    int maxBeamCandidates = 3;
-    int minWordLength = 3;
-    float charMatchThreshold = 0.67f;
-    boolean useEditDistance = true;  // v1.33.6: default to edit distance (more accurate)
-
-    if (context != null)
-    {
-      try
-      {
-        android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
-        debugMode = prefs.getBoolean("swipe_debug_detailed_logging", false);
-
-        // Read configurable scoring weights (v1.33+)
-        // CRITICAL FIX: Calculate weights from "swipe_prediction_source" slider (0-100)
-        // Config.java calculates these but never writes them to SharedPreferences!
-        int predictionSource = prefs.getInt("swipe_prediction_source", 60);  // 60 = balanced default
-        confidenceWeight = predictionSource / 100.0f;  // 0-100 slider → 0.0-1.0 weight
-        frequencyWeight = 1.0f - confidenceWeight;     // Complementary weight
-
-        commonBoost = Config.safeGetFloat(prefs, "swipe_common_words_boost", COMMON_WORDS_BOOST);
-        top5000Boost = Config.safeGetFloat(prefs, "swipe_top5000_boost", TOP5000_BOOST);
-        rarePenalty = Config.safeGetFloat(prefs, "swipe_rare_words_penalty", RARE_WORDS_PENALTY);
-
-        // Read autocorrect configuration (v1.33.4: beam autocorrect only, final autocorrect handled separately)
-        swipeAutocorrectEnabled = prefs.getBoolean("swipe_beam_autocorrect_enabled", true);
-        maxLengthDiff = prefs.getInt("autocorrect_max_length_diff", 2);
-        prefixLength = prefs.getInt("autocorrect_prefix_length", 2);
-        maxBeamCandidates = prefs.getInt("autocorrect_max_beam_candidates", 3);
-        minWordLength = prefs.getInt("autocorrect_min_word_length", 3);
-        charMatchThreshold = Config.safeGetFloat(prefs, "autocorrect_char_match_threshold", 0.67f);
-
-        // v1.33.6: Fuzzy matching algorithm selection (edit_distance or positional)
-        String fuzzyMatchMode = prefs.getString("swipe_fuzzy_match_mode", "edit_distance");
-        useEditDistance = "edit_distance".equals(fuzzyMatchMode);
-      }
-      catch (Exception e)
-      {
-        // Ignore - use default values
-      }
-    }
+    // CRITICAL FIX: Use CACHED config values instead of reading SharedPreferences on every swipe
+    // These are updated via updateConfig() when settings change (called from NeuralSwipeTypingEngine)
+    boolean debugMode = _debugMode;
+    float confidenceWeight = _confidenceWeight;
+    float frequencyWeight = _frequencyWeight;
+    float commonBoost = _commonBoost;
+    float top5000Boost = _top5000Boost;
+    float rarePenalty = _rarePenalty;
+    boolean swipeAutocorrectEnabled = _swipeAutocorrectEnabled;
+    int maxLengthDiff = _maxLengthDiff;
+    int prefixLength = _prefixLength;
+    int maxBeamCandidates = _maxBeamCandidates;
+    int minWordLength = _minWordLength;
+    float charMatchThreshold = _charMatchThreshold;
+    boolean useEditDistance = _useEditDistance;
 
     if (debugMode && !rawPredictions.isEmpty())
     {

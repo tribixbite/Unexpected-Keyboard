@@ -1434,6 +1434,12 @@ public class OnnxSwipePredictor
     // Cache other frequently-checked settings here as needed
     // Example: _useQuantizedModels = config.neural_use_quantized;
 
+    // CRITICAL FIX: Propagate config to vocabulary for its own caching
+    if (_vocabulary != null)
+    {
+      _vocabulary.updateConfig(config);
+    }
+
     // Log config update (this itself is NOT verbose logging)
     Log.d(TAG, "Config updated: verbose_logging=" + _enableVerboseLogging +
               ", show_raw=" + _showRawOutput + ", batch_beams=" + _batchBeams);
