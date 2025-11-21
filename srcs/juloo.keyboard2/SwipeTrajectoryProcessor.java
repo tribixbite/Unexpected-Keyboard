@@ -131,6 +131,10 @@ public class SwipeTrajectoryProcessor
 
     if (normalizedCoords.size() > maxSequenceLength && _resamplingMode != SwipeResampler.ResamplingMode.TRUNCATE)
     {
+      // OPTIMIZATION Phase 2: Recycle previous resampled coords before creating new ones
+      TrajectoryObjectPool.INSTANCE.recyclePointFList(_reusableProcessedCoords);
+      _reusableProcessedCoords.clear();
+
       // Convert to 2D array for resampling (only x,y for coordinate resampling)
       float[][] coordArray = new float[normalizedCoords.size()][2];
       for (int i = 0; i < normalizedCoords.size(); i++)
@@ -142,21 +146,22 @@ public class SwipeTrajectoryProcessor
       // Resample coordinates
       float[][] resampledArray = SwipeResampler.resample(coordArray, maxSequenceLength, _resamplingMode);
 
-      // Convert back to PointF list
-      processedCoords = new ArrayList<>();
+      // Convert back to PointF list using object pool
       for (float[] point : resampledArray)
       {
-        processedCoords.add(new PointF(point[0], point[1]));
+        _reusableProcessedCoords.add(TrajectoryObjectPool.INSTANCE.obtainPointF(point[0], point[1]));
       }
+      processedCoords = _reusableProcessedCoords;
 
       // Resample timestamps as well to maintain correspondence
-      processedTimestamps = new ArrayList<>();
+      _reusableProcessedTimestamps.clear();
       int origSize = timestamps.size();
       int newSize = processedCoords.size();
       for (int i = 0; i < newSize; i++) {
         int origIdx = (int) ((long) i * (origSize - 1) / (newSize - 1));
-        processedTimestamps.add(timestamps.get(origIdx));
+        _reusableProcessedTimestamps.add(timestamps.get(origIdx));
       }
+      processedTimestamps = _reusableProcessedTimestamps;
 
 
       // Only log if actually resampling occurred (performance: avoid string formatting when not needed)
@@ -177,56 +182,58 @@ public class SwipeTrajectoryProcessor
     // - Acceleration = velocity_change / time_change
     // - All clipped to [-10, 10]
     int actualLength = processedCoords.size();
-    List<TrajectoryPoint> points = new ArrayList<>();
+
+    // OPTIMIZATION Phase 2: Recycle TrajectoryPoints from previous call
+    TrajectoryObjectPool.INSTANCE.recycleTrajectoryPointList(_reusablePoints);
+    _reusablePoints.clear();
 
     // Use Kotlin TrajectoryFeatureCalculator for correct feature calculation
     // CRITICAL: Use processedCoords and processedTimestamps
     List<TrajectoryFeatureCalculator.FeaturePoint> featurePoints =
         TrajectoryFeatureCalculator.INSTANCE.calculateFeatures(processedCoords, processedTimestamps);
 
-    // Convert to TrajectoryPoint list
+    // Convert to TrajectoryPoint list using object pool
     for (TrajectoryFeatureCalculator.FeaturePoint fp : featurePoints)
     {
-      TrajectoryPoint point = new TrajectoryPoint();
+      TrajectoryPoint point = TrajectoryObjectPool.INSTANCE.obtainTrajectoryPoint();
       point.x = fp.getX();
       point.y = fp.getY();
       point.vx = fp.getVx();
       point.vy = fp.getVy();
       point.ax = fp.getAx();
       point.ay = fp.getAy();
-      points.add(point);
+      _reusablePoints.add(point);
     }
 
     // 5. Truncate or pad features to maxSequenceLength
     // Training: traj_features = np.pad(traj_features, ((0, pad_len), (0, 0)), mode="constant")
-    if (points.size() > maxSequenceLength) {
-      // Truncate
-      points = new ArrayList<>(points.subList(0, maxSequenceLength));
+    if (_reusablePoints.size() > maxSequenceLength) {
+      // Truncate - recycle excess points
+      while (_reusablePoints.size() > maxSequenceLength) {
+        TrajectoryObjectPool.INSTANCE.recycleTrajectoryPoint(_reusablePoints.remove(_reusablePoints.size() - 1));
+      }
     } else {
-      // Pad with zeros [0, 0, 0, 0, 0, 0]
-      while (points.size() < maxSequenceLength) {
-        TrajectoryPoint zeroPadding = new TrajectoryPoint();
-        zeroPadding.x = 0.0f;
-        zeroPadding.y = 0.0f;
-        zeroPadding.vx = 0.0f;
-        zeroPadding.vy = 0.0f;
-        zeroPadding.ax = 0.0f;
-        zeroPadding.ay = 0.0f;
-        points.add(zeroPadding);
+      // Pad with zeros [0, 0, 0, 0, 0, 0] using pooled objects
+      while (_reusablePoints.size() < maxSequenceLength) {
+        TrajectoryPoint zeroPadding = TrajectoryObjectPool.INSTANCE.obtainTrajectoryPoint();
+        // obtainTrajectoryPoint returns zero-initialized object from pool
+        _reusablePoints.add(zeroPadding);
       }
     }
+    List<TrajectoryPoint> points = _reusablePoints;
 
     // 6. Truncate or pad nearest_keys with PAD token (0)
     // Training: nearest_keys = nearest_keys + [self.tokenizer.pad_idx] * pad_len
-    List<Integer> finalNearestKeys;
-    if (processedKeys.size() >= maxSequenceLength) {
-      finalNearestKeys = processedKeys.subList(0, maxSequenceLength);
-    } else {
-      finalNearestKeys = new ArrayList<>(processedKeys);
-      while (finalNearestKeys.size() < maxSequenceLength) {
-        finalNearestKeys.add(0);  // PAD token
-      }
+    // OPTIMIZATION Phase 2: Use reusable list for keys
+    _reusableProcessedKeys.clear();
+    int keysToCopy = Math.min(processedKeys.size(), maxSequenceLength);
+    for (int i = 0; i < keysToCopy; i++) {
+      _reusableProcessedKeys.add(processedKeys.get(i));
     }
+    while (_reusableProcessedKeys.size() < maxSequenceLength) {
+      _reusableProcessedKeys.add(0);  // PAD token
+    }
+    List<Integer> finalNearestKeys = _reusableProcessedKeys;
 
     // Verification logging (first 3 points)
     if (!points.isEmpty()) {
