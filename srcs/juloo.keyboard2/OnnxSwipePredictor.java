@@ -81,6 +81,7 @@ public class OnnxSwipePredictor
   private boolean _isInitialized = false;
   private boolean _keepSessionsInMemory = true; // OPTIMIZATION: Never unload for speed
   private boolean _usesSeparateMasks = false; // Track if decoder uses separate padding/causal masks (custom models) vs combined target_mask (v2 builtin)
+  private boolean _broadcastEnabled = false; // OPTIMIZATION v6 (perftodos6.md): Broadcast-enabled models expand memory internally
   
   // Configuration parameters
   private int _beamWidth = DEFAULT_BEAM_WIDTH;
@@ -218,17 +219,14 @@ public class OnnxSwipePredictor
       switch (_currentModelVersion)
       {
         case "v2":
-          // NOTE: Reverting to float32 models - "bs" broadcast models incompatible
-          // The bs/ models output nonsense (repeated characters) despite correct I/O signatures
-          // Issue: Broadcast-enabled models may require different inference logic
-          // NNAPI still enabled for hardware acceleration of float32 models
-          // TODO: Debug broadcast model compatibility or wait for properly quantized INT8 models
-          encoderPath = "models/swipe_encoder_android.onnx";
-          decoderPath = "models/swipe_decoder_android.onnx";
+          // OPTIMIZATION v6 (perftodos6.md): Use quantized INT8 broadcast models with NNAPI
+          // Broadcast models expand memory internally - no manual replication needed
+          encoderPath = "models/bs/swipe_encoder_android.onnx";
+          decoderPath = "models/bs/swipe_decoder_android.onnx";
           _maxSequenceLength = 250;
-          _modelAccuracy = "80.6%";
-          _modelSource = "builtin";
-          Log.d(TAG, "Loading v2 models (float32 with NNAPI acceleration)");
+          _modelAccuracy = "73.4%";  // INT8 quantized accuracy
+          _modelSource = "builtin-quantized";
+          Log.d(TAG, "Loading v2 quantized models (INT8, broadcast-enabled, NNAPI-optimized)");
           break;
 
         case "v1":
@@ -413,6 +411,9 @@ public class OnnxSwipePredictor
         Log.e(TAG, "Failed to load decoder model data from: " + decoderPath);
       }
       Log.d(TAG, "Finished loading decoder model");
+
+      // OPTIMIZATION v6 (perftodos6.md): Read model configuration for broadcast support
+      readModelConfig(encoderPath);
 
       // Load tokenizer configuration
       Log.d(TAG, "Loading tokenizer");
@@ -1510,7 +1511,59 @@ public class OnnxSwipePredictor
       return null;
     }
   }
-  
+
+  /**
+   * OPTIMIZATION v6 (perftodos6.md): Read model configuration to detect broadcast support
+   * Broadcast-enabled models expand memory internally, avoiding manual replication
+   */
+  private void readModelConfig(String modelPath)
+  {
+    try
+    {
+      // Derive config path from model path (e.g., models/bs/swipe_encoder_android.onnx -> models/bs/model_config.json)
+      String configPath;
+      if (modelPath.contains("/bs/"))
+      {
+        // Quantized broadcast models in bs/ directory
+        configPath = "models/bs/model_config.json";
+      }
+      else
+      {
+        // Standard float32 models - no config, assume broadcast disabled
+        _broadcastEnabled = false;
+        Log.d(TAG, "Using float32 models - broadcast disabled (manual memory replication)");
+        return;
+      }
+
+      // Load and parse JSON config
+      InputStream configStream = _context.getAssets().open(configPath);
+      byte[] buffer = new byte[configStream.available()];
+      configStream.read(buffer);
+      configStream.close();
+      String jsonString = new String(buffer, "UTF-8");
+
+      // Parse broadcast_enabled flag (simple JSON parsing without external dependencies)
+      // Example: "broadcast_enabled": true
+      _broadcastEnabled = jsonString.contains("\"broadcast_enabled\"") &&
+                          jsonString.contains("true");
+
+      if (_broadcastEnabled)
+      {
+        Log.i(TAG, "✅ Broadcast-enabled models detected - memory will NOT be manually replicated");
+        Log.i(TAG, "   Decoder will expand memory internally for all beams");
+      }
+      else
+      {
+        Log.d(TAG, "Broadcast disabled - will manually replicate memory for all beams");
+      }
+    }
+    catch (IOException e)
+    {
+      Log.w(TAG, "Could not read model_config.json - assuming broadcast disabled: " + e.getMessage());
+      _broadcastEnabled = false;
+    }
+  }
+
   private OnnxTensor createTrajectoryTensor(SwipeTrajectoryProcessor.TrajectoryFeatures features)
     throws OrtException
   {
@@ -1707,22 +1760,45 @@ public class OnnxSwipePredictor
           int memorySeqLen = (int)memoryShape[1];
           int hiddenDim = (int)memoryShape[2];
 
-          // Replicate memory for all beams (required - model doesn't support broadcasting)
-          float[][][] memoryData = (float[][][])memory.getValue();
-          float[][][] replicatedMemory = new float[numActiveBeams][memorySeqLen][hiddenDim];
-          for (int b = 0; b < numActiveBeams; b++)
+          // OPTIMIZATION v6 (perftodos6.md): Broadcast models expand memory internally
+          OnnxTensor batchedMemoryTensor;
+          OnnxTensor actualSrcLengthTensor;
+
+          if (_broadcastEnabled)
           {
-            for (int s = 0; s < memorySeqLen; s++)
+            // Broadcast model: Pass memory with batch=1, model expands internally
+            // Memory shape: [1, seq_len, hidden_dim]
+            // Target tokens shape: [num_beams, seq_len]
+            // Model will broadcast memory to match num_beams automatically
+            batchedMemoryTensor = memory; // Use as-is, no replication needed
+
+            // For broadcast models, actual_src_length should also be single value
+            actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{actualSrcLength});
+
+            if (step == 0)
             {
-              System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
+              Log.d(TAG, "🚀 Broadcast mode: memory [1, " + memorySeqLen + ", " + hiddenDim + "] will expand to " + numActiveBeams + " beams internally");
             }
           }
-          OnnxTensor batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
+          else
+          {
+            // Legacy model: Manually replicate memory for all beams
+            float[][][] memoryData = (float[][][])memory.getValue();
+            float[][][] replicatedMemory = new float[numActiveBeams][memorySeqLen][hiddenDim];
+            for (int b = 0; b < numActiveBeams; b++)
+            {
+              for (int s = 0; s < memorySeqLen; s++)
+              {
+                System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
+              }
+            }
+            batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
 
-          // Create batched actual_src_length
-          int[] srcLengths = new int[numActiveBeams];
-          Arrays.fill(srcLengths, actualSrcLength);
-          OnnxTensor actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, srcLengths);
+            // Create batched actual_src_length for all beams
+            int[] srcLengths = new int[numActiveBeams];
+            Arrays.fill(srcLengths, actualSrcLength);
+            actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, srcLengths);
+          }
 
           // Run batched decoder inference
           Map<String, OnnxTensor> decoderInputs = new HashMap<>();
@@ -1760,7 +1836,12 @@ public class OnnxSwipePredictor
           // Cleanup
           targetTokensTensor.close();
           actualSrcLengthTensor.close();
-          batchedMemoryTensor.close();
+          // Only close batchedMemoryTensor if it's a new tensor (legacy mode)
+          // In broadcast mode, batchedMemoryTensor is the original memory tensor
+          if (!_broadcastEnabled)
+          {
+            batchedMemoryTensor.close();
+          }
           decoderOutput.close();
         }
         catch (Exception e)
