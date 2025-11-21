@@ -31,21 +31,21 @@ Generated version info:  ()
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
+> Task :mergeDebugResources
 > Task :processDebugMainManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugResources
 > Task :mergeDebugAssets
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :compressDebugAssets FROM-CACHE
-> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :checkDebugDuplicateClasses
-> Task :mergeDebugJniLibFolders
+> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
 > Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
@@ -70,6 +70,12 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:105:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:120:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/DecoderWrapper.kt:205:47 Unchecked cast: Any! to Array<Array<FloatArray>>
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/MemoryPool.kt:50:9 Parameter 'maxSeqLength' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/MemoryPool.kt:51:9 Parameter 'hiddenDim' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/ModelLoader.kt:248:24 Parameter 'sessionOptions' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/TensorFactory.kt:220:13 Variable 'hiddenDim' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/TensorFactory.kt:222:39 Unchecked cast: Any! to Array<Array<FloatArray>>
 
 > Task :compileDebugJavaWithJavac
 Java compiler version 21 has deprecated support for compiling with source/target version 8.
@@ -96,5 +102,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 44s
+BUILD SUCCESSFUL in 40s
 42 actionable tasks: 34 executed, 8 from cache

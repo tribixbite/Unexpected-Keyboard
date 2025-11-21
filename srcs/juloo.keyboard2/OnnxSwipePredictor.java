@@ -224,13 +224,13 @@ public class OnnxSwipePredictor
 
           if (useQuantized)
           {
-            // INT8 quantized models with broadcast support (experimental)
-            encoderPath = "models/bs/swipe_encoder_android.onnx";
-            decoderPath = "models/bs/swipe_decoder_android.onnx";
+            // INT8 quantized models with broadcast support (calibrated, v2)
+            encoderPath = "models/bs2/swipe_encoder_android.onnx";
+            decoderPath = "models/bs2/swipe_decoder_android.onnx";
             _maxSequenceLength = 250;
             _modelAccuracy = "73.4%";
-            _modelSource = "builtin-quantized";
-            Log.d(TAG, "Loading v2 INT8 quantized models (broadcast-enabled, NNAPI-optimized)");
+            _modelSource = "builtin-quantized-v2";
+            Log.i(TAG, "Loading v2 INT8 quantized models (calibrated, broadcast-enabled, XNNPACK-optimized)");
           }
           else
           {
