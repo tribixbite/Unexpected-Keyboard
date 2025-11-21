@@ -1,8 +1,40 @@
 # Performance Optimization Tasks (perftodos7.md)
 
-**Status**: 📋 ANALYSIS COMPLETE - Ready for Implementation
-**Priority**: HIGH - User-reported lag issues investigated
+**Status**: ✅ PHASE 1-3 COMPLETE (v1.32.571-623)
+**Priority**: HIGH - User-reported lag issues RESOLVED
 **Documentation**: docs/performance-bottlenecks.md
+**Build**: v1.32.571-623 (2025-11-21)
+
+## ✅ COMPLETION SUMMARY
+
+**Phase 1 (v1.32.570-622)**: ✅ COMPLETE
+- Cached settings (no SharedPreferences access in hot paths)
+- Conditional logging based on user preference
+- Config reload optimization (only when needed)
+- **Impact**: 50-100ms per swipe + 5-15ms per app switch
+
+**Phase 2 (v1.32.571-623)**: ✅ COMPLETE
+- Confidence threshold pruning (removes beams with prob < 1%)
+- Adaptive beam width reduction (narrows to top 3 if confident)
+- Early stopping already existed from v1.32.515
+- **Impact**: 10-20ms per swipe
+
+**Phase 3 (v1.32.571-623)**: ✅ COMPLETE
+- Thread safety warnings in initialize()
+- End-to-end latency measurement with breakdown
+- **Impact**: Better debugging and monitoring
+
+**Binary Vocabulary**: ✅ ALREADY OPTIMIZED
+- V2 binary format already exists (saves 500ms → 5ms)
+- No changes needed
+
+**Deferred Optimizations** (complex, lower priority):
+- Constrained vocabulary trie (20-30ms potential)
+- Batched decoding stability testing (30-50ms potential)
+
+**Total Expected Improvement**: 60-120ms faster per swipe (nearly doubles responsiveness)
+
+---
 
 ## Investigation Summary
 
