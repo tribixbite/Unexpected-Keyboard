@@ -204,12 +204,29 @@ public class OnnxSwipePredictor
    */
   public boolean initialize()
   {
+    // OPTIMIZATION Phase 3.1: Thread safety check
+    // Warn if initialization is called on main thread (may cause UI jank)
+    if (android.os.Looper.getMainLooper() == android.os.Looper.myLooper())
+    {
+      Log.w(TAG, "⚠️ initialize() called on MAIN THREAD - may cause UI jank!");
+      // In debug builds with StrictMode, this should be avoided
+      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+      {
+        android.os.StrictMode.ThreadPolicy policy = android.os.StrictMode.getThreadPolicy();
+        if (policy != null)
+        {
+          // StrictMode is enabled - this will trigger a warning
+          Log.w(TAG, "StrictMode is active - consider calling initializeAsync() instead");
+        }
+      }
+    }
+
     if (_isInitialized)
     {
       // Log.d(TAG, "Already initialized, models loaded: " + _isModelLoaded);
       return _isModelLoaded;
     }
-    
+
     try
     {
       Log.d(TAG, "STARTING OnnxSwipePredictor.initialize()") ;
@@ -653,9 +670,24 @@ public class OnnxSwipePredictor
           PredictionResult result = createPredictionResult(candidates, input);
           long postprocessTime = System.nanoTime() - postprocessStartTime;
           
-          // Total timing summary
+          // OPTIMIZATION Phase 3.2: End-to-end latency measurement
+          // Comprehensive breakdown for identifying remaining bottlenecks
           long totalTime = System.nanoTime() - totalStartTime;
-          
+
+          // Log detailed timing breakdown (always, for performance monitoring)
+          Log.i(TAG, String.format("⏱️ Swipe prediction latency breakdown:\n" +
+            "   Preprocessing:  %3dms (trajectory extraction, key detection)\n" +
+            "   Encoder:        %3dms (swipe → embeddings)\n" +
+            "   Beam search:    %3dms (decoder inference)\n" +
+            "   Postprocessing: %3dms (vocab filtering, ranking)\n" +
+            "   TOTAL:          %3dms",
+            preprocessTime / 1_000_000,
+            encoderTime / 1_000_000,
+            searchTime / 1_000_000,
+            postprocessTime / 1_000_000,
+            totalTime / 1_000_000
+          ));
+
           return result;
         }
         
@@ -2009,7 +2041,37 @@ public class OnnxSwipePredictor
 
       // Select top beams - matches CLI line 232
       candidates.sort((a, b) -> Float.compare(a.score, b.score)); // Lower score is better (negative log prob)
+
+      // OPTIMIZATION Phase 2.1: Confidence threshold pruning
+      // Remove beams with very low probability (exp(-score) < 0.01) to avoid wasting compute
+      if (step >= 2) { // Wait at least 2 steps before pruning
+        int beforePrune = candidates.size();
+        candidates.removeIf(beam -> Math.exp(-beam.score) < 0.01); // Keep only beams with prob > 1%
+        int afterPrune = candidates.size();
+        if (afterPrune < beforePrune && _enableVerboseLogging) {
+          logDebug(String.format("⚡ Pruned %d low-confidence beams at step %d\n", beforePrune - afterPrune, step));
+        }
+      }
+
       beams = candidates.subList(0, Math.min(candidates.size(), beamWidth));
+
+      // OPTIMIZATION Phase 2.2: Adaptive beam width reduction
+      // Reduce beam width mid-search if we have high-confidence predictions
+      if (step == 5 && beams.size() > 3) {
+        float topScore = beams.get(0).score;
+        float thirdScore = beams.size() >= 3 ? beams.get(2).score : Float.POSITIVE_INFINITY;
+        float confidence = (float)Math.exp(-topScore);
+
+        // If top beam has >50% confidence, narrow search to top 3 beams
+        if (confidence > 0.5f) {
+          int oldSize = beams.size();
+          beams = beams.subList(0, Math.min(3, beams.size()));
+          if (_enableVerboseLogging) {
+            logDebug(String.format("⚡ Reduced beam width %d→%d (top conf=%.2f) at step %d\n",
+              oldSize, beams.size(), confidence, step));
+          }
+        }
+      }
 
       // OPTIMIZATION v1.32.515: Score-gap early stopping
       // If top beam is significantly better than 2nd beam, stop early (confident prediction)
