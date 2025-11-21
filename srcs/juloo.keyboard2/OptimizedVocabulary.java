@@ -25,6 +25,13 @@ public class OptimizedVocabulary
   // OPTIMIZATION: Single unified lookup structure (1 hash lookup instead of 3)
   private Map<String, WordInfo> vocabulary;  // All words with frequency + tier in one lookup
 
+  // OPTIMIZATION Phase 2: Trie for constrained beam search (eliminates invalid paths)
+  private VocabularyTrie vocabularyTrie;
+
+  // OPTIMIZATION Phase 2: Length-based buckets for fuzzy matching (reduces 50k iteration to ~2k)
+  // Maps word length -> list of words with that length
+  private Map<Integer, List<String>> vocabularyByLength;
+
   // Word information with frequency and tier for single-lookup optimization
   private static class WordInfo
   {
@@ -77,14 +84,31 @@ public class OptimizedVocabulary
   private float _charMatchThreshold = 0.67f;
   private boolean _useEditDistance = true;
 
+  // OPTIMIZATION Phase 2: Cache parsed custom words to avoid JSON parsing on every swipe
+  // Maps custom word -> frequency
+  private Map<String, Integer> _cachedCustomWords = new HashMap<>();
+
   public OptimizedVocabulary(Context context)
   {
     this.context = context;
     this.vocabulary = new HashMap<>();
+    this.vocabularyTrie = new VocabularyTrie();
+    this.vocabularyByLength = new HashMap<>();
     this.minFrequencyByLength = new HashMap<>();
     this.disabledWords = new HashSet<>();
     this.contractionPairings = new HashMap<>();
     this.nonPairedContractions = new HashMap<>();
+  }
+
+  /**
+   * Get the vocabulary trie for constrained beam search.
+   * Allows beam search to check if a prefix is valid before exploring it.
+   *
+   * @return The vocabulary trie, or null if not loaded
+   */
+  public VocabularyTrie getVocabularyTrie()
+  {
+    return isLoaded ? vocabularyTrie : null;
   }
 
   /**
@@ -114,6 +138,26 @@ public class OptimizedVocabulary
     _minWordLength = config.autocorrect_min_word_length;
     _charMatchThreshold = config.autocorrect_char_match_threshold;
     _useEditDistance = "edit_distance".equals(config.swipe_fuzzy_match_mode);
+
+    // OPTIMIZATION Phase 2: Parse and cache custom words here instead of on every swipe
+    _cachedCustomWords.clear();
+    try {
+      android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
+      String customWordsJson = prefs.getString("custom_words", "{}");
+      if (!customWordsJson.equals("{}")) {
+        org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
+        java.util.Iterator<String> keys = jsonObj.keys();
+        while (keys.hasNext()) {
+          String customWord = keys.next().toLowerCase();
+          int customFreq = jsonObj.optInt(customWord, 1000);
+          _cachedCustomWords.put(customWord, customFreq);
+        }
+        Log.d(TAG, "Cached " + _cachedCustomWords.size() + " custom words");
+      }
+    } catch (Exception e) {
+      Log.e(TAG, "Failed to parse custom words JSON", e);
+      _cachedCustomWords.clear();
+    }
 
     Log.d(TAG, "Config cached: confidenceWeight=" + _confidenceWeight + ", autocorrect=" + _swipeAutocorrectEnabled);
   }
@@ -338,19 +382,14 @@ public class OptimizedVocabulary
     {
       try
       {
-        android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
-        // Get custom words (only SharedPreferences read in autocorrect block now)
-        String customWordsJson = prefs.getString("custom_words", "{}");
-        if (!customWordsJson.equals("{}"))
+        // OPTIMIZATION Phase 2: Use cached custom words instead of reading SharedPreferences
+        if (!_cachedCustomWords.isEmpty())
         {
-          org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
-          java.util.Iterator<String> keys = jsonObj.keys();
-
           // For each custom word, check if it fuzzy matches any top beam candidate
-          while (keys.hasNext())
+          for (Map.Entry<String, Integer> entry : _cachedCustomWords.entrySet())
           {
-            String customWord = keys.next().toLowerCase();
-            int customFreq = jsonObj.optInt(customWord, 1000);
+            String customWord = entry.getKey();
+            int customFreq = entry.getValue();
 
             // Check top N RAW beam candidates for fuzzy match (v1.33.1: CRITICAL FIX - was using validPredictions)
             // This allows autocorrect to work even when ALL beam outputs are rejected by vocabulary filtering
@@ -428,7 +467,8 @@ public class OptimizedVocabulary
             continue; // Already in validPredictions
           }
 
-          // Try fuzzy matching against dictionary words of similar length
+          // OPTIMIZATION Phase 2: Use length-based buckets instead of iterating entire vocabulary
+          // This reduces iteration from 50k+ words to ~2k words (only similar lengths)
           // v1.33.2: CRITICAL FIX - find BEST match (highest score), not FIRST match
           int targetLength = beamWord.length();
           String bestMatch = null;
@@ -436,26 +476,29 @@ public class OptimizedVocabulary
           float bestFrequency = 0.0f;
           String bestSource = null;
 
-          for (java.util.Map.Entry<String, WordInfo> entry : vocabulary.entrySet())
+          // Iterate only through length buckets within maxLengthDiff range
+          int minLength = Math.max(1, targetLength - maxLengthDiff);
+          int maxLength = targetLength + maxLengthDiff;
+
+          for (int len = minLength; len <= maxLength; len++)
           {
-            String dictWord = entry.getKey();
-            WordInfo info = entry.getValue();
+            List<String> bucket = vocabularyByLength.get(len);
+            if (bucket == null) continue; // No words of this length
 
-            // Only check words of similar length (performance optimization)
-            if (Math.abs(dictWord.length() - targetLength) > maxLengthDiff)
+            for (String dictWord : bucket)
             {
-              continue;
-            }
+              WordInfo info = vocabulary.get(dictWord);
+              if (info == null) continue; // Shouldn't happen
 
-            // Skip disabled words
-            if (disabledWords.contains(dictWord))
-            {
-              continue;
-            }
+              // Skip disabled words
+              if (disabledWords.contains(dictWord))
+              {
+                continue;
+              }
 
-            // Try fuzzy matching
-            if (fuzzyMatch(dictWord, beamWord, charMatchThreshold, maxLengthDiff, prefixLength, minWordLength))
-            {
+              // Try fuzzy matching
+              if (fuzzyMatch(dictWord, beamWord, charMatchThreshold, maxLengthDiff, prefixLength, minWordLength))
+              {
               // Determine tier boost for matched word
               float boost;
               String source;
@@ -492,7 +535,8 @@ public class OptimizedVocabulary
                 bestSource = source;
               }
             }
-          }
+            } // End for dictWord in bucket
+          } // End for len in length range
 
           // Add the best match found for this beam word (if any)
           if (bestMatch != null)
@@ -755,10 +799,22 @@ public class OptimizedVocabulary
         }
 
         vocabulary.put(word, new WordInfo(frequency, tier));
+        vocabularyTrie.insert(word); // OPTIMIZATION Phase 2: Build trie during vocab load
+
+        // OPTIMIZATION Phase 2: Add to length-based buckets for fuzzy matching
+        int wordLength = word.length();
+        List<String> bucket = vocabularyByLength.get(wordLength);
+        if (bucket == null) {
+          bucket = new ArrayList<>();
+          vocabularyByLength.put(wordLength, bucket);
+        }
+        bucket.add(word);
+
         wordCount++;
       }
 
       Log.d(TAG, "Loaded JSON vocabulary: " + wordCount + " words with frequency tiers");
+      vocabularyTrie.logStats(); // Log trie statistics
 
       // DO NOT save cache here - contractions haven't been loaded yet!
       // Cache will be saved after loadVocabulary() completes
@@ -1540,6 +1596,16 @@ public class OptimizedVocabulary
         byte tier = dis.readByte();
 
         vocabulary.put(word, new WordInfo(frequency, tier));
+        vocabularyTrie.insert(word); // OPTIMIZATION Phase 2: Build trie during binary cache load
+
+        // OPTIMIZATION Phase 2: Add to length-based buckets
+        int wordLength = word.length();
+        List<String> bucket = vocabularyByLength.get(wordLength);
+        if (bucket == null) {
+          bucket = new ArrayList<>();
+          vocabularyByLength.put(wordLength, bucket);
+        }
+        bucket.add(word);
       }
 
       // Read paired contractions (v2 format)
@@ -1584,6 +1650,7 @@ public class OptimizedVocabulary
       dis.close();
       contractionsLoadedFromCache = true; // Skip JSON loading
       Log.i(TAG, "📦 Loaded binary cache: " + wordCount + " words, " + pairedCount + " paired contractions, " + nonPairedCount + " non-paired");
+      vocabularyTrie.logStats(); // Log trie statistics
       return true;
     }
     catch (Exception e)

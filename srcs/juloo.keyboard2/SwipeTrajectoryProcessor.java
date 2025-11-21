@@ -35,6 +35,14 @@ public class SwipeTrajectoryProcessor
   // Resampling configuration
   private SwipeResampler.ResamplingMode _resamplingMode = SwipeResampler.ResamplingMode.TRUNCATE;
 
+  // OPTIMIZATION Phase 2: Reusable lists to reduce GC pressure
+  // These are cleared and reused on each call to extractFeatures()
+  private final ArrayList<PointF> _reusableNormalizedCoords = new ArrayList<>(150);
+  private final ArrayList<PointF> _reusableProcessedCoords = new ArrayList<>(150);
+  private final ArrayList<Long> _reusableProcessedTimestamps = new ArrayList<>(150);
+  private final ArrayList<Integer> _reusableProcessedKeys = new ArrayList<>(150);
+  private final ArrayList<TrajectoryPoint> _reusablePoints = new ArrayList<>(150);
+
   public SwipeTrajectoryProcessor()
   {
     // Log.d(TAG, "SwipeTrajectoryProcessor initialized");
@@ -110,8 +118,12 @@ public class SwipeTrajectoryProcessor
     // DO NOT filter duplicates - it corrupts actual_length and changes what model sees
     // (v1.32.470 fix)
 
-    // 1. Normalize coordinates (0-1 range)
-    List<PointF> normalizedCoords = normalizeCoordinates(coordinates);
+    // OPTIMIZATION Phase 2: Recycle PointFs from previous call
+    TrajectoryObjectPool.INSTANCE.recyclePointFList(_reusableNormalizedCoords);
+
+    // 1. Normalize coordinates (0-1 range) - uses reusable list to reduce GC pressure
+    normalizeCoordinates(coordinates, _reusableNormalizedCoords);
+    List<PointF> normalizedCoords = _reusableNormalizedCoords;
 
     // 2. Apply resampling if sequence exceeds maxSequenceLength
     List<PointF> processedCoords = normalizedCoords;
@@ -242,8 +254,13 @@ public class SwipeTrajectoryProcessor
    * Normalize coordinates to [0, 1] range
    * Uses QWERTY area bounds if set, otherwise falls back to full keyboard dimensions
    */
-  private List<PointF> normalizeCoordinates(List<PointF> coordinates)
+  /**
+   * OPTIMIZATION Phase 2: Modified to use pre-allocated destination list to reduce GC pressure
+   */
+  private void normalizeCoordinates(List<PointF> coordinates, ArrayList<PointF> outNormalized)
   {
+    outNormalized.clear();
+
     // CRITICAL: Check if keyboard dimensions are set correctly
     // If still at default 1.0f, coordinates won't normalize properly
     if (_keyboardWidth <= 1.0f || _keyboardHeight <= 1.0f) {
@@ -267,7 +284,6 @@ public class SwipeTrajectoryProcessor
     float yHeight = _qwertyAreaHeight > 0 ? _qwertyAreaHeight : _keyboardHeight;
     boolean usingQwertyBounds = _qwertyAreaHeight > 0;
 
-    List<PointF> normalized = new ArrayList<>();
     for (PointF point : coordinates) {
       float x = (point.x / _keyboardWidth);
 
@@ -288,15 +304,17 @@ public class SwipeTrajectoryProcessor
       // Clamp to [0,1]
       x = Math.max(0f, Math.min(1f, x));
       y = Math.max(0f, Math.min(1f, y));
-      normalized.add(new PointF(x, y));
+
+      // OPTIMIZATION Phase 2: Use object pool for PointF
+      outNormalized.add(TrajectoryObjectPool.INSTANCE.obtainPointF(x, y));
     }
 
     // Log normalization info for first and last points
-    if (!coordinates.isEmpty() && !normalized.isEmpty()) {
+    if (!coordinates.isEmpty() && !outNormalized.isEmpty()) {
       PointF rawFirst = coordinates.get(0);
-      PointF normFirst = normalized.get(0);
+      PointF normFirst = outNormalized.get(0);
       PointF rawLast = coordinates.get(coordinates.size() - 1);
-      PointF normLast = normalized.get(normalized.size() - 1);
+      PointF normLast = outNormalized.get(outNormalized.size() - 1);
 
       if (usingQwertyBounds) {
         Log.d(TAG, String.format("📐 QWERTY NORMALIZATION: top=%.0f, height=%.0f (kb=%.0fx%.0f)",
@@ -312,8 +330,6 @@ public class SwipeTrajectoryProcessor
             _keyboardWidth, _keyboardHeight, rawFirst.x, rawFirst.y, normFirst.x, normFirst.y));
       }
     }
-
-    return normalized;
   }
 
   /**

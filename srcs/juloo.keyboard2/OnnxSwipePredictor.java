@@ -1904,6 +1904,9 @@ public class OnnxSwipePredictor
           OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
           float[][][] logits3D = (float[][][]) logitsTensor.getValue();
 
+          // OPTIMIZATION Phase 2: Get trie once for all beams
+          VocabularyTrie trie = (_vocabulary != null) ? _vocabulary.getVocabularyTrie() : null;
+
           for (int b = 0; b < numActiveBeams; b++)
           {
             BeamSearchState beam = activeBeams.get(b);
@@ -1912,8 +1915,47 @@ public class OnnxSwipePredictor
             {
               float[] logProbs = logits3D[b][currentPos];
               int[] topK = getTopKIndices(logProbs, beamWidth);
+
               for (int idx : topK)
               {
+                // Skip special tokens
+                if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
+                  BeamSearchState newBeam = new BeamSearchState(beam);
+                  newBeam.tokens.add((long)idx);
+                  newBeam.score -= logProbs[idx];
+                  newBeam.finished = true;
+                  candidates.add(newBeam);
+                  continue;
+                }
+
+                // OPTIMIZATION Phase 2: Trie validation for batched path
+                // Convert tokens to partial word
+                StringBuilder partialWord = new StringBuilder();
+                for (Long token : beam.tokens) {
+                  int tokenIdx = token.intValue();
+                  if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
+                    char ch = _tokenizer.indexToChar(tokenIdx);
+                    if (ch != '?' && !Character.toString(ch).startsWith("<")) {
+                      partialWord.append(ch);
+                    }
+                  }
+                }
+
+                // Add new character
+                char newChar = _tokenizer.indexToChar(idx);
+                if (newChar != '?' && !Character.toString(newChar).startsWith("<")) {
+                  partialWord.append(newChar);
+                }
+
+                // Validate against trie
+                String partialWordStr = partialWord.toString();
+                if (trie != null && partialWordStr.length() > 0) {
+                  if (!trie.hasPrefix(partialWordStr)) {
+                    continue; // Invalid prefix - skip
+                  }
+                }
+
+                // Valid prefix - add beam
                 BeamSearchState newBeam = new BeamSearchState(beam);
                 newBeam.tokens.add((long)idx);
                 newBeam.score -= logProbs[idx];
@@ -2009,9 +2051,51 @@ public class OnnxSwipePredictor
               // Get top k tokens by highest log prob (higher is better)
               int[] topK = getTopKIndices(logProbs, beamWidth);
 
+              // OPTIMIZATION Phase 2: Constrained vocabulary search with Trie
+              // Check if new token forms valid vocabulary prefix before adding beam
+              VocabularyTrie trie = (_vocabulary != null) ? _vocabulary.getVocabularyTrie() : null;
+
               // Create new beams
               for (int idx : topK)
               {
+                // Skip special tokens
+                if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
+                  BeamSearchState newBeam = new BeamSearchState(beam);
+                  newBeam.tokens.add((long)idx);
+                  newBeam.score -= logProbs[idx];
+                  newBeam.finished = true;
+                  candidates.add(newBeam);
+                  continue;
+                }
+
+                // Convert tokens to partial word for trie validation
+                StringBuilder partialWord = new StringBuilder();
+                for (Long token : beam.tokens) {
+                  int tokenIdx = token.intValue();
+                  if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
+                    char ch = _tokenizer.indexToChar(tokenIdx);
+                    if (ch != '?' && !Character.toString(ch).startsWith("<")) {
+                      partialWord.append(ch);
+                    }
+                  }
+                }
+
+                // Add new character from this token
+                char newChar = _tokenizer.indexToChar(idx);
+                if (newChar != '?' && !Character.toString(newChar).startsWith("<")) {
+                  partialWord.append(newChar);
+                }
+
+                // Validate against trie if available
+                String partialWordStr = partialWord.toString();
+                if (trie != null && partialWordStr.length() > 0) {
+                  if (!trie.hasPrefix(partialWordStr)) {
+                    // Invalid prefix - skip this beam
+                    continue;
+                  }
+                }
+
+                // Valid prefix or no trie - add beam
                 BeamSearchState newBeam = new BeamSearchState(beam);
                 newBeam.tokens.add((long)idx);
                 newBeam.score -= logProbs[idx];
