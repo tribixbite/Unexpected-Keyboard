@@ -9,16 +9,47 @@
 
 ## 🔥 Current Status (2025-11-21 - UPDATED)
 
-**Latest Version**: v1.32.560 (612) 🎯
-**Build Status**: ✅ INT8 Quantized Models + NNAPI + Broadcast Support ACTIVE
+**Latest Version**: v1.32.565 (617) 🎯
+**Build Status**: ✅ Phase 1 ONNX Module Extraction COMPLETE
 **Branch**: feature/swipe-typing
-**Current Focus**: 🚀 Testing Broadcast INT8 Models - READY FOR VALIDATION 🚀
-**Refactoring Progress**: Phase 4 COMPLETE! + TrajectoryFeatureCalculator.kt extraction
+**Current Focus**: 🚀 Refactoring OnnxSwipePredictor.java → Kotlin Modules (Phase 2/3)
+**Refactoring Progress**: Phase 1 COMPLETE! (MemoryPool.kt, TensorFactory.kt, BroadcastSupport.kt)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
 **Critical Fixes**: 40 fixes applied (see history below)
 **Performance**: NO UI FREEZES | Atomic dict swapping | <1ms main thread | Instant word updates | 88% contraction binary reduction
 
-### 🔧 Latest Work (v1.32.560) - BROADCAST-ENABLED INT8 QUANTIZED MODELS (perftodos6.md - COMPLETE!)
+### 🔧 Latest Work (v1.32.565) - ONNX MODULE EXTRACTION Phase 1 COMPLETE! 🎯
+
+**REFACTORING: OnnxSwipePredictor.java (2484 lines) → Kotlin Modules**
+- **Goal**: Break down monolithic predictor into 9 focused, testable modules
+- **Status**: Phase 1 COMPLETE (3/9 modules) - Phase 2 IN PROGRESS
+
+**Phase 1: Data & Utilities (COMPLETE)** ✅
+1. ✅ **MemoryPool.kt** (195 lines) - Pre-allocated tensor buffers
+   - Manages batched and pooled decoder paths
+   - Reduces GC pressure during inference
+   - Methods: initializePreallocatedBuffers(), ensurePooledCapacity(), getPrealloc*()
+
+2. ✅ **TensorFactory.kt** (244 lines) - ONNX tensor creation
+   - All tensor creation logic extracted
+   - Methods: createTrajectoryTensor(), createNearestKeysTensor(), createSourceMaskTensor()
+   - Batched tensor support: createBatchedTargetTokensTensor()
+   - Memory replication for legacy models: replicateMemoryForBeams()
+   - Shape validation: validateTensorShape()
+
+3. ✅ **BroadcastSupport.kt** (194 lines) - Broadcast model detection
+   - Reads model_config.json from assets
+   - Detects broadcast_enabled flag
+   - Includes ModelConfig data class
+   - Simple JSON parsing without external dependencies
+
+**Build**: v1.32.565-617 ✅ All modules compile successfully
+
+**Next Steps**:
+- Phase 2: Extract EncoderWrapper.kt, DecoderWrapper.kt
+- Phase 3: Extract BeamSearchEngine.kt, ModelLoader.kt, refactor OnnxSwipePredictor
+
+### 🔧 Previous Work (v1.32.560) - BROADCAST-ENABLED INT8 QUANTIZED MODELS (perftodos6.md - COMPLETE!)
 
 **BROADCAST DECODER INTEGRATION (perftodos6.md) - v1.32.560** 🚀
 - **Goal**: Enable INT8 quantized models with broadcast-aware inference
