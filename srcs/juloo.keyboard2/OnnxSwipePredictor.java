@@ -116,9 +116,13 @@ public class OnnxSwipePredictor
   // OPTIMIZATION: Dedicated thread pool for ONNX operations (1.5x speedup expected)
   private static ExecutorService _onnxExecutor;
   private static final Object _executorLock = new Object();
-  
-  // Debug logging
+
+  // Debug logging and config caching (CACHED - updated via updateConfig(), not checked on every swipe)
   private NeuralSwipeTypingEngine.DebugLogger _debugLogger;
+  private boolean _enableVerboseLogging = false; // Cached from Config.swipe_debug_detailed_logging
+  private boolean _showRawOutput = false; // Cached from Config.swipe_debug_show_raw_output
+  private boolean _batchBeams = false; // Cached from Config.neural_batch_beams
+  private Config _cachedConfig; // Cached config to avoid repeated SharedPreferences access
   
   private OnnxSwipePredictor(Context context)
   {
@@ -359,8 +363,8 @@ public class OnnxSwipePredictor
         }
         Log.i(TAG, "---------------------------------");
 
-        // Log encoder interface only if debug logging enabled
-        if (_config != null && _config.swipe_debug_detailed_logging)
+        // Log encoder interface only if verbose logging enabled (CACHED)
+        if (_enableVerboseLogging)
         {
           Log.d(TAG, "✅ Encoder session created successfully");
           Log.d(TAG, "   Encoder Inputs: " + _encoderSession.getInputNames());
@@ -547,7 +551,6 @@ public class OnnxSwipePredictor
       SwipeTrajectoryProcessor.TrajectoryFeatures features =
         _trajectoryProcessor.extractFeatures(input, _maxSequenceLength);
       long preprocessTime = System.nanoTime() - preprocessStartTime;
-      // logDebug("⏱️ Feature extraction: " + (preprocessTime / 1_000_000.0) + "ms");
 
       // Log detected nearest key sequence for debugging (ALWAYS when debug logger is available)
       // This is critical for debugging key detection issues like 'x' → 'd' problems
@@ -616,8 +619,8 @@ public class OnnxSwipePredictor
         // Still create src_mask for decoder use
         srcMaskTensor = createSourceMaskTensor(features);
 
-        // Log tensor shapes only if debug logging enabled
-        if (_config != null && _config.swipe_debug_detailed_logging)
+        // Log tensor shapes only if verbose logging enabled (CACHED - no config check on hot path)
+        if (_enableVerboseLogging)
         {
           Log.d(TAG, "🔧 Encoder input tensor shapes (features.actualLength=" + features.actualLength + ", _maxSequenceLength=" + _maxSequenceLength + "):");
           Log.d(TAG, "   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
@@ -634,7 +637,6 @@ public class OnnxSwipePredictor
         long encoderStartTime = System.nanoTime();
         try (OrtSession.Result encoderResults = _encoderSession.run(encoderInputs)) {
           long encoderTime = System.nanoTime() - encoderStartTime;
-          // logDebug("⏱️ Encoder inference: " + (encoderTime / 1_000_000.0) + "ms");
           
           // Run beam search or greedy search decoding with timing
           long searchStartTime = System.nanoTime();
@@ -645,21 +647,14 @@ public class OnnxSwipePredictor
               candidates = runBeamSearch(encoderResults, features.actualLength, features);
           }
           long searchTime = System.nanoTime() - searchStartTime;
-          // logDebug("⏱️ Search total: " + (searchTime / 1_000_000.0) + "ms");
           
           // Post-processing with timing
           long postprocessStartTime = System.nanoTime();
           PredictionResult result = createPredictionResult(candidates, input);
           long postprocessTime = System.nanoTime() - postprocessStartTime;
-          // logDebug("⏱️ Post-processing: " + (postprocessTime / 1_000_000.0) + "ms");
           
           // Total timing summary
           long totalTime = System.nanoTime() - totalStartTime;
-          // logDebug("📊 Performance breakdown: Total=" + (totalTime / 1_000_000.0) +
-            // "ms (Preprocess=" + (preprocessTime / 1_000_000.0) +
-            // "ms, Encoder=" + (encoderTime / 1_000_000.0) +
-            // "ms, Search=" + (searchTime / 1_000_000.0) +
-            // "ms, Postprocess=" + (postprocessTime / 1_000_000.0) + "ms)");
           
           return result;
         }
@@ -1242,6 +1237,12 @@ public class OnnxSwipePredictor
   {
     _config = config;
 
+    // CRITICAL: Update cached config settings to avoid repeated checks on hot paths
+    if (config != null)
+    {
+      updateConfig(config);
+    }
+
     // Update neural parameters from config
     if (config != null)
     {
@@ -1383,7 +1384,29 @@ public class OnnxSwipePredictor
   {
     _debugLogger = logger;
   }
-  
+
+  /**
+   * Update cached configuration settings.
+   * CRITICAL: Call this when config changes (not on every swipe!)
+   * Caches expensive-to-check settings to avoid SharedPreferences access in hot paths.
+   *
+   * @param config Updated configuration from ConfigurationManager
+   */
+  public void updateConfig(Config config)
+  {
+    _cachedConfig = config;
+    _enableVerboseLogging = config.swipe_debug_detailed_logging;
+    _showRawOutput = config.swipe_debug_show_raw_output;
+    _batchBeams = config.neural_batch_beams;
+
+    // Cache other frequently-checked settings here as needed
+    // Example: _useQuantizedModels = config.neural_use_quantized;
+
+    // Log config update (this itself is NOT verbose logging)
+    Log.d(TAG, "Config updated: verbose_logging=" + _enableVerboseLogging +
+              ", show_raw=" + _showRawOutput + ", batch_beams=" + _batchBeams);
+  }
+
   private void logDebug(String message)
   {
     if (_debugLogger != null)
@@ -1696,15 +1719,17 @@ public class OnnxSwipePredictor
     beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
     // logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
 
-    // PERFORMANCE DEBUG: Log beam search parameters
-    Log.w(TAG, "🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
-    // logDebug("🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
+    // PERFORMANCE DEBUG: Log beam search parameters (CACHED check)
+    if (_enableVerboseLogging)
+    {
+      Log.d(TAG, "🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
+    }
 
     // Performance tracking
     long beamSearchStart = System.nanoTime();
     long totalInferenceTime = 0;
     long totalTensorTime = 0;
-    boolean useBatched = _config != null && _config.neural_batch_beams;
+    boolean useBatched = _batchBeams; // CACHED - avoid config check on every swipe
     int step = 0;
 
     // OPTIMIZATION v1.32.416: Batched beam search loop for 8x speedup
@@ -1789,7 +1814,7 @@ public class OnnxSwipePredictor
             // For broadcast models, actual_src_length should also be single value
             actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{actualSrcLength});
 
-            if (step == 0 && _config != null && _config.swipe_debug_detailed_logging)
+            if (step == 0 && _enableVerboseLogging)
             {
               logDebug("🚀 Broadcast mode: memory [1, " + memorySeqLen + ", " + hiddenDim + "] → " + numActiveBeams + " beams\n");
             }
@@ -1820,8 +1845,8 @@ public class OnnxSwipePredictor
           decoderInputs.put("target_tokens", targetTokensTensor);
           decoderInputs.put("actual_src_length", actualSrcLengthTensor);
 
-          // Debug logging when detailed pipeline logging enabled
-          if (step == 0 && _config != null && _config.swipe_debug_detailed_logging)
+          // Debug logging when verbose logging enabled (CACHED)
+          if (step == 0 && _enableVerboseLogging)
           {
             logDebug("=== DECODER INPUTS (step 0) ===\n");
             logDebug("  memory: " + java.util.Arrays.toString(batchedMemoryTensor.getInfo().getShape()) + "\n");
@@ -2181,8 +2206,8 @@ public class OnnxSwipePredictor
       }
     }
 
-    // DEBUG MODE: Log raw neural network outputs for analysis (not shown in UI)
-    if (_config != null && _config.swipe_debug_show_raw_output && !candidates.isEmpty())
+    // DEBUG MODE: Log raw neural network outputs for analysis (not shown in UI, CACHED check)
+    if (_showRawOutput && !candidates.isEmpty())
     {
       StringBuilder debugOutput = new StringBuilder("🔍 Raw NN Beam Search:\n");
       int numToShow = Math.min(5, candidates.size());
@@ -2343,8 +2368,8 @@ public class OnnxSwipePredictor
       }
     }
 
-    // DEBUG MODE: Log raw neural network outputs for analysis
-    if (_config != null && _config.swipe_debug_show_raw_output && !candidates.isEmpty())
+    // DEBUG MODE: Log raw neural network outputs for analysis (CACHED check)
+    if (_showRawOutput && !candidates.isEmpty())
     {
       StringBuilder debugOutput = new StringBuilder("🔍 Raw NN Beam Search (with vocab filtering):\n");
       int numToShow = Math.min(5, candidates.size());

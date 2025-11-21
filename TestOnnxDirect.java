@@ -38,8 +38,8 @@ public class TestOnnxDirect {
         OrtEnvironment env = OrtEnvironment.getEnvironment();
         
         // Load models
-        byte[] encoderData = loadModelData("assets/models/swipe_model_character_quant.onnx");
-        byte[] decoderData = loadModelData("assets/models/swipe_decoder_character_quant.onnx");
+        byte[] encoderData = loadModelData("assets/models/bs2/swipe_encoder_android.onnx");
+        byte[] decoderData = loadModelData("assets/models/bs2/swipe_decoder_android.onnx");
         
         System.out.println("📥 Encoder: " + encoderData.length + " bytes");
         System.out.println("📥 Decoder: " + decoderData.length + " bytes");

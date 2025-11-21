@@ -436,7 +436,12 @@ public class Keyboard2 extends InputMethodService
   @Override
   public void onStartInputView(EditorInfo info, boolean restarting)
   {
-    refresh_config();
+    // OPTIMIZATION: Only refresh config if null (first load) or explicitly restarting
+    // SharedPreferences listener will handle config changes, no need to reload every time
+    if (_config == null || !restarting)
+    {
+      refresh_config();
+    }
 
     // Initialize subtype and layout if not already done (v1.32.413: ensure layoutManager is ready)
     // This is needed for receiver initialization which depends on layoutManager
