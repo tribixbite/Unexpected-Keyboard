@@ -218,13 +218,14 @@ public class OnnxSwipePredictor
       switch (_currentModelVersion)
       {
         case "v2":
-          // Builtin model (only one in APK)
-          encoderPath = "models/swipe_encoder_android.onnx";
-          decoderPath = "models/swipe_decoder_android.onnx";
+          // OPTIMIZATION v6 (perftodos6.md): Use quantized INT8 models for better performance
+          // Quantized models are 4x smaller, faster inference, and enable NNAPI acceleration
+          encoderPath = "models/bs/swipe_encoder_android.onnx";
+          decoderPath = "models/bs/swipe_decoder_android.onnx";
           _maxSequenceLength = 250;
-          _modelAccuracy = "80.6%";
-          _modelSource = "builtin";
-          Log.d(TAG, "Loading v2 models (builtin, 250-len, accuracy: 80.6%)");
+          _modelAccuracy = "N/A (quantized)";
+          _modelSource = "builtin-quantized";
+          Log.d(TAG, "Loading v2 quantized models (bs, INT8, NNAPI-optimized)");
           break;
 
         case "v1":
@@ -314,13 +315,33 @@ public class OnnxSwipePredictor
       {
         // logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
         long encSessionStart = System.currentTimeMillis();
-        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Encoder");
+        // OPTIMIZATION v6 (perftodos6.md Step 2): Use NNAPI for quantized models
+        OrtSession.SessionOptions sessionOptions = createNnapiSessionOptions("Encoder");
         _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
         long encSessionTime = System.currentTimeMillis() - encSessionStart;
         Log.i(TAG, "⏱️ Encoder session creation: " + encSessionTime + "ms");
 
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_encoderSession, "Encoder");
+
+        // OPTIMIZATION v6 (perftodos6.md Step 3): Verify model signature for quantized models
+        Log.i(TAG, "--- Encoder Model Signature ---");
+        try
+        {
+          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _encoderSession.getInputInfo().entrySet())
+          {
+            Log.i(TAG, "Input: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
+          }
+          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _encoderSession.getOutputInfo().entrySet())
+          {
+            Log.i(TAG, "Output: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
+          }
+        }
+        catch (Exception sigError)
+        {
+          Log.w(TAG, "Could not log model signature: " + sigError.getMessage());
+        }
+        Log.i(TAG, "---------------------------------");
 
         // Log encoder interface only if debug logging enabled
         if (_config != null && _config.swipe_debug_detailed_logging)
@@ -350,7 +371,8 @@ public class OnnxSwipePredictor
       {
         // logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
         long decSessionStart = System.currentTimeMillis();
-        OrtSession.SessionOptions sessionOptions = createOptimizedSessionOptions("Decoder");
+        // OPTIMIZATION v6 (perftodos6.md Step 2): Use NNAPI for quantized models
+        OrtSession.SessionOptions sessionOptions = createNnapiSessionOptions("Decoder");
         _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
         long decSessionTime = System.currentTimeMillis() - decSessionStart;
         Log.i(TAG, "⏱️ Decoder session creation: " + decSessionTime + "ms");
@@ -360,6 +382,25 @@ public class OnnxSwipePredictor
 
         // CRITICAL: Verify execution provider is working
         verifyExecutionProvider(_decoderSession, "Decoder");
+
+        // OPTIMIZATION v6 (perftodos6.md Step 3): Verify model signature for quantized models
+        Log.i(TAG, "--- Decoder Model Signature ---");
+        try
+        {
+          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _decoderSession.getInputInfo().entrySet())
+          {
+            Log.i(TAG, "Input: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
+          }
+          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _decoderSession.getOutputInfo().entrySet())
+          {
+            Log.i(TAG, "Output: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
+          }
+        }
+        catch (Exception sigError)
+        {
+          Log.w(TAG, "Could not log model signature: " + sigError.getMessage());
+        }
+        Log.i(TAG, "---------------------------------");
 
         Log.d(TAG, String.format("Decoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
       }
@@ -881,10 +922,65 @@ public class OnnxSwipePredictor
    * OPTIMIZATION: Enable hardware acceleration with modern execution providers
    * Uses available Java API methods with proper fallback strategy
    */
+  /**
+   * Creates an optimized OrtSession.SessionOptions with the NNAPI Execution Provider enabled.
+   *
+   * OPTIMIZATION v6 (perftodos6.md): NNAPI is CRITICAL for leveraging hardware acceleration
+   * for quantized INT8 models on Android devices with NPU/DSP/GPU support.
+   *
+   * @param sessionName Name of the session for logging
+   * @return SessionOptions configured with NNAPI flags
+   */
+  private OrtSession.SessionOptions createNnapiSessionOptions(String sessionName)
+  {
+    try
+    {
+      OrtSession.SessionOptions options = new OrtSession.SessionOptions();
+      options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
+
+      // NNAPI for quantized INT8 models (perftodos6.md Step 2)
+      // Note: For optimal performance, NnapiFlags can be used:
+      //   int nnapiFlags = NnapiFlags.NNAPI_FLAG_USE_FP16;  // FP16 acceleration
+      //   int nnapiFlags = NnapiFlags.NNAPI_FLAG_CPU_DISABLED;  // Debug: force NNAPI only
+      // For production, use no-arg addNnapi() for maximum compatibility
+
+      try
+      {
+        // Add NNAPI execution provider (basic configuration for compatibility)
+        // The quantized INT8 model should automatically use NNAPI acceleration
+        options.addNnapi();
+        Log.i(TAG, "✅ NNAPI execution provider configured for " + sessionName + " (quantized INT8)");
+        return options;
+      }
+      catch (Exception e)
+      {
+        Log.w(TAG, "NNAPI provider not available on this device, trying fallback providers", e);
+        // Fall through to hardware acceleration fallbacks
+      }
+
+      // Fallback to existing QNN/XNNPACK if NNAPI fails
+      tryEnableHardwareAcceleration(options, sessionName);
+      return options;
+    }
+    catch (Exception e)
+    {
+      Log.e(TAG, "Failed to create NNAPI SessionOptions, using default", e);
+
+      try
+      {
+        return new OrtSession.SessionOptions();
+      }
+      catch (Exception fallbackError)
+      {
+        throw new RuntimeException("Cannot create any SessionOptions", fallbackError);
+      }
+    }
+  }
+
   private boolean tryEnableHardwareAcceleration(OrtSession.SessionOptions sessionOptions, String sessionName)
   {
     boolean accelerationEnabled = false;
-    
+
     // Priority 1: Try QNN for Samsung S25U Snapdragon NPU (requires quantized models)
     try
     {
