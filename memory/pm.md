@@ -9,16 +9,42 @@
 
 ## 🔥 Current Status (2025-11-21 - UPDATED)
 
-**Latest Version**: v1.32.567 (619) 🎯
-**Build Status**: ✅ ALL 3 PHASES COMPLETE - 7 Kotlin Modules Extracted!
+**Latest Version**: v1.32.568 (620) 🎯
+**Build Status**: ✅ BS2 CALIBRATED MODELS INTEGRATED!
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎉 ONNX Module Extraction SUCCESS - 1647 Lines Refactored!
-**Refactoring Progress**: Phases 1, 2 & 3 COMPLETE! (7 modules extracted from 2484-line monolith)
+**Current Focus**: 🎉 Calibrated INT8 Quantized Models - Better Performance!
+**Refactoring Progress**: 7 Kotlin modules extracted + bs2 models integrated
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
 **Critical Fixes**: 40 fixes applied (see history below)
 **Performance**: NO UI FREEZES | Atomic dict swapping | <1ms main thread | Instant word updates | 88% contraction binary reduction
 
-### 🔧 Latest Work (v1.32.567) - ONNX MODULE EXTRACTION ALL PHASES COMPLETE! 🎉
+### 🔧 Latest Work (v1.32.568) - BS2 CALIBRATED INT8 MODELS INTEGRATED! 🎉
+
+**CALIBRATED QUANTIZED MODELS (bs2)**
+- **Goal**: Switch to better calibrated INT8 models for improved inference
+- **Status**: INTEGRATION COMPLETE ✅
+
+**Changes**:
+- ✅ **Encoder**: Static INT8, calibrated on 10k real swipe traces
+- ✅ **Decoder**: Dynamic (weights-only) INT8 with broadcast support
+- ✅ **Accuracy**: 73.4% (same as bs1 but better calibration)
+- ✅ **Drop-in Replacement**: No app code changes needed
+- ✅ **Location**: assets/models/bs2/ with full documentation
+- ✅ **Build**: v1.32.568-620 compiles successfully
+
+**Technical Details**:
+- Updated OnnxSwipePredictor.java to use models/bs2/ paths
+- Model source identifier: "builtin-quantized-v2"
+- Broadcast handling remains unchanged (decoder internal)
+- Fixed decode length of 20 (pad unused positions)
+- Comprehensive README.md and model_config.json included
+
+**Performance Expectations**:
+- Better calibration → more accurate quantization
+- Same model architecture and accuracy metrics
+- Maintained XNNPACK optimization and broadcast support
+
+### 🔧 Previous Work (v1.32.567) - ONNX MODULE EXTRACTION ALL PHASES COMPLETE! 🎉
 
 **REFACTORING: OnnxSwipePredictor.java (2484 lines) → Kotlin Modules**
 - **Goal**: Break down monolithic predictor into focused, testable modules
