@@ -18,11 +18,11 @@
 **Critical Fixes**: 40 fixes applied (see history below)
 **Performance**: NO UI FREEZES | Atomic dict swapping | <1ms main thread | Instant word updates | 88% contraction binary reduction
 
-### 🔧 Latest Work (v1.32.565) - ONNX MODULE EXTRACTION Phase 1 COMPLETE! 🎯
+### 🔧 Latest Work (v1.32.566) - ONNX MODULE EXTRACTION Phases 1 & 2 COMPLETE! 🎯
 
 **REFACTORING: OnnxSwipePredictor.java (2484 lines) → Kotlin Modules**
-- **Goal**: Break down monolithic predictor into 9 focused, testable modules
-- **Status**: Phase 1 COMPLETE (3/9 modules) - Phase 2 IN PROGRESS
+- **Goal**: Break down monolithic predictor into focused, testable modules
+- **Status**: Phases 1 & 2 COMPLETE (5 modules, 1078 lines extracted) ✅
 
 **Phase 1: Data & Utilities (COMPLETE)** ✅
 1. ✅ **MemoryPool.kt** (195 lines) - Pre-allocated tensor buffers
@@ -43,11 +43,27 @@
    - Includes ModelConfig data class
    - Simple JSON parsing without external dependencies
 
-**Build**: v1.32.565-617 ✅ All modules compile successfully
+**Phase 2: Inference Wrappers (COMPLETE)** ✅
+4. ✅ **EncoderWrapper.kt** (167 lines) - Encoder inference
+   - Wraps encoder session with proper tensor lifecycle
+   - Methods: encode(), validateSession(), getMetadata()
+   - Performance timing with optional detailed logging
+   - Extracts and validates memory output [1, seq_len, hidden_dim]
+
+5. ✅ **DecoderWrapper.kt** (290 lines) - Decoder inference with broadcast
+   - Single beam: decodeSingle()
+   - Batched beams: decodeBatched()
+   - Broadcast mode: memory [1, ...] expanded internally by model
+   - Legacy mode: manual memory replication for all beams
+   - Proper tensor cleanup and lifecycle management
+   - Session validation and metadata methods
+
+**Total Progress**: 1078 lines of focused, testable Kotlin code extracted
+**Builds**: v1.32.565-617 (Phase 1), v1.32.566-618 (Phase 2) ✅
 
 **Next Steps**:
-- Phase 2: Extract EncoderWrapper.kt, DecoderWrapper.kt
-- Phase 3: Extract BeamSearchEngine.kt, ModelLoader.kt, refactor OnnxSwipePredictor
+- Phase 3: Extract BeamSearchEngine.kt, ModelLoader.kt
+- Final: Refactor OnnxSwipePredictor to use all new modules
 
 ### 🔧 Previous Work (v1.32.560) - BROADCAST-ENABLED INT8 QUANTIZED MODELS (perftodos6.md - COMPLETE!)
 
