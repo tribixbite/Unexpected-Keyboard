@@ -130,8 +130,8 @@ public class InputCoordinator
    */
   public void handlePredictionResults(List<String> predictions, List<Integer> scores, InputConnection ic, EditorInfo editorInfo, Resources resources)
   {
-    // TODO: Re-enable debug logging
-    // sendDebugLog(String.format("Predictions received: %d\n", predictions != null ? predictions.size() : 0));
+    long handleStartTime = System.currentTimeMillis();
+    android.util.Log.e("InputCoordinator", "⏱️ HANDLE_PREDICTIONS START");
 
     if (predictions == null || predictions.isEmpty())
     {
@@ -139,14 +139,17 @@ public class InputCoordinator
       {
         _suggestionBar.clearSuggestions();
       }
+      android.util.Log.e("InputCoordinator", "⏱️ HANDLE_PREDICTIONS COMPLETE (empty): " + (System.currentTimeMillis() - handleStartTime) + "ms");
       return;
     }
 
     // Update suggestion bar
     if (_suggestionBar != null)
     {
+      long suggestionsStartTime = System.currentTimeMillis();
       _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
       _suggestionBar.setSuggestionsWithScores(predictions, scores);
+      android.util.Log.e("InputCoordinator", "⏱️ setSuggestionsWithScores: " + (System.currentTimeMillis() - suggestionsStartTime) + "ms");
 
       // Auto-insert top prediction immediately after swipe completes
       String topPrediction = _suggestionBar.getTopSuggestion();
@@ -155,7 +158,9 @@ public class InputCoordinator
         // If manual typing in progress, add space after it
         if (_contextTracker.getCurrentWordLength() > 0 && ic != null)
         {
+          long spaceCommitTime = System.currentTimeMillis();
           ic.commitText(" ", 1);
+          android.util.Log.e("InputCoordinator", "⏱️ commitText(space): " + (System.currentTimeMillis() - spaceCommitTime) + "ms");
           _contextTracker.clearCurrentWord();
           _contextTracker.clearLastAutoInsertedWord();
           _contextTracker.setLastCommitSource(PredictionSource.USER_TYPED_TAP);
@@ -166,7 +171,10 @@ public class InputCoordinator
         _contextTracker.setLastCommitSource(PredictionSource.UNKNOWN);
 
         // Insert the top prediction
+        long insertStartTime = System.currentTimeMillis();
         onSuggestionSelected(topPrediction, ic, editorInfo, resources);
+        long insertDuration = System.currentTimeMillis() - insertStartTime;
+        android.util.Log.e("InputCoordinator", "⏱️ onSuggestionSelected('" + topPrediction + "'): " + insertDuration + "ms");
 
         // Track as auto-inserted for replacement
         String cleanPrediction = topPrediction.replaceAll("^raw:", "");
@@ -177,6 +185,9 @@ public class InputCoordinator
         _suggestionBar.setSuggestionsWithScores(predictions, scores);
       }
     }
+
+    long handleDuration = System.currentTimeMillis() - handleStartTime;
+    android.util.Log.e("InputCoordinator", "⏱️ HANDLE_PREDICTIONS COMPLETE: " + handleDuration + "ms");
   }
 
   /**
@@ -391,10 +402,13 @@ public class InputCoordinator
             // Send backspace key events
             if (_keyeventhandler != null)
             {
+              long backspaceStartTime = System.currentTimeMillis();
               for (int i = 0; i < deleteCount; i++)
               {
                 _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, 0);
               }
+              long backspaceDuration = System.currentTimeMillis() - backspaceStartTime;
+              android.util.Log.e("InputCoordinator", "⏱️ TERMUX BACKSPACES (" + deleteCount + " chars): " + backspaceDuration + "ms");
             }
           }
           else
@@ -491,7 +505,10 @@ public class InputCoordinator
         }
 
         android.util.Log.d("Keyboard2", "Committing text: '" + textToInsert + "' (length=" + textToInsert.length() + ")");
+        long commitStartTime = System.currentTimeMillis();
         ic.commitText(textToInsert, 1);
+        long commitDuration = System.currentTimeMillis() - commitStartTime;
+        android.util.Log.e("InputCoordinator", "⏱️ commitText('" + textToInsert + "'): " + commitDuration + "ms");
 
         // Track that this commit was from candidate selection (manual tap)
         // Note: Auto-insertions set this separately to NEURAL_SWIPE

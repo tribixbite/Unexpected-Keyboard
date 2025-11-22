@@ -135,18 +135,25 @@ public class AsyncPredictionHandler
       final List<Integer> scores = result.scores;
       
       long duration = System.currentTimeMillis() - startTime;
-      Log.d(TAG, "Prediction completed in " + duration + "ms (ID: " + request.requestId + ")");
-      
+      final long postTime = System.currentTimeMillis();
+      Log.e(TAG, "⏱️ PREDICTION COMPLETED in " + duration + "ms (ID: " + request.requestId + ")");
+
       // Post results to main thread
       _mainHandler.post(new Runnable()
       {
         @Override
         public void run()
         {
+          long callbackDelay = System.currentTimeMillis() - postTime;
+          Log.e(TAG, "⏱️ CALLBACK DELAY: " + callbackDelay + "ms (time from post to run)");
+
           // Final check before delivering results
           if (request.requestId == _currentRequestId)
           {
+            long callbackStartTime = System.currentTimeMillis();
             request.callback.onPredictionsReady(words, scores);
+            long callbackDuration = System.currentTimeMillis() - callbackStartTime;
+            Log.e(TAG, "⏱️ CALLBACK EXECUTION: " + callbackDuration + "ms (onPredictionsReady)");
           }
         }
       });
