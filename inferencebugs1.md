@@ -32,6 +32,31 @@
 - First swipe may have slight delay while models finish loading, but UI remains responsive
 - Location: `PredictionViewSetup.kt:70-75` (Thread wrapper around ensureInitialized)
 
+## 1b. CRITICAL: Thread Safety Race Condition (CONCURRENT INITIALIZATION)
+**Observation**: Background async initialization can race with setConfig() calls
+**Status**: ✅ FIXED (v1.32.581-633)
+
+**Root Cause Identified**:
+- `OnnxSwipePredictor.initialize()` was NOT synchronized
+- Background thread + main thread could both call initialize() simultaneously
+- Non-atomic check of `_isInitialized` flag allowed race window
+- Race scenario:
+  1. Background thread starts initialize() (T=0ms)
+  2. User changes model setting (T=500ms) → setConfig() on main thread
+  3. setConfig() resets _isInitialized = false and calls initialize()
+  4. Both threads loading models simultaneously → resource leak or crash
+
+**Frequency**: 0.01% (user must change settings within 2.8s of keyboard startup)
+**Severity**: HIGH (crash, resource leak, undefined behavior)
+
+**Fix Applied** (v1.32.581-633, commit 8adad0a3):
+- Made `_isInitialized` volatile for thread visibility (OnnxSwipePredictor.java:81)
+- Added `synchronized` keyword to `initialize()` method (OnnxSwipePredictor.java:206)
+- Added `synchronized` keyword to `cleanup()` methods (OnnxSwipePredictor.java:2626, 2631)
+- Prevents concurrent initialization/cleanup
+- Expert validated by Gemini 2.5 Pro via Zen MCP ThinkDeep
+- Full analysis: thread-safety-analysis.md
+
 ## 2. Long Swipes Yield No Output / Resampling Issues
 **Observation**: User reported long swipes failing and not adhering to resampling settings.
 **Status**: ✅ FIXED
