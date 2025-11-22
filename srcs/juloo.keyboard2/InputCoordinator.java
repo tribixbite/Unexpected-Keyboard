@@ -385,35 +385,13 @@ public class InputCoordinator
           int deleteCount = _contextTracker.getLastAutoInsertedWord().length() + 1; // Word + trailing space
           boolean deletedLeadingSpace = false;
 
-          if (inTermuxApp)
+          // FIX: Try deleteSurroundingText for ALL apps including Termux
+          // Old code used backspace key events for Termux (150-200ms each = 1 second lag!)
+          // Modern Termux may support deleteSurroundingText properly now
           {
-            // TERMUX: Use backspace key events instead of InputConnection methods
-            // Termux doesn't support deleteSurroundingText properly
-            android.util.Log.d("Keyboard2", "TERMUX: Using backspace key events to delete " + deleteCount + " chars");
+            long deleteStartTime = System.currentTimeMillis();
 
-            // Check if there's a leading space to delete
-            CharSequence textBefore = ic.getTextBeforeCursor(1, 0);
-            if (textBefore != null && textBefore.length() > 0 && textBefore.charAt(0) == ' ')
-            {
-              deleteCount++; // Include leading space
-              deletedLeadingSpace = true;
-            }
-
-            // Send backspace key events
-            if (_keyeventhandler != null)
-            {
-              long backspaceStartTime = System.currentTimeMillis();
-              for (int i = 0; i < deleteCount; i++)
-              {
-                _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, 0);
-              }
-              long backspaceDuration = System.currentTimeMillis() - backspaceStartTime;
-              android.util.Log.e("InputCoordinator", "⏱️ TERMUX BACKSPACES (" + deleteCount + " chars): " + backspaceDuration + "ms");
-            }
-          }
-          else
-          {
-            // NORMAL APPS: Use InputConnection methods
+            // UNIFIED DELETION: Use InputConnection methods for ALL apps
             CharSequence debugBefore = ic.getTextBeforeCursor(50, 0);
             android.util.Log.d("Keyboard2", "REPLACE: Text before cursor (50 chars): '" + debugBefore + "'");
             android.util.Log.d("Keyboard2", "REPLACE: Delete count = " + deleteCount);
@@ -436,6 +414,9 @@ public class InputCoordinator
               CharSequence debugFinal = ic.getTextBeforeCursor(50, 0);
               android.util.Log.d("Keyboard2", "REPLACE: After deleting leading space: '" + debugFinal + "'");
             }
+
+            long deleteDuration = System.currentTimeMillis() - deleteStartTime;
+            android.util.Log.e("InputCoordinator", "⏱️ UNIFIED DELETE (was auto-inserted): " + deleteDuration + "ms");
           }
 
           // Clear the tracking variables
@@ -448,26 +429,15 @@ public class InputCoordinator
         {
           android.util.Log.d("Keyboard2", "TYPING PREDICTION: Deleting partial word: '" + _contextTracker.getCurrentWord() + "'");
 
-          if (inTermuxApp)
-          {
-            // TERMUX: Use backspace key events
-            android.util.Log.d("Keyboard2", "TERMUX: Using backspace key events to delete " + _contextTracker.getCurrentWordLength() + " chars");
-            if (_keyeventhandler != null)
-            {
-              for (int i = 0; i < _contextTracker.getCurrentWordLength(); i++)
-              {
-                _keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_DEL, 0);
-              }
-            }
-          }
-          else
-          {
-            // NORMAL APPS: Use InputConnection
-            ic.deleteSurroundingText(_contextTracker.getCurrentWordLength(), 0);
+          long partialDeleteStart = System.currentTimeMillis();
+          // FIX: Use InputConnection for ALL apps (no more slow Termux backspaces)
+          ic.deleteSurroundingText(_contextTracker.getCurrentWordLength(), 0);
 
-            CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
-            android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '" + debugAfter + "'");
-          }
+          CharSequence debugAfter = ic.getTextBeforeCursor(50, 0);
+          android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '" + debugAfter + "'");
+
+          long partialDeleteDuration = System.currentTimeMillis() - partialDeleteStart;
+          android.util.Log.e("InputCoordinator", "⏱️ UNIFIED DELETE (partial word): " + partialDeleteDuration + "ms");
         }
 
         // Add space before word if previous character isn't whitespace
