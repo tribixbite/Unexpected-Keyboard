@@ -21,6 +21,9 @@ import java.util.concurrent.ThreadFactory;
 
 // REFACTORING: Import Kotlin ONNX modules for modular architecture
 import juloo.keyboard2.onnx.ModelLoader;
+import juloo.keyboard2.onnx.EncoderWrapper;
+import juloo.keyboard2.onnx.DecoderWrapper;
+import juloo.keyboard2.onnx.TensorFactory;
 
 /**
  * ONNX-based neural swipe predictor using transformer encoder-decoder architecture
@@ -80,6 +83,9 @@ public class OnnxSwipePredictor
 
   // REFACTORING: Modular ONNX components
   private ModelLoader _modelLoader; // Handles model loading and session creation
+  private TensorFactory _tensorFactory; // Handles tensor creation from trajectory features
+  private EncoderWrapper _encoderWrapper; // Handles encoder inference
+  private DecoderWrapper _decoderWrapper; // Handles decoder inference
   
   
   // Model state
@@ -442,6 +448,31 @@ public class OnnxSwipePredictor
         // Track successfully loaded paths for change detection
         _currentEncoderPath = encoderPath;
         _currentDecoderPath = decoderPath;
+
+        // REFACTORING: Initialize modular components after successful model loading
+        Log.d(TAG, "Initializing modular ONNX components");
+
+        // Create TensorFactory for tensor creation
+        _tensorFactory = new TensorFactory(_ortEnvironment, _maxSequenceLength, TRAJECTORY_FEATURES);
+
+        // Create EncoderWrapper for encoder inference
+        _encoderWrapper = new EncoderWrapper(
+          _encoderSession,
+          _tensorFactory,
+          _ortEnvironment,
+          _enableVerboseLogging
+        );
+
+        // Create DecoderWrapper for decoder inference
+        _decoderWrapper = new DecoderWrapper(
+          _decoderSession,
+          _tensorFactory,
+          _ortEnvironment,
+          _broadcastEnabled,
+          _enableVerboseLogging
+        );
+
+        Log.d(TAG, "✅ Modular components initialized (TensorFactory, EncoderWrapper, DecoderWrapper)");
       }
       else
       {
@@ -587,82 +618,59 @@ public class OnnxSwipePredictor
         }
       }
 
-      // Run encoder inference with proper ONNX API
-      OnnxTensor trajectoryTensor = null;
-      OnnxTensor nearestKeysTensor = null;
-      OnnxTensor actualLengthTensor = null;
-      OnnxTensor srcMaskTensor = null;  // Still needed for decoder
-      OrtSession.Result encoderResult = null;
+      // REFACTORING: Use EncoderWrapper for cleaner encoder inference
+      OnnxTensor encoderMemory = null;
 
       try {
-        trajectoryTensor = createTrajectoryTensor(features);
-        nearestKeysTensor = createNearestKeysTensor(features);
-        // New encoder uses actual_length instead of src_mask (V4 expects int32)
-        actualLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{features.actualLength});
-        // Still create src_mask for decoder use
-        srcMaskTensor = createSourceMaskTensor(features);
-
-        // Log tensor shapes only if verbose logging enabled (CACHED - no config check on hot path)
-        if (_enableVerboseLogging)
-        {
-          Log.d(TAG, "🔧 Encoder input tensor shapes (features.actualLength=" + features.actualLength + ", _maxSequenceLength=" + _maxSequenceLength + "):");
-          Log.d(TAG, "   trajectory_features: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
-          Log.d(TAG, "   nearest_keys: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
-          Log.d(TAG, "   actual_length: " + java.util.Arrays.toString(actualLengthTensor.getInfo().getShape()));
-        }
-
-        Map<String, OnnxTensor> encoderInputs = new HashMap<>();
-        encoderInputs.put("trajectory_features", trajectoryTensor);
-        encoderInputs.put("nearest_keys", nearestKeysTensor);
-        encoderInputs.put("actual_length", actualLengthTensor);
-        
-        // Run encoder inference with detailed timing
+        // Run encoder inference using modular EncoderWrapper
         long encoderStartTime = System.nanoTime();
-        try (OrtSession.Result encoderResults = _encoderSession.run(encoderInputs)) {
-          long encoderTime = System.nanoTime() - encoderStartTime;
-          
-          // Run beam search or greedy search decoding with timing
-          long searchStartTime = System.nanoTime();
-          List<BeamSearchCandidate> candidates;
-          if (_config != null && _config.neural_greedy_search) {
-              candidates = runGreedySearch((OnnxTensor) encoderResults.get(0), features.actualLength, _maxLength);
-          } else {
-              candidates = runBeamSearch(encoderResults, features.actualLength, features);
-          }
-          long searchTime = System.nanoTime() - searchStartTime;
-          
-          // Post-processing with timing
-          long postprocessStartTime = System.nanoTime();
-          PredictionResult result = createPredictionResult(candidates, input);
-          long postprocessTime = System.nanoTime() - postprocessStartTime;
-          
-          // OPTIMIZATION Phase 3.2: End-to-end latency measurement
-          // Comprehensive breakdown for identifying remaining bottlenecks
-          long totalTime = System.nanoTime() - totalStartTime;
+        EncoderWrapper.EncoderResult encoderResult = _encoderWrapper.encode(features);
+        long encoderTime = System.nanoTime() - encoderStartTime;
 
-          // Log detailed timing breakdown (always, for performance monitoring)
-          Log.i(TAG, String.format("⏱️ Swipe prediction latency breakdown:\n" +
-            "   Preprocessing:  %3dms (trajectory extraction, key detection)\n" +
-            "   Encoder:        %3dms (swipe → embeddings)\n" +
-            "   Beam search:    %3dms (decoder inference)\n" +
-            "   Postprocessing: %3dms (vocab filtering, ranking)\n" +
-            "   TOTAL:          %3dms",
-            preprocessTime / 1_000_000,
-            encoderTime / 1_000_000,
-            searchTime / 1_000_000,
-            postprocessTime / 1_000_000,
-            totalTime / 1_000_000
-          ));
+        // Extract memory tensor from encoder result
+        encoderMemory = encoderResult.getMemory();
 
-          return result;
+        // Run beam search or greedy search decoding with timing
+        long searchStartTime = System.nanoTime();
+        List<BeamSearchCandidate> candidates;
+        if (_config != null && _config.neural_greedy_search) {
+            candidates = runGreedySearch(encoderMemory, features.actualLength, _maxLength);
+        } else {
+            // REFACTORING NOTE: This still uses old runBeamSearch signature
+            // Will be replaced with BeamSearchEngine in next step
+            candidates = runBeamSearch(encoderMemory, features.actualLength, features);
         }
-        
+        long searchTime = System.nanoTime() - searchStartTime;
+
+        // Post-processing with timing
+        long postprocessStartTime = System.nanoTime();
+        PredictionResult result = createPredictionResult(candidates, input);
+        long postprocessTime = System.nanoTime() - postprocessStartTime;
+
+        // OPTIMIZATION Phase 3.2: End-to-end latency measurement
+        // Comprehensive breakdown for identifying remaining bottlenecks
+        long totalTime = System.nanoTime() - totalStartTime;
+
+        // Log detailed timing breakdown (always, for performance monitoring)
+        Log.i(TAG, String.format("⏱️ Swipe prediction latency breakdown:\n" +
+          "   Preprocessing:  %3dms (trajectory extraction, key detection)\n" +
+          "   Encoder:        %3dms (swipe → embeddings)\n" +
+          "   Beam search:    %3dms (decoder inference)\n" +
+          "   Postprocessing: %3dms (vocab filtering, ranking)\n" +
+          "   TOTAL:          %3dms",
+          preprocessTime / 1_000_000,
+          encoderTime / 1_000_000,
+          searchTime / 1_000_000,
+          postprocessTime / 1_000_000,
+          totalTime / 1_000_000
+        ));
+
+        return result;
+
       } finally {
-        // Proper memory cleanup
-        if (trajectoryTensor != null) trajectoryTensor.close();
-        if (nearestKeysTensor != null) nearestKeysTensor.close();
-        if (actualLengthTensor != null) actualLengthTensor.close();
-        if (srcMaskTensor != null) srcMaskTensor.close();
+        // REFACTORING: Simplified cleanup - EncoderWrapper manages input tensors
+        // Only need to close encoder memory tensor
+        if (encoderMemory != null) encoderMemory.close();
       }
     }
     catch (Exception e)
@@ -1685,7 +1693,8 @@ public class OnnxSwipePredictor
     return OnnxTensor.createTensor(_ortEnvironment, maskData);
   }
   
-  private List<BeamSearchCandidate> runBeamSearch(OrtSession.Result encoderResult, 
+  // REFACTORING: New overload that accepts OnnxTensor directly (for EncoderWrapper integration)
+  private List<BeamSearchCandidate> runBeamSearch(OnnxTensor memory,
     int actualSrcLength, SwipeTrajectoryProcessor.TrajectoryFeatures features) throws OrtException
   {
     if (_decoderSession == null)
@@ -1694,27 +1703,17 @@ public class OnnxSwipePredictor
       return new ArrayList<>();
     }
 
-    // Beam search parameters matching CLI test exactly
-    int beamWidth = _beamWidth;
-    int maxLength = _maxLength;
-    final int DECODER_SEQ_LEN = 20; // Fixed decoder sequence length - MUST match actual model export
-    int vocabSize = _tokenizer.getVocabSize();
-
-    // Get memory from encoder output using proper ONNX API
-    OnnxTensor memory = null;
-    try {
-      // Get first output from result
-      memory = (OnnxTensor) encoderResult.get(0);
-    } catch (Exception e) {
-      Log.e(TAG, "Failed to get encoder output", e);
-      return new ArrayList<>();
-    }
-
     if (memory == null)
     {
       Log.e(TAG, "No memory tensor from encoder");
       return new ArrayList<>();
     }
+
+    // Beam search parameters matching CLI test exactly
+    int beamWidth = _beamWidth;
+    int maxLength = _maxLength;
+    final int DECODER_SEQ_LEN = 20; // Fixed decoder sequence length - MUST match actual model export
+    int vocabSize = _tokenizer.getVocabSize();
 
     // Log.d(TAG, String.format("Decoder memory shape: %s", java.util.Arrays.toString(memory.getInfo().getShape())));
 

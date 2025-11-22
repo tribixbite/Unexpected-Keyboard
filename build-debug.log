@@ -26,22 +26,22 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
-> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
-> Task :mergeDebugResources
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
+> Task :mergeDebugResources
 > Task :mergeDebugAssets
-> Task :processDebugManifestForPackage
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :compressDebugAssets FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -102,9 +102,19 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 4s
+BUILD SUCCESSFUL in 1m 3s
 42 actionable tasks: 34 executed, 8 from cache
-oid.com/build/jdks.
+delLoader.kt:248:24 Parameter 'sessionOptions' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/TensorFactory.kt:220:13 Variable 'hiddenDim' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/TensorFactory.kt:222:39 Unchecked cast: Any! to Array<Array<FloatArray>>
+
+> Task :compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
 To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
 warning: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
@@ -123,17 +133,17 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 4s
+BUILD SUCCESSFUL in 1m 3s
 42 actionable tasks: 34 executed, 8 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 48M Nov 22 00:32 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 48M Nov 22 00:46 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /storage/emulated/0/unexpected/ for updates...
-APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.584-636.apk
--rw-rw----. 1 u0_a315 media_rw 48M Nov 22 00:32 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.584-636.apk
+APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.585-637.apk
+-rw-rw----. 1 u0_a315 media_rw 48M Nov 22 00:46 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.585-637.apk
 Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
 
 Step 6: Attempting ADB connection and installation...
