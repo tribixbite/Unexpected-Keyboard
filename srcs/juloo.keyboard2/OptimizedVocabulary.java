@@ -1655,8 +1655,7 @@ public class OptimizedVocabulary
     }
     catch (Exception e)
     {
-      Log.w(TAG, "Binary cache load failed: " + e.getClass().getName() + ": " + e.getMessage());
-      e.printStackTrace();
+      Log.w(TAG, "Binary cache load failed: " + e.getClass().getName() + ": " + e.getMessage(), e);
       return false;
     }
   }
