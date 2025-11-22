@@ -80,7 +80,7 @@ public class OptimizedVocabulary
   private int _maxLengthDiff = 2;
   private int _prefixLength = 2;
   private int _maxBeamCandidates = 3;
-  private int _minWordLength = 3;
+  private int _minWordLength = 2;
   private float _charMatchThreshold = 0.67f;
   private boolean _useEditDistance = true;
 

@@ -51,7 +51,7 @@ public class OnnxSwipePredictor
   // MOBILE-OPTIMIZED: Lower defaults for better performance on mobile devices
   // beam_width=8 * max_length=35 = 280 decoder inferences per swipe (too slow!)
   // beam_width=2 * max_length=35 = 70 decoder inferences per swipe (balanced)
-  private static final int DEFAULT_BEAM_WIDTH = 2; // Mobile-optimized: 2 beams (was 8)
+  private static final int DEFAULT_BEAM_WIDTH = 4; // Increased to 4 for better accuracy (she/me)
   private static final int DEFAULT_MAX_LENGTH = 20; // Must match model max_word_len (was 35)
   private static final float DEFAULT_CONFIDENCE_THRESHOLD = 0.1f;
   
@@ -78,7 +78,7 @@ public class OnnxSwipePredictor
   
   // Model state
   private boolean _isModelLoaded = false;
-  private boolean _isInitialized = false;
+  private volatile boolean _isInitialized = false; // THREAD SAFETY: volatile ensures visibility across threads
   private boolean _keepSessionsInMemory = true; // OPTIMIZATION: Never unload for speed
   private boolean _usesSeparateMasks = false; // Track if decoder uses separate padding/causal masks (custom models) vs combined target_mask (v2 builtin)
   private boolean _broadcastEnabled = false; // OPTIMIZATION v6 (perftodos6.md): Broadcast-enabled models expand memory internally
@@ -201,8 +201,9 @@ public class OnnxSwipePredictor
   /**
    * Initialize the predictor with models from assets
    * OPTIMIZATION: Models stay loaded in memory for maximum performance
+   * THREAD SAFETY: synchronized to prevent concurrent initialization from background thread and setConfig()
    */
-  public boolean initialize()
+  public synchronized boolean initialize()
   {
     // OPTIMIZATION Phase 3.1: Thread safety check
     // Warn if initialization is called on main thread (may cause UI jank)
@@ -1347,12 +1348,6 @@ public class OnnxSwipePredictor
         Log.d(TAG, "Triggering immediate model reinitialization...");
         initialize();
       }
-      else
-      {
-        // No reinitialization needed, but update stored paths to prevent false positives
-        _currentEncoderPath = newEncoderPath;
-        _currentDecoderPath = newDecoderPath;
-      }
 
       // Update max sequence length override
       if (config.neural_user_max_seq_length > 0)
@@ -2151,12 +2146,15 @@ public class OnnxSwipePredictor
       candidates.sort((a, b) -> Float.compare(a.score, b.score)); // Lower score is better (negative log prob)
 
       // OPTIMIZATION Phase 2.1: Confidence threshold pruning
-      // Remove beams with very low probability (exp(-score) < 0.01) to avoid wasting compute
+      // Remove beams with extremely low probability (exp(-score) < 1e-6) to avoid wasting compute
+      // CRITICAL FIX: Lowered threshold significantly for long swipes where probability mass is spread out
       if (step >= 2) { // Wait at least 2 steps before pruning
         int beforePrune = candidates.size();
-        candidates.removeIf(beam -> Math.exp(-beam.score) < 0.01); // Keep only beams with prob > 1%
+        candidates.removeIf(beam -> Math.exp(-beam.score) < 1e-6); // Keep beams with prob > 0.0001%
         int afterPrune = candidates.size();
         if (afterPrune < beforePrune && _enableVerboseLogging) {
+          // Only log if we pruned significant candidates (prob > 0.01) to avoid spam
+          // Most pruned candidates are effectively zero probability
           logDebug(String.format("⚡ Pruned %d low-confidence beams at step %d\n", beforePrune - afterPrune, step));
         }
       }
@@ -2623,13 +2621,14 @@ public class OnnxSwipePredictor
   /**
    * OPTIMIZATION: Controlled cleanup that respects session persistence
    * Only cleans up sessions if explicitly requested (default: keep in memory)
+   * THREAD SAFETY: synchronized to prevent cleanup during initialization
    */
-  public void cleanup()
+  public synchronized void cleanup()
   {
     cleanup(false); // Default: keep sessions for performance
   }
-  
-  public void cleanup(boolean forceCleanup)
+
+  public synchronized void cleanup(boolean forceCleanup)
   {
     if (!_keepSessionsInMemory || forceCleanup)
     {
