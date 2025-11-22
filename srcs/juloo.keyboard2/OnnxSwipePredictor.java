@@ -19,6 +19,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
+// REFACTORING: Import Kotlin ONNX modules for modular architecture
+import juloo.keyboard2.onnx.ModelLoader;
+
 /**
  * ONNX-based neural swipe predictor using transformer encoder-decoder architecture
  * Replaces legacy DTW/Bayesian prediction with state-of-the-art neural networks
@@ -74,6 +77,9 @@ public class OnnxSwipePredictor
   private SwipeTokenizer _tokenizer;
   private SwipeTrajectoryProcessor _trajectoryProcessor;
   private OptimizedVocabulary _vocabulary; // OPTIMIZATION: Web app vocabulary system
+
+  // REFACTORING: Modular ONNX components
+  private ModelLoader _modelLoader; // Handles model loading and session creation
   
   
   // Model state
@@ -327,112 +333,74 @@ public class OnnxSwipePredictor
           break;
       }
 
-      // Load encoder model (using correct name from web demo)
+      // REFACTORING: Use ModelLoader module for cleaner model loading
+      // Create ModelLoader if not exists (lazy initialization)
+      if (_modelLoader == null)
+      {
+        _modelLoader = new ModelLoader(_context, _ortEnvironment);
+      }
+
+      // Load encoder model
       Log.d(TAG, "Loading encoder model from: " + encoderPath);
       long encStartTime = System.currentTimeMillis();
-      byte[] encoderModelData = loadModelFromAssets(encoderPath);
-      long encReadTime = System.currentTimeMillis() - encStartTime;
-      Log.i(TAG, "⏱️ Encoder read: " + encReadTime + "ms");
+      ModelLoader.LoadResult encoderResult = _modelLoader.loadModel(encoderPath, "Encoder", true);
+      long encTotalTime = System.currentTimeMillis() - encStartTime;
 
-      if (encoderModelData != null)
+      _encoderSession = encoderResult.getSession();
+      Log.i(TAG, "⏱️ Encoder total load time: " + encTotalTime + "ms");
+      Log.i(TAG, "✅ Encoder loaded with " + encoderResult.getExecutionProvider() + " provider");
+
+      // OPTIMIZATION v6 (perftodos6.md Step 3): Verify model signature for quantized models
+      Log.i(TAG, "--- Encoder Model Signature ---");
+      try
       {
-        // logDebug("📥 Encoder model data loaded: " + encoderModelData.length + " bytes");
-        long encSessionStart = System.currentTimeMillis();
-        // OPTIMIZATION v6 (perftodos6.md Step 2): Use NNAPI for quantized models
-        OrtSession.SessionOptions sessionOptions = createNnapiSessionOptions("Encoder");
-        _encoderSession = _ortEnvironment.createSession(encoderModelData, sessionOptions);
-        long encSessionTime = System.currentTimeMillis() - encSessionStart;
-        Log.i(TAG, "⏱️ Encoder session creation: " + encSessionTime + "ms");
-
-        // CRITICAL: Verify execution provider is working
-        verifyExecutionProvider(_encoderSession, "Encoder");
-
-        // OPTIMIZATION v6 (perftodos6.md Step 3): Verify model signature for quantized models
-        Log.i(TAG, "--- Encoder Model Signature ---");
-        try
+        for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _encoderSession.getInputInfo().entrySet())
         {
-          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _encoderSession.getInputInfo().entrySet())
-          {
-            Log.i(TAG, "Input: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
-          }
-          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _encoderSession.getOutputInfo().entrySet())
-          {
-            Log.i(TAG, "Output: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
-          }
+          Log.i(TAG, "Input: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
         }
-        catch (Exception sigError)
+        for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _encoderSession.getOutputInfo().entrySet())
         {
-          Log.w(TAG, "Could not log model signature: " + sigError.getMessage());
+          Log.i(TAG, "Output: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
         }
-        Log.i(TAG, "---------------------------------");
-
-        // Log encoder interface only if verbose logging enabled (CACHED)
-        if (_enableVerboseLogging)
-        {
-          Log.d(TAG, "✅ Encoder session created successfully");
-          Log.d(TAG, "   Encoder Inputs: " + _encoderSession.getInputNames());
-          Log.d(TAG, "   Encoder Outputs: " + _encoderSession.getOutputNames());
-        }
-
-        Log.d(TAG, String.format("Encoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
       }
-      else
+      catch (Exception sigError)
       {
-        // logDebug("❌ Failed to load encoder model data");
-        Log.e(TAG, "Failed to load encoder model data from: " + encoderPath);
+        Log.w(TAG, "Could not log model signature: " + sigError.getMessage());
       }
-      Log.d(TAG, "Finished loading encoder model");
+      Log.i(TAG, "---------------------------------");
 
-      // Load decoder model (using correct name from web demo)
+      Log.d(TAG, String.format("Encoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
+
+      // Load decoder model
       Log.d(TAG, "Loading decoder model from: " + decoderPath);
       long decStartTime = System.currentTimeMillis();
-      byte[] decoderModelData = loadModelFromAssets(decoderPath);
-      long decReadTime = System.currentTimeMillis() - decStartTime;
-      Log.i(TAG, "⏱️ Decoder read: " + decReadTime + "ms");
+      ModelLoader.LoadResult decoderResult = _modelLoader.loadModel(decoderPath, "Decoder", true);
+      long decTotalTime = System.currentTimeMillis() - decStartTime;
 
-      if (decoderModelData != null)
+      _decoderSession = decoderResult.getSession();
+      Log.i(TAG, "⏱️ Decoder total load time: " + decTotalTime + "ms");
+      Log.i(TAG, "✅ Decoder loaded with " + decoderResult.getExecutionProvider() + " provider");
+
+      // OPTIMIZATION v6 (perftodos6.md Step 3): Verify model signature for quantized models
+      Log.i(TAG, "--- Decoder Model Signature ---");
+      try
       {
-        // logDebug("📥 Decoder model data loaded: " + decoderModelData.length + " bytes");
-        long decSessionStart = System.currentTimeMillis();
-        // OPTIMIZATION v6 (perftodos6.md Step 2): Use NNAPI for quantized models
-        OrtSession.SessionOptions sessionOptions = createNnapiSessionOptions("Decoder");
-        _decoderSession = _ortEnvironment.createSession(decoderModelData, sessionOptions);
-        long decSessionTime = System.currentTimeMillis() - decSessionStart;
-        Log.i(TAG, "⏱️ Decoder session creation: " + decSessionTime + "ms");
-        // logDebug("✅ Decoder session created successfully");
-        // logDebug("   Inputs: " + _decoderSession.getInputNames());
-        // logDebug("   Outputs: " + _decoderSession.getOutputNames());
-
-        // CRITICAL: Verify execution provider is working
-        verifyExecutionProvider(_decoderSession, "Decoder");
-
-        // OPTIMIZATION v6 (perftodos6.md Step 3): Verify model signature for quantized models
-        Log.i(TAG, "--- Decoder Model Signature ---");
-        try
+        for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _decoderSession.getInputInfo().entrySet())
         {
-          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _decoderSession.getInputInfo().entrySet())
-          {
-            Log.i(TAG, "Input: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
-          }
-          for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _decoderSession.getOutputInfo().entrySet())
-          {
-            Log.i(TAG, "Output: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
-          }
+          Log.i(TAG, "Input: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
         }
-        catch (Exception sigError)
+        for (Map.Entry<String, ai.onnxruntime.NodeInfo> entry : _decoderSession.getOutputInfo().entrySet())
         {
-          Log.w(TAG, "Could not log model signature: " + sigError.getMessage());
+          Log.i(TAG, "Output: " + entry.getKey() + " | Info: " + entry.getValue().getInfo().toString());
         }
-        Log.i(TAG, "---------------------------------");
-
-        Log.d(TAG, String.format("Decoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
       }
-      else
+      catch (Exception sigError)
       {
-        // logDebug("❌ Failed to load decoder model data");
-        Log.e(TAG, "Failed to load decoder model data from: " + decoderPath);
+        Log.w(TAG, "Could not log model signature: " + sigError.getMessage());
       }
-      Log.d(TAG, "Finished loading decoder model");
+      Log.i(TAG, "---------------------------------");
+
+      Log.d(TAG, String.format("Decoder model loaded: %s (max_seq_len=%d)", _currentModelVersion, _maxSequenceLength));
 
       // OPTIMIZATION v6 (perftodos6.md): Read model configuration for broadcast support
       readModelConfig(encoderPath);
