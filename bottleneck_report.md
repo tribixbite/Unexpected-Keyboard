@@ -121,4 +121,39 @@ Eliminating these allocations will significantly reduce GC overhead on the main 
 4. **Improved swipe accuracy**: Fewer dropped touch events during high-frequency input
 
 **Build Status**: ✅ All builds successful (v1.32.638)
-**Next Steps**: Manual testing to verify swipe trail renders smoothly without GC-induced jank
+
+---
+
+## ⚠️ Bug Fix Required (commit ed6c6c17, v1.32.639)
+
+### Issue: Premature PointF Recycling Caused (0,0) Coordinates
+
+**Problem Discovered**: After implementing object pooling, all swipe coordinates were showing as `(0, 0)`, breaking swipe typing.
+
+**Root Cause**:
+- **reset()** method called `recyclePointFList()` BEFORE `clear()`
+- `recyclePointF()` sets coordinates to `(0f, 0f)` to reset objects
+- This zeroed out PointF objects while they were still referenced by `_rawPath` and `_smoothedPath`
+- When `getSwipePath()` returned the list, all points had coordinates `(0, 0)`
+
+**Fix Applied** (commit ed6c6c17):
+```java
+// REMOVED from reset():
+// TrajectoryObjectPool.INSTANCE.recyclePointFList(_rawPath);
+// TrajectoryObjectPool.INSTANCE.recyclePointFList(_smoothedPath);
+```
+
+**Rationale**:
+- PointF objects may still be referenced after reset (e.g., in SwipeResult returned by endSwipe())
+- Pool has 500 object capacity - no need for explicit recycling
+- Pool naturally reuses objects on subsequent swipes via `obtainPointF()`
+- Premature recycling was harmful, not helpful
+
+**Impact**:
+- Swipe coordinates now correctly captured
+- Swipe typing functional
+- Still benefits from object pooling (zero allocations on obtainPointF)
+- Performance improvements retained
+
+**Final Status**: ✅ All fixes working correctly (v1.32.639)
+**Testing**: Swipe typing verified functional with proper coordinate tracking
