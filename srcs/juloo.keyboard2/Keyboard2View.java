@@ -48,6 +48,8 @@ public class Keyboard2View extends View
   
   private EnhancedSwipeGestureRecognizer _swipeRecognizer;
   private Paint _swipeTrailPaint;
+  // Reusable Path object for swipe trail rendering (to avoid allocation every frame)
+  private final Path _swipeTrailPath = new Path();
   
   // Swipe typing integration
   private WordPredictor _wordPredictor;
@@ -744,23 +746,29 @@ public class Keyboard2View extends View
     }
   }
   
+  /**
+   * Draw swipe trail without allocations.
+   * Reuses _swipeTrailPath and directly accesses swipe path to avoid copying.
+   */
   private void drawSwipeTrail(Canvas canvas)
   {
     List<PointF> swipePath = _swipeRecognizer.getSwipePath();
     if (swipePath.size() < 2)
       return;
-      
-    Path path = new Path();
+
+    // Reuse the path object - reset it instead of allocating new one
+    _swipeTrailPath.rewind();
+
     PointF firstPoint = swipePath.get(0);
-    path.moveTo(firstPoint.x, firstPoint.y);
-    
+    _swipeTrailPath.moveTo(firstPoint.x, firstPoint.y);
+
     for (int i = 1; i < swipePath.size(); i++)
     {
       PointF point = swipePath.get(i);
-      path.lineTo(point.x, point.y);
+      _swipeTrailPath.lineTo(point.x, point.y);
     }
-    
-    canvas.drawPath(path, _swipeTrailPaint);
+
+    canvas.drawPath(_swipeTrailPath, _swipeTrailPaint);
   }
 
   @Override

@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Queue;
 
 /**
- * Improved swipe gesture recognizer with better noise filtering
+ * Improved swipe gesture recognizer with better noise filtering.
+ * Uses TrajectoryObjectPool to reduce GC pressure during high-frequency touch events.
  */
 public class ImprovedSwipeGestureRecognizer
 {
@@ -67,8 +68,9 @@ public class ImprovedSwipeGestureRecognizer
   public void startSwipe(float x, float y, KeyboardData.Key key)
   {
     reset();
-    
-    PointF startPoint = new PointF(x, y);
+
+    // Use object pool to reduce GC pressure
+    PointF startPoint = TrajectoryObjectPool.INSTANCE.obtainPointF(x, y);
     _rawPath.add(startPoint);
     _smoothedPath.add(startPoint);
     
@@ -119,14 +121,14 @@ public class ImprovedSwipeGestureRecognizer
     
     // Calculate velocity
     _recentVelocity = (distance / timeSinceLastPoint) * 1000; // pixels per second
-    
-    // Add raw point
-    _rawPath.add(new PointF(x, y));
+
+    // Add raw point (using object pool)
+    _rawPath.add(TrajectoryObjectPool.INSTANCE.obtainPointF(x, y));
     _timestamps.add(now);
     _lastPointTime = now;
     _totalDistance += distance;
-    
-    // Apply smoothing
+
+    // Apply smoothing (also uses object pool)
     PointF smoothedPoint = applySmoothing(x, y);
     _smoothedPath.add(smoothedPoint);
     
@@ -144,20 +146,21 @@ public class ImprovedSwipeGestureRecognizer
   }
   
   /**
-   * Apply moving average smoothing to coordinates
+   * Apply moving average smoothing to coordinates.
+   * Uses object pool to avoid allocation on every touch event.
    */
   private PointF applySmoothing(float x, float y)
   {
     if (_rawPath.size() < SMOOTHING_WINDOW)
     {
-      return new PointF(x, y);
+      return TrajectoryObjectPool.INSTANCE.obtainPointF(x, y);
     }
-    
+
     // Calculate moving average over last N points
     float avgX = 0, avgY = 0;
     int startIdx = Math.max(0, _rawPath.size() - SMOOTHING_WINDOW);
     int count = 0;
-    
+
     for (int i = startIdx; i < _rawPath.size(); i++)
     {
       PointF p = _rawPath.get(i);
@@ -165,8 +168,8 @@ public class ImprovedSwipeGestureRecognizer
       avgY += p.y;
       count++;
     }
-    
-    return new PointF(avgX / count, avgY / count);
+
+    return TrajectoryObjectPool.INSTANCE.obtainPointF(avgX / count, avgY / count);
   }
   
   /**
@@ -306,13 +309,14 @@ public class ImprovedSwipeGestureRecognizer
   }
   
   /**
-   * Calculate average point over a range
+   * Calculate average point over a range.
+   * Uses object pool to avoid allocation.
    */
   private PointF calculateAveragePoint(List<PointF> points, int start, int end)
   {
     float sumX = 0, sumY = 0;
     int count = 0;
-    
+
     for (int i = start; i <= Math.min(end, points.size() - 1); i++)
     {
       PointF p = points.get(i);
@@ -320,8 +324,8 @@ public class ImprovedSwipeGestureRecognizer
       sumY += p.y;
       count++;
     }
-    
-    return new PointF(sumX / count, sumY / count);
+
+    return TrajectoryObjectPool.INSTANCE.obtainPointF(sumX / count, sumY / count);
   }
   
   /**
@@ -453,10 +457,15 @@ public class ImprovedSwipeGestureRecognizer
   }
   
   /**
-   * Reset the recognizer for a new gesture
+   * Reset the recognizer for a new gesture.
+   * Recycles all PointF objects back to the pool to reduce GC pressure.
    */
   public void reset()
   {
+    // Recycle all PointF objects before clearing
+    TrajectoryObjectPool.INSTANCE.recyclePointFList(_rawPath);
+    TrajectoryObjectPool.INSTANCE.recyclePointFList(_smoothedPath);
+
     _rawPath.clear();
     _smoothedPath.clear();
     _touchedKeys.clear();
