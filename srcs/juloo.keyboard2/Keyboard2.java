@@ -570,6 +570,12 @@ public class Keyboard2 extends InputMethodService
   {
     super.onFinishInputView(finishingInput);
     _keyboardView.reset();
+    
+    // Clear suggestions to prevent stale state/crashes on app switch
+    if (_suggestionBar != null)
+    {
+      _suggestionBar.clearSuggestions();
+    }
   }
 
   @Override
