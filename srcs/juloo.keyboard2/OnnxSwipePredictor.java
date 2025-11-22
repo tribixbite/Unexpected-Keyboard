@@ -241,29 +241,14 @@ public class OnnxSwipePredictor
       switch (_currentModelVersion)
       {
         case "v2":
-          // Check user preference for quantized vs float32 models
-          boolean useQuantized = (_config != null && _config.neural_use_quantized);
-
-          if (useQuantized)
-          {
-            // INT8 quantized models with broadcast support (calibrated, v2)
-            encoderPath = "models/bs2/swipe_encoder_android.onnx";
-            decoderPath = "models/bs2/swipe_decoder_android.onnx";
-            _maxSequenceLength = 250;
-            _modelAccuracy = "73.4%";
-            _modelSource = "builtin-quantized-v2";
-            Log.i(TAG, "Loading v2 INT8 quantized models (calibrated, broadcast-enabled, XNNPACK-optimized)");
-          }
-          else
-          {
-            // Standard float32 models (default, more stable)
-            encoderPath = "models/swipe_encoder_android.onnx";
-            decoderPath = "models/swipe_decoder_android.onnx";
-            _maxSequenceLength = 250;
-            _modelAccuracy = "80.6%";
-            _modelSource = "builtin";
-            Log.d(TAG, "Loading v2 float32 models (standard, NNAPI-accelerated)");
-          }
+          // CLEANUP (v1.32.582): Removed float32 models, INT8 quantized only (saves 20MB APK)
+          // INT8 quantized models (calibrated, v2) - now in models/ root
+          encoderPath = "models/swipe_encoder_android.onnx";
+          decoderPath = "models/swipe_decoder_android.onnx";
+          _maxSequenceLength = 250;
+          _modelAccuracy = "73.4%";
+          _modelSource = "builtin-quantized-v2";
+          Log.i(TAG, "Loading v2 INT8 quantized models (calibrated, broadcast-enabled, XNNPACK-optimized)");
           break;
 
         case "v1":
