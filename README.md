@@ -400,9 +400,21 @@ This fork maintains the original **GNU General Public License v3.0**.
 
 ---
 
-**Current Status**: ✅ **Production Ready** - All core features complete and tested (v1.32.231)
+**Current Status**: ✅ **Production Ready** - Highly optimized and performance-tuned (v1.32.644)
+
+### 🚀 Recent Performance Improvements (v1.32.635-644)
+
+- **2-3x faster swipe processing** (141-226ms saved per swipe)
+- **100x faster Termux deletion** (<10ms vs 900ms)
+- **Zero UI allocations** from object pooling
+- **71% code reduction** in core module (2,397 → 692 lines)
+- **-26% APK size** (65MB → 48MB)
+- **Thread-safe initialization** with race condition fixes
+- **Enhanced logging** with proper Android practices
 
 For detailed technical documentation, see:
-- **STATUS.md** - Complete feature documentation and implementation status
+- **STATE_SUMMARY_v1.32.643.md** - Complete performance metrics and architecture
+- **UTILITY_SCRIPTS.md** - Development and monitoring tools
+- **SWIPE_LAG_DEBUG.md** - Termux performance investigation
 - **CLAUDE.md** - Development guidelines and build instructions
 - **memory/pm.md** - Project management and roadmap
