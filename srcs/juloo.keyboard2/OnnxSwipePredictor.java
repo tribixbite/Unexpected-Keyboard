@@ -463,7 +463,19 @@ public class OnnxSwipePredictor
       // OPTIMIZATION: Load vocabulary for fast filtering
       Log.d(TAG, "Loading vocabulary");
       long vocabStart = System.currentTimeMillis();
-      boolean vocabularyLoaded = _vocabulary.loadVocabulary();
+      boolean vocabularyLoaded;
+      
+      // Prevent redundant reloading if already loaded (fixes double "Loaded X custom words" logs)
+      if (_vocabulary.isLoaded())
+      {
+        vocabularyLoaded = true;
+        Log.d(TAG, "Vocabulary already loaded, skipping reload");
+      }
+      else
+      {
+        vocabularyLoaded = _vocabulary.loadVocabulary();
+      }
+
       long vocabTime = System.currentTimeMillis() - vocabStart;
       Log.i(TAG, "⏱️ Vocabulary load: " + vocabTime + "ms");
       Log.d(TAG, "Vocabulary loaded: " + vocabularyLoaded);
@@ -1289,8 +1301,14 @@ public class OnnxSwipePredictor
       String newDecoderPath = config.neural_custom_decoder_path;
 
       boolean versionChanged = !newModelVersion.equals(_currentModelVersion);
-      boolean pathsChanged = !java.util.Objects.equals(newEncoderPath, _currentEncoderPath) ||
-                             !java.util.Objects.equals(newDecoderPath, _currentDecoderPath);
+      boolean pathsChanged = false;
+
+      // Only check for path changes if using custom model version
+      // Builtin versions (v2) have hardcoded paths, so config paths are irrelevant
+      if ("custom".equals(newModelVersion)) {
+          pathsChanged = !java.util.Objects.equals(newEncoderPath, _currentEncoderPath) ||
+                         !java.util.Objects.equals(newDecoderPath, _currentDecoderPath);
+      }
 
       if (versionChanged || pathsChanged)
       {

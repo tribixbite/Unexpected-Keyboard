@@ -67,8 +67,12 @@ class PredictionViewSetup(
     ): SetupResult {
         // Check if word prediction or swipe typing is enabled
         if (config.word_prediction_enabled || config.swipe_typing_enabled) {
-            // Ensure prediction engines are initialized (lazy initialization)
-            predictionCoordinator.ensureInitialized()
+            // CRITICAL FIX: Initialize prediction engines in background thread to avoid 3-second UI freeze
+            // ONNX model loading takes 2.8-4.4s and MUST NOT block the main thread
+            // See OnnxSwipePredictor.java:210 warning about main thread initialization
+            Thread {
+                predictionCoordinator.ensureInitialized()
+            }.start()
 
             // Set keyboard dimensions for neural engine if available
             if (config.swipe_typing_enabled &&

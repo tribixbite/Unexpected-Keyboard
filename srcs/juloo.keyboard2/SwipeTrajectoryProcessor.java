@@ -33,7 +33,8 @@ public class SwipeTrajectoryProcessor
   private float _touchYOffset = 0.0f;
 
   // Resampling configuration
-  private SwipeResampler.ResamplingMode _resamplingMode = SwipeResampler.ResamplingMode.TRUNCATE;
+  // Default to DISCARD to preserve start/end of long swipes (matching Config.java default)
+  private SwipeResampler.ResamplingMode _resamplingMode = SwipeResampler.ResamplingMode.DISCARD;
 
   // OPTIMIZATION Phase 2: Reusable lists to reduce GC pressure
   // These are cleared and reused on each call to extractFeatures()
