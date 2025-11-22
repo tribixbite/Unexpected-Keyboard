@@ -9,16 +9,46 @@
 
 ## 🔥 Current Status (2025-11-21 - UPDATED)
 
-**Latest Version**: v1.32.575 (627) 🎯
-**Build Status**: ✅ ALL OPTIMIZATIONS COMPLETE - 3X PERFORMANCE BOOST!
+**Latest Version**: v1.32.579 (631) 🎯
+**Build Status**: ✅ CRITICAL BUG FIXES - 3-SECOND UI FREEZE ELIMINATED!
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎉 Performance Optimization Complete - Ready for Testing
+**Current Focus**: 🔥 Critical Performance Fix - Async Model Loading
 **Refactoring Progress**: 7 Kotlin modules + 2 performance modules
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
-**Critical Fixes**: 40 fixes applied (see history below)
-**Performance**: 3X FASTER SWIPE | ZERO ALLOCATIONS | NO GC PAUSES | NO UI FREEZES | Atomic dict swapping | <1ms main thread
+**Critical Fixes**: 43 fixes applied (see history below) - 3 NEW BUG FIXES
+**Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | NO UI FREEZES | NO MAIN THREAD BLOCKING | ZERO ALLOCATIONS | <1ms main thread
 
-### 🔧 Latest Work (v1.32.575) - PRIORITY 2 OPTIMIZATIONS + FINAL POLISH! ✨
+### 🔧 Latest Work (v1.32.579) - CRITICAL BUG FIXES! 🚨
+
+**THREE CRITICAL BUGS FIXED** (See inferencebugs1.md for full details):
+
+**BUG #1: 3-Second UI Freeze on App Switch** ⚡ CRITICAL
+- **Impact**: Keyboard completely frozen for 3-4 seconds after switching apps
+- **Root Cause**: ONNX model loading blocking main thread (2.8-4.4s)
+  - Encoder read: 500-800ms
+  - Encoder session: 1000-1500ms
+  - Decoder read: 300-500ms
+  - Decoder session: 800-1200ms
+  - Tokenizer/vocab: 200-400ms
+- **Fix**: Moved ensureInitialized() to background thread (PredictionViewSetup.kt:73-75)
+- **Result**: ✅ Keyboard appears instantly, models load asynchronously
+
+**BUG #2: Redundant Layout Update** (Double Initialization)
+- **Impact**: Neural key positions set twice, causing input lag
+- **Root Cause**: Two code paths calling setNeuralKeyboardLayout()
+- **Fix**: Removed redundant post() in Keyboard2.java:556-563
+- **Result**: ✅ Single initialization, no redundant processing
+
+**BUG #3: Redundant Vocabulary Loading**
+- **Impact**: 50k-word dictionary loaded multiple times (unnecessary memory churn)
+- **Root Cause**: No isLoaded() check before reloading
+- **Fix**: Added guard in OnnxSwipePredictor.java:469-477
+- **Result**: ✅ Load once, prevent double logs
+
+**Build**: v1.32.579-631 ✅ SUCCESS
+**Commit**: 6f5554b0
+
+### 🔧 Previous Work (v1.32.575) - PRIORITY 2 OPTIMIZATIONS + FINAL POLISH! ✨
 
 **PRIORITY 2: MICRO-OPTIMIZATIONS**
 - **Goal**: Squeeze every last drop of performance
