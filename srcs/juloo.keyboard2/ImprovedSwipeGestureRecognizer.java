@@ -458,14 +458,12 @@ public class ImprovedSwipeGestureRecognizer
   
   /**
    * Reset the recognizer for a new gesture.
-   * Recycles all PointF objects back to the pool to reduce GC pressure.
+   * Note: We don't recycle PointF objects here because they may still be referenced
+   * elsewhere (e.g., in SwipeResult returned by endSwipe()). The pool will naturally
+   * reuse objects on subsequent swipes.
    */
   public void reset()
   {
-    // Recycle all PointF objects before clearing
-    TrajectoryObjectPool.INSTANCE.recyclePointFList(_rawPath);
-    TrajectoryObjectPool.INSTANCE.recyclePointFList(_smoothedPath);
-
     _rawPath.clear();
     _smoothedPath.clear();
     _touchedKeys.clear();
