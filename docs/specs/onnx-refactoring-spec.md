@@ -354,7 +354,28 @@ class OnnxConfigManager(
   * Model loading logic now testable independently
   * Hardware acceleration fallback chain encapsulated
   * Model caching and optimization handled by module
-- **Next**: Integrate EncoderWrapper + DecoderWrapper + TensorFactory
+
+### 2025-11-22: EncoderWrapper + DecoderWrapper Integration Complete
+- **Commit**: ab434168 "refactor(onnx): integrate EncoderWrapper + DecoderWrapper + TensorFactory"
+- **Changes**:
+  * Added imports for EncoderWrapper, DecoderWrapper, TensorFactory
+  * Added fields for modular inference components
+  * Initialized components after model loading
+  * Replaced encoder inference with EncoderWrapper.encode()
+  * Simplified predict() method - removed 40+ lines of tensor creation
+  * Added runBeamSearch() overload accepting OnnxTensor
+  * Build successful (v1.32.637)
+- **Benefits**:
+  * Encoder execution logic encapsulated and testable
+  * TensorFactory handles all tensor creation
+  * Cleaner error handling and timing logs
+  * Simplified memory management (EncoderWrapper owns input tensors)
+
+### 2025-11-22: Partial MemoryPool Integration
+- **Status**: Import added, field created, not fully integrated
+- **Reason**: Full integration requires replacing buffer access throughout 400+ lines of beam search code
+- **Deferral**: Will be completed in final Kotlin conversion phase
+- **Next**: OnnxConfigManager module creation
 
 ---
 

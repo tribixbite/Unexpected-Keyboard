@@ -24,6 +24,7 @@ import juloo.keyboard2.onnx.ModelLoader;
 import juloo.keyboard2.onnx.EncoderWrapper;
 import juloo.keyboard2.onnx.DecoderWrapper;
 import juloo.keyboard2.onnx.TensorFactory;
+import juloo.keyboard2.onnx.MemoryPool;
 
 /**
  * ONNX-based neural swipe predictor using transformer encoder-decoder architecture
@@ -86,6 +87,7 @@ public class OnnxSwipePredictor
   private TensorFactory _tensorFactory; // Handles tensor creation from trajectory features
   private EncoderWrapper _encoderWrapper; // Handles encoder inference
   private DecoderWrapper _decoderWrapper; // Handles decoder inference
+  private MemoryPool _memoryPool; // Handles buffer pooling for GC reduction
   
   
   // Model state
