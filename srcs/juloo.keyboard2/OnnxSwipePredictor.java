@@ -1259,58 +1259,10 @@ public class OnnxSwipePredictor
       _confidenceThreshold = config.neural_confidence_threshold != 0 ?
         config.neural_confidence_threshold : DEFAULT_CONFIDENCE_THRESHOLD;
 
-      // Handle model version or path changes (requires reinitialization)
-      String newModelVersion = config.neural_model_version != null ? config.neural_model_version : "v2";
-      String newEncoderPath = config.neural_custom_encoder_path;
-      String newDecoderPath = config.neural_custom_decoder_path;
-
-      boolean versionChanged = !newModelVersion.equals(_currentModelVersion);
-      boolean pathsChanged = false;
-
-      // Only check for path changes if using custom model version
-      // Builtin versions (v2) have hardcoded paths, so config paths are irrelevant
-      if ("custom".equals(newModelVersion)) {
-          pathsChanged = !java.util.Objects.equals(newEncoderPath, _currentEncoderPath) ||
-                         !java.util.Objects.equals(newDecoderPath, _currentDecoderPath);
-      }
-
-      if (versionChanged || pathsChanged)
-      {
-        Log.d(TAG, String.format("Model config changed: versionChanged=%b, pathsChanged=%b. Re-initialization required.",
-          versionChanged, pathsChanged));
-
-        // CRITICAL: Clean up old sessions before reinitializing
-        try
-        {
-          if (_encoderSession != null)
-          {
-            _encoderSession.close();
-            _encoderSession = null;
-            Log.d(TAG, "Closed old encoder session");
-          }
-          if (_decoderSession != null)
-          {
-            _decoderSession.close();
-            _decoderSession = null;
-            Log.d(TAG, "Closed old decoder session");
-          }
-        }
-        catch (Exception e)
-        {
-          Log.e(TAG, "Error closing old sessions", e);
-        }
-
-        _currentModelVersion = newModelVersion;
-        _currentEncoderPath = newEncoderPath;
-        _currentDecoderPath = newDecoderPath;
-        _isInitialized = false;
-        _isModelLoaded = false;
-
-        // CRITICAL: Immediately reinitialize instead of waiting for next prediction
-        // This ensures settings UI shows correct model status right away
-        Log.d(TAG, "Triggering immediate model reinitialization...");
-        initialize();
-      }
+      // OPTIMIZATION: Removed automatic model reload logic per user request.
+      // Changes to 'neural_model_version' or custom paths now require a keyboard restart.
+      // This eliminates overhead and prevents potential race conditions during app switches.
+      // Old logic checked versionChanged || pathsChanged and called initialize().
 
       // Update max sequence length override
       if (config.neural_user_max_seq_length > 0)

@@ -309,7 +309,7 @@ public final class Config
     neural_prediction_enabled = _prefs.getBoolean("neural_prediction_enabled", true);
     // Mobile-optimized defaults: 2 beams, max 35 chars (was 8 beams, 35 chars)
     // Reduced from 8 to 2 beams for 4x speedup while keeping max_length for long words
-    neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 2);
+    neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 4);
     neural_max_length = safeGetInt(_prefs, "neural_max_length", 35);
     neural_confidence_threshold = safeGetFloat(_prefs, "neural_confidence_threshold", 0.1f);
     neural_batch_beams = _prefs.getBoolean("neural_batch_beams", false); // Default off - sequential is safer

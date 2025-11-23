@@ -26,14 +26,12 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
-> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
-> Task :mergeDebugResources
+> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
@@ -41,15 +39,17 @@ Generated version info:  ()
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :processDebugManifestForPackage
-> Task :checkDebugDuplicateClasses
+> Task :mergeDebugResources
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeDebugJniLibFolders
+> Task :checkDebugDuplicateClasses
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -67,8 +67,8 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 
 > Task :compileDebugKotlin
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardGrid.kt:158:26 Variable 'pos' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:109:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:124:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:111:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:129:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/DecoderWrapper.kt:205:47 Unchecked cast: Any! to Array<Array<FloatArray>>
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/MemoryPool.kt:50:9 Parameter 'maxSeqLength' is never used
@@ -102,5 +102,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 59s
+BUILD SUCCESSFUL in 39s
 42 actionable tasks: 34 executed, 8 from cache

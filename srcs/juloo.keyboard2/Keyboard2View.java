@@ -149,17 +149,41 @@ public class Keyboard2View extends View
     _compose_key = _keyboard.findKeyWithValue(_compose_kv);
     KeyModifier.set_modmap(_keyboard.modmap);
     
+    // CRITICAL FIX: Pre-calculate key width based on screen width
+    // This ensures getKeyAtPosition works immediately for swipes before onMeasure() runs
+    // Always recalculate because layout or screen dims might have changed (view reuse)
+    {
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        int screenWidth = dm.widthPixels;
+        float marginLeft = Math.max(_config.horizontal_margin, _insets_left);
+        float marginRight = Math.max(_config.horizontal_margin, _insets_right);
+        _keyWidth = (screenWidth - marginLeft - marginRight) / _keyboard.keysWidth;
+        
+        // Ensure theme cache is initialized for key detection
+        String cacheKey = (_keyboard.name != null ? _keyboard.name : "") + "_" + _keyWidth;
+        if (_themeCache.get(cacheKey) == null) {
+            _tc = new Theme.Computed(_theme, _config, _keyWidth, _keyboard);
+            _themeCache.put(cacheKey, _tc);
+        } else {
+            _tc = _themeCache.get(cacheKey);
+        }
+        android.util.Log.d("Keyboard2View", "Pre-calculated keyWidth=" + _keyWidth + " for immediate touch handling");
+    }
+    
     // Initialize swipe recognizer if not already created
     if (_swipeRecognizer == null)
     {
       _swipeRecognizer = new EnhancedSwipeGestureRecognizer();
     }
     
-    // Set keyboard for swipe recognizer's probabilistic detection  
+    // ENABLE PROBABILISTIC DETECTION:
+    // Pass the keyboard layout to the recognizer so it can find "nearest keys"
+    // instead of failing on gaps/misalignment (crucial for startup race condition)
     if (_swipeRecognizer != null && _keyboard != null)
     {
-      DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-      // Parent class handles keyboard setup - no need for setKeyboardDimensions
+      float estimatedWidth = _keyWidth * _keyboard.keysWidth + _marginLeft + _marginRight;
+      float estimatedHeight = _tc != null ? _tc.row_height * _keyboard.keysHeight : 0;
+      _swipeRecognizer.setKeyboard(_keyboard, estimatedWidth, estimatedHeight);
     }
     
     reset();
@@ -540,14 +564,17 @@ public class Keyboard2View extends View
   private KeyboardData.Key getKeyAtPosition(float tx, float ty)
   {
     KeyboardData.Row row = getRowAtPosition(ty);
-    float x = _marginLeft;
+    // CRITICAL FIX: Calculate margin dynamically to avoid stale _marginLeft from delayed onMeasure
+    float currentMarginLeft = Math.max(_config.horizontal_margin, _insets_left);
+    float x = currentMarginLeft;
+    
     if (row == null) {
-      android.util.Log.e("KeyDetection", "❌ No row found for y=" + ty + " (marginTop=" + _config.marginTop + ")");
+      android.util.Log.e("SWIPE_LAG_DEBUG", "❌ No row found for y=" + ty + " (marginTop=" + _config.marginTop + ")");
       return null;
     }
     
     // Log coordinate mapping for debugging
-    android.util.Log.v("KeyDetection", "🎯 Touch at (" + tx + "," + ty + ") → row found, checking keys...");
+    // android.util.Log.v("KeyDetection", "🎯 Touch at (" + tx + "," + ty + ") → row found, checking keys...");
     
     // Check if this row contains 'a' and 'l' keys (middle letter row in QWERTY)
     boolean hasAAndLKeys = rowContainsAAndL(row);
@@ -567,8 +594,9 @@ public class Keyboard2View extends View
       return aKey;
     }
     
-    if (tx < x)
-      return null;
+    if (tx < x) {
+        return null;
+    }
       
     for (KeyboardData.Key key : row.keys)
     {
@@ -577,21 +605,24 @@ public class Keyboard2View extends View
       
       // Log 'a' key coordinates for debugging
       if (isCharacterKey(key, 'a')) {
-        android.util.Log.e("KeyDetection", "📍 'A' KEY POSITION: x=" + xLeft + "-" + xRight + ", y=row, touch=(" + tx + "," + ty + ")");
       }
       
-      if (tx < xLeft)
-        return null;
+      // GAP FIX: If touch is in the gap before this key (xLeft),
+      // consider it part of this key for swiping purposes.
+      // This prevents dropped points when _keyWidth is slightly off.
+      // if (tx < xLeft) { return null; } <-- REMOVED
+      
       if (tx < xRight) {
-        android.util.Log.v("KeyDetection", "✅ Found key at (" + tx + "," + ty + ") → " + key.toString());
         return key;
       }
       x = xRight;
     }
     
     // Check if touch is after the last key and we have 'l' key - extend its touch zone
-    if (lKey != null) {
-      return lKey;
+    // GAP FIX: If we reached here, tx > last key's right edge.
+    // Return the last key in the row to handle right-margin slop.
+    if (!row.keys.isEmpty()) {
+        return row.keys.get(row.keys.size() - 1);
     }
     
     return null;
@@ -633,11 +664,27 @@ public class Keyboard2View extends View
     int width;
     // FIXED: Use actual measured width instead of screen width (layout calculation bug)
     width = MeasureSpec.getSize(wSpec);
-    android.util.Log.d("Keyboard2View", "Layout fix: using measured width " + width + " instead of screen width");
+    
+    // CRITICAL FIX: If measure returns 0 (e.g. view detached/invisible), preserve existing
+    // valid keyWidth to allow key detection logic (getKeyAtPosition) to continue working.
+    // This fixes the "ignored initial swipes" issue after app switching.
+    if (width == 0 && _keyWidth > 0 && _keyboard != null) {
+        android.util.Log.d("Keyboard2View", "onMeasure: width=0, preserving valid keyWidth=" + _keyWidth);
+        // Reconstruct width from existing keyWidth to satisfy setMeasuredDimension expectations
+        width = (int)(_keyWidth * _keyboard.keysWidth + _marginLeft + _marginRight);
+    } else {
+        // Normal path: update width and recalculate derived values
+        android.util.Log.d("Keyboard2View", "onMeasure: width=" + width);
+    }
+
     _marginLeft = Math.max(_config.horizontal_margin, _insets_left);
     _marginRight = Math.max(_config.horizontal_margin, _insets_right);
     _marginBottom = _config.margin_bottom + _insets_bottom;
-    _keyWidth = (width - _marginLeft - _marginRight) / _keyboard.keysWidth;
+    
+    // Only recalculate keyWidth if we have a valid new width
+    if (width > 0) {
+        _keyWidth = (width - _marginLeft - _marginRight) / _keyboard.keysWidth;
+    }
     
     String cacheKey = (_keyboard.name != null ? _keyboard.name : "") + "_" + _keyWidth;
     _tc = _themeCache.get(cacheKey);

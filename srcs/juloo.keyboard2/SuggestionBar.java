@@ -214,41 +214,48 @@ public class SuggestionBar extends LinearLayout
     _suggestionViews.clear();
 
     // Dynamically create TextViews for all suggestions
-    for (int i = 0; i < _currentSuggestions.size(); i++)
-    {
-      // Add divider before each suggestion except the first
-      if (i > 0)
+    try {
+      for (int i = 0; i < _currentSuggestions.size(); i++)
       {
-        View divider = createDivider(getContext());
-        addView(divider);
+        // Add divider before each suggestion except the first
+        if (i > 0)
+        {
+          View divider = createDivider(getContext());
+          addView(divider);
+        }
+
+        String suggestion = _currentSuggestions.get(i);
+
+        // Add debug score if enabled and available
+        if (_showDebugScores && i < _currentScores.size() && !_currentScores.isEmpty())
+        {
+          int score = _currentScores.get(i);
+          suggestion = suggestion + "\n" + score;
+        }
+
+        TextView textView = createSuggestionView(getContext(), i);
+        textView.setText(suggestion);
+
+        // Highlight first suggestion with activated color
+        if (i == 0)
+        {
+          textView.setTypeface(Typeface.DEFAULT_BOLD);
+          textView.setTextColor(_theme != null && _theme.activatedColor != 0 ? _theme.activatedColor : Color.CYAN);
+        }
+        else
+        {
+          textView.setTypeface(Typeface.DEFAULT);
+          textView.setTextColor(_theme != null && _theme.labelColor != 0 ? _theme.labelColor : Color.WHITE);
+        }
+
+        if (textView.getParent() != null) {
+            ((ViewGroup)textView.getParent()).removeView(textView);
+        }
+        addView(textView);
+        _suggestionViews.add(textView);
       }
-
-      String suggestion = _currentSuggestions.get(i);
-
-      // Add debug score if enabled and available
-      if (_showDebugScores && i < _currentScores.size() && !_currentScores.isEmpty())
-      {
-        int score = _currentScores.get(i);
-        suggestion = suggestion + "\n" + score;
-      }
-
-      TextView textView = createSuggestionView(getContext(), i);
-      textView.setText(suggestion);
-
-      // Highlight first suggestion with activated color
-      if (i == 0)
-      {
-        textView.setTypeface(Typeface.DEFAULT_BOLD);
-        textView.setTextColor(_theme != null && _theme.activatedColor != 0 ? _theme.activatedColor : Color.CYAN);
-      }
-      else
-      {
-        textView.setTypeface(Typeface.DEFAULT);
-        textView.setTextColor(_theme != null && _theme.labelColor != 0 ? _theme.labelColor : Color.WHITE);
-      }
-
-      addView(textView);
-      _suggestionViews.add(textView);
+    } catch (Exception e) {
+        android.util.Log.e("SuggestionBar", "Error updating suggestion views: " + e.getMessage());
     }
 
     // Show or hide the entire bar based on suggestions (unless always visible mode)

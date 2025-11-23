@@ -105,9 +105,10 @@ public class PredictionCoordinator
 
   /**
    * Initializes neural engine for swipe typing.
-   * OPTIMIZATION v1.32.529: Marked synchronized to ensure single initialization
+   * OPTIMIZATION v1.32.529: Removed synchronized as it's now protected by double-checked locking
+   * in ensureNeuralEngineReady and initialize
    */
-  private synchronized void initializeNeuralEngine()
+  private void initializeNeuralEngine()
   {
     // Skip if already initialized or initializing
     if (_neuralEngine != null || _isInitializingNeuralEngine)
@@ -156,14 +157,21 @@ public class PredictionCoordinator
 
   /**
    * Ensures neural engine is initialized before use.
-   * OPTIMIZATION v1.32.529: Lazy initialization on first swipe if not already loaded
+   * OPTIMIZATION v1.32.529: Double-checked locking to prevent Main Thread blocking
+   * This allows check to be fast if already initialized, without acquiring lock.
    */
-  public synchronized void ensureNeuralEngineReady()
+  public void ensureNeuralEngineReady()
   {
     if (_config.swipe_typing_enabled && _neuralEngine == null && !_isInitializingNeuralEngine)
     {
-      Log.d(TAG, "Lazy-loading neural engine on first swipe...");
-      initializeNeuralEngine();
+      synchronized(this)
+      {
+        if (_neuralEngine == null && !_isInitializingNeuralEngine)
+        {
+          Log.d(TAG, "Lazy-loading neural engine on first swipe...");
+          initializeNeuralEngine();
+        }
+      }
     }
   }
 

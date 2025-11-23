@@ -87,6 +87,7 @@ public class OptimizedVocabulary
   // OPTIMIZATION Phase 2: Cache parsed custom words to avoid JSON parsing on every swipe
   // Maps custom word -> frequency
   private Map<String, Integer> _cachedCustomWords = new HashMap<>();
+  private String _lastCustomWordsJson = ""; // Track last parsed JSON to avoid redundant parsing
 
   public OptimizedVocabulary(Context context)
   {
@@ -140,23 +141,29 @@ public class OptimizedVocabulary
     _useEditDistance = "edit_distance".equals(config.swipe_fuzzy_match_mode);
 
     // OPTIMIZATION Phase 2: Parse and cache custom words here instead of on every swipe
-    _cachedCustomWords.clear();
     try {
       android.content.SharedPreferences prefs = DirectBootAwarePreferences.get_shared_preferences(context);
       String customWordsJson = prefs.getString("custom_words", "{}");
-      if (!customWordsJson.equals("{}")) {
-        org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
-        java.util.Iterator<String> keys = jsonObj.keys();
-        while (keys.hasNext()) {
-          String customWord = keys.next().toLowerCase();
-          int customFreq = jsonObj.optInt(customWord, 1000);
-          _cachedCustomWords.put(customWord, customFreq);
+      
+      // Only parse if content changed
+      if (!customWordsJson.equals(_lastCustomWordsJson)) {
+        _cachedCustomWords.clear();
+        if (!customWordsJson.equals("{}")) {
+          org.json.JSONObject jsonObj = new org.json.JSONObject(customWordsJson);
+          java.util.Iterator<String> keys = jsonObj.keys();
+          while (keys.hasNext()) {
+            String customWord = keys.next().toLowerCase();
+            int customFreq = jsonObj.optInt(customWord, 1000);
+            _cachedCustomWords.put(customWord, customFreq);
+          }
+          Log.d(TAG, "Cached " + _cachedCustomWords.size() + " custom words");
         }
-        Log.d(TAG, "Cached " + _cachedCustomWords.size() + " custom words");
+        _lastCustomWordsJson = customWordsJson;
       }
     } catch (Exception e) {
       Log.e(TAG, "Failed to parse custom words JSON", e);
       _cachedCustomWords.clear();
+      _lastCustomWordsJson = "{}"; // Reset on error
     }
 
     Log.d(TAG, "Config cached: confidenceWeight=" + _confidenceWeight + ", autocorrect=" + _swipeAutocorrectEnabled);

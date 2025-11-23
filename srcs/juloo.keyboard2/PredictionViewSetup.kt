@@ -69,10 +69,12 @@ class PredictionViewSetup(
         if (config.word_prediction_enabled || config.swipe_typing_enabled) {
             // CRITICAL FIX: Initialize prediction engines in background thread to avoid 3-second UI freeze
             // ONNX model loading takes 2.8-4.4s and MUST NOT block the main thread
-            // See OnnxSwipePredictor.java:210 warning about main thread initialization
-            Thread {
-                predictionCoordinator.ensureInitialized()
-            }.start()
+            // OPTIMIZATION: Only spawn thread if neural engine not yet ready
+            if (!predictionCoordinator.isSwipeTypingAvailable()) {
+                Thread {
+                    predictionCoordinator.ensureInitialized()
+                }.start()
+            }
 
             // Set keyboard dimensions for neural engine if available
             if (config.swipe_typing_enabled &&
@@ -121,6 +123,9 @@ class PredictionViewSetup(
                     contentPaneContainer
                 )
 
+                // CRITICAL FIX: Remove keyboardView from existing parent (e.g. Window)
+                // before adding to new container to prevent IllegalStateException
+                (keyboardView.parent as? android.view.ViewGroup)?.removeView(keyboardView)
                 inputViewContainer?.addView(keyboardView)
             }
 
