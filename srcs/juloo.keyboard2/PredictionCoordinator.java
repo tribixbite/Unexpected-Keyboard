@@ -79,7 +79,10 @@ public class PredictionCoordinator
     // Initialize neural engine if swipe typing is enabled
     if (_config.swipe_typing_enabled)
     {
-      initializeNeuralEngine();
+      // FIX: Initialize neural engine on background thread to avoid blocking startup
+      new Thread(() -> {
+          initializeNeuralEngine();
+      }).start();
     }
   }
 
@@ -95,7 +98,13 @@ public class PredictionCoordinator
     _wordPredictor.setContext(_context); // Enable disabled words filtering
     _wordPredictor.setConfig(_config);
     _wordPredictor.setUserAdaptationManager(_adaptationManager);
-    _wordPredictor.loadDictionary(_context, "en");
+    
+    // FIX: Load dictionary asynchronously to prevent Main Thread blocking during startup
+    // This prevents ANRs when the keyboard initializes
+    Log.d(TAG, "Starting async dictionary loading...");
+    _wordPredictor.loadDictionaryAsync(_context, "en", () -> {
+        Log.d(TAG, "Dictionary loaded successfully");
+    });
 
     // OPTIMIZATION: Start observing dictionary changes for automatic updates
     _wordPredictor.startObservingDictionaryChanges();

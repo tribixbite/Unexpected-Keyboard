@@ -387,12 +387,14 @@ public class Keyboard2View extends View
 
         boolean result = distanceFromCenter <= maxDistance;
 
+        /*
         android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: " +
                           "point=(" + x + "," + y + ") " +
                           "center=(" + keyCenterX + "," + keyCenterY + ") " +
                           "distance=" + distanceFromCenter + " " +
                           "maxDistance=" + maxDistance + " (maxH=" + maxHorizontal + ", maxV=" + maxVertical + ", tolerance=" + (tolerance * 100) + "%) " +
                           "result=" + result);
+        */
 
         return result;
       }
@@ -478,7 +480,7 @@ public class Keyboard2View extends View
           if (keyString != null && keyString.length() == 1 && Character.isLetter(keyString.charAt(0))) {
             char keyChar = keyString.toLowerCase().charAt(0);
             keyPositions.put(keyChar, new android.graphics.PointF(centerX, centerY));
-            android.util.Log.d("KeyPositions", "Real position: '" + keyChar + "' = (" + centerX + "," + centerY + ")");
+            // android.util.Log.d("KeyPositions", "Real position: '" + keyChar + "' = (" + centerX + "," + centerY + ")");
           }
         } catch (Exception e) {
           // Skip keys that can't be extracted
@@ -490,7 +492,7 @@ public class Keyboard2View extends View
       y += (row.shift + row.height) * _tc.row_height;
     }
     
-    android.util.Log.i("KeyPositions", "Extracted " + keyPositions.size() + " real key positions");
+    // android.util.Log.i("KeyPositions", "Extracted " + keyPositions.size() + " real key positions");
     return keyPositions;
   }
 
@@ -499,10 +501,12 @@ public class Keyboard2View extends View
   {
     // GESTURE INTERRUPTION DEBUGGING - log events that might segment swipes
     int action = event.getActionMasked();
+    /*
     if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
       android.util.Log.e("SwipeDebug", "🎯 KEY EVENT: " + MotionEvent.actionToString(action) + 
         " at (" + event.getX() + "," + event.getY() + ") viewHeight=" + getHeight());
     }
+    */
     
     int p;
     switch (action)
@@ -536,10 +540,10 @@ public class Keyboard2View extends View
   private KeyboardData.Row getRowAtPosition(float ty)
   {
     float y = _config.marginTop;
-    android.util.Log.e("KeyDetection", "🔍 COORDINATE DEBUG: touch_y=" + ty + ", marginTop=" + y + ", viewHeight=" + getHeight() + ", rowHeight=" + _tc.row_height);
+    // android.util.Log.e("KeyDetection", "🔍 COORDINATE DEBUG: touch_y=" + ty + ", marginTop=" + y + ", viewHeight=" + getHeight() + ", rowHeight=" + _tc.row_height);
     
     if (ty < y) {
-      android.util.Log.v("KeyDetection", "❌ Y too small: " + ty + " < " + y);
+      // android.util.Log.v("KeyDetection", "❌ Y too small: " + ty + " < " + y);
       return null;
     }
     
@@ -547,17 +551,17 @@ public class Keyboard2View extends View
     for (KeyboardData.Row row : _keyboard.rows)
     {
       float rowBottom = y + (row.shift + row.height) * _tc.row_height;
-      android.util.Log.v("KeyDetection", "Row " + rowIndex + ": y=" + y + "-" + rowBottom);
+      // android.util.Log.v("KeyDetection", "Row " + rowIndex + ": y=" + y + "-" + rowBottom);
       
       if (ty < rowBottom) {
-        android.util.Log.v("KeyDetection", "✅ Found row " + rowIndex + " for y=" + ty);
+        // android.util.Log.v("KeyDetection", "✅ Found row " + rowIndex + " for y=" + ty);
         return row;
       }
       y = rowBottom;
       rowIndex++;
     }
     
-    android.util.Log.v("KeyDetection", "❌ No row found for y=" + ty + " (past last row)");
+    // android.util.Log.v("KeyDetection", "❌ No row found for y=" + ty + " (past last row)");
     return null;
   }
 
@@ -669,12 +673,12 @@ public class Keyboard2View extends View
     // valid keyWidth to allow key detection logic (getKeyAtPosition) to continue working.
     // This fixes the "ignored initial swipes" issue after app switching.
     if (width == 0 && _keyWidth > 0 && _keyboard != null) {
-        android.util.Log.d("Keyboard2View", "onMeasure: width=0, preserving valid keyWidth=" + _keyWidth);
+        // android.util.Log.d("Keyboard2View", "onMeasure: width=0, preserving valid keyWidth=" + _keyWidth);
         // Reconstruct width from existing keyWidth to satisfy setMeasuredDimension expectations
         width = (int)(_keyWidth * _keyboard.keysWidth + _marginLeft + _marginRight);
     } else {
         // Normal path: update width and recalculate derived values
-        android.util.Log.d("Keyboard2View", "onMeasure: width=" + width);
+        // android.util.Log.d("Keyboard2View", "onMeasure: width=" + width);
     }
 
     _marginLeft = Math.max(_config.horizontal_margin, _insets_left);

@@ -8,6 +8,9 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import juloo.keyboard2.ml.SwipeMLData;
 
 /**
@@ -55,6 +58,10 @@ public class SuggestionHandler
   // Debug mode for logging
   private boolean _debugMode = false;
   private DebugLogger _debugLogger; // Interface for sending debug logs
+  
+  // Async prediction execution
+  private final ExecutorService _predictionExecutor = Executors.newSingleThreadExecutor();
+  private Future<?> _currentPredictionTask;
 
   /**
    * Interface for sending debug logs to SwipeDebugActivity.
@@ -679,16 +686,39 @@ public class SuggestionHandler
   {
     if (_contextTracker.getCurrentWordLength() > 0)
     {
-      String partial = _contextTracker.getCurrentWord();
+      final String partial = _contextTracker.getCurrentWord();
+      
+      // Copy context to be thread-safe
+      final List<String> contextWords = new ArrayList<>(_contextTracker.getContextWords());
 
-      // Use contextual prediction
-      WordPredictor.PredictionResult result = _predictionCoordinator.getWordPredictor().predictWordsWithContext(partial, _contextTracker.getContextWords());
-
-      if (!result.words.isEmpty() && _suggestionBar != null)
+      // Cancel previous task if running
+      if (_currentPredictionTask != null)
       {
-        _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
-        _suggestionBar.setSuggestionsWithScores(result.words, result.scores);
+        _currentPredictionTask.cancel(true);
       }
+
+      // Submit new prediction task
+      _currentPredictionTask = _predictionExecutor.submit(() -> {
+        if (Thread.currentThread().isInterrupted()) return;
+
+        // Use contextual prediction (Heavy operation)
+        final WordPredictor.PredictionResult result = 
+            _predictionCoordinator.getWordPredictor().predictWordsWithContext(partial, contextWords);
+
+        if (Thread.currentThread().isInterrupted()) return;
+
+        // Post result to UI thread
+        if (!result.words.isEmpty() && _suggestionBar != null)
+        {
+          _suggestionBar.post(() -> {
+             // Verify context hasn't changed drastically (optional, but good practice)
+             if (_suggestionBar != null) {
+                 _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
+                 _suggestionBar.setSuggestionsWithScores(result.words, result.scores);
+             }
+          });
+        }
+      });
     }
   }
 

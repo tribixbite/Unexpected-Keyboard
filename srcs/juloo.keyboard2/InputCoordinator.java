@@ -975,49 +975,21 @@ public class InputCoordinator
       else
       {
         // Fallback to synchronous prediction if async handler not available
-        long startTime = System.currentTimeMillis();
-        PredictionResult result = _predictionCoordinator.getNeuralEngine().predict(swipeInput);
-      long predictionTime = System.currentTimeMillis() - startTime;
-      List<String> predictions = result.words;
-      
-      if (predictions.size() > 0)
-      {
-      }
-      else
-      {
-      }
-
-      // TODO: Re-enable file logging
-      // Log predictions to file
-      // if (_logWriter != null)
-      // {
-      //   try
-      //   {
-      //     _logWriter.write("  Predictions: " + predictions + " (" + predictionTime + "ms)\n");
-      //     _logWriter.write("  Scores: " + result.scores + "\n");
-      //     _logWriter.flush();
-      //   }
-      //   catch (IOException e)
-      //   {
-      //   }
-      // }
-      
-      // Show suggestions in the bar
-      if (_suggestionBar != null && !predictions.isEmpty())
-      {
-        _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
-        _suggestionBar.setSuggestionsWithScores(predictions, result.scores);
-        
-        // Auto-commit the first suggestion if confidence is high
-        if (predictions.size() > 0)
+        // Ensure engine is available before calling predict
+        if (_predictionCoordinator.getNeuralEngine() != null)
         {
-          // For now, just show suggestions - user can tap to select
-          // Could auto-commit the first word here if desired
+            long startTime = System.currentTimeMillis();
+            PredictionResult result = _predictionCoordinator.getNeuralEngine().predict(swipeInput);
+            long predictionTime = System.currentTimeMillis() - startTime;
+            List<String> predictions = result.words;
+            
+            // Show suggestions in the bar
+            if (_suggestionBar != null && !predictions.isEmpty())
+            {
+              _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
+              _suggestionBar.setSuggestionsWithScores(predictions, result.scores);
+            }
         }
-      }
-      else
-      {
-      }
       } // Close fallback else block
     }
     else

@@ -1001,9 +1001,11 @@ public class WordPredictor
         candidates.add(new WordCandidate(word, score));
         // CRITICAL OPTIMIZATION: This log was called hundreds of times per prediction
         // causing ~600ms latency. Now only enabled in debug builds.
+        /*
         if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
           android.util.Log.d("WordPredictor", "Candidate: " + word + " (score=" + score + ")");
         }
+        */
       }
     }
 

@@ -31,7 +31,7 @@ public class ImprovedSwipeGestureRecognizer
   private static final float MIN_SWIPE_DISTANCE = 50.0f; // Reduced to 50.0f to allow shorter swipes (e.g. "it", "is")
   private static final long MIN_DWELL_TIME_MS = 10; // Minimum time to register a key (reduced from 20ms for fast swipes)
   private static final float MIN_KEY_DISTANCE = 30.0f; // Minimum distance to register new key (reduced from 40px)
-  private static final int SMOOTHING_WINDOW = 3; // Points for moving average
+  private static final int SMOOTHING_WINDOW = 1; // No smoothing - raw points (testing if this reduces trajectory noise)
   private static final int DUPLICATE_CHECK_WINDOW = 5; // Check last 5 keys for duplicates
   private static final long MAX_POINT_INTERVAL_MS = 500;
   private static final float NOISE_THRESHOLD = 10.0f; // Ignore tiny movements

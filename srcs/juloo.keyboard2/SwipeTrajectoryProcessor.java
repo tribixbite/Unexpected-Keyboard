@@ -130,6 +130,11 @@ public class SwipeTrajectoryProcessor
     List<PointF> processedCoords = normalizedCoords;
     List<Long> processedTimestamps = timestamps;
 
+    // DEBUG: Log resampling decision
+    Log.d(TAG, String.format("🔍 Resampling check: size=%d, max=%d, mode=%s, needsResample=%b",
+        normalizedCoords.size(), maxSequenceLength, _resamplingMode,
+        (normalizedCoords.size() > maxSequenceLength && _resamplingMode != SwipeResampler.ResamplingMode.TRUNCATE)));
+
     if (normalizedCoords.size() > maxSequenceLength && _resamplingMode != SwipeResampler.ResamplingMode.TRUNCATE)
     {
       // OPTIMIZATION Phase 2: Recycle previous resampled coords before creating new ones
@@ -165,12 +170,15 @@ public class SwipeTrajectoryProcessor
       processedTimestamps = _reusableProcessedTimestamps;
 
 
-      // Only log if actually resampling occurred (performance: avoid string formatting when not needed)
-      if (android.util.Log.isLoggable(TAG, android.util.Log.DEBUG))
-      {
-        Log.d(TAG, String.format("🔄 Resampled trajectory: %d → %d points (mode: %s)",
+      // DEBUG: Always log resampling (remove isLoggable check for debugging)
+      Log.d(TAG, String.format("🔄 Resampled trajectory: %d → %d points (mode: %s)",
           normalizedCoords.size(), maxSequenceLength, _resamplingMode));
-      }
+    }
+
+    // DEBUG: Verify resampling worked
+    if (processedCoords.size() > maxSequenceLength) {
+      Log.e(TAG, String.format("❌ RESAMPLING FAILED! Still have %d points after resampling, expected max %d",
+          processedCoords.size(), maxSequenceLength));
     }
 
     // 3. Detect nearest keys from FINAL processed coordinates (already normalized!)
