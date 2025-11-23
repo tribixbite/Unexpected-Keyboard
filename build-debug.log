@@ -11,7 +11,17 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 Binary contractions up-to-date: contractions.bin
 
 > Task :generateBinaryDictionaries
-Binary dictionary up-to-date: en_enhanced.bin
+Generating binary dictionary: en_enhanced.bin
+Converting /data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/assets/dictionaries/en_enhanced.json to binary format...
+Loaded 49296 words from en_enhanced.json
+Built prefix index: 5037 prefixes
+Written binary dictionary: en_enhanced.bin
+  Words: 49296
+  Prefixes: 5037
+  File size: 1,275,606 bytes
+  Compression: -42.7% smaller than JSON
+
+✓ Binary dictionary generated successfully!
 
 > Task :generateVersionInfo
 Generated version info:  ()
@@ -32,24 +42,24 @@ Generated version info:  ()
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :compressDebugAssets FROM-CACHE
-> Task :mergeDebugResources
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeDebugJniLibFolders
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
+> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
+> Task :compressDebugAssets
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -102,5 +112,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 39s
-42 actionable tasks: 34 executed, 8 from cache
+BUILD SUCCESSFUL in 1m 14s
+42 actionable tasks: 35 executed, 7 from cache
