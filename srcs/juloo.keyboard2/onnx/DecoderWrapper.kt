@@ -202,6 +202,7 @@ class DecoderWrapper(
                 ?: throw RuntimeException("Failed to extract logits tensor from decoder output")
 
             val logitsShape = logitsTensor.info.shape
+            @Suppress("UNCHECKED_CAST")
             val logits3D = logitsTensor.value as Array<Array<FloatArray>>
 
             // Flatten for efficient access

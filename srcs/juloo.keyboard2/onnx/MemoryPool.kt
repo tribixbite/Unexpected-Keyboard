@@ -40,15 +40,11 @@ class MemoryPool {
      *
      * @param maxBeams Maximum number of beams
      * @param decoderSeqLength Fixed decoder sequence length (e.g., 20)
-     * @param maxSeqLength Maximum sequence length for encoder
-     * @param hiddenDim Model hidden dimension (d_model)
      * @param vocabSize Vocabulary size for probability arrays
      */
     fun initializePreallocatedBuffers(
         maxBeams: Int,
         decoderSeqLength: Int,
-        maxSeqLength: Int,
-        hiddenDim: Int,
         vocabSize: Int
     ) {
         // Pre-allocate batched token arrays [beam_width, decoder_seq_length]

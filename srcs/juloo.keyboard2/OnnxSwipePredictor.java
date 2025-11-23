@@ -473,6 +473,9 @@ public class OnnxSwipePredictor
           _broadcastEnabled,
           _enableVerboseLogging
         );
+        
+        // Initialize MemoryPool for buffer management
+        _memoryPool = new MemoryPool();
 
         Log.d(TAG, "✅ Modular components initialized (TensorFactory, EncoderWrapper, DecoderWrapper)");
       }
@@ -773,12 +776,23 @@ public class OnnxSwipePredictor
       initializeBatchProcessingBuffers(decoderSeqLength);
 
       // OPTIMIZATION v1.32.420: Initialize memory pool for tensor buffers
-      initializeMemoryPool(decoderSeqLength);
+      // Pre-allocate arrays for decoder sequence length (must match model_config.json max_word_len)
+      final int DECODER_SEQ_LENGTH = 20; // MUST match actual model export (not model_config.json)
+      int vocabSize = 30; // Standard vocab size (26 letters + special tokens)
+      int maxBeams = _beamWidth > 0 ? _beamWidth : DEFAULT_BEAM_WIDTH;
+      
+      // Initialize pre-allocated buffers for batched beam search
+      _memoryPool.initializePreallocatedBuffers(maxBeams, DECODER_SEQ_LENGTH, vocabSize);
+      
+      // Ensure pooled capacity for sequential path
+      int estimatedSeqLen = _maxSequenceLength > 0 ? _maxSequenceLength : 250;
+      int estimatedHiddenDim = 256; // Standard transformer hidden dimension
+      _memoryPool.ensurePooledCapacity(maxBeams, estimatedSeqLen, estimatedHiddenDim);
 
       // OPTIMIZATION v1.32.489: Pre-allocate beam search loop buffers
       // These are allocated once and reused every iteration to eliminate GC pressure
-      int maxBeams = _beamWidth > 0 ? _beamWidth : DEFAULT_BEAM_WIDTH;
-      int vocabSize = 30; // Standard vocab size (26 letters + special tokens)
+      // int maxBeams = _beamWidth > 0 ? _beamWidth : DEFAULT_BEAM_WIDTH; // REMOVED DUPLICATE
+      // int vocabSize = 30; // Standard vocab size (26 letters + special tokens) // REMOVED DUPLICATE
 
       _preallocBatchedTokens = new int[maxBeams][decoderSeqLength];
       _preallocSrcLengths = new int[maxBeams];
@@ -798,85 +812,6 @@ public class OnnxSwipePredictor
     }
   }
 
-  /**
-   * OPTIMIZATION v1.32.420: Initialize memory pool for reusable tensor buffers
-   * Eliminates repeated ByteBuffer/array allocations during beam search (20-30% speedup)
-   */
-  private void initializeMemoryPool(int decoderSeqLength)
-  {
-    try
-    {
-      // Pre-allocate for maximum beam width (DEFAULT_BEAM_WIDTH)
-      int initialCapacity = _beamWidth > 0 ? _beamWidth : DEFAULT_BEAM_WIDTH;
-
-      // Allocate reusable ByteBuffer for tokens (direct buffer for ONNX)
-      int tokensByteBufferSize = initialCapacity * decoderSeqLength * 8; // 8 bytes per long
-      _pooledTokensByteBuffer = java.nio.ByteBuffer.allocateDirect(tokensByteBufferSize);
-      _pooledTokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
-      _pooledTokensLongBuffer = _pooledTokensByteBuffer.asLongBuffer();
-
-      // Allocate reusable memory replication array
-      // Typical encoder output: [1, 250, 256] → replicate to [beams, 250, 256]
-      int estimatedSeqLen = _maxSequenceLength > 0 ? _maxSequenceLength : 250;
-      int estimatedHiddenDim = 256; // Standard transformer hidden dimension
-      _pooledMemoryArray = new float[initialCapacity][estimatedSeqLen][estimatedHiddenDim];
-
-      // Allocate reusable src_mask array
-      _pooledSrcMaskArray = new boolean[initialCapacity][estimatedSeqLen];
-
-      _pooledBufferMaxBeams = initialCapacity;
-
-      Log.d(TAG, "Memory pool initialized: capacity=" + initialCapacity + " beams, seq_len=" + estimatedSeqLen);
-    }
-    catch (Exception e)
-    {
-      Log.e(TAG, "Failed to initialize memory pool", e);
-      // Fallback: memory pool remains null, will allocate on-demand
-    }
-  }
-
-  /**
-   * OPTIMIZATION v1.32.420: Ensure memory pool has sufficient capacity
-   * Grows pool if needed, reuses existing buffers if sufficient
-   */
-  private void ensureMemoryPoolCapacity(int requiredBeams, int memorySeqLen, int hiddenDim)
-  {
-    // If pool not initialized or capacity insufficient, reallocate
-    if (_pooledMemoryArray == null ||
-        _pooledBufferMaxBeams < requiredBeams ||
-        _pooledMemoryArray[0].length < memorySeqLen ||
-        _pooledMemoryArray[0][0].length < hiddenDim)
-    {
-      try
-      {
-        // Grow capacity by 50% to avoid frequent reallocations
-        int newCapacity = Math.max(requiredBeams, (int)(_pooledBufferMaxBeams * 1.5));
-
-        // Reallocate memory array with larger dimensions
-        _pooledMemoryArray = new float[newCapacity][memorySeqLen][hiddenDim];
-
-        // Reallocate src_mask array
-        _pooledSrcMaskArray = new boolean[newCapacity][memorySeqLen];
-
-        // Reallocate ByteBuffer for tokens (need to recreate due to fixed size)
-        final int DECODER_SEQ_LENGTH = 20; // MUST match actual model export
-        int tokensByteBufferSize = newCapacity * DECODER_SEQ_LENGTH * 8;
-        _pooledTokensByteBuffer = java.nio.ByteBuffer.allocateDirect(tokensByteBufferSize);
-        _pooledTokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
-        _pooledTokensLongBuffer = _pooledTokensByteBuffer.asLongBuffer();
-
-        _pooledBufferMaxBeams = newCapacity;
-
-        Log.d(TAG, "Memory pool grown: new capacity=" + newCapacity + " beams");
-      }
-      catch (Exception e)
-      {
-        Log.e(TAG, "Failed to grow memory pool", e);
-        // Pool remains at old capacity or null
-      }
-    }
-  }
-  
   /**
    * OPTIMIZATION: Initialize batch processing buffers for single decoder call
    * This is the critical architectural change for 8x speedup (expert recommendation)

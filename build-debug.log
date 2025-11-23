@@ -11,17 +11,7 @@ WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termu
 Binary contractions up-to-date: contractions.bin
 
 > Task :generateBinaryDictionaries
-Generating binary dictionary: en_enhanced.bin
-Converting /data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/assets/dictionaries/en_enhanced.json to binary format...
-Loaded 49296 words from en_enhanced.json
-Built prefix index: 5037 prefixes
-Written binary dictionary: en_enhanced.bin
-  Words: 49296
-  Prefixes: 5037
-  File size: 1,275,606 bytes
-  Compression: -42.7% smaller than JSON
-
-✓ Binary dictionary generated successfully!
+Binary dictionary up-to-date: en_enhanced.bin
 
 > Task :generateVersionInfo
 Generated version info:  ()
@@ -42,24 +32,24 @@ Generated version info:  ()
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
-> Task :mergeDebugResources
 > Task :processDebugManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :processDebugManifestForPackage
-> Task :checkDebugDuplicateClasses
+> Task :compressDebugAssets FROM-CACHE
+> Task :mergeDebugResources
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
+> Task :checkDebugDuplicateClasses
+> Task :mergeDebugJniLibFolders
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :mergeDebugJniLibFolders
-> Task :compressDebugAssets
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -80,12 +70,7 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:111:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:129:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/DecoderWrapper.kt:205:47 Unchecked cast: Any! to Array<Array<FloatArray>>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/MemoryPool.kt:50:9 Parameter 'maxSeqLength' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/MemoryPool.kt:51:9 Parameter 'hiddenDim' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/ModelLoader.kt:248:24 Parameter 'sessionOptions' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/TensorFactory.kt:220:13 Variable 'hiddenDim' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/TensorFactory.kt:222:39 Unchecked cast: Any! to Array<Array<FloatArray>>
 
 > Task :compileDebugJavaWithJavac
 Java compiler version 21 has deprecated support for compiling with source/target version 8.
@@ -112,5 +97,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 14s
-42 actionable tasks: 35 executed, 7 from cache
+BUILD SUCCESSFUL in 45s
+42 actionable tasks: 34 executed, 8 from cache

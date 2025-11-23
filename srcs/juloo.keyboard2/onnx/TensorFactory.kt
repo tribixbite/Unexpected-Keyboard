@@ -214,10 +214,10 @@ class TensorFactory(
      * @param numBeams Number of beams to replicate for
      * @return ONNX tensor containing replicated memory
      */
+    @Suppress("UNCHECKED_CAST")
     fun replicateMemoryForBeams(memory: OnnxTensor, numBeams: Int): OnnxTensor {
         val memoryShape = memory.info.shape // [1, seq_len, hidden_dim]
         val memorySeqLen = memoryShape[1].toInt()
-        val hiddenDim = memoryShape[2].toInt()
 
         val memoryData = memory.value as Array<Array<FloatArray>>
         val replicatedMemory = Array(numBeams) {

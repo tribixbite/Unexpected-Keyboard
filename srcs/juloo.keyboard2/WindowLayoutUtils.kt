@@ -122,6 +122,7 @@ object WindowLayoutUtils {
      * @param isFullscreen Whether the IME is in fullscreen mode
      */
     @JvmStatic
+    @Suppress("DEPRECATION")
     fun updateSoftInputWindowLayoutParams(
         window: Window,
         inputArea: View,
