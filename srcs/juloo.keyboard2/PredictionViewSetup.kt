@@ -134,24 +134,36 @@ class PredictionViewSetup(
 
             // Set correct keyboard dimensions for CGR after view is laid out
             if (predictionCoordinator.getNeuralEngine() != null) {
-                keyboardView.getViewTreeObserver().addOnGlobalLayoutListener(
+                // Helper to update layout dimensions and keys
+                val updateNeuralLayout = {
+                    if (keyboardView.width > 0 && keyboardView.height > 0) {
+                        // Use dynamic keyboard dimensions
+                        val keyboardWidth = keyboardView.width.toFloat()
+                        val keyboardHeight = neuralLayoutHelper?.calculateDynamicKeyboardHeight()
+                            ?: keyboardView.height.toFloat()
+
+                        predictionCoordinator.getNeuralEngine()
+                            .setKeyboardDimensions(keyboardWidth, keyboardHeight)
+
+                        // Set real key positions for accurate coordinate mapping
+                        neuralLayoutHelper?.setNeuralKeyboardLayout()
+                    }
+                }
+
+                // Try setting immediately if dimensions are already available
+                // This ensures predictions work even if onGlobalLayout doesn't fire (e.g. view reuse)
+                updateNeuralLayout()
+
+                // Also add listener to catch layout completion or changes
+                keyboardView.viewTreeObserver.addOnGlobalLayoutListener(
                     object : ViewTreeObserver.OnGlobalLayoutListener {
                         override fun onGlobalLayout() {
                             // Ensure we have valid dimensions
-                            if (keyboardView.getWidth() > 0 && keyboardView.getHeight() > 0) {
-                                // Use dynamic keyboard dimensions
-                                val keyboardWidth = keyboardView.getWidth().toFloat()
-                                val keyboardHeight = neuralLayoutHelper?.calculateDynamicKeyboardHeight()
-                                    ?: keyboardView.getHeight().toFloat()
-
-                                predictionCoordinator.getNeuralEngine()
-                                    .setKeyboardDimensions(keyboardWidth, keyboardHeight)
-
-                                // Set real key positions for accurate coordinate mapping
-                                neuralLayoutHelper?.setNeuralKeyboardLayout()
+                            if (keyboardView.width > 0 && keyboardView.height > 0) {
+                                updateNeuralLayout()
 
                                 // Remove listener to avoid repeated calls
-                                keyboardView.getViewTreeObserver()
+                                keyboardView.viewTreeObserver
                                     .removeOnGlobalLayoutListener(this)
                             }
                         }
