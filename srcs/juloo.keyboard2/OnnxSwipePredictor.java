@@ -1768,7 +1768,7 @@ public class OnnxSwipePredictor
             if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
             {
               float[] logProbs = logits3D[b][currentPos];
-              int[] topK = getTopKIndices(logProbs, beamWidth);
+              int[] topK = getTopKIndices(logProbs, Math.max(beamWidth * 4, 16));
 
               for (int idx : topK)
               {
@@ -1903,7 +1903,7 @@ public class OnnxSwipePredictor
               float[] logProbs = logits3D[0][currentPos];  // batch=0 since we use batch=1
 
               // Get top k tokens by highest log prob (higher is better)
-              int[] topK = getTopKIndices(logProbs, beamWidth);
+              int[] topK = getTopKIndices(logProbs, Math.max(beamWidth * 4, 16));
 
               // OPTIMIZATION Phase 2: Constrained vocabulary search with Trie
               // Check if new token forms valid vocabulary prefix before adding beam
