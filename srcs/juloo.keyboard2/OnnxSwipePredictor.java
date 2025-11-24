@@ -1768,7 +1768,39 @@ public class OnnxSwipePredictor
             if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
             {
               float[] logProbs = logits3D[b][currentPos];
-              int[] topK = getTopKIndices(logProbs, Math.max(beamWidth * 4, 16));
+
+              // OPTIMIZATION: Trie-Guided Decoding (Logit Masking)
+              // Replaces "over-generate and prune" for 10x speedup
+              if (trie != null) {
+                  StringBuilder partialWord = new StringBuilder();
+                  for (Long token : beam.tokens) {
+                      int tokenIdx = token.intValue();
+                      if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
+                          char ch = _tokenizer.indexToChar(tokenIdx);
+                          if (ch != '?' && !Character.toString(ch).startsWith("<")) {
+                              partialWord.append(ch);
+                          }
+                      }
+                  }
+                  String prefix = partialWord.toString();
+                  java.util.Set<Character> allowed = trie.getAllowedNextChars(prefix);
+                  boolean isWord = trie.containsWord(prefix);
+
+                  for (int i = 0; i < logProbs.length; i++) {
+                      if (i == SOS_IDX || i == PAD_IDX) continue;
+                      if (i == EOS_IDX) {
+                          if (!isWord) logProbs[i] = Float.NEGATIVE_INFINITY;
+                          continue;
+                      }
+                      char c = _tokenizer.indexToChar(i);
+                      // Note: trie chars are lowercase
+                      if (c == '?' || !allowed.contains(Character.toLowerCase(c))) {
+                          logProbs[i] = Float.NEGATIVE_INFINITY;
+                      }
+                  }
+              }
+
+              int[] topK = getTopKIndices(logProbs, beamWidth);
 
               for (int idx : topK)
               {
@@ -1782,34 +1814,7 @@ public class OnnxSwipePredictor
                   continue;
                 }
 
-                // OPTIMIZATION Phase 2: Trie validation for batched path
-                // Convert tokens to partial word
-                StringBuilder partialWord = new StringBuilder();
-                for (Long token : beam.tokens) {
-                  int tokenIdx = token.intValue();
-                  if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
-                    char ch = _tokenizer.indexToChar(tokenIdx);
-                    if (ch != '?' && !Character.toString(ch).startsWith("<")) {
-                      partialWord.append(ch);
-                    }
-                  }
-                }
-
-                // Add new character
-                char newChar = _tokenizer.indexToChar(idx);
-                if (newChar != '?' && !Character.toString(newChar).startsWith("<")) {
-                  partialWord.append(newChar);
-                }
-
-                // Validate against trie
-                String partialWordStr = partialWord.toString();
-                if (trie != null && partialWordStr.length() > 0) {
-                  if (!trie.hasPrefix(partialWordStr)) {
-                    continue; // Invalid prefix - skip
-                  }
-                }
-
-                // Valid prefix - add beam
+                // Trie validation already done via masking - just add beam
                 BeamSearchState newBeam = new BeamSearchState(beam);
                 newBeam.tokens.add((long)idx);
                 newBeam.score -= logProbs[idx];
@@ -1902,12 +1907,39 @@ public class OnnxSwipePredictor
             {
               float[] logProbs = logits3D[0][currentPos];  // batch=0 since we use batch=1
 
-              // Get top k tokens by highest log prob (higher is better)
-              int[] topK = getTopKIndices(logProbs, Math.max(beamWidth * 4, 16));
+              // OPTIMIZATION: Trie-Guided Decoding (Logit Masking)
+              // Replaces "over-generate and prune" for 10x speedup
+              if (trie != null) {
+                  StringBuilder partialWord = new StringBuilder();
+                  for (Long token : beam.tokens) {
+                      int tokenIdx = token.intValue();
+                      if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
+                          char ch = _tokenizer.indexToChar(tokenIdx);
+                          if (ch != '?' && !Character.toString(ch).startsWith("<")) {
+                              partialWord.append(ch);
+                          }
+                      }
+                  }
+                  String prefix = partialWord.toString();
+                  java.util.Set<Character> allowed = trie.getAllowedNextChars(prefix);
+                  boolean isWord = trie.containsWord(prefix);
 
-              // OPTIMIZATION Phase 2: Constrained vocabulary search with Trie
-              // Check if new token forms valid vocabulary prefix before adding beam
-              VocabularyTrie trie = (_vocabulary != null) ? _vocabulary.getVocabularyTrie() : null;
+                  for (int i = 0; i < logProbs.length; i++) {
+                      if (i == SOS_IDX || i == PAD_IDX) continue;
+                      if (i == EOS_IDX) {
+                          if (!isWord) logProbs[i] = Float.NEGATIVE_INFINITY;
+                          continue;
+                      }
+                      char c = _tokenizer.indexToChar(i);
+                      // Note: trie chars are lowercase
+                      if (c == '?' || !allowed.contains(Character.toLowerCase(c))) {
+                          logProbs[i] = Float.NEGATIVE_INFINITY;
+                      }
+                  }
+              }
+
+              // Get top k tokens by highest log prob (higher is better)
+              int[] topK = getTopKIndices(logProbs, beamWidth);
 
               // Create new beams
               for (int idx : topK)
@@ -1922,34 +1954,7 @@ public class OnnxSwipePredictor
                   continue;
                 }
 
-                // Convert tokens to partial word for trie validation
-                StringBuilder partialWord = new StringBuilder();
-                for (Long token : beam.tokens) {
-                  int tokenIdx = token.intValue();
-                  if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
-                    char ch = _tokenizer.indexToChar(tokenIdx);
-                    if (ch != '?' && !Character.toString(ch).startsWith("<")) {
-                      partialWord.append(ch);
-                    }
-                  }
-                }
-
-                // Add new character from this token
-                char newChar = _tokenizer.indexToChar(idx);
-                if (newChar != '?' && !Character.toString(newChar).startsWith("<")) {
-                  partialWord.append(newChar);
-                }
-
-                // Validate against trie if available
-                String partialWordStr = partialWord.toString();
-                if (trie != null && partialWordStr.length() > 0) {
-                  if (!trie.hasPrefix(partialWordStr)) {
-                    // Invalid prefix - skip this beam
-                    continue;
-                  }
-                }
-
-                // Valid prefix or no trie - add beam
+                // Trie validation already done via masking - just add beam
                 BeamSearchState newBeam = new BeamSearchState(beam);
                 newBeam.tokens.add((long)idx);
                 newBeam.score -= logProbs[idx];

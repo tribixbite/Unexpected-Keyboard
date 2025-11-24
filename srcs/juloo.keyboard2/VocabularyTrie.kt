@@ -76,6 +76,25 @@ class VocabularyTrie {
     }
 
     /**
+     * Get all allowed next characters for a given prefix.
+     * Case-insensitive (converts to lowercase).
+     *
+     * @param prefix The prefix to check (will be lowercased)
+     * @return Set of valid next characters, or empty set if prefix not found
+     */
+    fun getAllowedNextChars(prefix: String): Set<Char> {
+        val lowerPrefix = prefix.lowercase()
+        var current = root
+
+        for (char in lowerPrefix) {
+            val next = current.children[char] ?: return emptySet()
+            current = next
+        }
+
+        return current.children.keys
+    }
+
+    /**
      * Check if the trie contains this exact word.
      * Case-insensitive (converts to lowercase).
      *
