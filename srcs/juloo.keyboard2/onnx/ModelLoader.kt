@@ -208,14 +208,14 @@ class ModelLoader(
         sessionOptions: OrtSession.SessionOptions,
         sessionName: String
     ): String {
-        // Try NNAPI first (Android Neural Networks API)
-        if (tryNnapi(sessionOptions, sessionName)) {
-            return "NNAPI"
+        // Try XNNPACK first (optimized CPU inference)
+        if (tryXnnpack(sessionOptions, sessionName)) {
+            return "XNNPACK"
         }
 
-        // Try QNN (Qualcomm Neural Network SDK)
-        if (tryQnn(sessionOptions, sessionName)) {
-            return "QNN"
+        // Try NNAPI (Android Neural Networks API)
+        if (tryNnapi(sessionOptions, sessionName)) {
+            return "NNAPI"
         }
 
         // Try XNNPACK (optimized CPU inference)
