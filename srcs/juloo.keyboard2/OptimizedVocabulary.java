@@ -526,11 +526,13 @@ public class OptimizedVocabulary
               }
 
               // v1.33.3: MULTIPLICATIVE SCORING - match quality dominates
-              // Dict fuzzy: base_score = (0.7×NN + 0.3×freq)
-              // final_score = base_score × (match_quality^3) × tier_boost
+              // Dict fuzzy: Use configured weights but penalize rescue (0.8x) to prefer direct matches
               float matchQuality = calculateMatchQuality(dictWord, beamWord, useEditDistance);
               float matchPower = matchQuality * matchQuality * matchQuality; // Cubic
-              float baseScore = (0.7f * beamConfidence) + (0.3f * info.frequency);
+              
+              float baseScore = (confidenceWeight * beamConfidence) + (frequencyWeight * info.frequency);
+              baseScore *= 0.8f; // Penalty for not being a direct beam match
+              
               float score = baseScore * matchPower * boost;
 
               // Keep track of best match (v1.33.2: don't break on first match!)
