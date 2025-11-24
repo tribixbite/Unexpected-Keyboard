@@ -208,7 +208,12 @@ class ModelLoader(
         sessionOptions: OrtSession.SessionOptions,
         sessionName: String
     ): String {
-        // Try NNAPI (Android Neural Networks API)
+        // Try XNNPACK first (optimized CPU inference) - Most stable
+        if (tryXnnpack(sessionOptions, sessionName)) {
+            return "XNNPACK"
+        }
+
+        // Try NNAPI (Android Neural Networks API) - Fast but prone to 'Session ID' crashes
         if (tryNnapi(sessionOptions, sessionName)) {
             return "NNAPI"
         }
@@ -216,11 +221,6 @@ class ModelLoader(
         // Try QNN (Qualcomm Neural Network SDK)
         if (tryQnn(sessionOptions, sessionName)) {
             return "QNN"
-        }
-
-        // Try XNNPACK (optimized CPU inference)
-        if (tryXnnpack(sessionOptions, sessionName)) {
-            return "XNNPACK"
         }
 
         // Fallback to CPU
@@ -262,8 +262,11 @@ class ModelLoader(
      */
     private fun tryXnnpack(sessionOptions: OrtSession.SessionOptions, sessionName: String): Boolean {
         return try {
-            sessionOptions.addXnnpack(mapOf())
-            Log.i(TAG, "✅ XNNPACK enabled for $sessionName")
+            // Configure XNNPACK with 4 threads for performance
+            val options = mapOf("intra_op_num_threads" to "4")
+            sessionOptions.addXnnpack(options)
+            sessionOptions.setIntraOpNumThreads(4)
+            Log.i(TAG, "✅ XNNPACK enabled for $sessionName with 4 threads")
             true
         } catch (e: Exception) {
             Log.d(TAG, "XNNPACK not available for $sessionName: ${e.message}")
