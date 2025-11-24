@@ -136,7 +136,7 @@ echo "This may take a few minutes on first run..."
 # Build with Termux-specific configuration (optimized for speed)
 ./gradlew $GRADLE_TASK \
     -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" \
-    -Pandroid.aapt2FromMavenOverride="/data/data/com.termux/files/home/git/Unexpected-Keyboard/tools/aapt2-arm64/aapt2" \
+    -Pandroid.aapt2FromMavenOverride="$(pwd)/tools/aapt2-arm64/aapt2" \
     --no-daemon \
     --warning-mode=none \
     --console=plain \
