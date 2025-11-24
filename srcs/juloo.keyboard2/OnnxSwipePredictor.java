@@ -92,6 +92,7 @@ public class OnnxSwipePredictor
   
   // Model state
   private boolean _isModelLoaded = false;
+  private boolean _forceCpuFallback = false; // AUTO-FIX: Disable hardware acceleration if it crashes
   private volatile boolean _isInitialized = false; // THREAD SAFETY: volatile ensures visibility across threads
   private boolean _keepSessionsInMemory = true; // OPTIMIZATION: Never unload for speed
   private boolean _usesSeparateMasks = false; // Track if decoder uses separate padding/causal masks (custom models) vs combined target_mask (v2 builtin)
@@ -351,7 +352,8 @@ public class OnnxSwipePredictor
       // Load encoder model
       Log.d(TAG, "Loading encoder model from: " + encoderPath);
       long encStartTime = System.currentTimeMillis();
-      ModelLoader.LoadResult encoderResult = _modelLoader.loadModel(encoderPath, "Encoder", true);
+      // AUTO-FIX: Respect CPU fallback flag
+      ModelLoader.LoadResult encoderResult = _modelLoader.loadModel(encoderPath, "Encoder", !_forceCpuFallback);
       long encTotalTime = System.currentTimeMillis() - encStartTime;
 
       _encoderSession = encoderResult.getSession();
@@ -382,7 +384,8 @@ public class OnnxSwipePredictor
       // Load decoder model
       Log.d(TAG, "Loading decoder model from: " + decoderPath);
       long decStartTime = System.currentTimeMillis();
-      ModelLoader.LoadResult decoderResult = _modelLoader.loadModel(decoderPath, "Decoder", true);
+      // AUTO-FIX: Respect CPU fallback flag
+      ModelLoader.LoadResult decoderResult = _modelLoader.loadModel(decoderPath, "Decoder", !_forceCpuFallback);
       long decTotalTime = System.currentTimeMillis() - decStartTime;
 
       _decoderSession = decoderResult.getSession();
@@ -681,6 +684,22 @@ public class OnnxSwipePredictor
     catch (Exception e)
     {
       Log.e(TAG, "Neural prediction failed", e);
+      
+      // AUTO-FIX: If using hardware acceleration, try fallback to CPU
+      if (!_forceCpuFallback) {
+          Log.w(TAG, "⚠️ Hardware acceleration likely crashed. Switching to CPU-only mode.");
+          cleanup(true); // Clean up current sessions
+          _forceCpuFallback = true;
+          initializeSync(); // Re-initialize synchronously
+          
+          // Retry prediction once
+          try {
+              return predict(input);
+          } catch (Exception retryEx) {
+              Log.e(TAG, "Retry on CPU also failed", retryEx);
+          }
+      }
+      
       throw new RuntimeException("Neural prediction failed: " + e.getMessage());
     }
   }
@@ -1906,6 +1925,8 @@ public class OnnxSwipePredictor
             if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
             {
               float[] logProbs = logits3D[0][currentPos];  // batch=0 since we use batch=1
+
+              VocabularyTrie trie = (_vocabulary != null) ? _vocabulary.getVocabularyTrie() : null;
 
               // OPTIMIZATION: Trie-Guided Decoding (Logit Masking)
               // Replaces "over-generate and prune" for 10x speedup
