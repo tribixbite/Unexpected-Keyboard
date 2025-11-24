@@ -548,14 +548,33 @@ public class OptimizedVocabulary
           // Add the best match found for this beam word (if any)
           if (bestMatch != null)
           {
-            validPredictions.add(new FilteredPrediction(bestMatch, bestScore, beamConfidence, bestFrequency, bestSource));
-
-            if (debugMode)
+            // RE-APPLY STARTING LETTER ACCURACY CHECK (CRITICAL FIX)
+            if (prefixLength > 0 && swipeStats.firstChar != '\0' && bestMatch.length() > 0)
             {
-              String matchMsg = String.format("🔄 DICT FUZZY: \"%s\" (dict) matches \"%s\" (beam #%d, NN=%.4f) → added with score=%.4f\n",
-                bestMatch, beamWord, i+1, beamConfidence, bestScore);
-              Log.d(TAG, matchMsg);
-              sendDebugLog(matchMsg);
+                char expectedFirst = Character.toLowerCase(swipeStats.firstChar);
+                char actualFirst = bestMatch.charAt(0);
+                if (actualFirst != expectedFirst)
+                {
+                    if (debugMode) {
+                        String matchMsg = String.format("❌ DICT FUZZY REJECTED: \"%s\" (dict) for \"%s\" (beam #%d, NN=%.4f) - wrong starting letter (expected '%c', got '%c')\n",
+                            bestMatch, beamWord, i+1, beamConfidence, expectedFirst, actualFirst);
+                        Log.d(TAG, matchMsg);
+                        sendDebugLog(matchMsg);
+                    }
+                    bestMatch = null; // Mark as invalid
+                }
+            }
+
+            if (bestMatch != null) { // Only add if still valid after re-check
+                validPredictions.add(new FilteredPrediction(bestMatch, bestScore, beamConfidence, bestFrequency, bestSource));
+
+                if (debugMode)
+                {
+                  String matchMsg = String.format("🔄 DICT FUZZY: \"%s\" (dict) matches \"%s\" (beam #%d, NN=%.4f) → added with score=%.4f\n",
+                    bestMatch, beamWord, i+1, beamConfidence, bestScore);
+                  Log.d(TAG, matchMsg);
+                  sendDebugLog(matchMsg);
+                }
             }
           }
         }
