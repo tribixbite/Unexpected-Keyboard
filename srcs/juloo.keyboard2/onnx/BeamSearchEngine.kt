@@ -52,9 +52,9 @@ class BeamSearchEngine(
         private const val LOG_PROB_THRESHOLD = -13.8f // approx ln(1e-6)
         private const val PRUNE_STEP_THRESHOLD = 2
         private const val ADAPTIVE_WIDTH_STEP = 5
-        private const val ADAPTIVE_WIDTH_CONFIDENCE = 0.5f
+        private const val ADAPTIVE_WIDTH_CONFIDENCE = 0.8f
         private const val SCORE_GAP_STEP = 3
-        private const val SCORE_GAP_THRESHOLD = 2.0f
+        private const val SCORE_GAP_THRESHOLD = 5.0f
         
         // Diversity parameters (4D: Diverse Beam Search)
         private const val DIVERSITY_LAMBDA = 0.5f // Penalty weight for similar beams
@@ -137,7 +137,7 @@ class BeamSearchEngine(
             // 4C: Length-Normalized Scoring
             // Normalize score by sequence length to prevent bias towards short words
             // alpha = 0.6 to 0.7 is standard. 1.0 = linear average.
-            val alpha = 0.7f 
+            val alpha = 1.2f 
             
             candidates.sortBy { 
                 val len = it.tokens.size.toFloat()
