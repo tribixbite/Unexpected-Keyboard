@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Processes swipe trajectories for neural network input
  * CRITICAL FIX: Matches working cleverkeys implementation exactly
- * - Pads both coordinates AND nearestKeys to 150
+ * - Pads both coordinates AND nearestKeys to 250 (max sequence length)
  * - Uses integer token indices (not characters)
  * - Repeats last key for padding (not PAD tokens)
  * - Filters duplicate starting points
@@ -38,11 +38,11 @@ public class SwipeTrajectoryProcessor
 
   // OPTIMIZATION Phase 2: Reusable lists to reduce GC pressure
   // These are cleared and reused on each call to extractFeatures()
-  private final ArrayList<PointF> _reusableNormalizedCoords = new ArrayList<>(150);
-  private final ArrayList<PointF> _reusableProcessedCoords = new ArrayList<>(150);
-  private final ArrayList<Long> _reusableProcessedTimestamps = new ArrayList<>(150);
-  private final ArrayList<Integer> _reusableProcessedKeys = new ArrayList<>(150);
-  private final ArrayList<TrajectoryPoint> _reusablePoints = new ArrayList<>(150);
+  private final ArrayList<PointF> _reusableNormalizedCoords = new ArrayList<>(250);
+  private final ArrayList<PointF> _reusableProcessedCoords = new ArrayList<>(250);
+  private final ArrayList<Long> _reusableProcessedTimestamps = new ArrayList<>(250);
+  private final ArrayList<Integer> _reusableProcessedKeys = new ArrayList<>(250);
+  private final ArrayList<TrajectoryPoint> _reusablePoints = new ArrayList<>(250);
 
   public SwipeTrajectoryProcessor()
   {
