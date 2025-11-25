@@ -25,6 +25,7 @@ import juloo.keyboard2.onnx.EncoderWrapper;
 import juloo.keyboard2.onnx.DecoderWrapper;
 import juloo.keyboard2.onnx.TensorFactory;
 import juloo.keyboard2.onnx.MemoryPool;
+import juloo.keyboard2.onnx.BeamSearchEngine;
 
 /**
  * ONNX-based neural swipe predictor using transformer encoder-decoder architecture
@@ -103,31 +104,6 @@ public class OnnxSwipePredictor
   private int _maxLength = DEFAULT_MAX_LENGTH;
   private float _confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD;
   
-  // OPTIMIZATION: Pre-allocated tensor buffers for reuse (3x speedup expected)
-  private long[] _reusableTokensArray;
-  private boolean[][] _reusableTargetMaskArray;
-  private java.nio.LongBuffer _reusableTokensBuffer;
-
-  // OPTIMIZATION: Batch processing buffers for single decoder call (8x speedup expected)
-  private long[][] _batchedTokensArray;     // [beam_width, seq_length]
-  private boolean[][] _batchedMaskArray;    // [beam_width, seq_length]
-  private float[][][] _batchedMemoryArray; // [beam_width, 150, 256]
-
-  // OPTIMIZATION v1.32.420: Memory pool for tensor buffers to reduce GC pressure
-  private java.nio.ByteBuffer _pooledTokensByteBuffer;  // Reusable ByteBuffer for tokens
-  private java.nio.LongBuffer _pooledTokensLongBuffer;  // Reusable LongBuffer view
-  private float[][][] _pooledMemoryArray;                // Reusable memory replication array
-  private boolean[][] _pooledSrcMaskArray;               // Reusable src_mask array
-  private int _pooledBufferMaxBeams = 0;                 // Track allocated capacity
-
-  // OPTIMIZATION v1.32.489: Pre-allocated buffers for beam search loop
-  // These are allocated once and reused every iteration to eliminate GC pressure
-  private int[][] _preallocBatchedTokens;               // [beam_width, DECODER_SEQ_LENGTH]
-  private java.nio.ByteBuffer _preallocTokensByteBuffer; // Direct buffer for ONNX
-  private java.nio.IntBuffer _preallocTokensIntBuffer;   // View into byte buffer
-  private int[] _preallocSrcLengths;                     // [beam_width] for actual_src_length
-  private float[] _preallocProbs;                        // [vocab_size] for softmax output
-
   // OPTIMIZATION: Dedicated thread pool for ONNX operations (1.5x speedup expected)
   private static ExecutorService _onnxExecutor;
   private static final Object _executorLock = new Object();
@@ -492,7 +468,7 @@ public class OnnxSwipePredictor
       // OPTIMIZATION: Pre-allocate reusable buffers for beam search
       if (_isModelLoaded)
       {
-        initializeReusableBuffers();
+        // initializeReusableBuffers(); // REMOVED: Logic moved to BeamSearchEngine
         initializeThreadPool();
         // logDebug("🧠 ONNX neural prediction system ready!");
         // Log.d(TAG, "ONNX neural prediction system ready with optimized vocabulary");
@@ -777,85 +753,13 @@ public class OnnxSwipePredictor
     }
   }
   
-  /**
-   * OPTIMIZATION: Initialize reusable tensor buffers for beam search
-   * This prevents creating new tensors for every beam search step (3x speedup)
-   */
-  private void initializeReusableBuffers()
-  {
-    try
-    {
-      // Pre-allocate arrays for decoder sequence length (must match model_config.json max_word_len)
-      int decoderSeqLength = 20; // MUST match actual model export (not model_config.json)
-      _reusableTokensArray = new long[decoderSeqLength];
-      _reusableTargetMaskArray = new boolean[1][decoderSeqLength];
-      _reusableTokensBuffer = java.nio.LongBuffer.allocate(decoderSeqLength);
-
-      // CRITICAL OPTIMIZATION: Initialize batch processing buffers
-      initializeBatchProcessingBuffers(decoderSeqLength);
-
-      // OPTIMIZATION v1.32.420: Initialize memory pool for tensor buffers
-      // Pre-allocate arrays for decoder sequence length (must match model_config.json max_word_len)
-      final int DECODER_SEQ_LENGTH = 20; // MUST match actual model export (not model_config.json)
-      int vocabSize = 30; // Standard vocab size (26 letters + special tokens)
-      int maxBeams = _beamWidth > 0 ? _beamWidth : DEFAULT_BEAM_WIDTH;
-      
-      // Initialize pre-allocated buffers for batched beam search
-      _memoryPool.initializePreallocatedBuffers(maxBeams, DECODER_SEQ_LENGTH, vocabSize);
-      
-      // Ensure pooled capacity for sequential path
-      int estimatedSeqLen = _maxSequenceLength > 0 ? _maxSequenceLength : 250;
-      int estimatedHiddenDim = 256; // Standard transformer hidden dimension
-      _memoryPool.ensurePooledCapacity(maxBeams, estimatedSeqLen, estimatedHiddenDim);
-
-      // OPTIMIZATION v1.32.489: Pre-allocate beam search loop buffers
-      // These are allocated once and reused every iteration to eliminate GC pressure
-      // int maxBeams = _beamWidth > 0 ? _beamWidth : DEFAULT_BEAM_WIDTH; // REMOVED DUPLICATE
-      // int vocabSize = 30; // Standard vocab size (26 letters + special tokens) // REMOVED DUPLICATE
-
-      _preallocBatchedTokens = new int[maxBeams][decoderSeqLength];
-      _preallocSrcLengths = new int[maxBeams];
-      _preallocProbs = new float[vocabSize];
-
-      // Direct buffer for ONNX tensor creation (reusable)
-      int tokensByteBufferSize = maxBeams * decoderSeqLength * 4; // 4 bytes per int
-      _preallocTokensByteBuffer = java.nio.ByteBuffer.allocateDirect(tokensByteBufferSize);
-      _preallocTokensByteBuffer.order(java.nio.ByteOrder.nativeOrder());
-      _preallocTokensIntBuffer = _preallocTokensByteBuffer.asIntBuffer();
-
-      Log.d(TAG, "Pre-allocated beam search buffers: " + maxBeams + " beams × " + decoderSeqLength + " seq_len, vocab=" + vocabSize);
-    }
-    catch (Exception e)
-    {
-      Log.e(TAG, "Failed to initialize reusable buffers", e);
-    }
-  }
+  // Removed unused initialization methods
 
   /**
    * OPTIMIZATION: Initialize batch processing buffers for single decoder call
    * This is the critical architectural change for 8x speedup (expert recommendation)
    */
-  private void initializeBatchProcessingBuffers(int decoderSeqLength)
-  {
-    try
-    {
-      // Allocate batched arrays for processing all beams simultaneously
-      _batchedTokensArray = new long[_beamWidth][decoderSeqLength];
-      _batchedMaskArray = new boolean[_beamWidth][decoderSeqLength];
-      _batchedMemoryArray = new float[_beamWidth][150][256]; // Encoder memory for each beam
-      
-      // Log.d(TAG, "Batch processing buffers initialized: " + _beamWidth + " beams × " + decoderSeqLength + " seq_length");
-      // logDebug("🚀 Batch processing initialized: " + _beamWidth + "×" + decoderSeqLength + " decoder optimization");
-    }
-    catch (Exception e)
-    {
-      Log.e(TAG, "Failed to initialize batch processing buffers", e);
-      // Fallback to sequential processing if batch allocation fails
-      _batchedTokensArray = null;
-      _batchedMaskArray = null; 
-      _batchedMemoryArray = null;
-    }
-  }
+  // Removed initializeBatchProcessingBuffers method
   
   /**
    * OPTIMIZATION: Create optimized ONNX session options for maximum performance
@@ -1170,7 +1074,7 @@ public class OnnxSwipePredictor
       if (token != SOS_IDX && token != EOS_IDX && token != PAD_IDX)
       {
         char ch = _tokenizer.indexToChar(token);
-        if (ch != '?')
+        if (ch != '?' && !ch.toString().startsWith("<"))
         {
           word.append(ch);
         }
@@ -1179,8 +1083,8 @@ public class OnnxSwipePredictor
     
     long greedyTime = (System.nanoTime() - greedyStart) / 1_000_000;
     String wordStr = word.toString();
-    // logDebug("🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'");
-    Log.w(TAG, "🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'");
+    // logDebug("🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'\n");
+    Log.w(TAG, "🏆 Greedy search completed in " + greedyTime + "ms: '" + wordStr + "'\n");
     
     List<BeamSearchCandidate> result = new ArrayList<>();
     if (wordStr.length() > 0)
@@ -1617,651 +1521,50 @@ public class OnnxSwipePredictor
       return new ArrayList<>();
     }
 
-    // Beam search parameters matching CLI test exactly
-    int beamWidth = _beamWidth;
-    int maxLength = _maxLength;
-    final int DECODER_SEQ_LEN = 20; // Fixed decoder sequence length - MUST match actual model export
-    int vocabSize = _tokenizer.getVocabSize();
-
-    // Log.d(TAG, String.format("Decoder memory shape: %s", java.util.Arrays.toString(memory.getInfo().getShape())));
-
-    // Initialize beams with SOS token - matching CLI test (line 158)
-    List<BeamSearchState> beams = new ArrayList<>();
-    beams.add(new BeamSearchState(SOS_IDX, 0.0f, false));
-    // logDebug("🚀 Beam search initialized with SOS token (" + SOS_IDX + ")");
-
-    // PERFORMANCE DEBUG: Log beam search parameters (CACHED check)
-    if (_enableVerboseLogging)
-    {
-      Log.d(TAG, "🔥 BEAM SEARCH MODE: beam_width=" + beamWidth + ", max_length=" + maxLength);
-    }
-
-    // Performance tracking
-    long beamSearchStart = System.nanoTime();
-    long totalInferenceTime = 0;
-    long totalTensorTime = 0;
-    boolean useBatched = _batchBeams; // CACHED - avoid config check on every swipe
-    int step = 0;
-
-    // OPTIMIZATION v1.32.416: Batched beam search loop for 8x speedup
-    // Process all beams simultaneously in single decoder call instead of sequential processing
-    for (; step < maxLength; step++)
-    {
-      List<BeamSearchState> candidates = new ArrayList<>();
-      // PERFORMANCE: Only log every 5th step to reduce overhead
-      if (step % 5 == 0) {
-        // logDebug("🔄 Batched beam search step " + step + " with " + beams.size() + " beams");
-      }
-
-      // Separate finished beams from active beams
-      List<BeamSearchState> activeBeams = new ArrayList<>();
-      for (BeamSearchState beam : beams)
-      {
-        if (beam.finished)
-        {
-          candidates.add(beam);
-        }
-        else
-        {
-          activeBeams.add(beam);
-        }
-      }
-
-      // If no active beams, we're done
-      if (activeBeams.isEmpty())
-      {
-        break;
-      }
-
-      long tensorStart = System.nanoTime();
-
-      if (useBatched)
-      {
-        // EXPERIMENTAL: Batched beam processing - all beams in single inference
-        // May cause reshape errors in self-attention layers
-        try
-        {
-          int numActiveBeams = activeBeams.size();
-
-          // Prepare batched token arrays
-          int[][] batchedTokens = new int[numActiveBeams][DECODER_SEQ_LEN];
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            BeamSearchState beam = activeBeams.get(b);
-            Arrays.fill(batchedTokens[b], (int)PAD_IDX);
-            for (int i = 0; i < Math.min(beam.tokens.size(), DECODER_SEQ_LEN); i++)
-            {
-              batchedTokens[b][i] = beam.tokens.get(i).intValue();
-            }
-          }
-
-          // Flatten to 1D for tensor creation
-          int[] flatTokens = new int[numActiveBeams * DECODER_SEQ_LEN];
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            System.arraycopy(batchedTokens[b], 0, flatTokens, b * DECODER_SEQ_LEN, DECODER_SEQ_LEN);
-          }
-
-          OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
-            java.nio.IntBuffer.wrap(flatTokens), new long[]{numActiveBeams, DECODER_SEQ_LEN});
-
-          // Get memory dimensions for replication
-          long[] memoryShape = memory.getInfo().getShape(); // [1, seq_len, hidden_dim]
-          int memorySeqLen = (int)memoryShape[1];
-          int hiddenDim = (int)memoryShape[2];
-
-          // OPTIMIZATION v6 (perftodos6.md): Broadcast models expand memory internally
-          OnnxTensor batchedMemoryTensor;
-          OnnxTensor actualSrcLengthTensor;
-
-          if (_broadcastEnabled)
-          {
-            // Broadcast model: Pass memory with batch=1, model expands internally
-            // Memory shape: [1, seq_len, hidden_dim]
-            // Target tokens shape: [num_beams, seq_len]
-            // Model will broadcast memory to match num_beams automatically
-            batchedMemoryTensor = memory; // Use as-is, no replication needed
-
-            // For broadcast models, actual_src_length should also be single value
-            actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, new int[]{actualSrcLength});
-
-            if (step == 0 && _enableVerboseLogging)
-            {
-              logDebug("🚀 Broadcast mode: memory [1, " + memorySeqLen + ", " + hiddenDim + "] → " + numActiveBeams + " beams\n");
-            }
-          }
-          else
-          {
-            // Legacy model: Manually replicate memory for all beams
-            float[][][] memoryData = (float[][][])memory.getValue();
-            float[][][] replicatedMemory = new float[numActiveBeams][memorySeqLen][hiddenDim];
-            for (int b = 0; b < numActiveBeams; b++)
-            {
-              for (int s = 0; s < memorySeqLen; s++)
-              {
-                System.arraycopy(memoryData[0][s], 0, replicatedMemory[b][s], 0, hiddenDim);
-              }
-            }
-            batchedMemoryTensor = OnnxTensor.createTensor(_ortEnvironment, replicatedMemory);
-
-            // Create batched actual_src_length for all beams
-            int[] srcLengths = new int[numActiveBeams];
-            Arrays.fill(srcLengths, actualSrcLength);
-            actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, srcLengths);
-          }
-
-          // Run batched decoder inference
-          Map<String, OnnxTensor> decoderInputs = new HashMap<>();
-          decoderInputs.put("memory", batchedMemoryTensor);
-          decoderInputs.put("target_tokens", targetTokensTensor);
-          decoderInputs.put("actual_src_length", actualSrcLengthTensor);
-
-          // Debug logging when verbose logging enabled (CACHED)
-          if (step == 0 && _enableVerboseLogging)
-          {
-            logDebug("=== DECODER INPUTS (step 0) ===\n");
-            logDebug("  memory: " + java.util.Arrays.toString(batchedMemoryTensor.getInfo().getShape()) + "\n");
-            logDebug("  target_tokens: " + java.util.Arrays.toString(targetTokensTensor.getInfo().getShape()) + "\n");
-            logDebug("  actual_src_length: " + java.util.Arrays.toString(actualSrcLengthTensor.getInfo().getShape()) + "\n");
-            logDebug("  actualSrcLength value: " + actualSrcLength + "\n");
-            logDebug("  numActiveBeams: " + numActiveBeams + "\n");
-            logDebug("  broadcastEnabled: " + _broadcastEnabled + "\n");
-            logDebug("  First beam tokens: " + java.util.Arrays.toString(java.util.Arrays.copyOf(flatTokens, Math.min(10, flatTokens.length))) + "\n");
-          }
-
-          long inferenceStart = System.nanoTime();
-          OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
-          totalInferenceTime += (System.nanoTime() - inferenceStart) / 1_000_000;
-
-          // Process batched output [num_beams, seq_len, vocab_size]
-          OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
-          float[][][] logits3D = (float[][][]) logitsTensor.getValue();
-
-          // OPTIMIZATION Phase 2: Get trie once for all beams
-          VocabularyTrie trie = (_vocabulary != null) ? _vocabulary.getVocabularyTrie() : null;
-
-          for (int b = 0; b < numActiveBeams; b++)
-          {
-            BeamSearchState beam = activeBeams.get(b);
-            int currentPos = beam.tokens.size() - 1;
-            if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
-            {
-              float[] logProbs = logits3D[b][currentPos];
-
-              // OPTIMIZATION: Trie-Guided Decoding (Logit Masking)
-              // Replaces "over-generate and prune" for 10x speedup
-              if (trie != null) {
-                  StringBuilder partialWord = new StringBuilder();
-                  for (Long token : beam.tokens) {
-                      int tokenIdx = token.intValue();
-                      if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
-                          char ch = _tokenizer.indexToChar(tokenIdx);
-                          if (ch != '?' && !Character.toString(ch).startsWith("<")) {
-                              partialWord.append(ch);
-                          }
-                      }
-                  }
-                  String prefix = partialWord.toString();
-                  java.util.Set<Character> allowed = trie.getAllowedNextChars(prefix);
-                  boolean isWord = trie.containsWord(prefix);
-
-                  for (int i = 0; i < logProbs.length; i++) {
-                      if (i == SOS_IDX || i == PAD_IDX) continue;
-                      if (i == EOS_IDX) {
-                          if (!isWord) logProbs[i] = Float.NEGATIVE_INFINITY;
-                          continue;
-                      }
-                      char c = _tokenizer.indexToChar(i);
-                      // Note: trie chars are lowercase
-                      if (c == '?' || !allowed.contains(Character.toLowerCase(c))) {
-                          logProbs[i] = Float.NEGATIVE_INFINITY;
-                      }
-                  }
-              }
-
-              int[] topK = getTopKIndices(logProbs, beamWidth);
-
-              for (int idx : topK)
-              {
-                // Skip special tokens
-                if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
-                  BeamSearchState newBeam = new BeamSearchState(beam);
-                  newBeam.tokens.add((long)idx);
-                  newBeam.score -= logProbs[idx];
-                  newBeam.finished = true;
-                  candidates.add(newBeam);
-                  continue;
-                }
-
-                // Trie validation already done via masking - just add beam
-                BeamSearchState newBeam = new BeamSearchState(beam);
-                newBeam.tokens.add((long)idx);
-                newBeam.score -= logProbs[idx];
-                newBeam.finished = (idx == EOS_IDX || idx == PAD_IDX);
-                candidates.add(newBeam);
-              }
-            }
-          }
-
-          // Cleanup
-          targetTokensTensor.close();
-          actualSrcLengthTensor.close();
-          // Only close batchedMemoryTensor if it's a new tensor (legacy mode)
-          // In broadcast mode, batchedMemoryTensor is the original memory tensor
-          if (!_broadcastEnabled)
-          {
-            batchedMemoryTensor.close();
-          }
-          decoderOutput.close();
-        }
-        catch (Exception e)
-        {
-          logDebug("💥 Batched decoder step " + step + " error: " + e.getClass().getSimpleName() + " - " + e.getMessage() + "\n");
-          Log.e(TAG, "Batched decoder step error", e);
-        }
-      }
-      else
-      {
-        // Sequential beam processing (batch=1) - default, stable mode
-        // OPTIMIZATION v1.32.511: Reuse arrays and tensors to reduce allocation overhead
-
-        // Pre-allocate reusable arrays (only on first step to avoid per-step allocation)
-        if (step == 0)
-        {
-          // These will be reused for all beams in all steps
-        }
-
-        // OPTIMIZATION: Create actualSrcLengthTensor once per step (same for all beams)
-        OnnxTensor actualSrcLengthTensor = null;
-        try
-        {
-          actualSrcLengthTensor = OnnxTensor.createTensor(_ortEnvironment, 
-            new int[]{actualSrcLength});
-        }
-        catch (Exception e)
-        {
-          Log.e(TAG, "Failed to create actualSrcLengthTensor", e);
-          break;
-        }
-
-        // OPTIMIZATION: Pre-allocate token array and HashMap outside beam loop
-        int[] tgtTokens = new int[DECODER_SEQ_LEN];
-        Map<String, OnnxTensor> decoderInputs = new HashMap<>(3);
-        decoderInputs.put("memory", memory);
-        decoderInputs.put("actual_src_length", actualSrcLengthTensor);
-
-        for (int b = 0; b < activeBeams.size(); b++)
-        {
-          BeamSearchState beam = activeBeams.get(b);
-
-          try
-          {
-            // Reuse tgtTokens array - just overwrite values
-            Arrays.fill(tgtTokens, (int)PAD_IDX);
-            int tokenCount = Math.min(beam.tokens.size(), DECODER_SEQ_LEN);
-            for (int i = 0; i < tokenCount; i++)
-            {
-              tgtTokens[i] = beam.tokens.get(i).intValue();
-            }
-
-            // Create tensor for this beam's tokens (must create new - wraps buffer)
-            OnnxTensor targetTokensTensor = OnnxTensor.createTensor(_ortEnvironment, 
-              java.nio.IntBuffer.wrap(tgtTokens), new long[]{1, DECODER_SEQ_LEN});
-
-            // Update HashMap with new target_tokens tensor
-            decoderInputs.put("target_tokens", targetTokensTensor);
-
-            long inferenceStart = System.nanoTime();
-            OrtSession.Result decoderOutput = _decoderSession.run(decoderInputs);
-            totalInferenceTime += (System.nanoTime() - inferenceStart) / 1_000_000;
-
-            OnnxTensor logitsTensor = (OnnxTensor) decoderOutput.get(0);
-
-            // Handle 3D logits tensor [1, seq_len, vocab_size]
-            float[][][] logits3D = (float[][][]) logitsTensor.getValue();
-
-            // Get log probs for last valid position
-            int currentPos = beam.tokens.size() - 1;
-            if (currentPos >= 0 && currentPos < DECODER_SEQ_LEN)
-            {
-              float[] logProbs = logits3D[0][currentPos];  // batch=0 since we use batch=1
-
-              VocabularyTrie trie = (_vocabulary != null) ? _vocabulary.getVocabularyTrie() : null;
-
-              // OPTIMIZATION: Trie-Guided Decoding (Logit Masking)
-              // Replaces "over-generate and prune" for 10x speedup
-              if (trie != null) {
-                  StringBuilder partialWord = new StringBuilder();
-                  for (Long token : beam.tokens) {
-                      int tokenIdx = token.intValue();
-                      if (tokenIdx != SOS_IDX && tokenIdx != EOS_IDX && tokenIdx != PAD_IDX) {
-                          char ch = _tokenizer.indexToChar(tokenIdx);
-                          if (ch != '?' && !Character.toString(ch).startsWith("<")) {
-                              partialWord.append(ch);
-                          }
-                      }
-                  }
-                  String prefix = partialWord.toString();
-                  java.util.Set<Character> allowed = trie.getAllowedNextChars(prefix);
-                  boolean isWord = trie.containsWord(prefix);
-
-                  for (int i = 0; i < logProbs.length; i++) {
-                      if (i == SOS_IDX || i == PAD_IDX) continue;
-                      if (i == EOS_IDX) {
-                          if (!isWord) logProbs[i] = Float.NEGATIVE_INFINITY;
-                          continue;
-                      }
-                      char c = _tokenizer.indexToChar(i);
-                      // Note: trie chars are lowercase
-                      if (c == '?' || !allowed.contains(Character.toLowerCase(c))) {
-                          logProbs[i] = Float.NEGATIVE_INFINITY;
-                      }
-                  }
-              }
-
-              // Get top k tokens by highest log prob (higher is better)
-              int[] topK = getTopKIndices(logProbs, beamWidth);
-
-              // Create new beams
-              for (int idx : topK)
-              {
-                // Skip special tokens
-                if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
-                  BeamSearchState newBeam = new BeamSearchState(beam);
-                  newBeam.tokens.add((long)idx);
-                  newBeam.score -= logProbs[idx];
-                  newBeam.finished = true;
-                  candidates.add(newBeam);
-                  continue;
-                }
-
-                // Trie validation already done via masking - just add beam
-                BeamSearchState newBeam = new BeamSearchState(beam);
-                newBeam.tokens.add((long)idx);
-                newBeam.score -= logProbs[idx];
-                newBeam.finished = (idx == EOS_IDX || idx == PAD_IDX);
-                candidates.add(newBeam);
-              }
-            }
-
-            // Clean up only targetTokensTensor (actualSrcLengthTensor reused)
-            targetTokensTensor.close();
-            decoderOutput.close();
-          }
-          catch (Exception e)
-          {
-            logDebug("💥 Decoder step " + step + " beam " + b + " error: " + e.getClass().getSimpleName() + " - " + e.getMessage() + "\n");
-            Log.e(TAG, "Decoder step error for beam " + b, e);
-          }
-        }
-
-        // Clean up the shared actualSrcLengthTensor after all beams processed
-        if (actualSrcLengthTensor != null)
-        {
-          actualSrcLengthTensor.close();
-        }
-      }
-
-      totalTensorTime += (System.nanoTime() - tensorStart) / 1_000_000;
-
-      // Debug: log candidate generation
-      if (step == 0) {
-        logDebug("Step " + step + ": generated " + candidates.size() + " candidates from " + activeBeams.size() + " active beams\n");
-      }
-
-      // Select top beams - matches CLI line 232
-      candidates.sort((a, b) -> Float.compare(a.score, b.score)); // Lower score is better (negative log prob)
-
-      // OPTIMIZATION Phase 2.1: Confidence threshold pruning
-      // Remove beams with extremely low probability (exp(-score) < 1e-6) to avoid wasting compute
-      // CRITICAL FIX: Lowered threshold significantly for long swipes where probability mass is spread out
-      if (step >= 2) { // Wait at least 2 steps before pruning
-        int beforePrune = candidates.size();
-        candidates.removeIf(beam -> Math.exp(-beam.score) < 1e-6); // Keep beams with prob > 0.0001%
-        int afterPrune = candidates.size();
-        if (afterPrune < beforePrune && _enableVerboseLogging) {
-          // Only log if we pruned significant candidates (prob > 0.01) to avoid spam
-          // Most pruned candidates are effectively zero probability
-          logDebug(String.format("⚡ Pruned %d low-confidence beams at step %d\n", beforePrune - afterPrune, step));
-        }
-      }
-
-      beams = candidates.subList(0, Math.min(candidates.size(), beamWidth));
-
-      // OPTIMIZATION Phase 2.2: Adaptive beam width reduction
-      // Reduce beam width mid-search if we have high-confidence predictions
-      if (step == 5 && beams.size() > 3) {
-        float topScore = beams.get(0).score;
-        float thirdScore = beams.size() >= 3 ? beams.get(2).score : Float.POSITIVE_INFINITY;
-        float confidence = (float)Math.exp(-topScore);
-
-        // If top beam has >50% confidence, narrow search to top 3 beams
-        if (confidence > 0.5f) {
-          int oldSize = beams.size();
-          beams = beams.subList(0, Math.min(3, beams.size()));
-          if (_enableVerboseLogging) {
-            logDebug(String.format("⚡ Reduced beam width %d→%d (top conf=%.2f) at step %d\n",
-              oldSize, beams.size(), confidence, step));
-          }
-        }
-      }
-
-      // OPTIMIZATION v1.32.515: Score-gap early stopping
-      // If top beam is significantly better than 2nd beam, stop early (confident prediction)
-      if (beams.size() >= 2 && step >= 3) // Wait at least 3 steps for meaningful scores
-      {
-        float topScore = beams.get(0).score;
-        float secondScore = beams.get(1).score;
-        float scoreGap = secondScore - topScore; // Gap between top and 2nd (higher = more confident)
-
-        // If top beam finished and score gap > 2.0 (e^2 ≈ 7.4x more likely), stop early
-        if (beams.get(0).finished && scoreGap > 2.0f)
-        {
-          logDebug("⚡ Score-gap early stop at step " + step + " (gap=" + String.format("%.2f", scoreGap) + ")\n");
-          break;
-        }
-      }
-
-      // Check if all beams finished - matches CLI line 235
-      boolean allFinished = true;
-      int finishedCount = 0;
-      for (BeamSearchState beam : beams) {
-        if (beam.finished) {
-          finishedCount++;
-        } else {
-          allFinished = false;
-        }
-      }
-
-      // Early stop if all beams finished OR we have enough finished beams
-      if (allFinished || finishedCount >= beamWidth)
-      {
-        logDebug("🏁 Early stop at step " + step + " (" + finishedCount + "/" + beams.size() + " finished)\n");
-        break;
-      }
-    }
+    // Initialize BeamSearchEngine
+    VocabularyTrie trie = (_vocabulary != null) ? _vocabulary.getVocabularyTrie() : null;
     
-    // Performance summary
-    long totalBeamSearchTime = (System.nanoTime() - beamSearchStart) / 1_000_000;
-    logDebug("📊 Beam search: " + totalBeamSearchTime + "ms (inference: " + totalInferenceTime + "ms, tensor: " + totalTensorTime + "ms, steps: " + step + ", mode: " + (useBatched ? "batched" : "sequential") + ")\n");
-    
-    // Convert token sequences to words with detailed debugging
-    List<BeamSearchCandidate> results = new ArrayList<>();
-    logDebug("🔤 Converting " + beams.size() + " beams to words...\n");
-
-    for (int b = 0; b < beams.size(); b++) {
-      BeamSearchState beam = beams.get(b);
-      StringBuilder word = new StringBuilder();
-      StringBuilder tokenLog = new StringBuilder();
-
-      for (Long token : beam.tokens)
-      {
-        int idx = token.intValue();
-        if (idx == SOS_IDX || idx == EOS_IDX || idx == PAD_IDX) {
-          tokenLog.append("[").append(idx).append("] ");
-          continue;
-        }
-
-        char ch = _tokenizer.indexToChar(idx);
-        tokenLog.append(ch);
-
-        if (ch != '?' && !Character.toString(ch).startsWith("<"))
-        {
-          word.append(ch);
-        }
-      }
-
-      String wordStr = word.toString();
-      if (wordStr.length() > 0)
-      {
-        // Convert accumulated negative log likelihood back to probability
-        // Since score is positive (accumulated -log(prob)), use exp(-score)
-        float confidence = (float)Math.exp(-beam.score);
-        results.add(new BeamSearchCandidate(wordStr, confidence));
-        logDebug(String.format("   Beam %d: '%s' (score=%.2f, conf=%.3f) tokens=%s\n",
-          b, wordStr, beam.score, confidence, tokenLog.toString()));
-      } else {
-        logDebug(String.format("   Beam %d: EMPTY (tokens=%s)\n", b, tokenLog.toString()));
-      }
+    // Lambda for debug logging
+    kotlin.jvm.functions.Function1<String, kotlin.Unit> logger = null;
+    if (_enableVerboseLogging && _debugLogger != null) {
+        logger = msg -> {
+            _debugLogger.log(msg);
+            return kotlin.Unit.INSTANCE;
+        };
     }
 
-    logDebug("🎯 Generated " + results.size() + " word candidates from " + beams.size() + " beams\n");
-    return results;
+    BeamSearchEngine engine = new BeamSearchEngine(
+        _decoderSession,
+        _ortEnvironment,
+        _tokenizer,
+        trie,
+        _beamWidth,
+        _maxLength,
+        _confidenceThreshold,
+        logger
+    );
+
+    // Run search
+    List<BeamSearchEngine.BeamSearchCandidate> results = engine.search(memory, actualSrcLength, _batchBeams);
+
+    // Map to local BeamSearchCandidate
+    List<BeamSearchCandidate> candidates = new ArrayList<>();
+    for (BeamSearchEngine.BeamSearchCandidate result : results) {
+        candidates.add(new BeamSearchCandidate(result.getWord(), result.getConfidence()));
+    }
+
+    return candidates;
   }
   
-  private float[] softmax(float[] logits)
+  private static class BeamSearchCandidate
   {
-    float maxLogit = 0.0f;
-    for (float logit : logits) {
-      if (logit > maxLogit) maxLogit = logit;
-    }
-    float[] expScores = new float[logits.length];
-    float sumExpScores = 0.0f;
+    public final String word;
+    public final float confidence;
     
-    for (int i = 0; i < logits.length; i++)
+    public BeamSearchCandidate(String word, float confidence)
     {
-      expScores[i] = (float)Math.exp(logits[i] - maxLogit);
-      sumExpScores += expScores[i];
-    }
-    
-    for (int i = 0; i < expScores.length; i++)
-    {
-      expScores[i] /= sumExpScores;
-    }
-    
-    return expScores;
-  }
-  
-  /**
-   * OPTIMIZATION Phase 2: Micro-optimized top-K selection for small k and n.
-   * For beam_width=2-5 and vocab=30, this specialized implementation is faster
-   * than both heap-based and insertion-sort approaches.
-   *
-   * Uses partial quickselect partitioning for O(n) average case.
-   */
-  private int[] getTopKIndices(float[] array, int k)
-  {
-    int n = array.length;
-    int actualK = Math.min(k, n);
-
-    // Special case: k=1 (greedy decode)
-    if (actualK == 1) {
-      int maxIdx = 0;
-      float maxVal = array[0];
-      for (int i = 1; i < n; i++) {
-        if (array[i] > maxVal) {
-          maxVal = array[i];
-          maxIdx = i;
-        }
-      }
-      return new int[]{maxIdx};
-    }
-
-    // For small k (2-5), use optimized linear scan with minimal comparisons
-    // This avoids the shift overhead in insertion sort
-    int[] result = new int[actualK];
-    float[] resultValues = new float[actualK];
-
-    // Initialize with first k elements
-    for (int i = 0; i < actualK; i++) {
-      result[i] = i;
-      resultValues[i] = array[i];
-    }
-
-    // Sort initial k elements (bubble sort for small k)
-    for (int i = 0; i < actualK - 1; i++) {
-      for (int j = i + 1; j < actualK; j++) {
-        if (resultValues[j] > resultValues[i]) {
-          float tmpVal = resultValues[i];
-          int tmpIdx = result[i];
-          resultValues[i] = resultValues[j];
-          result[i] = result[j];
-          resultValues[j] = tmpVal;
-          result[j] = tmpIdx;
-        }
-      }
-    }
-
-    // Scan remaining elements, only insert if larger than smallest in top-k
-    float minTopK = resultValues[actualK - 1];
-    for (int i = actualK; i < n; i++) {
-      float val = array[i];
-      if (val > minTopK) {
-        // Find insertion position (binary search in sorted top-k)
-        int insertPos = actualK - 1;
-        for (int j = actualK - 2; j >= 0; j--) {
-          if (val > resultValues[j]) {
-            insertPos = j;
-          } else {
-            break;
-          }
-        }
-
-        // Shift and insert
-        for (int j = actualK - 1; j > insertPos; j--) {
-          resultValues[j] = resultValues[j - 1];
-          result[j] = result[j - 1];
-        }
-        resultValues[insertPos] = val;
-        result[insertPos] = i;
-        minTopK = resultValues[actualK - 1];
-      }
-    }
-
-    return result;
-  }
-  
-  private static class BeamSearchState
-  {
-    public List<Long> tokens;
-    public float score;
-    public boolean finished;
-    
-    public BeamSearchState(int startToken, float startScore, boolean isFinished)
-    {
-      tokens = new ArrayList<>();
-      tokens.add((long)startToken);
-      score = startScore;
-      finished = isFinished;
-    }
-    
-    public BeamSearchState(BeamSearchState other)
-    {
-      tokens = new ArrayList<>(other.tokens);
-      score = other.score;
-      finished = other.finished;
-    }
-  }
-  
-  private static class IndexValue
-  {
-    public int index;
-    public float value;
-    
-    public IndexValue(int index, float value)
-    {
-      this.index = index;
-      this.value = value;
+      this.word = word;
+      this.confidence = confidence;
     }
   }
   
@@ -2474,8 +1777,8 @@ public class OnnxSwipePredictor
 
     // logDebug("📊 Optimized predictions: " + candidates.size() + " raw → " + filtered.size() + " filtered");
     // logDebug("   Fast-path breakdown: " +
-      // filtered.stream().mapToLong(p -> p.source.equals("common") ? 1 : 0).sum() + " common, " +
-      // filtered.stream().mapToLong(p -> p.source.equals("top5000") ? 1 : 0).sum() + " top5000");
+      // filtered.stream().mapToLong(p -> p.source.equals(\"common\") ? 1 : 0).sum() + " common, " +
+      // filtered.stream().mapToLong(p -> p.source.equals(\"top5000\") ? 1 : 0).sum() + " top5000");
 
     return new PredictionResult(words, scores);
   }
@@ -2570,22 +1873,6 @@ public class OnnxSwipePredictor
         _singletonInstance = null;
         // Log.d(TAG, "Singleton instance reset");
       }
-    }
-  }
-  
-  
-  /**
-   * Beam search candidate
-   */
-  private static class BeamSearchCandidate
-  {
-    public final String word;
-    public final float confidence;
-    
-    public BeamSearchCandidate(String word, float confidence)
-    {
-      this.word = word;
-      this.confidence = confidence;
     }
   }
 }
