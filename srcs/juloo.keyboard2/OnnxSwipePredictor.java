@@ -1074,7 +1074,7 @@ public class OnnxSwipePredictor
       if (token != SOS_IDX && token != EOS_IDX && token != PAD_IDX)
       {
         char ch = _tokenizer.indexToChar(token);
-        if (ch != '?' && !ch.toString().startsWith("<"))
+        if (ch != '?' && !Character.toString(ch).startsWith("<"))
         {
           word.append(ch);
         }
