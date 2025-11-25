@@ -2,7 +2,7 @@ To honour the JVM settings for this build a single-use Daemon process will be fo
 Daemon will be stopped at the end of the build 
 
 > Configure project :
-WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termux/files/home/git/Unexpected-Keyboard/tools/aapt2-arm64/aapt2' is experimental.
+WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/tools/aapt2-arm64/aapt2' is experimental.
 
 > Task :copyLayoutDefinitions UP-TO-DATE
 > Task :copyRawQwertyUS UP-TO-DATE
@@ -27,22 +27,22 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
-> Task :checkDebugAarMetadata
-> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
+> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
-> Task :mergeDebugResources
 > Task :processDebugManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
-> Task :processDebugManifestForPackage
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
+> Task :mergeDebugResources
 > Task :checkDebugDuplicateClasses
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
@@ -66,11 +66,44 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :processDebugResources
 
 > Task :compileDebugKotlin
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:388:22 Variable 'dx' initializer is redundant
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:389:22 Variable 'dy' initializer is redundant
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:296:32 Parameter 'point' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:31 Parameter 'prev' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:55 Parameter 'curr' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:79 Parameter 'next' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardGrid.kt:158:26 Variable 'pos' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:136:55 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:139:54 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:256:51 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:264:39 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:423:59 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:555:79 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:696:40 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:753:42 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:892:13 Condition 'context == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:901:55 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:905:48 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:954:60 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:983:13 Condition 'context == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:991:37 Type mismatch: inferred type is (Mutable)Set<String!>? but (MutableCollection<out String!>..Collection<String!>) was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1005:13 Condition 'context == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1029:48 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1035:83 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1065:57 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1066:79 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1087:13 Condition 'context == null' is always 'false'
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:111:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:129:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VocabularyCache.kt:34:25 Variable 'wordCount' initializer is redundant
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:90:58 Parameter 'useBatched' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:204:9 Parameter 'step' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:232:55 Unchecked cast: Any! to Array<Array<FloatArray>>
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:360:25 Type mismatch: inferred type is Int? but Int was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/GreedySearchEngine.kt:68:59 Unchecked cast: Any! to Array<Array<FloatArray>>
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/ModelLoader.kt:248:24 Parameter 'sessionOptions' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/SwipePredictorOrchestrator.kt:198:24 Parameter 'logger' is never used
 
 > Task :compileDebugJavaWithJavac
 Java compiler version 21 has deprecated support for compiling with source/target version 8.
@@ -97,48 +130,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 13s
+BUILD SUCCESSFUL in 1m 19s
 42 actionable tasks: 34 executed, 8 from cache
-ttps://developer.android.com/build/jdks.
-To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
-warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target value 8 is obsolete and will be removed in a future release
-warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-3 warnings
-
-> Task :processDebugJavaRes
-> Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
-
-BUILD SUCCESSFUL in 1m 13s
-42 actionable tasks: 34 executed, 8 from cache
-
-=== BUILD SUCCESSFUL! ===
-APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
--rw-------. 1 u0_a364 u0_a364 47M Nov 23 16:14 build/outputs/apk/debug/juloo.keyboard2.debug.apk
-
-Copying APK to /storage/emulated/0/unexpected/ for updates...
-APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.673-673.apk
--rw-rw----. 1 u0_a315 media_rw 47M Nov 23 16:14 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.673-673.apk
-Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
-
-Step 6: Attempting ADB connection and installation...
-No ADB device connected, attempting wireless connection...
-Scanning for ADB on host: 192.168.1.247
-Scanning ports 30000-50000 for ADB...
-Trying 192.168.1.247:5555... no response
-Trying 192.168.1.247:39123... no response
-Trying 192.168.1.247:41993... no response
-Trying 192.168.1.247:43367... no response
-No working ADB port found on 192.168.1.247
-❌ Could not establish ADB connection
-Opening APK for installation...
