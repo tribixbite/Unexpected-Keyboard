@@ -78,6 +78,7 @@ class OptimizedVocabulary(private val context: Context) {
     private var _minWordLength = 2
     private var _charMatchThreshold = 0.67f
     private var _useEditDistance = true
+    private var _autocorrect_confidence_min_frequency: Int = 500 // Added for user-configured min frequency
 
     // OPTIMIZATION Phase 2: Cache parsed custom words to avoid JSON parsing on every swipe
     // Maps custom word -> frequency
@@ -120,6 +121,8 @@ class OptimizedVocabulary(private val context: Context) {
         _minWordLength = config.autocorrect_min_word_length
         _charMatchThreshold = config.autocorrect_char_match_threshold
         _useEditDistance = "edit_distance" == config.swipe_fuzzy_match_mode
+        _autocorrect_confidence_min_frequency = config.autocorrect_confidence_min_frequency // Cache this value
+
 
         // OPTIMIZATION Phase 2: Parse and cache custom words here instead of on every swipe
         try {
@@ -305,15 +308,25 @@ class OptimizedVocabulary(private val context: Context) {
                     boost = top5000Boost  // v1.33+: configurable (default: 1.0)
                     source = "top5000"
                 }
-                else -> { // regular
+                else -> { // regular (tier 0)
                     // Check frequency threshold for rare words
-                    val minFreq = getMinFrequency(word.length)
-                    if (info.frequency < minFreq) {
-                        if (debugMode) detailedLog?.append(String.format("❌ \"%s\" - BELOW FREQUENCY THRESHOLD (freq=%.4f < min=%.4f for length %d)\n",
-                            word, info.frequency, minFreq, word.length))
+                    val hardcodedMinFreq = getMinFrequency(word.length)
+                    
+                    // Normalize the user's configured min frequency
+                    val configMinFreqValue = _autocorrect_confidence_min_frequency
+                    // Use a slightly different scale for Config frequency to avoid 0.0 for values like 100
+                    val configNormalizedMinFreq = max(0.0f, configMinFreqValue.toFloat() / 10000.0f) // Scale 0-10000 -> 0-1.0
+                    
+                    // Take the maximum of the hardcoded baseline and the user's configured min frequency
+                    // This ensures the word passes both (hardcoded baseline is still important for very rare words)
+                    val effectiveMinFreq = max(hardcodedMinFreq, configNormalizedMinFreq)
+
+                    if (info.frequency < effectiveMinFreq) {
+                        if (debugMode) detailedLog?.append(String.format("❌ \"%s\" - BELOW FREQUENCY THRESHOLD (freq=%.4f < effective_min=%.4f (hardcoded=%.4f, config=%.4f) for length %d)\n",
+                            word, info.frequency, effectiveMinFreq, hardcodedMinFreq, configNormalizedMinFreq, word.length))
                         continue // Below threshold
                     }
-                    boost = rarePenalty  // v1.33+: configurable (default: 0.75)
+                    boost = rarePenalty
                     source = "vocabulary"
                 }
             }
