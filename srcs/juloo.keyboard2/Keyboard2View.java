@@ -23,6 +23,7 @@ import android.view.WindowMetrics;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import juloo.keyboard2.SwipeResult;
 
 public class Keyboard2View extends View
   implements View.OnTouchListener, Pointers.IPointerEventHandler
@@ -288,7 +289,7 @@ public class Keyboard2View extends View
   {
     if (recognizer.isSwipeTyping())
     {
-      ImprovedSwipeGestureRecognizer.SwipeResult result = recognizer.endSwipe();
+      SwipeResult result = recognizer.endSwipe();
       if (_keyboard2 != null && result != null && result.keys != null && !result.keys.isEmpty())
       {
         // Pass full swipe data for ML collection
