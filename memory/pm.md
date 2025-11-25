@@ -7,18 +7,59 @@
 
 ---
 
-## 🔥 Current Status (2025-11-22 - UPDATED)
+## 🔥 Current Status (2025-11-25 - UPDATED)
 
 **Latest Version**: v1.32.644 🎯
 **Build Status**: ✅ PRODUCTION READY - TERMUX LAG FIXED + CODE QUALITY IMPROVEMENTS!
 **Branch**: feature/swipe-typing
-**Current Focus**: ✅ Ready for User Testing - All Fixes Applied + Monitoring Tools
+**Current Focus**: ✅ Documentation Complete - All Neural Input Parameters Documented
 **Refactoring Progress**: 11 Kotlin modules + Complete UI optimization
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
 **Critical Fixes**: 54 fixes applied (see history below) - ALL OPTIMIZATIONS COMPLETE
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 
-### 🔧 Latest Work (v1.32.640-642) - TERMUX LAG FIX + BUG RE-FIX! ⚡
+### 📚 Latest Work (2025-11-25) - COMPREHENSIVE PARAMETER DOCUMENTATION! 📋
+
+**NEURAL INPUT PARAMETER DOCUMENTATION COMPLETE** (commit 8b4ecddb):
+
+**Documentation Created**:
+1. **SWIPE_PREDICTION_COEFFICIENTS.md** - Complete pipeline documentation
+   - 7 pipeline stages from raw input to final predictions
+   - 40+ parameters with values and purposes
+   - Frequency weighting system (60/40 split, 3-tier boost)
+   - Language model smoothing (add-k 0.001, bigram 0.9/0.1)
+
+2. **docs/specs/NEURAL_INPUT_PARAMETERS.md** - Detailed NN input focus
+   - 9 critical parameters affecting neural network input
+   - **SMOOTHING_WINDOW = 3** (moving average on coordinates)
+   - **NOISE_THRESHOLD = 10.0f** (Euclidean distance filtering)
+   - Touch Y-offset = 74px (fat finger effect compensation)
+   - QWERTY area mapping (vertical normalization)
+   - **MAX_SEQUENCE_LENGTH = 250** (corrected from 150!)
+   - Velocity/acceleration clipping ([-10, 10])
+   - Concrete numerical examples for each transformation
+   - Algorithm walkthroughs with real values
+   - Effect on NN tensor explained
+   - Criticality ratings (CRITICAL/HIGH/MEDIUM/LOW)
+   - Debugging tips with expected value ranges
+
+**Key Corrections Made**:
+- ✅ Found missing SMOOTHING_WINDOW = 3 (primary coordinate smoothing)
+- ✅ Corrected sequence length: 150 → 250 throughout all examples
+- ✅ Documented 10+ additional constants initially missed
+- ✅ Added detailed impact analysis for each parameter
+
+**Files Referenced**:
+- ImprovedSwipeGestureRecognizer.java (smoothing, noise, gesture detection)
+- ProbabilisticKeyDetector.java (Gaussian probability, path simplification)
+- SwipeTrajectoryProcessor.java (normalization, QWERTY bounds)
+- TrajectoryFeatureCalculator.kt (velocity, acceleration, clipping)
+- VocabularyUtils.kt (combined scoring formula)
+- Config.java (user-configurable weights)
+
+**Impact**: Complete reference for debugging neural prediction issues and understanding the entire transformation pipeline from raw touch to NN input tensor.
+
+### 🔧 Previous Work (v1.32.640-642) - TERMUX LAG FIX + BUG RE-FIX! ⚡
 
 **PHASE 1-3 COMPLETE** (v1.32.635-638, commits b5147bfb → 521f86c6):
 
