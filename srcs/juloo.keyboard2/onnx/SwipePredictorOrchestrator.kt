@@ -39,9 +39,9 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
     // Components
     private val ortEnvironment = OrtEnvironment.getEnvironment()
     private val tokenizer = SwipeTokenizer()
-    private val trajectoryProcessor = SwipeTrajectoryProcessor()
     private val vocabulary = OptimizedVocabulary(context)
     private val modelLoader = ModelLoader(context, ortEnvironment)
+    private val trajectoryProcessor = SwipeTrajectoryProcessor() // Move here
     private var tensorFactory: TensorFactory? = null
     private var encoderWrapper: EncoderWrapper? = null
     private var decoderWrapper: DecoderWrapper? = null
@@ -111,7 +111,7 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
             
             // Load Tokenizer & Vocabulary
             tokenizer.loadFromAssets(context)
-            if (!vocabulary.isLoaded) vocabulary.loadVocabulary()
+            if (!vocabulary.isLoaded()) vocabulary.loadVocabulary() // Fixed: used isLoaded()
             
             // Load Models
             val encoderPath = "models/swipe_encoder_android.onnx"
@@ -163,7 +163,7 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
             } else {
                 val engine = BeamSearchEngine(
                     decoderSession!!, ortEnvironment, tokenizer, 
-                    vocabulary.vocabularyTrie, beamWidth, maxLength, 
+                    vocabulary.getVocabularyTrie(), beamWidth, maxLength, // Fixed: used getVocabularyTrie()
                     confidenceThreshold, beamAlpha, beamPruneConfidence, beamScoreGap
                 )
                 val results = engine.search(memory, features.actualLength, batchBeams)
@@ -186,9 +186,20 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
     // Pass-through methods for compatibility
     fun isAvailable() = isModelLoaded
     fun setKeyboardDimensions(w: Float, h: Float) = trajectoryProcessor.setKeyboardLayout(null, w, h)
+    fun setRealKeyPositions(keyPositions: Map<Char, PointF>?) {
+        val width = trajectoryProcessor._keyboardWidth
+        val height = trajectoryProcessor._keyboardHeight
+        trajectoryProcessor.setKeyboardLayout(keyPositions, width, height)
+    }
     fun setQwertyAreaBounds(top: Float, height: Float) = trajectoryProcessor.setQwertyAreaBounds(top, height)
     fun setTouchYOffset(offset: Float) = trajectoryProcessor.setTouchYOffset(offset)
     fun reloadVocabulary() = vocabulary.reloadCustomAndDisabledWords()
+    
+    fun setDebugLogger(logger: Any?) {
+        // TODO: Implement proper debug logger interface if needed
+        // For now, we rely on Logcat and enableVerboseLogging flag
+    }
+
     fun cleanup() {
         encoderSession?.close()
         decoderSession?.close()

@@ -3,8 +3,13 @@ package juloo.keyboard2.onnx
 import android.util.Log
 import juloo.keyboard2.OptimizedVocabulary
 import juloo.keyboard2.SwipeInput
+import juloo.keyboard2.CandidateWord // Added import
+import juloo.keyboard2.SwipeStats // Added import
+import juloo.keyboard2.FilteredPrediction // Added import as it might be used here for `Filtered` part
 import java.util.ArrayList
 import java.util.LinkedHashMap
+import kotlin.math.min
+import kotlin.math.max // Added import
 
 /**
  * Post-processor for neural prediction results.
@@ -38,7 +43,7 @@ class PredictionPostProcessor(
         swipeShowRawBeamPredictions: Boolean
     ): Result {
         // 1. Use vocabulary filtering if available (optimized path)
-        if (vocabulary != null && vocabulary.isLoaded) {
+        if (vocabulary != null && vocabulary.isLoaded()) { // Fixed: used isLoaded()
             return createOptimizedPredictionResult(candidates, input, swipeShowRawBeamPredictions)
         }
 
@@ -56,7 +61,7 @@ class PredictionPostProcessor(
         // Debug logging for raw outputs
         if (showRawOutput && candidates.isNotEmpty()) {
             val sb = StringBuilder("🔍 Raw NN Beam Search (Fallback):\n")
-            val numToShow = Math.min(5, candidates.size)
+            val numToShow = min(5, candidates.size)
             for (i in 0 until numToShow) {
                 val candidate = candidates[i]
                 sb.append("  ${i + 1}. ${candidate.word} ${"%.3f".format(candidate.confidence)}\n")
@@ -75,7 +80,7 @@ class PredictionPostProcessor(
         // Log raw model outputs
         if (debugLogger != null && candidates.isNotEmpty()) {
             val sb = StringBuilder("🤖 MODEL OUTPUT: ")
-            val numToShow = Math.min(3, candidates.size)
+            val numToShow = min(3, candidates.size)
             for (i in 0 until numToShow) {
                 val c = candidates[i]
                 if (i > 0) sb.append(", ")
@@ -86,7 +91,7 @@ class PredictionPostProcessor(
 
         // Convert to vocabulary candidates
         val vocabCandidates = candidates.map { 
-            OptimizedVocabulary.CandidateWord(it.word, it.confidence) 
+            CandidateWord(it.word, it.confidence) // Fixed: removed OptimizedVocabulary.
         }
 
         // Extract stats for filtering
@@ -100,7 +105,7 @@ class PredictionPostProcessor(
             firstChar = input.keySequence.first()
         }
 
-        val swipeStats = OptimizedVocabulary.SwipeStats(
+        val swipeStats = SwipeStats( // Fixed: removed OptimizedVocabulary.
             input?.keySequence?.length ?: 0,
             input?.pathLength ?: 0f,
             input?.averageVelocity ?: 0f,
@@ -138,8 +143,8 @@ class PredictionPostProcessor(
                 if (score < minFilteredScore) minFilteredScore = score
             }
 
-            val rawScoreCap = Math.max(1, minFilteredScore / 10)
-            val numRawToAdd = Math.min(3, candidates.size)
+            val rawScoreCap = max(1, minFilteredScore / 10)
+            val numRawToAdd = min(3, candidates.size)
 
             for (i in 0 until numRawToAdd) {
                 val candidate = candidates[i]
@@ -152,7 +157,7 @@ class PredictionPostProcessor(
                 }
 
                 if (!alreadyIncluded) {
-                    val rawScore = Math.min((candidate.confidence * 1000).toInt(), rawScoreCap)
+                    val rawScore = min((candidate.confidence * 1000).toInt(), rawScoreCap)
                     words.add("raw:${candidate.word}")
                     scores.add(rawScore)
                 }
@@ -161,7 +166,7 @@ class PredictionPostProcessor(
 
         if (showRawOutput && candidates.isNotEmpty()) {
             val sb = StringBuilder("🔍 Raw NN Beam Search (Filtered):\n")
-            val numToShow = Math.min(5, candidates.size)
+            val numToShow = min(5, candidates.size)
             for (i in 0 until numToShow) {
                 val candidate = candidates[i]
                 var inFiltered = false
