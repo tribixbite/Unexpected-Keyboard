@@ -9,6 +9,9 @@ import android.view.inputmethod.InputConnection;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import juloo.keyboard2.ml.SwipeMLData;
 
 /**
@@ -51,6 +54,10 @@ public class InputCoordinator
 
   // Swipe ML data collection
   private SwipeMLData _currentSwipeData;
+
+  // Async prediction execution
+  private final ExecutorService _predictionExecutor = Executors.newSingleThreadExecutor();
+  private Future<?> _currentPredictionTask;
 
   /**
    * Creates a new InputCoordinator.
@@ -226,16 +233,39 @@ public class InputCoordinator
   {
     if (_contextTracker.getCurrentWordLength() > 0)
     {
-      String partial = _contextTracker.getCurrentWord();
-
-      // Use contextual prediction
-      WordPredictor.PredictionResult result = _predictionCoordinator.getWordPredictor().predictWordsWithContext(partial, _contextTracker.getContextWords());
+      final String partial = _contextTracker.getCurrentWord();
       
-      if (!result.words.isEmpty() && _suggestionBar != null)
+      // Copy context to be thread-safe
+      final List<String> contextWords = new ArrayList<>(_contextTracker.getContextWords());
+
+      // Cancel previous task if running
+      if (_currentPredictionTask != null)
       {
-        _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
-        _suggestionBar.setSuggestionsWithScores(result.words, result.scores);
+        _currentPredictionTask.cancel(true);
       }
+
+      // Submit new prediction task
+      _currentPredictionTask = _predictionExecutor.submit(() -> {
+        if (Thread.currentThread().isInterrupted()) return;
+
+        // Use contextual prediction (Heavy operation)
+        final WordPredictor.PredictionResult result = 
+            _predictionCoordinator.getWordPredictor().predictWordsWithContext(partial, contextWords);
+
+        if (Thread.currentThread().isInterrupted()) return;
+
+        // Post result to UI thread
+        if (!result.words.isEmpty() && _suggestionBar != null)
+        {
+          _suggestionBar.post(() -> {
+             // Verify context hasn't changed drastically (optional, but good practice)
+             if (_suggestionBar != null) {
+                 _suggestionBar.setShowDebugScores(_config.swipe_show_debug_scores);
+                 _suggestionBar.setSuggestionsWithScores(result.words, result.scores);
+             }
+          });
+        }
+      });
     }
   }
   public void onSuggestionSelected(String word, InputConnection ic, EditorInfo editorInfo, Resources resources)
