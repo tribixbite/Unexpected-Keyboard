@@ -30,8 +30,8 @@ import android.util.Log;
 public class OnnxBenchmarkTest {
 
     private static final String TAG = "OnnxBenchmarkTest";
-    private static final String ENCODER_ASSET_PATH = "models/bs/swipe_encoder_android.onnx";
-    private static final String DECODER_ASSET_PATH = "models/bs/swipe_decoder_android.onnx";
+    private static final String ENCODER_ASSET_PATH = "models/swipe_encoder_android.onnx";
+    private static final String DECODER_ASSET_PATH = "models/swipe_decoder_android.onnx";
 
     private static final int MAX_SEQUENCE_LENGTH = 250;
     private static final int TRAJECTORY_FEATURES = 6;

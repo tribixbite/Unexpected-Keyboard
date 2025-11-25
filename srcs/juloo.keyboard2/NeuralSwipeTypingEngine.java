@@ -3,7 +3,11 @@ package juloo.keyboard2;
 import android.content.Context;
 import android.graphics.PointF;
 import android.util.Log;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import juloo.keyboard2.onnx.SwipePredictorOrchestrator;
+import juloo.keyboard2.onnx.PredictionPostProcessor;
 
 /**
  * Neural swipe typing engine using ONNX transformer models
@@ -20,7 +24,7 @@ public class NeuralSwipeTypingEngine
   
   private Context _context;
   private Config _config;
-  private OnnxSwipePredictor _neuralPredictor;
+  private SwipePredictorOrchestrator _neuralPredictor;
   
   // State tracking
   private boolean _initialized = false;
@@ -34,7 +38,7 @@ public class NeuralSwipeTypingEngine
     _config = config;
 
     // OPTIMIZATION: Use singleton predictor with session persistence
-    _neuralPredictor = OnnxSwipePredictor.getInstance(context);
+    _neuralPredictor = SwipePredictorOrchestrator.getInstance(context);
 
     // OPTIMIZATION: Start async model loading immediately for faster startup
     // Models will load in background while keyboard UI appears
@@ -114,13 +118,16 @@ public class NeuralSwipeTypingEngine
     
     try
     {
-      PredictionResult result = _neuralPredictor.predict(input);
+      PredictionPostProcessor.Result result = _neuralPredictor.predict(input);
       
       if (result != null)
       {
+        List<String> words = result.getWords();
+        List<Integer> scores = result.getScores();
+        
         Log.d(TAG, String.format("Neural prediction successful: %d candidates", 
-          result.words.size()));
-        return result;
+          words.size()));
+        return new PredictionResult(words, scores);
       }
       else
       {

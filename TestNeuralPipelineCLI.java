@@ -195,14 +195,22 @@ public class TestNeuralPipelineCLI {
         @Override
         public InputStream open(String fileName) throws IOException {
             // Map assets to actual file paths
-            if (fileName.equals("models/swipe_model_character_quant.onnx")) {
-                return new FileInputStream("assets/models/swipe_model_character_quant.onnx");
-            } else if (fileName.equals("models/swipe_decoder_character_quant.onnx")) {
-                return new FileInputStream("assets/models/swipe_decoder_character_quant.onnx");
+            if (fileName.equals("models/swipe_encoder_android.onnx")) {
+                return new FileInputStream("assets/models/swipe_encoder_android.onnx");
+            } else if (fileName.equals("models/swipe_decoder_android.onnx")) {
+                return new FileInputStream("assets/models/swipe_decoder_android.onnx");
             } else if (fileName.equals("models/tokenizer.json")) {
                 return new FileInputStream("assets/models/tokenizer.json");
+            } else if (fileName.startsWith("dictionaries/")) {
+                // Allow loading dictionaries for OptimizedVocabulary
+                return new FileInputStream("assets/" + fileName);
             } else {
-                throw new FileNotFoundException("Mock asset not found: " + fileName);
+                // Try generic asset loading
+                try {
+                    return new FileInputStream("assets/" + fileName);
+                } catch (FileNotFoundException e) {
+                    throw new FileNotFoundException("Mock asset not found: " + fileName);
+                }
             }
         }
     }

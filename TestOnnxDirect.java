@@ -38,8 +38,8 @@ public class TestOnnxDirect {
         OrtEnvironment env = OrtEnvironment.getEnvironment();
         
         // Load models
-        byte[] encoderData = loadModelData("assets/models/bs2/swipe_encoder_android.onnx");
-        byte[] decoderData = loadModelData("assets/models/bs2/swipe_decoder_android.onnx");
+        byte[] encoderData = loadModelData("assets/models/swipe_encoder_android.onnx");
+        byte[] decoderData = loadModelData("assets/models/swipe_decoder_android.onnx");
         
         System.out.println("📥 Encoder: " + encoderData.length + " bytes");
         System.out.println("📥 Decoder: " + decoderData.length + " bytes");
@@ -105,9 +105,9 @@ public class TestOnnxDirect {
         floatBuffer.rewind();
         
         // Create nearest keys [1, 150]
-        ByteBuffer keysBuffer = ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH * 8);
+        ByteBuffer keysBuffer = ByteBuffer.allocateDirect(MAX_SEQUENCE_LENGTH * 4); // 4 bytes per int
         keysBuffer.order(ByteOrder.nativeOrder());
-        LongBuffer longBuffer = keysBuffer.asLongBuffer();
+        IntBuffer intBuffer = keysBuffer.asIntBuffer();
         
         // Test sequence: h-e-l-l-o
         char[] letters = {'h', 'e', 'l', 'l', 'o'};
@@ -115,12 +115,12 @@ public class TestOnnxDirect {
             if (i < 50) {
                 // Map letters cyclically
                 char letter = letters[i % letters.length];
-                longBuffer.put(letter - 'a' + 4); // Map to token indices 4-29
+                intBuffer.put(letter - 'a' + 4); // Map to token indices 4-29
             } else {
-                longBuffer.put(PAD_IDX); // Padding
+                intBuffer.put(PAD_IDX); // Padding
             }
         }
-        longBuffer.rewind();
+        intBuffer.rewind();
         
         // Create source mask [1, 150] - boolean array
         boolean[][] srcMaskData = new boolean[1][MAX_SEQUENCE_LENGTH];
@@ -134,7 +134,7 @@ public class TestOnnxDirect {
         
         Map<String, OnnxTensor> inputs = new HashMap<>();
         inputs.put("trajectory_features", OnnxTensor.createTensor(env, floatBuffer, new long[]{1, MAX_SEQUENCE_LENGTH, 6}));
-        inputs.put("nearest_keys", OnnxTensor.createTensor(env, longBuffer, new long[]{1, MAX_SEQUENCE_LENGTH}));
+        inputs.put("nearest_keys", OnnxTensor.createTensor(env, intBuffer, new long[]{1, MAX_SEQUENCE_LENGTH}));
         inputs.put("src_mask", OnnxTensor.createTensor(env, srcMaskData));
         
         return inputs;
@@ -144,17 +144,17 @@ public class TestOnnxDirect {
         System.out.println("🔍 Testing single decoder step with SOS token...");
         
         // Create decoder inputs for first step
-        long[] targetTokens = new long[DECODER_SEQ_LENGTH];
+        int[] targetTokens = new int[DECODER_SEQ_LENGTH];
         targetTokens[0] = SOS_IDX; // Start with SOS
         // Rest are padding (0)
         
-        ByteBuffer tokensBuffer = ByteBuffer.allocateDirect(DECODER_SEQ_LENGTH * 8);
+        ByteBuffer tokensBuffer = ByteBuffer.allocateDirect(DECODER_SEQ_LENGTH * 4); // 4 bytes per int
         tokensBuffer.order(ByteOrder.nativeOrder());
-        LongBuffer longBuffer = tokensBuffer.asLongBuffer();
-        for (long token : targetTokens) {
-            longBuffer.put(token);
+        IntBuffer intBuffer = tokensBuffer.asIntBuffer();
+        for (int token : targetTokens) {
+            intBuffer.put(token);
         }
-        longBuffer.rewind();
+        intBuffer.rewind();
         
         // Target mask: mask all positions after SOS
         boolean[][] targetMaskData = new boolean[1][DECODER_SEQ_LENGTH];
@@ -173,7 +173,7 @@ public class TestOnnxDirect {
         
         Map<String, OnnxTensor> decoderInputs = new HashMap<>();
         decoderInputs.put("memory", memory);
-        decoderInputs.put("target_tokens", OnnxTensor.createTensor(env, longBuffer, new long[]{1, DECODER_SEQ_LENGTH}));
+        decoderInputs.put("target_tokens", OnnxTensor.createTensor(env, intBuffer, new long[]{1, DECODER_SEQ_LENGTH}));
         decoderInputs.put("target_mask", OnnxTensor.createTensor(env, targetMaskData));
         decoderInputs.put("src_mask", OnnxTensor.createTensor(env, srcMaskData));
         
@@ -185,16 +185,12 @@ public class TestOnnxDirect {
         System.out.println("   Logits shape: " + Arrays.toString(logitsTensor.getInfo().getShape()));
         
         // Extract first token predictions (position 0)
-        float[] logitsFlat = (float[]) logitsTensor.getValue();
-        System.out.println("   Logits flat length: " + logitsFlat.length);
-        
-        // Get logits for position 0 (after SOS token)
-        int startIdx = 0 * VOCAB_SIZE;
-        float[] firstTokenLogits = new float[VOCAB_SIZE];
-        System.arraycopy(logitsFlat, startIdx, firstTokenLogits, 0, VOCAB_SIZE);
+        float[][][] logits3D = (float[][][]) logitsTensor.getValue(); // 3D logits in V4
+        float[] logitsFlat = logits3D[0][0]; // Batch 0, Step 0
+        System.out.println("   Logits length: " + logitsFlat.length);
         
         // Apply softmax
-        float[] probs = softmax(firstTokenLogits);
+        float[] probs = softmax(logitsFlat);
         
         // Get top 5 tokens
         int[] topTokens = getTopKIndices(probs, 5);

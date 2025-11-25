@@ -20,6 +20,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import juloo.keyboard2.onnx.SwipePredictorOrchestrator
 
 /**
  * Dictionary Manager Activity
@@ -259,7 +260,7 @@ class DictionaryManagerActivity : AppCompatActivity() {
             WordPredictor.signalReloadNeeded()
 
             // Reload swipe beam search vocabulary immediately (singleton, one-time cost)
-            val swipePredictor = OnnxSwipePredictor.getInstance(this)
+            val swipePredictor = SwipePredictorOrchestrator.getInstance(this)
             swipePredictor.reloadVocabulary()
 
             android.util.Log.d("DictionaryManagerActivity", "Reloaded predictions after dictionary changes")

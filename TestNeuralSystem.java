@@ -115,7 +115,7 @@ public class TestNeuralSystem
         OrtEnvironment env = OrtEnvironment.getEnvironment();
         
         // Load encoder model
-        String encoderPath = "assets/models/swipe_model_character_quant.onnx";
+        String encoderPath = "assets/models/swipe_encoder_android.onnx";
         byte[] encoderData = loadModelFile(new File(encoderPath));
         OrtSession encoderSession = env.createSession(encoderData);
         
@@ -142,22 +142,22 @@ public class TestNeuralSystem
         System.out.println("   Trajectory tensor: " + java.util.Arrays.toString(trajectoryTensor.getInfo().getShape()));
         
         // Nearest keys: [1, 100] - sample key sequence
-        java.nio.ByteBuffer keysBuffer = java.nio.ByteBuffer.allocateDirect(100 * 8);
+        java.nio.ByteBuffer keysBuffer = java.nio.ByteBuffer.allocateDirect(100 * 4); // 4 bytes per int
         keysBuffer.order(java.nio.ByteOrder.nativeOrder());
-        java.nio.LongBuffer longBuffer = keysBuffer.asLongBuffer();
+        java.nio.IntBuffer intBuffer = keysBuffer.asIntBuffer();
         
         // Simple sequence: h-e-l-l-o (using token indices)
         char[] letters = {'h', 'e', 'l', 'l', 'o'};
         for (int i = 0; i < 100; i++) {
             if (i < letters.length) {
-                longBuffer.put(letters[i] - 'a' + 4); // Simple char to token mapping
+                intBuffer.put(letters[i] - 'a' + 4); // Simple char to token mapping
             } else {
-                longBuffer.put(0); // Padding
+                intBuffer.put(0); // Padding
             }
         }
-        longBuffer.rewind();
+        intBuffer.rewind();
         
-        OnnxTensor nearestKeysTensor = OnnxTensor.createTensor(env, longBuffer, new long[]{1, 100});
+        OnnxTensor nearestKeysTensor = OnnxTensor.createTensor(env, intBuffer, new long[]{1, 100});
         System.out.println("   Nearest keys tensor: " + java.util.Arrays.toString(nearestKeysTensor.getInfo().getShape()));
         
         // Source mask: [1, 100] - boolean mask for padding
@@ -198,7 +198,7 @@ public class TestNeuralSystem
         System.out.println("\nTesting decoder inference...");
         
         // Load decoder model
-        String decoderPath = "assets/models/swipe_decoder_character_quant.onnx";
+        String decoderPath = "assets/models/swipe_decoder_android.onnx";
         byte[] decoderData = loadModelFile(new File(decoderPath));
         OrtSession decoderSession = env.createSession(decoderData);
         
@@ -206,19 +206,19 @@ public class TestNeuralSystem
         int decoderSeqLength = 20;
         
         // Target tokens: [1, 20] - start with SOS token
-        long[] targetTokens = new long[decoderSeqLength];
+        int[] targetTokens = new int[decoderSeqLength];
         targetTokens[0] = 2; // SOS_IDX
         // Rest are padding (0)
         
-        java.nio.ByteBuffer tokensBuffer = java.nio.ByteBuffer.allocateDirect(decoderSeqLength * 8);
+        java.nio.ByteBuffer tokensBuffer = java.nio.ByteBuffer.allocateDirect(decoderSeqLength * 4); // 4 bytes per int
         tokensBuffer.order(java.nio.ByteOrder.nativeOrder());
-        java.nio.LongBuffer longBuffer = tokensBuffer.asLongBuffer();
-        for (long token : targetTokens) {
-            longBuffer.put(token);
+        java.nio.IntBuffer intBuffer = tokensBuffer.asIntBuffer();
+        for (int token : targetTokens) {
+            intBuffer.put(token);
         }
-        longBuffer.rewind();
+        intBuffer.rewind();
         
-        OnnxTensor targetTokensTensor = OnnxTensor.createTensor(env, longBuffer, new long[]{1, decoderSeqLength});
+        OnnxTensor targetTokensTensor = OnnxTensor.createTensor(env, intBuffer, new long[]{1, decoderSeqLength});
         
         // Target mask: [1, 20] - mask positions after SOS token
         boolean[][] targetMaskData = new boolean[1][decoderSeqLength];
@@ -247,13 +247,13 @@ public class TestNeuralSystem
             OnnxTensor logits = (OnnxTensor) decoderResult.get(0);
             System.out.println("   Logits tensor: " + java.util.Arrays.toString(logits.getInfo().getShape()));
             
-            float[] logitsData = (float[]) logits.getValue();
+            float[][][] logitsData = (float[][][]) logits.getValue();
             System.out.println("   Logits data length: " + logitsData.length);
             
             // Show first few logits
             System.out.print("   First 10 logits: ");
-            for (int i = 0; i < Math.min(10, logitsData.length); i++) {
-                System.out.printf("%.3f ", logitsData[i]);
+            for (int i = 0; i < Math.min(10, logitsData[0][0].length); i++) {
+                System.out.printf("%.3f ", logitsData[0][0][i]);
             }
             System.out.println();
         }
