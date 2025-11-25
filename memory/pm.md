@@ -59,6 +59,13 @@
 
 **Impact**: Complete reference for debugging neural prediction issues and understanding the entire transformation pipeline from raw touch to NN input tensor.
 
+**Code Fix (commit 51756526):**
+- ✅ Fixed SwipeTrajectoryProcessor.java to use correct maxSequenceLength = 250
+  - Updated comment: "Pads to 150" → "Pads to 250 (max sequence length)"
+  - Updated ArrayList capacities from 150 → 250 (5 arrays)
+  - Prevents unnecessary array resizing during trajectory processing
+  - Matches actual model input size (SwipePredictorOrchestrator.kt:64)
+
 ### 🔧 Previous Work (v1.32.640-642) - TERMUX LAG FIX + BUG RE-FIX! ⚡
 
 **PHASE 1-3 COMPLETE** (v1.32.635-638, commits b5147bfb → 521f86c6):
