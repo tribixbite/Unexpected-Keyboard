@@ -123,6 +123,11 @@ public final class Config
   public boolean swipe_show_raw_beam_predictions; // Show raw beam outputs (labeled) at end of suggestions
   public boolean termux_mode_enabled; // Termux-compatible prediction insertion
 
+  // Beam search tuning (v1.35+)
+  public float neural_beam_alpha; // Length normalization (default 1.2)
+  public float neural_beam_prune_confidence; // Adaptive width confidence threshold (default 0.8)
+  public float neural_beam_score_gap; // Early stopping score gap (default 5.0)
+
   // Neural model versioning and resampling (v1.34+)
   public String neural_model_version; // "v2" (builtin), "v1", "v3" (external)
   public boolean neural_use_quantized; // Use INT8 quantized models (faster) vs float32 (more accurate)
@@ -319,6 +324,11 @@ public final class Config
     swipe_debug_show_raw_output = _prefs.getBoolean("swipe_debug_show_raw_output", true);
     swipe_show_raw_beam_predictions = _prefs.getBoolean("swipe_show_raw_beam_predictions", false);
 
+    // Beam search tuning
+    neural_beam_alpha = safeGetFloat(_prefs, "neural_beam_alpha", 1.2f);
+    neural_beam_prune_confidence = safeGetFloat(_prefs, "neural_beam_prune_confidence", 0.8f);
+    neural_beam_score_gap = safeGetFloat(_prefs, "neural_beam_score_gap", 5.0f);
+
     // Neural model versioning and resampling (v1.34+)
     neural_model_version = _prefs.getString("neural_model_version", "v2"); // Default to v2 (builtin, 80.6% accuracy)
     neural_use_quantized = _prefs.getBoolean("neural_use_quantized", false); // Default to float32 (more stable)
@@ -496,6 +506,9 @@ public final class Config
       {"prediction_frequency_scale", "1000.0"},
       {"autocorrect_char_match_threshold", "0.67"},
       {"neural_confidence_threshold", "0.1"},
+      {"neural_beam_alpha", "1.2"},
+      {"neural_beam_prune_confidence", "0.8"},
+      {"neural_beam_score_gap", "5.0"},
       {"swipe_rare_words_penalty", "0.75"},
       {"swipe_common_words_boost", "1.3"},
       {"swipe_top5000_boost", "1.0"},

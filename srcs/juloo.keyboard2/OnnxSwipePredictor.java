@@ -104,6 +104,11 @@ public class OnnxSwipePredictor
   private int _maxLength = DEFAULT_MAX_LENGTH;
   private float _confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD;
   
+  // Beam search tuning parameters (v1.35+)
+  private float _beamAlpha = 1.2f;
+  private float _beamPruneConfidence = 0.8f;
+  private float _beamScoreGap = 5.0f;
+  
   // OPTIMIZATION: Dedicated thread pool for ONNX operations (1.5x speedup expected)
   private static ExecutorService _onnxExecutor;
   private static final Object _executorLock = new Object();
@@ -1116,6 +1121,11 @@ public class OnnxSwipePredictor
       _maxLength = config.neural_max_length != 0 ? config.neural_max_length : DEFAULT_MAX_LENGTH;
       _confidenceThreshold = config.neural_confidence_threshold != 0 ?
         config.neural_confidence_threshold : DEFAULT_CONFIDENCE_THRESHOLD;
+        
+      // Beam search tuning
+      _beamAlpha = config.neural_beam_alpha;
+      _beamPruneConfidence = config.neural_beam_prune_confidence;
+      _beamScoreGap = config.neural_beam_score_gap;
 
       // OPTIMIZATION: Removed automatic model reload logic per user request.
       // Changes to 'neural_model_version' or custom paths now require a keyboard restart.
@@ -1541,6 +1551,9 @@ public class OnnxSwipePredictor
         _beamWidth,
         _maxLength,
         _confidenceThreshold,
+        _beamAlpha,
+        _beamPruneConfidence,
+        _beamScoreGap,
         logger
     );
 

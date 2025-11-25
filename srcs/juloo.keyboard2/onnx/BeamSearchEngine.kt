@@ -35,6 +35,9 @@ class BeamSearchEngine(
     private val beamWidth: Int,
     private val maxLength: Int,
     private val confidenceThreshold: Float = 0.05f, // Lowered default (0.1 -> 0.05)
+    private val lengthPenaltyAlpha: Float = 1.2f, // Length normalization factor
+    private val adaptiveWidthConfidence: Float = 0.8f, // Pruning confidence threshold
+    private val scoreGapThreshold: Float = 5.0f, // Early stopping score gap
     private val debugLogger: ((String) -> Unit)? = null
 ) {
 
@@ -52,9 +55,7 @@ class BeamSearchEngine(
         private const val LOG_PROB_THRESHOLD = -13.8f // approx ln(1e-6)
         private const val PRUNE_STEP_THRESHOLD = 2
         private const val ADAPTIVE_WIDTH_STEP = 5
-        private const val ADAPTIVE_WIDTH_CONFIDENCE = 0.8f
         private const val SCORE_GAP_STEP = 3
-        private const val SCORE_GAP_THRESHOLD = 5.0f
         
         // Diversity parameters (4D: Diverse Beam Search)
         private const val DIVERSITY_LAMBDA = 0.5f // Penalty weight for similar beams
@@ -137,12 +138,11 @@ class BeamSearchEngine(
             // 4C: Length-Normalized Scoring
             // Normalize score by sequence length to prevent bias towards short words
             // alpha = 0.6 to 0.7 is standard. 1.0 = linear average.
-            val alpha = 1.2f 
             
             candidates.sortBy { 
                 val len = it.tokens.size.toFloat()
                 // Avoid division by zero or extremely short length bias
-                val normFactor = (5.0 + len).pow(alpha.toDouble()).toFloat() / 6.0.pow(alpha.toDouble()).toFloat()
+                val normFactor = (5.0 + len).pow(lengthPenaltyAlpha.toDouble()).toFloat() / 6.0.pow(lengthPenaltyAlpha.toDouble()).toFloat()
                 it.score / normFactor 
             }
             
@@ -168,7 +168,7 @@ class BeamSearchEngine(
             if (step == ADAPTIVE_WIDTH_STEP && beams.size > 3) {
                 val topScore = beams[0].score
                 val confidence = exp(-topScore)
-                if (confidence > ADAPTIVE_WIDTH_CONFIDENCE) {
+                if (confidence > adaptiveWidthConfidence) {
                     // Prune to top 3 if very confident
                     while (beams.size > 3) beams.removeAt(beams.size - 1)
                 }
@@ -180,7 +180,7 @@ class BeamSearchEngine(
                 val secondScore = beams[1].score
                 val gap = secondScore - topScore // positive since lower is better
                 
-                if (beams[0].finished && gap > SCORE_GAP_THRESHOLD) {
+                if (beams[0].finished && gap > scoreGapThreshold) {
                     // logDebug("Score gap early stop: $gap")
                     break
                 }
