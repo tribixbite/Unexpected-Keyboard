@@ -63,11 +63,12 @@ object LayoutModifier {
         // 'kw_keys' contains the keys present on the layout without any extra keys
         val kw_keys = kw.keys.keys
 
-        if (globalConfig.extra_keys_subtype != null && kw.locale_extra_keys) {
+        val extraKeysSubtype = globalConfig.extra_keys_subtype
+        if (extraKeysSubtype != null && kw.locale_extra_keys) {
             val present = mutableSetOf<KeyValue>()
             present.addAll(kw_keys)
             present.addAll(extra_keys_keyset)
-            globalConfig.extra_keys_subtype.compute(
+            extraKeysSubtype.compute(
                 extra_keys,
                 ExtraKeys.Query(kw.script, present)
             )

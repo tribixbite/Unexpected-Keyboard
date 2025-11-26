@@ -9,69 +9,70 @@
 
 ## 🔥 Current Status (2025-11-26 - UPDATED)
 
-**Latest Version**: v1.32.838 🎯
-**Build Status**: ✅ PRODUCTION READY - ClipboardDatabase Migrated!
+**Latest Version**: v1.32.841 🎯
+**Build Status**: ✅ PRODUCTION READY - Config Migrated!
 **Branch**: feature/swipe-typing
-**Current Focus**: ✅ Kotlin Migration - 93% Complete (137/147 files)!
-**Migration Progress**: 137 Kotlin files, 10 Java files remaining (93.2% complete)
+**Current Focus**: ✅ Kotlin Migration - 94% Complete (138/147 files)!
+**Migration Progress**: 138 Kotlin files, 9 Java files remaining (94.0% complete)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
 **Critical Fixes**: 54 fixes applied (see history below) - ALL OPTIMIZATIONS COMPLETE
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 
-### 🔄 Latest Work (2025-11-26) - KOTLIN MIGRATION: ClipboardDatabase - SQLite Database! 🎯
+### 🔄 Latest Work (2025-11-26) - KOTLIN MIGRATION: Config - Core Configuration! 🎯
 
 **SUCCESSFUL JAVA→KOTLIN MIGRATION**:
 
 **Migration Results**:
-- **File**: ClipboardDatabase.java → ClipboardDatabase.kt
-- **Line Count**: 788 lines (Java) → 376 lines (Kotlin) - **~52% smaller!**
-- **Build Status**: ✅ SUCCESS (used by ClipboardHistoryService)
-- **Migration Progress**: 92.5% → 93.2% (137/147 files migrated)
-- **Java Interop**: @JvmStatic getInstance() for Java callers
+- **File**: Config.java → Config.kt
+- **Line Count**: 660 lines (Java) → 592 lines (Kotlin) - **~10% smaller**
+- **Build Status**: ✅ SUCCESS (core configuration class)
+- **Migration Progress**: 93.2% → 94.0% (138/147 files migrated)
+- **Java Interop**: @JvmStatic methods + @JvmField on 100+ properties
 
 **Technical Achievements**:
-1. **SQLite Database Management**:
-   - 15+ database operations for clipboard history
-   - Duplicate detection with content hash (efficient)
-   - Expiry timestamp tracking for auto-cleanup
-   - Pin/unpin support for important entries
-   - Size limits (by count and bytes)
-   - Import/export to JSON
+1. **Configuration Management**:
+   - 100+ user preferences (swipe, autocorrect, themes, clipboard, neural)
+   - Safe type conversions: safeGetInt, safeGetFloat (handles corrupted prefs)
+   - repairCorruptedFloatPreferences: fixes bad imports (int→float conversion)
+   - Orientation-aware settings (portrait/landscape, folded/unfolded)
+   - Dynamic theme selection with night mode detection
+   - Config migration system (version 0→3)
 
 2. **Kotlin Language Features**:
-   - Use blocks for automatic Cursor closing (rawQuery.use {})
-   - When expressions for validation logic
-   - Companion object with @JvmStatic singleton pattern
-   - Data class for StorageStats (totalEntries, activeEntries, pinnedEntries, sizes)
-   - Elvis operator for default values
-   - String templates for SQL queries
-   - Extension functions: isNullOrBlank(), trim(), hashCode()
+   - @JvmStatic on companion methods (initGlobalConfig, globalConfig, globalPrefs)
+   - @JvmField on ALL 100+ properties for Java access
+   - When expressions for theme selection (10+ themes)
+   - Elvis operators for null-safe defaults
+   - Extension functions: filterNotNull(), coerceIn()
+   - Property initialization in init block
+   - Local variables to enable smart casts
 
-3. **Code Reduction (52%!)**:
-   - Try-with-resources → use blocks (automatic closing)
-   - Verbose cursor iteration → cursor.use + do-while
-   - ContentValues initialization → apply blocks
-   - Builder pattern → primary constructor
-   - String concatenation → templates
-   - Collection building → joinToString, forEach
+3. **Code Reduction (10%)**:
+   - Ternary operators → if expressions
+   - Verbose null checks → elvis operators
+   - String concatenation → string templates
+   - Switch statements → when expressions
+   - Manual type casts → safe casts with try-catch chains
 
-4. **Java Interop**:
-   - @JvmStatic on getInstance() for Java callers (SettingsActivity)
-   - Singleton pattern preserved with thread safety (synchronized block)
-   - Works with existing ClipboardEntry.kt class
-   - All public methods accessible from Java
+4. **Java Interop (Critical!)**:
+   - @JvmStatic on companion methods for static access
+   - @JvmField on ALL properties (layouts, swipe settings, themes, etc.)
+   - Non-nullable return types (Config!!, SharedPreferences!!)
+   - Interface IKeyEventHandler preserved with correct signatures
+   - Used by: Keyboard2.java, Keyboard2View.java, SettingsActivity.java, SuggestionHandler.java
 
 **Files Modified**:
-- ClipboardDatabase.java → ClipboardDatabase.kt (MIGRATED)
-- Used by: ClipboardHistoryService.kt, SettingsActivity.java
+- Config.java → Config.kt (MIGRATED - 592 lines)
+- LayoutModifier.kt (fixed smart cast with local variable)
+- Used by: Keyboard2, Keyboard2View, SettingsActivity, and many Kotlin files
 
 **Benefits**:
-- 52% code reduction (largest reduction yet!)
-- Cleaner database operations with use blocks
-- Thread-safe singleton with @JvmStatic
-- Full Java compatibility
-- Modern Kotlin idioms throughout
-- Automatic resource cleanup (no cursor leaks)
+- 10% code reduction
+- Type-safe configuration loading
+- Full Java compatibility maintained
+- Modern Kotlin idioms
+- Cleaner null handling
+- Corruption-resistant preference loading
 
 ### 📚 Previous Work (2025-11-26) - KOTLIN MIGRATION: BackupRestoreManager + Java Interop! 🎯
 
