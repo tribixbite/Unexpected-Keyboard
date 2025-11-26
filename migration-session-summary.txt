@@ -1,6 +1,6 @@
 ## Java→Kotlin Migration Progress
 
-### Completed This Session (19 files total)
+### Completed This Session (21 files total)
 
 #### Previous Session (7 files)
 1. BigramModel.java → BigramModel.kt (551→507 lines, 8% reduction)
@@ -11,7 +11,7 @@
 6. AsyncPredictionHandler.java → AsyncPredictionHandler.kt (205→157 lines, 23% reduction)
 7. BinaryDictionaryLoader.java → BinaryDictionaryLoader.kt (312→271 lines, 13% reduction)
 
-#### This Session (12 files)
+#### This Session (14 files)
 8. SwipeInput.java → SwipeInput.kt (201→189 lines, 6% reduction) - @JvmField
 9. PredictionContextTracker.java → PredictionContextTracker.kt (261→225 lines, 14% reduction)
 10. PredictionCoordinator.java → PredictionCoordinator.kt (316→271 lines, 14% reduction)
@@ -24,9 +24,11 @@
 17. SwipeResampler.java → SwipeResampler.kt (249→238 lines, 4% reduction)
 18. EnhancedSwipeGestureRecognizer.java → EnhancedSwipeGestureRecognizer.kt (14→7 lines)
 19. NeuralSwipeTypingEngine.java → NeuralSwipeTypingEngine.kt (264→211 lines, 20% reduction)
+20. SwipeAdvancedSettings.java → SwipeAdvancedSettings.kt (182→170 lines, 7% reduction)
+21. SwipeMLData.java → SwipeMLData.kt (295→256 lines, 13% reduction)
 
-**Total: 5,020 lines Java → 4,186 lines Kotlin (17% reduction)**
-**Remaining: 79 Java files** (from 98 total)
+**Total: 5,497 lines Java → 4,612 lines Kotlin (16% reduction)**
+**Remaining: 77 Java files** (from 98 total)
 
 All builds successful ✅
 
@@ -46,3 +48,8 @@ All builds successful ✅
 - fun interface for SAM conversions
 - Primary constructors
 - Property access instead of getters
+- Singleton with double-checked locking (@Volatile + synchronized)
+- Multiple constructors (primary + secondary)
+- toList() for defensive copies
+- last() instead of get(size - 1)
+- apply{} for builder patterns
