@@ -56,10 +56,8 @@ class SubtypeLayoutInitializer(
         val subtypeManager = existingSubtypeManager ?: SubtypeManager(keyboard2)
 
         // Refresh subtype and get default layout
-        var defaultLayout = subtypeManager.refreshSubtype(config, resources)
-        if (defaultLayout == null) {
-            defaultLayout = KeyboardData.load(resources, R.xml.latn_qwerty_us)
-        }
+        val defaultLayout = subtypeManager.refreshSubtype(config, resources)
+            ?: KeyboardData.load(resources, R.xml.latn_qwerty_us)
 
         // Update or create LayoutManager
         val layoutManager: LayoutManager
