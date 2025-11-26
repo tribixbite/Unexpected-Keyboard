@@ -1,0 +1,1111 @@
+--------- beginning of main
+11-23 17:36:07.094 28499 28499 D SuggestionBar: clearSuggestions called - showing empty list instead of hiding
+11-23 17:36:07.094 28499 28499 D InputMethodService: unregisterCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:07.094 28499 28499 D InputMethodService: updateClientDisplayId: displayId=0, mClientDisplayId=0
+11-23 17:36:07.095 28499 28499 W Config  : Fixed clipboard_history_limit type mismatch: 0
+11-23 17:36:07.095 28499 28499 D OptimizedVocabulary: Config cached: confidenceWeight=0.75, autocorrect=true
+11-23 17:36:07.095 28499 28499 D OnnxSwipePredictor: Config updated: verbose_logging=true, show_raw=true, batch_beams=false
+11-23 17:36:07.095 28499 28499 D SwipeTrajectoryProcessor: Resampling mode set to: DISCARD
+11-23 17:36:07.095 28499 28499 D NeuralSwipeTypingEngine: Neural config updated
+11-23 17:36:07.095 28499 28499 D Keyboard2View: Pre-calculated keyWidth=106.425 for immediate touch handling
+11-23 17:36:07.095 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x783
+11-23 17:36:07.096 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:07.096 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:07.096 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:07.096 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:07.096 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:07.096 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:07.096 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:07.096 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:07.096 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:07.097 28499 28499 D juloo.keyboard2: inputType=0x0 imeOptions=0x0 privateImeOptions=null
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: actionLabel=null actionId=0
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: initialSelStart=-1 initialSelEnd=-1 initialToolType=1 initialCapsMode=0x0
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: hintText=null label=null
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: packageName=com.sec.android.app.launcher autofillId=0 fieldId=0 fieldName=null
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: extras=Bundle[{appShowRequested=false, isTextEditor=false, displayId=0}]
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: hintLocales=null
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: supportedHandwritingGestureTypes=(none)
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: supportedHandwritingGesturePreviewTypes=(none)
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: isStylusHandwritingEnabled=false
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: writingToolsEnabled=true
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: contentMimeTypes=null
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: extras: Bundle[{appShowRequested=false, isTextEditor=false, displayId=0}]
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: swapEnterActionKey: true
+11-23 17:36:07.099 28499 28499 D juloo.keyboard2: actionLabel: null
+11-23 17:36:07.099 28499 28499 D InputMethodService: registerCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:07.099 28499 28499 I InputMethod: hideSoftInput(): flags=0
+11-23 17:36:07.100 28499 28499 D SuggestionBar: clearSuggestions called - showing empty list instead of hiding
+11-23 17:36:07.100 28499 28499 D InputMethodService: unregisterCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:07.100 28499 28499 D InputMethodService: sendBroadcastImeShownState: isInputViewShown=false candidatesVisibility=4
+11-23 17:36:07.100 28499 28499 D InputMethodService: sendInputViewShownStateSSRM(): false
+11-23 17:36:07.101 28499 28499 I InputMethodService: scheduleImeSurfaceRemoval: removeImeSurface is posted.
+11-23 17:36:07.101 28499 28499 I ImeTracker: system_server:1e53a17b: onHidden
+11-23 17:36:07.101 28499 28499 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = VRI[InputMethod]@485b086 mNativeObject= 0xb4000075aa3e1bc0 sc.mNativeObject= 0xb4000076ba3328d0 format= -2 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3574 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 
+11-23 17:36:07.101 28499 28499 I VRI[InputMethod]@485b086: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=true req=(1080,2340)0 dur=0 res=0x0 s={true 0xb40000751a3cd070} ch=false seqId=0
+11-23 17:36:07.102 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:07.102 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:07.102 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:07.102 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:07.102 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:07.102 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:07.102 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:07.102 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:07.102 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:07.104 28499 28499 I VRI[InputMethod]@485b086: registerCallbackForPendingTransactions
+11-23 17:36:07.105 28499 28618 I VRI[InputMethod]@485b086: mWNT: t=0xb40000763a4e5810 mBlastBufferQueue=0xb4000075aa3e1bc0 fn= 227 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$10.onFrameDraw:6536 android.view.ViewRootImpl$4.onFrameDraw:2489 android.view.ThreadedRenderer$1.onFrameDraw:718 
+11-23 17:36:07.107 28499 28620 D HWUI    : CacheManager::trimMemory(20)
+11-23 17:36:07.115 28499 28499 I InputMethodService: scheduleImeSurfaceRemoval: canceled, mShowInputRequested=false, mWindowVisible=false, IsmWindowNull=false, IsmImeSurfaceRemoverRunnableNotNull=true
+11-23 17:36:07.601 28499 28499 I InputMethodService: removeImeSurface
+11-23 17:36:07.601 28499 28499 I InputMethodService: cancelImeSurfaceRemoval: removeCallbacks
+11-23 17:36:07.607 28499 28620 D HWUI    : CacheManager::trimMemory(20)
+11-23 17:36:07.615 28499 28499 I VRI[InputMethod]@485b086: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)8 dur=5 res=0x2 s={false 0x0} ch=true seqId=0
+11-23 17:36:07.616 28499 28499 D VRI[InputMethod]@485b086: Not drawing due to not visible. Reason=View.GONE
+11-23 17:36:07.642 28499 28499 I VRI[SwipeDebugActivity]@d02771: handleAppVisibility mAppVisible = false visible = true
+11-23 17:36:07.643 28499 28499 I VRI[SwipeDebugActivity]@d02771: stopped(false) old = true
+11-23 17:36:07.643 28499 28499 D VRI[SwipeDebugActivity]@d02771: WindowStopped on juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity set to false
+11-23 17:36:07.650 28499 28499 I InsetsController: onStateChanged: host=juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity, from=android.view.ViewRootImpl.onInsetsStateChanged:3026, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 85 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(514, 0 - 566, 85), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={2.8125} cutoutSpec={M 0,0 H -9.333333333333333 V 30.13333333333333 H 9.333333333333333 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=39, center=Point(39, 39)}, RoundedCorner{position=TopRight, radius=39, center=Point(1041, 39)}, RoundedCorner{position=BottomRight, radius=39, center=Point(1041, 2301)}, RoundedCorner{position=BottomLeft, radius=39, center=Point(39, 2301)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(964, 0 - 1080, 85) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2340 physicalPixelDisplaySizeRatio=0.75 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {8ced0001 mType=navigationBars mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0004 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {8ced0005 mType=mandatorySystemGestures mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0006 mType=tappableElement mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0024 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {3 mType=ime mFrame=[0,0][0,0] mVisible=false mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50000 mType=statusBars mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50005 mType=mandatorySystemGestures mFrame=[0,0][1080,117] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50006 mType=tappableElement mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+11-23 17:36:07.651 28499 28499 I BufferQueueProducer: [](id:6f530000001f,api:0,p:-1,c:28499) setDequeueTimeout:2077252342
+11-23 17:36:07.651 28499 28499 I BLASTBufferQueue_Java: new BLASTBufferQueue, mName= VRI[SwipeDebugActivity]@d02771 mNativeObject= 0xb4000075aa3e1bc0 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3585 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 android.view.Choreographer.doCallbacks:1367 android.view.Choreographer.doFrame:1292 android.view.Choreographer$FrameDisplayEventReceiver.run:1870 
+11-23 17:36:07.651 28499 28499 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = VRI[SwipeDebugActivity]@d02771 mNativeObject= 0xb4000075aa3e1bc0 sc.mNativeObject= 0xb4000076ba3328d0 format= -1 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3590 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 
+11-23 17:36:07.651 28499 28499 I VRI[SwipeDebugActivity]@d02771: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)0 dur=3 res=0x3 s={true 0xb40000751a3dc510} ch=true seqId=0
+11-23 17:36:07.651 28499 28499 D VRI[SwipeDebugActivity]@d02771: mThreadedRenderer.initialize() mSurface={isValid=true 0xb40000751a3dc510} hwInitialized=true
+11-23 17:36:07.652 28499 28499 D ScrollView:  onsize change changed 
+11-23 17:36:07.652 28499 28499 D VRI[SwipeDebugActivity]@d02771: reportNextDraw android.view.ViewRootImpl.performTraversals:5443 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 
+11-23 17:36:07.652 28499 28499 D VRI[SwipeDebugActivity]@d02771: Setup new sync=wmsSync-VRI[SwipeDebugActivity]@d02771#68
+11-23 17:36:07.652 28499 28499 I VRI[SwipeDebugActivity]@d02771: Creating new active sync group VRI[SwipeDebugActivity]@d02771#69
+11-23 17:36:07.652 28499 28499 D VRI[SwipeDebugActivity]@d02771: Start draw after previous draw not visible
+11-23 17:36:07.652 28499 28499 D VRI[SwipeDebugActivity]@d02771: registerCallbacksForSync syncBuffer=false
+11-23 17:36:07.653 28499 28619 D VRI[SwipeDebugActivity]@d02771: Received frameDrawingCallback syncResult=0 frameNum=1.
+11-23 17:36:07.653 28499 28619 I VRI[SwipeDebugActivity]@d02771: mWNT: t=0xb40000763a4e7410 mBlastBufferQueue=0xb4000075aa3e1bc0 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$12.onFrameDraw:15441 android.view.ThreadedRenderer$1.onFrameDraw:718 <bottom of call stack> 
+11-23 17:36:07.653 28499 28619 I VRI[SwipeDebugActivity]@d02771: Setting up sync and frameCommitCallback
+11-23 17:36:07.656 28499 28620 I BLASTBufferQueue: [VRI[SwipeDebugActivity]@d02771#31](f:0,a:0,s:0) onFrameAvailable the first frame is available
+11-23 17:36:07.656 28499 28620 I SurfaceComposerClient: apply transaction with the first frame. layerId: 42533, bufferData(ID: 122402272968828, frameNumber: 1)
+11-23 17:36:07.656 28499 28620 I VRI[SwipeDebugActivity]@d02771: Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+11-23 17:36:07.656 28499 28499 D VRI[SwipeDebugActivity]@d02771: reportDrawFinished seqId=0
+11-23 17:36:07.657 28499 28499 I InsetsSourceConsumer: applyRequestedVisibilityToControl: visible=true, type=statusBars, host=juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity
+11-23 17:36:07.657 28499 28499 I InsetsSourceConsumer: applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity
+11-23 17:36:07.675 28499 28499 D VRI[SwipeDebugActivity]@d02771: mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb40000751a3dc510}
+11-23 17:36:07.675 28499 28499 D InputMethodManagerUtils: startInputInner - Id : 0
+11-23 17:36:07.675 28499 28499 I InputMethodManager: startInputInner - IInputMethodManagerGlobalInvoker.startInputOrWindowGainedFocus
+11-23 17:36:07.677 28499 28499 D InputMethodService: unregisterCompatOnBackInvokedCallback return because registered : false
+11-23 17:36:07.677 28499 28499 D InputMethodService: updateClientDisplayId: displayId=0, mClientDisplayId=0
+11-23 17:36:07.677 28499 28499 I InputMethod: showSoftInput(): flags=1
+11-23 17:36:07.677 28499 28659 D InputTransport: Input channel constructed: 'ClientS', fd=170
+11-23 17:36:07.678 28499 28499 W Config  : Fixed clipboard_history_limit type mismatch: 0
+11-23 17:36:07.678 28499 28499 D OptimizedVocabulary: Config cached: confidenceWeight=0.75, autocorrect=true
+11-23 17:36:07.678 28499 28499 D OnnxSwipePredictor: Config updated: verbose_logging=true, show_raw=true, batch_beams=false
+11-23 17:36:07.678 28499 28499 D SwipeTrajectoryProcessor: Resampling mode set to: DISCARD
+11-23 17:36:07.678 28499 28499 D NeuralSwipeTypingEngine: Neural config updated
+11-23 17:36:07.678 28499 28499 D Keyboard2View: Pre-calculated keyWidth=106.425 for immediate touch handling
+11-23 17:36:07.678 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x783
+11-23 17:36:07.679 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:07.679 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:07.679 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:07.679 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:07.679 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:07.679 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:07.679 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:07.679 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:07.679 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: inputType=0x1 imeOptions=0x6 privateImeOptions=null
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: actionLabel=null actionId=0
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: initialSelStart=11 initialSelEnd=11 initialToolType=1 initialCapsMode=0x0
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: hintText=Type or swipe here... label=null
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: packageName=juloo.keyboard2.debug autofillId=1073741824 fieldId=2131296518 fieldName=null
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: extras=Bundle[{androidx.core.view.inputmethod.EditorInfoCompat.STYLUS_HANDWRITING_ENABLED=true, appShowRequested=false, maxLength=5000, isTextEditor=true, displayId=0}]
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: hintLocales=null
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: supportedHandwritingGestureTypes=SELECT|SELECT_RANGE|INSERT|DELETE|DELETE_RANGE|REMOVE_SPACE|JOIN_OR_SPLIT
+11-23 17:36:07.682 28499 28499 D juloo.keyboard2: supportedHandwritingGesturePreviewTypes=SELECT|SELECT_RANGE|DELETE|DELETE_RANGE
+11-23 17:36:07.683 28499 28499 D juloo.keyboard2: isStylusHandwritingEnabled=true
+11-23 17:36:07.683 28499 28499 D juloo.keyboard2: writingToolsEnabled=true
+11-23 17:36:07.683 28499 28499 D juloo.keyboard2: contentMimeTypes=null
+11-23 17:36:07.683 28499 28499 D juloo.keyboard2: extras: Bundle[{androidx.core.view.inputmethod.EditorInfoCompat.STYLUS_HANDWRITING_ENABLED=true, appShowRequested=false, maxLength=5000, isTextEditor=true, displayId=0}]
+11-23 17:36:07.683 28499 28499 D juloo.keyboard2: swapEnterActionKey: true
+11-23 17:36:07.683 28499 28499 D juloo.keyboard2: actionLabel: Done
+11-23 17:36:07.683 28499 28499 D InputMethodService: sendBroadcastImeShownState: isInputViewShown=true candidatesVisibility=4
+11-23 17:36:07.683 28499 28499 D InputMethodService: sendInputViewShownStateSSRM(): true
+11-23 17:36:07.683 28499 28499 D InputMethodService: registerCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:07.684 28499 28499 I InputMethodManager: handleMessage: setImeVisibility visible=true
+11-23 17:36:07.684 28499 28499 D InsetsController: show(ime(), fromIme=false)
+11-23 17:36:07.684 28499 28499 I ImeTracker: juloo.keyboard2.debug:85e1215c: onCancelled at PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+11-23 17:36:07.684 28499 28499 I InputMethod: showSoftInput(): flags=1
+11-23 17:36:07.684 28499 28499 I InputMethodService: startViews: mShowInputRequested=true, mInputViewStarted=true, mCandidatesViewStarted= false
+11-23 17:36:07.684 28499 28499 D InputMethodService: sendBroadcastImeShownState: isInputViewShown=true candidatesVisibility=4
+11-23 17:36:07.684 28499 28499 D InputMethodService: registerCompatOnBackInvokedCallback return because registered : true
+11-23 17:36:07.687 28499 28499 I BufferQueueProducer: [](id:6f5300000020,api:0,p:2049323504,c:28499) setDequeueTimeout:2077252342
+11-23 17:36:07.687 28499 28499 I BLASTBufferQueue_Java: new BLASTBufferQueue, mName= VRI[InputMethod]@485b086 mNativeObject= 0xb4000075aa345200 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3585 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 android.view.Choreographer.doCallbacks:1367 android.view.Choreographer.doFrame:1292 android.view.Choreographer$FrameDisplayEventReceiver.run:1870 
+11-23 17:36:07.687 28499 28499 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = VRI[InputMethod]@485b086 mNativeObject= 0xb4000075aa345200 sc.mNativeObject= 0xb4000076ba27b210 format= -2 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3590 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 
+11-23 17:36:07.687 28499 28499 I VRI[InputMethod]@485b086: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)0 dur=2 res=0x3 s={true 0xb40000751a25ee50} ch=true seqId=0
+11-23 17:36:07.687 28499 28499 D VRI[InputMethod]@485b086: mThreadedRenderer.initialize() mSurface={isValid=true 0xb40000751a25ee50} hwInitialized=true
+11-23 17:36:07.688 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:07.688 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:07.688 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:07.688 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:07.688 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:07.688 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:07.688 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:07.688 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:07.688 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:07.689 28499 28499 D VRI[InputMethod]@485b086: reportNextDraw android.view.ViewRootImpl.performTraversals:5443 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 
+11-23 17:36:07.689 28499 28499 D VRI[InputMethod]@485b086: Setup new sync=wmsSync-VRI[InputMethod]@485b086#70
+11-23 17:36:07.689 28499 28499 I VRI[InputMethod]@485b086: Creating new active sync group VRI[InputMethod]@485b086#71
+11-23 17:36:07.689 28499 28499 D VRI[InputMethod]@485b086: Start draw after previous draw not visible
+11-23 17:36:07.690 28499 28499 D VRI[InputMethod]@485b086: registerCallbacksForSync syncBuffer=false
+11-23 17:36:07.691 28499 28618 D VRI[InputMethod]@485b086: Received frameDrawingCallback syncResult=0 frameNum=1.
+11-23 17:36:07.691 28499 28618 I VRI[InputMethod]@485b086: mWNT: t=0xb40000763a388b50 mBlastBufferQueue=0xb4000075aa345200 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$12.onFrameDraw:15441 android.view.ThreadedRenderer$1.onFrameDraw:718 <bottom of call stack> 
+11-23 17:36:07.691 28499 28618 I VRI[InputMethod]@485b086: Setting up sync and frameCommitCallback
+11-23 17:36:07.692 28499 28620 I BLASTBufferQueue: [VRI[InputMethod]@485b086#32](f:0,a:0,s:0) onFrameAvailable the first frame is available
+11-23 17:36:07.692 28499 28620 I SurfaceComposerClient: apply transaction with the first frame. layerId: 42537, bufferData(ID: 122402272968835, frameNumber: 1)
+11-23 17:36:07.692 28499 28620 I VRI[InputMethod]@485b086: Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+11-23 17:36:07.692 28499 28499 D VRI[InputMethod]@485b086: reportDrawFinished seqId=0
+11-23 17:36:07.704 28499 28499 I InsetsController: onStateChanged: host=juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity, from=android.view.ViewRootImpl.onInsetsStateChanged:3026, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 85 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(514, 0 - 566, 85), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={2.8125} cutoutSpec={M 0,0 H -9.333333333333333 V 30.13333333333333 H 9.333333333333333 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=39, center=Point(39, 39)}, RoundedCorner{position=TopRight, radius=39, center=Point(1041, 39)}, RoundedCorner{position=BottomRight, radius=39, center=Point(1041, 2301)}, RoundedCorner{position=BottomLeft, radius=39, center=Point(39, 2301)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(964, 0 - 1080, 85) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2340 physicalPixelDisplaySizeRatio=0.75 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {8ced0001 mType=navigationBars mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0004 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {8ced0005 mType=mandatorySystemGestures mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0006 mType=tappableElement mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0024 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {3 mType=ime mFrame=[0,1452][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50000 mType=statusBars mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50005 mType=mandatorySystemGestures mFrame=[0,0][1080,117] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50006 mType=tappableElement mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+11-23 17:36:07.704 28499 28499 I VRI[SwipeDebugActivity]@d02771: handleResized, frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0]} displayId=0 dragResizing=false compatScale=1.0 frameChanged=false attachedFrameChanged=false configChanged=false displayChanged=false compatScaleChanged=false dragResizingChanged=false
+11-23 17:36:07.704 28499 28499 I VRI[InputMethod]@485b086: handleResized, frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0]} displayId=0 dragResizing=false compatScale=1.0 frameChanged=false attachedFrameChanged=false configChanged=false displayChanged=false compatScaleChanged=false dragResizingChanged=false
+11-23 17:36:07.704 28499 28499 I InsetsController: onStateChanged: host=juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity, from=android.view.ViewRootImpl.onInsetsStateChanged:3026, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 85 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(514, 0 - 566, 85), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={2.8125} cutoutSpec={M 0,0 H -9.333333333333333 V 30.13333333333333 H 9.333333333333333 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=39, center=Point(39, 39)}, RoundedCorner{position=TopRight, radius=39, center=Point(1041, 39)}, RoundedCorner{position=BottomRight, radius=39, center=Point(1041, 2301)}, RoundedCorner{position=BottomLeft, radius=39, center=Point(39, 2301)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(964, 0 - 1080, 85) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2340 physicalPixelDisplaySizeRatio=0.75 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {8ced0001 mType=navigationBars mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0004 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {8ced0005 mType=mandatorySystemGestures mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0006 mType=tappableElement mFrame=[0,2214][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {8ced0024 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {3 mType=ime mFrame=[0,1452][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50000 mType=statusBars mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50005 mType=mandatorySystemGestures mFrame=[0,0][1080,117] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {12d50006 mType=tappableElement mFrame=[0,0][1080,85] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+11-23 17:36:07.705 28499 28499 I InsetsController: controlAnimationUncheckedInner: Added types=ime, animType=0, host=juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity, from=android.view.InsetsController.controlAnimationUnchecked:1608 android.view.InsetsController.applyAnimation:2416 android.view.InsetsController.applyAnimation:2343 
+11-23 17:36:07.705 28499 28499 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = VRI[SwipeDebugActivity]@d02771 mNativeObject= 0xb4000075aa3e1bc0 sc.mNativeObject= 0xb4000076ba3328d0 format= -1 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3574 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 
+11-23 17:36:07.706 28499 28499 I VRI[SwipeDebugActivity]@d02771: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=true req=(1080,2340)0 dur=0 res=0x0 s={true 0xb40000751a3dc510} ch=false seqId=0
+11-23 17:36:07.706 28499 28499 D ScrollView:  onsize change changed 
+11-23 17:36:07.706 28499 28499 I VRI[SwipeDebugActivity]@d02771: registerCallbackForPendingTransactions
+11-23 17:36:07.706 28499 28619 I VRI[SwipeDebugActivity]@d02771: mWNT: t=0xb40000763a4e6610 mBlastBufferQueue=0xb4000075aa3e1bc0 fn= 3 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$10.onFrameDraw:6536 android.view.ViewRootImpl$4.onFrameDraw:2489 android.view.ThreadedRenderer$1.onFrameDraw:718 
+11-23 17:36:07.714 28499 28499 I InsetsController: cancelAnimation: types=ime, animType=0, host=juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity, from=android.view.InsetsController.notifyFinished:2006 android.view.InsetsAnimationThreadControlRunner$1.lambda$notifyFinished$0:82 android.view.InsetsAnimationThreadControlRunner$1.$r8$lambda$cDFF0h4Ncq-8EXdGszv69jrUu7c:0 
+11-23 17:36:07.714 28499 28499 I ImeTracker: system_server:3e3b45a6: onShown
+11-23 17:36:09.350 28499 28499 I VRI[InputMethod]@485b086: ViewPostIme pointer 0
+11-23 17:36:09.361 28499 28499 D Pointers: onTouchMove: id=0 pos=(853.76953,126.58887) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.361 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.361 28499 28499 D Pointers: onTouchMove: collecting point (853.76953, 126.58887) for potential swipe
+11-23 17:36:09.369 28499 28499 D Pointers: onTouchMove: id=0 pos=(853.76953,126.58887) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.369 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.369 28499 28499 D Pointers: onTouchMove: collecting point (853.76953, 126.58887) for potential swipe
+11-23 17:36:09.378 28499 28499 D Pointers: onTouchMove: id=0 pos=(853.76953,126.58887) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.378 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.378 28499 28499 D Pointers: onTouchMove: collecting point (853.76953, 126.58887) for potential swipe
+11-23 17:36:09.387 28499 28499 D Pointers: onTouchMove: id=0 pos=(853.76953,126.58887) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.387 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.387 28499 28499 D Pointers: onTouchMove: collecting point (853.76953, 126.58887) for potential swipe
+11-23 17:36:09.394 28499 28499 D Pointers: onTouchMove: id=0 pos=(843.5244,133.59863) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.394 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.394 28499 28499 D Pointers: onTouchMove: collecting point (843.5244, 133.59863) for potential swipe
+11-23 17:36:09.403 28499 28499 D Pointers: onTouchMove: id=0 pos=(828.58887,144.58984) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.403 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.403 28499 28499 D Pointers: onTouchMove: collecting point (828.58887, 144.58984) for potential swipe
+11-23 17:36:09.412 28499 28499 D Pointers: onTouchMove: id=0 pos=(811.1279,156.60938) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.412 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.412 28499 28499 D Pointers: onTouchMove: collecting point (811.1279, 156.60938) for potential swipe
+11-23 17:36:09.412 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:09.412 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:09.412 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 52.155556 (need 50.0)
+11-23 17:36:09.412 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:09.428 28499 28499 D Pointers: onTouchMove: id=0 pos=(768.0117,189.82031) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.428 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.428 28499 28499 D Pointers: onTouchMove: collecting point (768.0117, 189.82031) for potential swipe
+11-23 17:36:09.428 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:09.428 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:09.428 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 106.579575 (need 50.0)
+11-23 17:36:09.428 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:09.436 28499 28499 D Pointers: onTouchMove: id=0 pos=(744.8408,208.25) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=0
+11-23 17:36:09.436 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:09.436 28499 28499 D Pointers: onTouchMove: collecting point (744.8408, 208.25) for potential swipe
+11-23 17:36:09.436 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:09.436 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 2
+11-23 17:36:09.436 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 136.18607 (need 50.0)
+11-23 17:36:09.436 28499 28499 E ImprovedSwipeGestureRecognizer: ✅ SWIPE DETECTED - proceeding with swipe typing
+11-23 17:36:09.445 28499 28499 D Pointers: onTouchMove: id=0 pos=(716.68066,231.18652) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.453 28499 28499 D Pointers: onTouchMove: id=0 pos=(688.9043,254.09961) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.461 28499 28499 D Pointers: onTouchMove: id=0 pos=(662.5166,277.13672) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.469 28499 28499 D Pointers: onTouchMove: id=0 pos=(636.5381,299.33203) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.478 28499 28499 D Pointers: onTouchMove: id=0 pos=(614.2549,320.48828) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.486 28499 28499 D Pointers: onTouchMove: id=0 pos=(591.8115,342.21387) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.495 28499 28499 D Pointers: onTouchMove: id=0 pos=(572.4258,362.2871) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.503 28499 28499 D Pointers: onTouchMove: id=0 pos=(554.52246,382.7373) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.513 28499 28499 D Pointers: onTouchMove: id=0 pos=(540.499,399.87207) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.520 28499 28499 D Pointers: onTouchMove: id=0 pos=(528.7051,416.91406) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.528 28499 28499 D Pointers: onTouchMove: id=0 pos=(519.2256,431.7256) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.536 28499 28499 D Pointers: onTouchMove: id=0 pos=(511.08105,444.80762) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.544 28499 28499 D Pointers: onTouchMove: id=0 pos=(505.6631,454.15527) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.553 28499 28499 D Pointers: onTouchMove: id=0 pos=(501.4375,462.1328) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.561 28499 28499 D Pointers: onTouchMove: id=0 pos=(498.46875,467.9668) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.569 28499 28499 D Pointers: onTouchMove: id=0 pos=(496.05957,472.61035) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.579 28499 28499 D Pointers: onTouchMove: id=0 pos=(494.70996,475.51367) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.586 28499 28499 D Pointers: onTouchMove: id=0 pos=(494.23047,476.09863) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.594 28499 28499 D Pointers: onTouchMove: id=0 pos=(494.1211,476.21777) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.603 28499 28499 D Pointers: onTouchMove: id=0 pos=(494.1211,476.21777) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.611 28499 28499 D Pointers: onTouchMove: id=0 pos=(491.56836,473.4629) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.619 28499 28499 D Pointers: onTouchMove: id=0 pos=(483.78613,456.68164) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.628 28499 28499 D Pointers: onTouchMove: id=0 pos=(477.33984,436.78516) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.636 28499 28499 D Pointers: onTouchMove: id=0 pos=(470.2461,410.25) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.644 28499 28499 D Pointers: onTouchMove: id=0 pos=(462.15332,381.51953) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.653 28499 28499 D Pointers: onTouchMove: id=0 pos=(451.7998,351.11523) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.661 28499 28499 D Pointers: onTouchMove: id=0 pos=(439.61133,317.7412) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.669 28499 28499 D Pointers: onTouchMove: id=0 pos=(425.12207,283.92773) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.678 28499 28499 D Pointers: onTouchMove: id=0 pos=(408.8457,248.6084) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.686 28499 28499 D Pointers: onTouchMove: id=0 pos=(391.56152,215.58887) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.694 28499 28499 D Pointers: onTouchMove: id=0 pos=(372.9961,184.85742) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.702 28499 28499 D Pointers: onTouchMove: id=0 pos=(354.03027,158.9707) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.711 28499 28499 D Pointers: onTouchMove: id=0 pos=(337.4209,138.00781) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.720 28499 28499 D Pointers: onTouchMove: id=0 pos=(323.37305,123.54492) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.727 28499 28499 D Pointers: onTouchMove: id=0 pos=(309.62793,110.04297) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.736 28499 28499 D Pointers: onTouchMove: id=0 pos=(298.8086,100.59766) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.744 28499 28499 D Pointers: onTouchMove: id=0 pos=(290.3457,93.15234) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.752 28499 28499 D Pointers: onTouchMove: id=0 pos=(284.68555,88.46387) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.761 28499 28499 D Pointers: onTouchMove: id=0 pos=(280.95215,85.56543) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.769 28499 28499 D Pointers: onTouchMove: id=0 pos=(278.52734,83.80664) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.777 28499 28499 D Pointers: onTouchMove: id=0 pos=(277.1504,82.62695) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.786 28499 28499 D Pointers: onTouchMove: id=0 pos=(275.83496,81.48633) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.794 28499 28499 D Pointers: onTouchMove: id=0 pos=(273.75,80.3457) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.802 28499 28499 D Pointers: onTouchMove: id=0 pos=(270.89062,79.21094) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.811 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.73633,78.615234) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.819 28499 28499 D Pointers: onTouchMove: id=0 pos=(266.3877,78.600586) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.828 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.53027,78.600586) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.836 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.4629,78.600586) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.844 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.4629,78.600586) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.852 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.4629,78.600586) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.860 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.4629,78.600586) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.869 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.4629,78.600586) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.877 28499 28499 D Pointers: onTouchMove: id=0 pos=(284.7871,83.0918) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.886 28499 28499 D Pointers: onTouchMove: id=0 pos=(301.9209,82.625) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.894 28499 28499 D Pointers: onTouchMove: id=0 pos=(322.06543,80.96484) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.902 28499 28499 D Pointers: onTouchMove: id=0 pos=(343.04395,77.586914) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.910 28499 28499 D Pointers: onTouchMove: id=0 pos=(363.18262,75.802734) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.919 28499 28499 D Pointers: onTouchMove: id=0 pos=(382.20312,74.08887) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.927 28499 28499 D Pointers: onTouchMove: id=0 pos=(397.51465,72.668945) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.936 28499 28499 D Pointers: onTouchMove: id=0 pos=(418.83594,72.31641) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.945 28499 28499 D Pointers: onTouchMove: id=0 pos=(435.29102,72.8584) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.953 28499 28499 D Pointers: onTouchMove: id=0 pos=(447.81934,73.9668) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.961 28499 28499 D Pointers: onTouchMove: id=0 pos=(457.23535,75.65137) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.969 28499 28499 D Pointers: onTouchMove: id=0 pos=(463.55566,77.38965) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.977 28499 28499 D Pointers: onTouchMove: id=0 pos=(467.36133,79.112305) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.985 28499 28499 D Pointers: onTouchMove: id=0 pos=(468.75195,79.71875) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:09.994 28499 28499 D Pointers: onTouchMove: id=0 pos=(468.8086,79.743164) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.002 28499 28499 D Pointers: onTouchMove: id=0 pos=(468.8086,79.743164) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.010 28499 28499 D Pointers: onTouchMove: id=0 pos=(469.63086,89.82422) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.019 28499 28499 D Pointers: onTouchMove: id=0 pos=(465.28418,96.07617) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.027 28499 28499 D Pointers: onTouchMove: id=0 pos=(456.55566,104.49512) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.035 28499 28499 D Pointers: onTouchMove: id=0 pos=(441.667,116.24414) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.044 28499 28499 D Pointers: onTouchMove: id=0 pos=(424.3506,127.71582) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.052 28499 28499 D Pointers: onTouchMove: id=0 pos=(406.86328,138.72461) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.060 28499 28499 D Pointers: onTouchMove: id=0 pos=(387.50684,151.65039) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.068 28499 28499 D Pointers: onTouchMove: id=0 pos=(367.49316,164.9541) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.077 28499 28499 D Pointers: onTouchMove: id=0 pos=(349.30273,178.0498) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.085 28499 28499 D Pointers: onTouchMove: id=0 pos=(333.25098,191.09473) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.093 28499 28499 D Pointers: onTouchMove: id=0 pos=(319.48828,202.21094) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.102 28499 28499 D Pointers: onTouchMove: id=0 pos=(307.77246,213.66992) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.110 28499 28499 D Pointers: onTouchMove: id=0 pos=(297.48828,226.16113) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.118 28499 28499 D Pointers: onTouchMove: id=0 pos=(289.42285,237.17969) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.127 28499 28499 D Pointers: onTouchMove: id=0 pos=(282.2539,246.39941) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.135 28499 28499 D Pointers: onTouchMove: id=0 pos=(275.91602,254.41113) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.144 28499 28499 D Pointers: onTouchMove: id=0 pos=(270.53223,261.62402) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.152 28499 28499 D Pointers: onTouchMove: id=0 pos=(265.40527,268.6328) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.160 28499 28499 D Pointers: onTouchMove: id=0 pos=(260.9336,274.34668) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.168 28499 28499 D Pointers: onTouchMove: id=0 pos=(256.36328,280.17188) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.177 28499 28499 D Pointers: onTouchMove: id=0 pos=(252.43457,286.38965) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.185 28499 28499 D Pointers: onTouchMove: id=0 pos=(249.55078,290.93555) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.194 28499 28499 D Pointers: onTouchMove: id=0 pos=(247.41406,294.94922) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.202 28499 28499 D Pointers: onTouchMove: id=0 pos=(245.97559,298.52832) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.210 28499 28499 D Pointers: onTouchMove: id=0 pos=(244.98828,301.83984) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.219 28499 28499 D Pointers: onTouchMove: id=0 pos=(243.93066,305.292) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.227 28499 28499 D Pointers: onTouchMove: id=0 pos=(243.3877,308.1582) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.251 28499 28499 D Pointers: onTouchMove: id=0 pos=(242.32227,320.6836) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.260 28499 28499 D Pointers: onTouchMove: id=0 pos=(242.05762,326.9414) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.268 28499 28499 D Pointers: onTouchMove: id=0 pos=(241.83789,332.65527) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.277 28499 28499 D Pointers: onTouchMove: id=0 pos=(241.78711,340.60645) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.285 28499 28499 D Pointers: onTouchMove: id=0 pos=(242.04004,347.39258) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.294 28499 28499 D Pointers: onTouchMove: id=0 pos=(242.05078,354.7539) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.302 28499 28499 D Pointers: onTouchMove: id=0 pos=(242.05078,361.59766) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.310 28499 28499 D Pointers: onTouchMove: id=0 pos=(241.7998,369.03613) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.318 28499 28499 D Pointers: onTouchMove: id=0 pos=(241.02344,376.55957) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.326 28499 28499 D Pointers: onTouchMove: id=0 pos=(239.72559,384.52344) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.335 28499 28499 D Pointers: onTouchMove: id=0 pos=(238.40137,392.5537) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.360 28499 28499 D Pointers: onTouchMove: id=0 pos=(233.92188,416.57812) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.369 28499 28499 D Pointers: onTouchMove: id=0 pos=(232.60449,423.41992) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.377 28499 28499 D Pointers: onTouchMove: id=0 pos=(231.54102,429.1709) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.385 28499 28499 D Pointers: onTouchMove: id=0 pos=(230.74121,434.32715) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.393 28499 28499 D Pointers: onTouchMove: id=0 pos=(230.45801,437.82227) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.401 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.94629,441.20898) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.410 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.66797,443.01855) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.418 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.6582,443.083) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.427 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.6582,443.083) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.435 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.6582,443.083) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.443 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.6582,443.083) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.469 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.6582,443.083) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.476 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.14062,421.32422) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.485 28499 28499 D Pointers: onTouchMove: id=0 pos=(228.87598,405.9121) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.493 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.1211,387.75293) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.501 28499 28499 D Pointers: onTouchMove: id=0 pos=(229.89844,368.7998) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.510 28499 28499 D Pointers: onTouchMove: id=0 pos=(231.69531,347.93457) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.518 28499 28499 D Pointers: onTouchMove: id=0 pos=(234.5625,325.63574) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.526 28499 28499 D Pointers: onTouchMove: id=0 pos=(239.00195,302.18164) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.535 28499 28499 D Pointers: onTouchMove: id=0 pos=(243.97656,278.83887) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.543 28499 28499 D Pointers: onTouchMove: id=0 pos=(248.1836,259.16992) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.551 28499 28499 D Pointers: onTouchMove: id=0 pos=(253.39062,235.72949) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.560 28499 28499 D Pointers: onTouchMove: id=0 pos=(257.22266,216.88086) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.568 28499 28499 D Pointers: onTouchMove: id=0 pos=(259.89453,200.80469) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.577 28499 28499 D Pointers: onTouchMove: id=0 pos=(262.00195,187.14648) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.585 28499 28499 D Pointers: onTouchMove: id=0 pos=(263.3623,174.99414) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.593 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.42285,165.78613) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.601 28499 28499 D Pointers: onTouchMove: id=0 pos=(265.71582,156.74805) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.610 28499 28499 D Pointers: onTouchMove: id=0 pos=(266.14062,152.01562) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.618 28499 28499 D Pointers: onTouchMove: id=0 pos=(266.8047,145.17285) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.626 28499 28499 D Pointers: onTouchMove: id=0 pos=(267.09082,141.01074) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.635 28499 28499 D Pointers: onTouchMove: id=0 pos=(267.61133,136.99219) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.643 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.14258,134.0791) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.651 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.4131,131.77344) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.659 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.67676,131.16895) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.684 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.68164,131.15918) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.693 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.68164,131.15918) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.701 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.68164,131.15918) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.710 28499 28499 D Pointers: onTouchMove: id=0 pos=(272.26074,129.50098) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.718 28499 28499 D Pointers: onTouchMove: id=0 pos=(275.63574,127.81445) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.726 28499 28499 D Pointers: onTouchMove: id=0 pos=(279.83008,126.640625) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.735 28499 28499 D Pointers: onTouchMove: id=0 pos=(283.7959,124.40723) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.743 28499 28499 D Pointers: onTouchMove: id=0 pos=(287.24316,122.66992) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.751 28499 28499 D Pointers: onTouchMove: id=0 pos=(289.38867,121.51367) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.760 28499 28499 D Pointers: onTouchMove: id=0 pos=(290.01172,120.90625) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.767 28499 28499 D Pointers: onTouchMove: id=0 pos=(290.2881,120.87598) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.793 28499 28499 D Pointers: onTouchMove: id=0 pos=(290.30273,120.87598) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.801 28499 28499 D Pointers: onTouchMove: id=0 pos=(290.30273,120.87598) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.809 28499 28499 D Pointers: onTouchMove: id=0 pos=(277.54492,123.62988) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.818 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.85156,129.15723) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.826 28499 28499 D Pointers: onTouchMove: id=0 pos=(250.0166,137.82617) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.834 28499 28499 D Pointers: onTouchMove: id=0 pos=(236.10059,146.9082) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.843 28499 28499 D Pointers: onTouchMove: id=0 pos=(220.7998,157.56738) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.851 28499 28499 D Pointers: onTouchMove: id=0 pos=(206.29492,168.39258) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.859 28499 28499 D Pointers: onTouchMove: id=0 pos=(190.91406,179.33398) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.867 28499 28499 D Pointers: onTouchMove: id=0 pos=(177.41309,189.07715) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.876 28499 28499 D Pointers: onTouchMove: id=0 pos=(165.63477,198.88086) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.884 28499 28499 D Pointers: onTouchMove: id=0 pos=(155.90527,207.60254) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.892 28499 28499 D Pointers: onTouchMove: id=0 pos=(145.06055,218.26367) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.900 28499 28499 D Pointers: onTouchMove: id=0 pos=(135.68652,229.7959) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.909 28499 28499 D Pointers: onTouchMove: id=0 pos=(128.7832,240.10938) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.917 28499 28499 D Pointers: onTouchMove: id=0 pos=(122.70996,250.38477) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.926 28499 28499 D Pointers: onTouchMove: id=0 pos=(117.67578,258.99414) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.934 28499 28499 D Pointers: onTouchMove: id=0 pos=(114.271484,267.44434) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.942 28499 28499 D Pointers: onTouchMove: id=0 pos=(111.85547,274.3838) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.950 28499 28499 D Pointers: onTouchMove: id=0 pos=(110.24902,280.1416) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.959 28499 28499 D Pointers: onTouchMove: id=0 pos=(109.44336,284.16406) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.967 28499 28499 D Pointers: onTouchMove: id=0 pos=(109.16699,287.04297) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.975 28499 28499 D Pointers: onTouchMove: id=0 pos=(109.16016,289.3584) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:10.983 28499 28499 D Pointers: onTouchMove: id=0 pos=(109.41797,290.5244) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.009 28499 28499 D Pointers: onTouchMove: id=0 pos=(109.42383,290.54883) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.034 28499 28499 D Pointers: onTouchMove: id=0 pos=(113.55469,292.7959) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.042 28499 28499 D Pointers: onTouchMove: id=0 pos=(117.45801,293.93652) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.051 28499 28499 D Pointers: onTouchMove: id=0 pos=(123.43652,294.52637) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.059 28499 28499 D Pointers: onTouchMove: id=0 pos=(131.56543,293.99512) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.067 28499 28499 D Pointers: onTouchMove: id=0 pos=(143.23242,291.2334) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.076 28499 28499 D Pointers: onTouchMove: id=0 pos=(158.41504,284.5244) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.084 28499 28499 D Pointers: onTouchMove: id=0 pos=(178.86426,272.67383) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.092 28499 28499 D Pointers: onTouchMove: id=0 pos=(203.66211,257.26855) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.101 28499 28499 D Pointers: onTouchMove: id=0 pos=(231.8457,241.80762) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.109 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.15723,228.71973) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.117 28499 28499 D Pointers: onTouchMove: id=0 pos=(300.79492,217.27734) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.126 28499 28499 D Pointers: onTouchMove: id=0 pos=(343.51855,208.0039) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.134 28499 28499 D Pointers: onTouchMove: id=0 pos=(392.6455,202.14844) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.142 28499 28499 D Pointers: onTouchMove: id=0 pos=(444.50488,199.77441) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.151 28499 28499 D Pointers: onTouchMove: id=0 pos=(498.54492,200.26562) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.159 28499 28499 D Pointers: onTouchMove: id=0 pos=(550.6279,204.09082) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.167 28499 28499 D Pointers: onTouchMove: id=0 pos=(601.3711,209.66602) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.175 28499 28499 D Pointers: onTouchMove: id=0 pos=(651.8447,215.95605) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.184 28499 28499 D Pointers: onTouchMove: id=0 pos=(697.83984,222.80469) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.192 28499 28499 D Pointers: onTouchMove: id=0 pos=(739.4912,228.09863) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.200 28499 28499 D Pointers: onTouchMove: id=0 pos=(776.48145,233.23145) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.226 28499 28499 D Pointers: onTouchMove: id=0 pos=(852.4619,240.30273) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.234 28499 28499 D Pointers: onTouchMove: id=0 pos=(875.4717,241.39551) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.242 28499 28499 D Pointers: onTouchMove: id=0 pos=(890.33203,241.97559) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.251 28499 28499 D Pointers: onTouchMove: id=0 pos=(903.03613,242.53516) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.259 28499 28499 D Pointers: onTouchMove: id=0 pos=(914.73535,242.56055) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.267 28499 28499 D Pointers: onTouchMove: id=0 pos=(924.5469,243.10742) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.275 28499 28499 D Pointers: onTouchMove: id=0 pos=(932.834,244.23242) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.284 28499 28499 D Pointers: onTouchMove: id=0 pos=(939.41504,245.36328) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.291 28499 28499 D Pointers: onTouchMove: id=0 pos=(945.3496,245.9707) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.300 28499 28499 D Pointers: onTouchMove: id=0 pos=(949.38086,247.10156) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.308 28499 28499 D Pointers: onTouchMove: id=0 pos=(952.5957,247.69336) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.317 28499 28499 D Pointers: onTouchMove: id=0 pos=(954.458,248.2627) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.325 28499 28499 D Pointers: onTouchMove: id=0 pos=(954.749,248.27344) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.334 28499 28499 D Pointers: onTouchMove: id=0 pos=(954.75586,248.27344) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.342 28499 28499 D Pointers: onTouchMove: id=0 pos=(954.75586,248.27344) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.350 28499 28499 D Pointers: onTouchMove: id=0 pos=(956.541,235.06738) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.359 28499 28499 D Pointers: onTouchMove: id=0 pos=(953.5176,218.96973) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.367 28499 28499 D Pointers: onTouchMove: id=0 pos=(948.86523,200.9541) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.375 28499 28499 D Pointers: onTouchMove: id=0 pos=(944.1289,183.26172) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.384 28499 28499 D Pointers: onTouchMove: id=0 pos=(938.8926,167.7959) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.392 28499 28499 D Pointers: onTouchMove: id=0 pos=(934.6123,155.05664) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.401 28499 28499 D Pointers: onTouchMove: id=0 pos=(930.67773,144.2207) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.409 28499 28499 D Pointers: onTouchMove: id=0 pos=(927.3838,134.90332) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.425 28499 28499 D Pointers: onTouchMove: id=0 pos=(921.8623,119.92285) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.433 28499 28499 D Pointers: onTouchMove: id=0 pos=(920.51855,114.74805) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.442 28499 28499 D Pointers: onTouchMove: id=0 pos=(918.9424,109.59961) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.451 28499 28499 D Pointers: onTouchMove: id=0 pos=(917.62695,104.5) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.459 28499 28499 D Pointers: onTouchMove: id=0 pos=(916.0547,99.3584) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.467 28499 28499 D Pointers: onTouchMove: id=0 pos=(914.2051,94.17871) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.476 28499 28499 D Pointers: onTouchMove: id=0 pos=(911.65625,89.163086) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.484 28499 28499 D Pointers: onTouchMove: id=0 pos=(908.7588,84.54199) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.492 28499 28499 D Pointers: onTouchMove: id=0 pos=(905.36523,79.9834) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.500 28499 28499 D Pointers: onTouchMove: id=0 pos=(901.66406,75.45117) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.508 28499 28499 D Pointers: onTouchMove: id=0 pos=(893.22754,68.65137) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.522 28499 28499 D Pointers: onTouchMove: id=0 pos=(883.3887,62.810547) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.525 28499 28499 D Pointers: onTouchMove: id=0 pos=(873.06445,58.171875) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.534 28499 28499 D Pointers: onTouchMove: id=0 pos=(860.16406,51.910156) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.543 28499 28499 D Pointers: onTouchMove: id=0 pos=(845.53613,46.21875) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.551 28499 28499 D Pointers: onTouchMove: id=0 pos=(831.5381,42.16504) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.558 28499 28499 D Pointers: onTouchMove: id=0 pos=(817.93555,39.296875) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.567 28499 28499 D Pointers: onTouchMove: id=0 pos=(807.0,37.05957) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.575 28499 28499 D Pointers: onTouchMove: id=0 pos=(789.9297,35.223633) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.584 28499 28499 D Pointers: onTouchMove: id=0 pos=(776.38574,36.26953) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.592 28499 28499 D Pointers: onTouchMove: id=0 pos=(763.3662,39.05664) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.601 28499 28499 D Pointers: onTouchMove: id=0 pos=(751.15234,43.02246) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.609 28499 28499 D Pointers: onTouchMove: id=0 pos=(740.96875,47.60742) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.617 28499 28499 D Pointers: onTouchMove: id=0 pos=(732.98926,52.179688) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.625 28499 28499 D Pointers: onTouchMove: id=0 pos=(727.1377,55.63379) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.656 28499 28499 D Pointers: onTouchMove: id=0 pos=(714.65234,64.25) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.679 28499 28499 D Pointers: onTouchMove: id=0 pos=(699.9385,71.68945) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.687 28499 28499 D Pointers: onTouchMove: id=0 pos=(693.57324,73.98828) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.701 28499 28499 D Pointers: onTouchMove: id=0 pos=(676.5674,77.98047) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.709 28499 28499 D Pointers: onTouchMove: id=0 pos=(666.25586,79.66406) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.716 28499 28499 D Pointers: onTouchMove: id=0 pos=(654.0215,81.95703) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.725 28499 28499 D Pointers: onTouchMove: id=0 pos=(641.7529,84.268555) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.733 28499 28499 D Pointers: onTouchMove: id=0 pos=(629.66406,87.10449) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.741 28499 28499 D Pointers: onTouchMove: id=0 pos=(614.89844,91.65332) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.750 28499 28499 D Pointers: onTouchMove: id=0 pos=(598.4961,97.93848) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.758 28499 28499 D Pointers: onTouchMove: id=0 pos=(582.4365,105.21875) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.768 28499 28499 D Pointers: onTouchMove: id=0 pos=(565.5537,113.20996) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.775 28499 28499 D Pointers: onTouchMove: id=0 pos=(547.9199,121.75781) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.784 28499 28499 D Pointers: onTouchMove: id=0 pos=(528.94727,130.89551) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.792 28499 28499 D Pointers: onTouchMove: id=0 pos=(509.70898,139.91504) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.800 28499 28499 D Pointers: onTouchMove: id=0 pos=(489.1543,149.07031) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.808 28499 28499 D Pointers: onTouchMove: id=0 pos=(467.5703,157.7666) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.817 28499 28499 D Pointers: onTouchMove: id=0 pos=(449.42773,165.16797) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.825 28499 28499 D Pointers: onTouchMove: id=0 pos=(432.12012,172.65137) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.833 28499 28499 D Pointers: onTouchMove: id=0 pos=(417.2754,178.97266) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.841 28499 28499 D Pointers: onTouchMove: id=0 pos=(402.4746,185.06055) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.850 28499 28499 D Pointers: onTouchMove: id=0 pos=(388.6504,191.59082) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.875 28499 28499 D Pointers: onTouchMove: id=0 pos=(348.7422,208.6709) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.883 28499 28499 D Pointers: onTouchMove: id=0 pos=(334.00293,214.39062) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.892 28499 28499 D Pointers: onTouchMove: id=0 pos=(318.7578,219.53906) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.899 28499 28499 D Pointers: onTouchMove: id=0 pos=(301.11133,226.36035) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.907 28499 28499 D Pointers: onTouchMove: id=0 pos=(284.4961,231.54492) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.916 28499 28499 D Pointers: onTouchMove: id=0 pos=(270.8662,236.16113) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.924 28499 28499 D Pointers: onTouchMove: id=0 pos=(258.8418,240.1289) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.933 28499 28499 D Pointers: onTouchMove: id=0 pos=(248.71875,243.58691) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.941 28499 28499 D Pointers: onTouchMove: id=0 pos=(240.76758,245.90234) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.949 28499 28499 D Pointers: onTouchMove: id=0 pos=(232.78711,248.20703) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.958 28499 28499 D Pointers: onTouchMove: id=0 pos=(226.9414,249.9336) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.967 28499 28499 D Pointers: onTouchMove: id=0 pos=(221.34668,251.10352) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.976 28499 28499 D Pointers: onTouchMove: id=0 pos=(216.6582,251.67871) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.984 28499 28499 D Pointers: onTouchMove: id=0 pos=(211.65234,252.25098) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:11.992 28499 28499 D Pointers: onTouchMove: id=0 pos=(205.2373,252.27246) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:12.000 28499 28499 D Pointers: onTouchMove: id=0 pos=(198.65234,251.7334) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:12.008 28499 28499 D Pointers: onTouchMove: id=0 pos=(190.37793,250.59668) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:12.016 28499 28499 D Pointers: onTouchMove: id=0 pos=(179.3457,248.89355) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:12.024 28499 28499 D Pointers: onTouchMove: id=0 pos=(179.0332,248.84473) value=[KeyValue Char+0+105 "i"] hasLeftKey=false flags=256
+11-23 17:36:12.025 28499 28499 I VRI[InputMethod]@485b086: ViewPostIme pointer 1
+11-23 17:36:12.034 28499 28499 D SwipeRecognizer: Using traditional keys: 4
+11-23 17:36:12.036 28499 28499 D AsyncPredictionHandler: All pending predictions cancelled
+11-23 17:36:12.036 28499 28499 D AsyncPredictionHandler: Prediction requested (ID: 30)
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: 🔥🔥🔥 NEURAL PREDICTION CALLED FROM:
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.NeuralSwipeTypingEngine.predict:97
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.AsyncPredictionHandler.handlePredictionRequest:124
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.AsyncPredictionHandler.access$000:16
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.AsyncPredictionHandler$1.handleMessage:57
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: === PURE NEURAL PREDICTION START ===
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: Input: keySeq=, pathLen=4030.0, duration=2.66s
+11-23 17:36:12.036 28499 28633 D NeuralSwipeTypingEngine: Using PURE NEURAL prediction - no classification needed
+11-23 17:36:12.036 28499 28633 D SwipeTrajectoryProcessor: 📐 QWERTY NORMALIZATION: top=0, height=595 (kb=1080x632)
+11-23 17:36:12.036 28499 28633 D SwipeTrajectoryProcessor: 📐 RAW first=(854,127) last=(179,249)
+11-23 17:36:12.036 28499 28633 D SwipeTrajectoryProcessor: 📐 NORMALIZED first=(0.791,0.213) last=(0.166,0.419)
+11-23 17:36:12.036 28499 28633 D SwipeTrajectoryProcessor: 📐 For z at pixel y=496: normalized y = 0.834
+11-23 17:36:12.036 28499 28633 D SwipeTrajectoryProcessor: 🔍 Resampling check: size=198, max=250, mode=DISCARD, needsResample=false
+11-23 17:36:12.036 28499 28633 D SwipeTrajectoryProcessor: 🔍 Detecting keys from 198 normalized points: first=(0.791,0.213) last=(0.166,0.419)
+11-23 17:36:12.037 28499 28633 D SwipeTrajectoryProcessor: 🎯 DETECTED KEY SEQUENCE: "ijhgvcfrertrdszsewasdfghjkloiuytrds" (from 198 points)
+11-23 17:36:12.117 28499 28633 D OnnxSwipePredictor: 🔥 BEAM SEARCH MODE: beam_width=4, max_length=15
+11-23 17:36:12.218 28499 28633 D OptimizedVocabulary: DEBUG: Checking for 'asshole' in vocabulary. Is present: true
+11-23 17:36:12.218 28499 28633 D OptimizedVocabulary: 📊 DETAILED FILTERING PROCESS:
+11-23 17:36:12.218 28499 28633 D OptimizedVocabulary: ─────────────────────────────────────────────────────────
+11-23 17:36:12.218 28499 28633 D OptimizedVocabulary: ─────────────────────────────────────────────────────────
+11-23 17:36:12.219 28499 28633 I OnnxSwipePredictor: ⏱️ Swipe prediction latency breakdown:
+11-23 17:36:12.219 28499 28633 I OnnxSwipePredictor:    Preprocessing:    1ms (trajectory extraction, key detection)
+11-23 17:36:12.219 28499 28633 I OnnxSwipePredictor:    Encoder:          9ms (swipe → embeddings)
+11-23 17:36:12.219 28499 28633 I OnnxSwipePredictor:    Beam search:    100ms (decoder inference)
+11-23 17:36:12.219 28499 28633 I OnnxSwipePredictor:    Postprocessing:   0ms (vocab filtering, ranking)
+11-23 17:36:12.219 28499 28633 I OnnxSwipePredictor:    TOTAL:          182ms
+11-23 17:36:12.219 28499 28633 D NeuralSwipeTypingEngine: Neural prediction successful: 0 candidates
+11-23 17:36:12.219 28499 28633 E AsyncPredictionHandler: ⏱️ PREDICTION COMPLETED in 183ms (ID: 30)
+11-23 17:36:12.219 28499 28499 E AsyncPredictionHandler: ⏱️ CALLBACK DELAY: 0ms (time from post to run)
+11-23 17:36:12.219 28499 28499 E InputCoordinator: ⏱️ HANDLE_PREDICTIONS START
+11-23 17:36:12.219 28499 28499 D SuggestionBar: clearSuggestions called - showing empty list instead of hiding
+11-23 17:36:12.219 28499 28499 E InputCoordinator: ⏱️ HANDLE_PREDICTIONS COMPLETE (empty): 0ms
+11-23 17:36:12.219 28499 28499 E AsyncPredictionHandler: ⏱️ CALLBACK EXECUTION: 0ms (onPredictionsReady)
+11-23 17:36:13.802 28499 28499 I VRI[InputMethod]@485b086: ViewPostIme pointer 0
+11-23 17:36:13.813 28499 28499 D Pointers: onTouchMove: id=0 pos=(579.81445,277.98047) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.813 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.813 28499 28499 D Pointers: onTouchMove: collecting point (579.81445, 277.98047) for potential swipe
+11-23 17:36:13.822 28499 28499 D Pointers: onTouchMove: id=0 pos=(579.81445,277.98047) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.822 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.822 28499 28499 D Pointers: onTouchMove: collecting point (579.81445, 277.98047) for potential swipe
+11-23 17:36:13.830 28499 28499 D Pointers: onTouchMove: id=0 pos=(579.81445,277.98047) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.830 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.830 28499 28499 D Pointers: onTouchMove: collecting point (579.81445, 277.98047) for potential swipe
+11-23 17:36:13.855 28499 28499 D Pointers: onTouchMove: id=0 pos=(566.6084,275.1836) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.855 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.855 28499 28499 D Pointers: onTouchMove: collecting point (566.6084, 275.1836) for potential swipe
+11-23 17:36:13.863 28499 28499 D Pointers: onTouchMove: id=0 pos=(556.85645,273.45312) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.863 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.863 28499 28499 D Pointers: onTouchMove: collecting point (556.85645, 273.45312) for potential swipe
+11-23 17:36:13.871 28499 28499 D Pointers: onTouchMove: id=0 pos=(545.1924,269.47363) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.871 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.871 28499 28499 D Pointers: onTouchMove: collecting point (545.1924, 269.47363) for potential swipe
+11-23 17:36:13.880 28499 28499 D Pointers: onTouchMove: id=0 pos=(529.9365,263.78027) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.880 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.880 28499 28499 D Pointers: onTouchMove: collecting point (529.9365, 263.78027) for potential swipe
+11-23 17:36:13.880 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.880 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.880 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 51.946724 (need 50.0)
+11-23 17:36:13.880 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.888 28499 28499 D Pointers: onTouchMove: id=0 pos=(513.1582,256.97168) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.888 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.888 28499 28499 D Pointers: onTouchMove: collecting point (513.1582, 256.97168) for potential swipe
+11-23 17:36:13.888 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.888 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.888 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 70.05388 (need 50.0)
+11-23 17:36:13.888 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.896 28499 28499 D Pointers: onTouchMove: id=0 pos=(494.10742,246.27832) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.896 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.896 28499 28499 D Pointers: onTouchMove: collecting point (494.10742, 246.27832) for potential swipe
+11-23 17:36:13.897 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.897 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.897 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 91.90062 (need 50.0)
+11-23 17:36:13.897 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.905 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.5088,233.17383) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.905 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.905 28499 28499 D Pointers: onTouchMove: collecting point (472.5088, 233.17383) for potential swipe
+11-23 17:36:13.905 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.905 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.905 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 117.1638 (need 50.0)
+11-23 17:36:13.905 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.913 28499 28499 D Pointers: onTouchMove: id=0 pos=(449.00586,218.8711) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.913 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.913 28499 28499 D Pointers: onTouchMove: collecting point (449.00586, 218.8711) for potential swipe
+11-23 17:36:13.913 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.913 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.913 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 144.67664 (need 50.0)
+11-23 17:36:13.913 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.921 28499 28499 D Pointers: onTouchMove: id=0 pos=(423.5381,202.95117) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.922 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.922 28499 28499 D Pointers: onTouchMove: collecting point (423.5381, 202.95117) for potential swipe
+11-23 17:36:13.922 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.922 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.922 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 174.7108 (need 50.0)
+11-23 17:36:13.922 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.930 28499 28499 D Pointers: onTouchMove: id=0 pos=(395.93164,188.22266) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.930 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.930 28499 28499 D Pointers: onTouchMove: collecting point (395.93164, 188.22266) for potential swipe
+11-23 17:36:13.930 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.930 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.930 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 206.00049 (need 50.0)
+11-23 17:36:13.930 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.938 28499 28499 D Pointers: onTouchMove: id=0 pos=(366.8047,173.71484) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.938 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.938 28499 28499 D Pointers: onTouchMove: collecting point (366.8047, 173.71484) for potential swipe
+11-23 17:36:13.938 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.938 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.938 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 238.54056 (need 50.0)
+11-23 17:36:13.938 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.946 28499 28499 D Pointers: onTouchMove: id=0 pos=(338.8369,160.55176) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.946 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.946 28499 28499 D Pointers: onTouchMove: collecting point (338.8369, 160.55176) for potential swipe
+11-23 17:36:13.946 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.946 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.946 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 269.4511 (need 50.0)
+11-23 17:36:13.946 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.955 28499 28499 D Pointers: onTouchMove: id=0 pos=(310.56738,149.06738) value=[KeyValue Char+0+103 "g"] hasLeftKey=false flags=0
+11-23 17:36:13.955 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.955 28499 28499 D Pointers: onTouchMove: collecting point (310.56738, 149.06738) for potential swipe
+11-23 17:36:13.955 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.955 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.955 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 299.96436 (need 50.0)
+11-23 17:36:13.955 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.963 28499 28499 D Pointers: onTouchMove: id=0 pos=(284.94043,138.7627) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:13.963 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.963 28499 28499 D Pointers: onTouchMove: collecting point (284.94043, 138.7627) for potential swipe
+11-23 17:36:13.963 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.963 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.963 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 327.5855 (need 50.0)
+11-23 17:36:13.963 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.971 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.70117,130.78613) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:13.971 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.971 28499 28499 D Pointers: onTouchMove: collecting point (264.70117, 130.78613) for potential swipe
+11-23 17:36:13.971 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.971 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.971 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 349.3399 (need 50.0)
+11-23 17:36:13.972 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.980 28499 28499 D Pointers: onTouchMove: id=0 pos=(246.59082,122.7334) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:13.980 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.980 28499 28499 D Pointers: onTouchMove: collecting point (246.59082, 122.7334) for potential swipe
+11-23 17:36:13.980 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.980 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.980 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 369.15988 (need 50.0)
+11-23 17:36:13.980 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.988 28499 28499 D Pointers: onTouchMove: id=0 pos=(233.84082,116.418945) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:13.988 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.988 28499 28499 D Pointers: onTouchMove: collecting point (233.84082, 116.418945) for potential swipe
+11-23 17:36:13.988 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:13.988 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:13.988 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 383.38785 (need 50.0)
+11-23 17:36:13.988 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:13.996 28499 28499 D Pointers: onTouchMove: id=0 pos=(225.15234,112.41699) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:13.996 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:13.996 28499 28499 D Pointers: onTouchMove: collecting point (225.15234, 112.41699) for potential swipe
+11-23 17:36:14.005 28499 28499 D Pointers: onTouchMove: id=0 pos=(220.28711,109.52344) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.005 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.005 28499 28499 D Pointers: onTouchMove: collecting point (220.28711, 109.52344) for potential swipe
+11-23 17:36:14.005 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:14.005 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:14.005 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 398.5948 (need 50.0)
+11-23 17:36:14.005 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:14.013 28499 28499 D Pointers: onTouchMove: id=0 pos=(217.34473,107.22754) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.013 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.013 28499 28499 D Pointers: onTouchMove: collecting point (217.34473, 107.22754) for potential swipe
+11-23 17:36:14.021 28499 28499 D Pointers: onTouchMove: id=0 pos=(216.75586,106.612305) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.021 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.021 28499 28499 D Pointers: onTouchMove: collecting point (216.75586, 106.612305) for potential swipe
+11-23 17:36:14.030 28499 28499 D Pointers: onTouchMove: id=0 pos=(216.73828,106.59375) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.030 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.030 28499 28499 D Pointers: onTouchMove: collecting point (216.73828, 106.59375) for potential swipe
+11-23 17:36:14.038 28499 28499 D Pointers: onTouchMove: id=0 pos=(216.73828,106.59375) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.038 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.038 28499 28499 D Pointers: onTouchMove: collecting point (216.73828, 106.59375) for potential swipe
+11-23 17:36:14.046 28499 28499 D Pointers: onTouchMove: id=0 pos=(216.73828,106.59375) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.046 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.046 28499 28499 D Pointers: onTouchMove: collecting point (216.73828, 106.59375) for potential swipe
+11-23 17:36:14.071 28499 28499 D Pointers: onTouchMove: id=0 pos=(266.375,131.27539) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.071 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.071 28499 28499 D Pointers: onTouchMove: collecting point (266.375, 131.27539) for potential swipe
+11-23 17:36:14.071 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:14.071 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 1
+11-23 17:36:14.071 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 449.55792 (need 50.0)
+11-23 17:36:14.071 28499 28499 E ImprovedSwipeGestureRecognizer: ❌ Too few keys: 1 < 2
+11-23 17:36:14.096 28499 28499 D Pointers: onTouchMove: id=0 pos=(336.7539,179.08105) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=0
+11-23 17:36:14.096 28499 28499 D Pointers: Path collection check: swipeEnabled=true ptrsSize=1 hasValue=true isChar=true shouldCollect=true
+11-23 17:36:14.096 28499 28499 D Pointers: onTouchMove: collecting point (336.7539, 179.08105) for potential swipe
+11-23 17:36:14.096 28499 28499 E ImprovedSwipeGestureRecognizer: 🔍 SWIPE DETECTION CHECK:
+11-23 17:36:14.096 28499 28499 E ImprovedSwipeGestureRecognizer: - Keys touched: 2
+11-23 17:36:14.096 28499 28499 E ImprovedSwipeGestureRecognizer: - Total distance: 534.6377 (need 50.0)
+11-23 17:36:14.096 28499 28499 E ImprovedSwipeGestureRecognizer: ✅ SWIPE DETECTED - proceeding with swipe typing
+11-23 17:36:14.104 28499 28499 D Pointers: onTouchMove: id=0 pos=(367.3037,197.68457) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.113 28499 28499 D Pointers: onTouchMove: id=0 pos=(398.92383,216.0791) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.121 28499 28499 D Pointers: onTouchMove: id=0 pos=(436.66602,237.13965) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.130 28499 28499 D Pointers: onTouchMove: id=0 pos=(470.21973,260.35742) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.138 28499 28499 D Pointers: onTouchMove: id=0 pos=(507.48438,285.9756) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.146 28499 28499 D Pointers: onTouchMove: id=0 pos=(538.9502,310.8506) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.154 28499 28499 D Pointers: onTouchMove: id=0 pos=(571.583,338.60938) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.163 28499 28499 D Pointers: onTouchMove: id=0 pos=(599.58203,363.20312) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.171 28499 28499 D Pointers: onTouchMove: id=0 pos=(625.4297,386.61816) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.179 28499 28499 D Pointers: onTouchMove: id=0 pos=(650.25684,408.94043) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.187 28499 28499 D Pointers: onTouchMove: id=0 pos=(669.93945,427.36426) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.196 28499 28499 D Pointers: onTouchMove: id=0 pos=(686.1416,443.45898) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.204 28499 28499 D Pointers: onTouchMove: id=0 pos=(700.1543,457.21094) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.212 28499 28499 D Pointers: onTouchMove: id=0 pos=(712.91504,469.06738) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.221 28499 28499 D Pointers: onTouchMove: id=0 pos=(723.2471,478.8203) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.229 28499 28499 D Pointers: onTouchMove: id=0 pos=(731.22754,486.31445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.237 28499 28499 D Pointers: onTouchMove: id=0 pos=(737.6211,491.53516) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.246 28499 28499 D Pointers: onTouchMove: id=0 pos=(744.208,496.1172) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.254 28499 28499 D Pointers: onTouchMove: id=0 pos=(750.02344,499.0088) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.262 28499 28499 D Pointers: onTouchMove: id=0 pos=(754.54297,500.75098) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.288 28499 28499 D Pointers: onTouchMove: id=0 pos=(764.85156,498.52734) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.312 28499 28499 D Pointers: onTouchMove: id=0 pos=(770.666,490.60156) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.321 28499 28499 D Pointers: onTouchMove: id=0 pos=(771.4834,483.81934) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.329 28499 28499 D Pointers: onTouchMove: id=0 pos=(769.4463,474.1709) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.338 28499 28499 D Pointers: onTouchMove: id=0 pos=(763.21875,463.33984) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.346 28499 28499 D Pointers: onTouchMove: id=0 pos=(751.1787,451.02246) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.354 28499 28499 D Pointers: onTouchMove: id=0 pos=(732.91504,434.01953) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.362 28499 28499 D Pointers: onTouchMove: id=0 pos=(705.9971,416.82422) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.371 28499 28499 D Pointers: onTouchMove: id=0 pos=(678.54785,400.06055) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.379 28499 28499 D Pointers: onTouchMove: id=0 pos=(643.59375,380.51953) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.387 28499 28499 D Pointers: onTouchMove: id=0 pos=(610.9795,362.42773) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.396 28499 28499 D Pointers: onTouchMove: id=0 pos=(573.5713,344.542) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.404 28499 28499 D Pointers: onTouchMove: id=0 pos=(540.7422,327.3623) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.412 28499 28499 D Pointers: onTouchMove: id=0 pos=(506.96094,311.32715) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.421 28499 28499 D Pointers: onTouchMove: id=0 pos=(478.2578,295.9502) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.429 28499 28499 D Pointers: onTouchMove: id=0 pos=(454.5039,282.5381) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.438 28499 28499 D Pointers: onTouchMove: id=0 pos=(437.6797,272.30273) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.446 28499 28499 D Pointers: onTouchMove: id=0 pos=(416.83105,258.66602) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.454 28499 28499 D Pointers: onTouchMove: id=0 pos=(401.76855,248.02832) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.462 28499 28499 D Pointers: onTouchMove: id=0 pos=(389.8506,237.77246) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.471 28499 28499 D Pointers: onTouchMove: id=0 pos=(379.83203,227.55469) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.479 28499 28499 D Pointers: onTouchMove: id=0 pos=(370.0,217.20215) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.504 28499 28499 D Pointers: onTouchMove: id=0 pos=(344.4209,187.52441) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.513 28499 28499 D Pointers: onTouchMove: id=0 pos=(336.25195,179.47363) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.521 28499 28499 D Pointers: onTouchMove: id=0 pos=(329.52344,172.49707) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.529 28499 28499 D Pointers: onTouchMove: id=0 pos=(323.76465,166.81445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.538 28499 28499 D Pointers: onTouchMove: id=0 pos=(318.97363,162.19629) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.546 28499 28499 D Pointers: onTouchMove: id=0 pos=(314.7744,158.75488) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.554 28499 28499 D Pointers: onTouchMove: id=0 pos=(311.0088,155.83301) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.563 28499 28499 D Pointers: onTouchMove: id=0 pos=(306.85254,152.46094) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.572 28499 28499 D Pointers: onTouchMove: id=0 pos=(302.09082,148.45508) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.579 28499 28499 D Pointers: onTouchMove: id=0 pos=(296.80078,143.32227) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.604 28499 28499 D Pointers: onTouchMove: id=0 pos=(279.6797,125.649414) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.621 28499 28499 D Pointers: onTouchMove: id=0 pos=(271.48535,115.927734) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.629 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.53027,112.43945) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.640 28499 28499 D Pointers: onTouchMove: id=0 pos=(266.1084,110.08301) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.646 28499 28499 D Pointers: onTouchMove: id=0 pos=(264.52734,108.37793) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.654 28499 28499 D Pointers: onTouchMove: id=0 pos=(263.44043,107.200195) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.662 28499 28499 D Pointers: onTouchMove: id=0 pos=(262.40918,105.541016) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.671 28499 28499 D Pointers: onTouchMove: id=0 pos=(261.84473,104.34863) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.679 28499 28499 D Pointers: onTouchMove: id=0 pos=(261.57227,103.75781) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.687 28499 28499 D Pointers: onTouchMove: id=0 pos=(261.30762,103.18555) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.695 28499 28499 D Pointers: onTouchMove: id=0 pos=(261.29883,102.61328) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.708 28499 28499 D Pointers: onTouchMove: id=0 pos=(261.29883,102.59473) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.713 28499 28499 D Pointers: onTouchMove: id=0 pos=(261.29883,102.59473) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.721 28499 28499 D Pointers: onTouchMove: id=0 pos=(263.08984,100.36914) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.729 28499 28499 D Pointers: onTouchMove: id=0 pos=(268.47852,97.55762) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.738 28499 28499 D Pointers: onTouchMove: id=0 pos=(274.30176,95.79297) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.746 28499 28499 D Pointers: onTouchMove: id=0 pos=(280.88867,95.18457) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.754 28499 28499 D Pointers: onTouchMove: id=0 pos=(288.89844,96.26172) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.763 28499 28499 D Pointers: onTouchMove: id=0 pos=(297.37598,97.961914) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.771 28499 28499 D Pointers: onTouchMove: id=0 pos=(305.73047,100.203125) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.779 28499 28499 D Pointers: onTouchMove: id=0 pos=(314.08398,103.00488) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.788 28499 28499 D Pointers: onTouchMove: id=0 pos=(323.20996,106.47363) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.796 28499 28499 D Pointers: onTouchMove: id=0 pos=(331.98242,109.37012) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.804 28499 28499 D Pointers: onTouchMove: id=0 pos=(341.5918,112.74121) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.828 28499 28499 D Pointers: onTouchMove: id=0 pos=(384.62988,118.5791) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.837 28499 28499 D Pointers: onTouchMove: id=0 pos=(405.14746,117.46973) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.845 28499 28499 D Pointers: onTouchMove: id=0 pos=(427.0381,114.640625) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.853 28499 28499 D Pointers: onTouchMove: id=0 pos=(446.5996,111.82031) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.862 28499 28499 D Pointers: onTouchMove: id=0 pos=(467.62598,108.41406) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.870 28499 28499 D Pointers: onTouchMove: id=0 pos=(489.24414,105.538086) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.879 28499 28499 D Pointers: onTouchMove: id=0 pos=(509.3672,102.71289) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.887 28499 28499 D Pointers: onTouchMove: id=0 pos=(530.75195,100.396484) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.895 28499 28499 D Pointers: onTouchMove: id=0 pos=(551.9502,98.12793) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.903 28499 28499 D Pointers: onTouchMove: id=0 pos=(571.26953,95.81543) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.913 28499 28499 D Pointers: onTouchMove: id=0 pos=(590.3623,93.51758) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.920 28499 28499 D Pointers: onTouchMove: id=0 pos=(610.39355,90.70996) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.929 28499 28499 D Pointers: onTouchMove: id=0 pos=(628.99414,87.84277) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.938 28499 28499 D Pointers: onTouchMove: id=0 pos=(648.2422,85.53418) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.947 28499 28499 D Pointers: onTouchMove: id=0 pos=(669.44336,82.70801) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.954 28499 28499 D Pointers: onTouchMove: id=0 pos=(689.0049,80.953125) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.962 28499 28499 D Pointers: onTouchMove: id=0 pos=(709.8262,79.771484) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.971 28499 28499 D Pointers: onTouchMove: id=0 pos=(730.13477,79.743164) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.982 28499 28499 D Pointers: onTouchMove: id=0 pos=(749.21875,80.28711) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.987 28499 28499 D Pointers: onTouchMove: id=0 pos=(766.4043,81.94043) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:14.995 28499 28499 D Pointers: onTouchMove: id=0 pos=(783.08105,84.23633) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.004 28499 28499 D Pointers: onTouchMove: id=0 pos=(797.92676,86.52539) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.012 28499 28499 D Pointers: onTouchMove: id=0 pos=(811.3701,88.802734) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.020 28499 28499 D Pointers: onTouchMove: id=0 pos=(823.06445,91.64551) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.045 28499 28499 D Pointers: onTouchMove: id=0 pos=(854.916,100.26074) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.053 28499 28499 D Pointers: onTouchMove: id=0 pos=(864.4248,103.58984) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.061 28499 28499 D Pointers: onTouchMove: id=0 pos=(872.3594,105.9834) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.070 28499 28499 D Pointers: onTouchMove: id=0 pos=(879.1631,108.24707) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.078 28499 28499 D Pointers: onTouchMove: id=0 pos=(885.249,110.53223) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.087 28499 28499 D Pointers: onTouchMove: id=0 pos=(891.06055,112.819336) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.095 28499 28499 D Pointers: onTouchMove: id=0 pos=(895.5664,114.54297) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.103 28499 28499 D Pointers: onTouchMove: id=0 pos=(899.7969,116.81445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.111 28499 28499 D Pointers: onTouchMove: id=0 pos=(902.4668,119.09082) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.117 28499 28508 I keyboard2.debug: Background concurrent mark compact GC freed 47MB AllocSpace bytes, 51(2136KB) LOS objects, 41% free, 67MB/115MB, paused 97us,1.032ms total 103.703ms
+11-23 17:36:15.119 28499 28499 D Pointers: onTouchMove: id=0 pos=(904.6045,121.38867) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.128 28499 28499 D Pointers: onTouchMove: id=0 pos=(909.3428,127.649414) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.136 28499 28499 D Pointers: onTouchMove: id=0 pos=(913.0498,136.19336) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.145 28499 28499 D Pointers: onTouchMove: id=0 pos=(915.1709,146.97754) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.153 28499 28499 D Pointers: onTouchMove: id=0 pos=(915.9834,160.65039) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.162 28499 28499 D Pointers: onTouchMove: id=0 pos=(915.9961,176.41211) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.170 28499 28499 D Pointers: onTouchMove: id=0 pos=(915.9961,194.14844) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.179 28499 28499 D Pointers: onTouchMove: id=0 pos=(916.5156,210.89062) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.187 28499 28499 D Pointers: onTouchMove: id=0 pos=(917.2793,227.5166) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.195 28499 28499 D Pointers: onTouchMove: id=0 pos=(918.83594,243.11035) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.205 28499 28499 D Pointers: onTouchMove: id=0 pos=(920.67773,257.4834) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.212 28499 28499 D Pointers: onTouchMove: id=0 pos=(922.751,271.04004) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.220 28499 28499 D Pointers: onTouchMove: id=0 pos=(925.1299,283.21387) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.229 28499 28499 D Pointers: onTouchMove: id=0 pos=(927.5078,295.23535) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.237 28499 28499 D Pointers: onTouchMove: id=0 pos=(928.7842,301.68945) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.245 28499 28499 D Pointers: onTouchMove: id=0 pos=(930.4492,312.55566) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.253 28499 28499 D Pointers: onTouchMove: id=0 pos=(931.26953,317.2832) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.262 28499 28499 D Pointers: onTouchMove: id=0 pos=(931.28906,319.0879) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.270 28499 28499 D Pointers: onTouchMove: id=0 pos=(931.28906,319.11328) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.278 28499 28499 D Pointers: onTouchMove: id=0 pos=(931.28906,319.11328) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.287 28499 28499 D Pointers: onTouchMove: id=0 pos=(931.28906,319.11328) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.295 28499 28499 D Pointers: onTouchMove: id=0 pos=(931.28906,319.11328) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.303 28499 28499 D Pointers: onTouchMove: id=0 pos=(914.95996,286.59082) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.312 28499 28499 D Pointers: onTouchMove: id=0 pos=(904.0996,257.60156) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.321 28499 28499 D Pointers: onTouchMove: id=0 pos=(892.5928,224.82422) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.330 28499 28499 D Pointers: onTouchMove: id=0 pos=(881.2881,186.42773) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.336 28499 28499 D Pointers: onTouchMove: id=0 pos=(870.959,151.08789) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.345 28499 28499 D Pointers: onTouchMove: id=0 pos=(863.3086,122.60742) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.369 28499 28499 D Pointers: onTouchMove: id=0 pos=(850.4082,68.04785) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.377 28499 28499 D Pointers: onTouchMove: id=0 pos=(849.0488,60.46289) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.386 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.99023,56.40332) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.395 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7129,54.65625) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.403 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.411 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.420 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.428 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.436 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.444 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.452 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.461 28499 28499 D Pointers: onTouchMove: id=0 pos=(847.7051,54.606445) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.470 28499 28499 D Pointers: onTouchMove: id=0 pos=(838.917,57.964844) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.478 28499 28499 D Pointers: onTouchMove: id=0 pos=(829.41504,60.279297) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.486 28499 28499 D Pointers: onTouchMove: id=0 pos=(817.81934,63.13379) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.495 28499 28499 D Pointers: onTouchMove: id=0 pos=(804.3965,67.67871) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.503 28499 28499 D Pointers: onTouchMove: id=0 pos=(786.9922,75.6543) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.511 28499 28499 D Pointers: onTouchMove: id=0 pos=(770.8301,84.671875) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.519 28499 28499 D Pointers: onTouchMove: id=0 pos=(755.47656,94.78223) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.528 28499 28499 D Pointers: onTouchMove: id=0 pos=(740.0498,106.81152) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.536 28499 28499 D Pointers: onTouchMove: id=0 pos=(723.59863,120.37207) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.545 28499 28499 D Pointers: onTouchMove: id=0 pos=(705.20703,136.50977) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.553 28499 28499 D Pointers: onTouchMove: id=0 pos=(687.4414,151.46289) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.561 28499 28499 D Pointers: onTouchMove: id=0 pos=(667.1875,167.99805) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.586 28499 28499 D Pointers: onTouchMove: id=0 pos=(603.38965,214.69629) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.595 28499 28499 D Pointers: onTouchMove: id=0 pos=(581.28906,228.98047) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.603 28499 28499 D Pointers: onTouchMove: id=0 pos=(561.13965,242.35547) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.611 28499 28499 D Pointers: onTouchMove: id=0 pos=(543.1797,254.93262) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.619 28499 28499 D Pointers: onTouchMove: id=0 pos=(526.501,266.6084) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.627 28499 28499 D Pointers: onTouchMove: id=0 pos=(512.2129,276.542) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.635 28499 28499 D Pointers: onTouchMove: id=0 pos=(500.9912,284.07812) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.644 28499 28499 D Pointers: onTouchMove: id=0 pos=(491.70312,290.95703) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.652 28499 28499 D Pointers: onTouchMove: id=0 pos=(485.29883,296.1455) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.660 28499 28499 D Pointers: onTouchMove: id=0 pos=(481.9922,298.833) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.669 28499 28499 D Pointers: onTouchMove: id=0 pos=(476.27344,303.6289) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.677 28499 28499 D Pointers: onTouchMove: id=0 pos=(474.3711,305.3789) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.686 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.792,306.5244) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.694 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.702 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.712 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.720 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.728 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.736 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.744 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.753 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.763 28499 28499 D Pointers: onTouchMove: id=0 pos=(472.76367,306.54492) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.769 28499 28499 D Pointers: onTouchMove: id=0 pos=(485.56934,290.67773) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.785 28499 28499 D Pointers: onTouchMove: id=0 pos=(506.81543,266.23926) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.802 28499 28499 D Pointers: onTouchMove: id=0 pos=(531.041,238.03125) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.811 28499 28499 D Pointers: onTouchMove: id=0 pos=(544.36523,221.88477) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.819 28499 28499 D Pointers: onTouchMove: id=0 pos=(556.2676,205.88965) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.827 28499 28499 D Pointers: onTouchMove: id=0 pos=(566.6797,190.15723) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.836 28499 28499 D Pointers: onTouchMove: id=0 pos=(575.16504,174.25) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.844 28499 28499 D Pointers: onTouchMove: id=0 pos=(581.89453,160.87988) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.852 28499 28499 D Pointers: onTouchMove: id=0 pos=(588.0303,147.63672) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.861 28499 28499 D Pointers: onTouchMove: id=0 pos=(594.1113,135.56348) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.870 28499 28499 D Pointers: onTouchMove: id=0 pos=(599.6367,124.17871) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.877 28499 28499 D Pointers: onTouchMove: id=0 pos=(604.96875,114.3125) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.885 28499 28499 D Pointers: onTouchMove: id=0 pos=(609.4863,105.68652) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.894 28499 28499 D Pointers: onTouchMove: id=0 pos=(613.459,97.11133) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.903 28499 28499 D Pointers: onTouchMove: id=0 pos=(616.626,89.14453) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.911 28499 28499 D Pointers: onTouchMove: id=0 pos=(618.52344,82.21582) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.920 28499 28499 D Pointers: onTouchMove: id=0 pos=(619.3418,76.4834) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.928 28499 28499 D Pointers: onTouchMove: id=0 pos=(619.36523,73.03125) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.937 28499 28499 D Pointers: onTouchMove: id=0 pos=(619.1113,71.23633) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.944 28499 28499 D Pointers: onTouchMove: id=0 pos=(618.5967,70.08008) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.952 28499 28499 D Pointers: onTouchMove: id=0 pos=(618.5742,70.03125) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.961 28499 28499 D Pointers: onTouchMove: id=0 pos=(618.5742,70.03125) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.969 28499 28499 D Pointers: onTouchMove: id=0 pos=(605.39746,65.50098) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.980 28499 28499 D Pointers: onTouchMove: id=0 pos=(596.7705,67.65527) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.985 28499 28499 D Pointers: onTouchMove: id=0 pos=(583.3535,69.41211) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.993 28499 28499 D Pointers: onTouchMove: id=0 pos=(582.9785,69.45996) value=[KeyValue Char+0+103 "g"] hasLeftKey=true flags=256
+11-23 17:36:15.994 28499 28499 I VRI[InputMethod]@485b086: ViewPostIme pointer 1
+11-23 17:36:15.997 28499 28499 D SwipeRecognizer: Using traditional keys: 8
+11-23 17:36:15.998 28499 28499 D AsyncPredictionHandler: All pending predictions cancelled
+11-23 17:36:15.998 28499 28499 D AsyncPredictionHandler: Prediction requested (ID: 32)
+11-23 17:36:15.998 28499 28633 D NeuralSwipeTypingEngine: 🔥🔥🔥 NEURAL PREDICTION CALLED FROM:
+11-23 17:36:15.999 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.NeuralSwipeTypingEngine.predict:97
+11-23 17:36:15.999 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.AsyncPredictionHandler.handlePredictionRequest:124
+11-23 17:36:15.999 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.AsyncPredictionHandler.access$000:16
+11-23 17:36:15.999 28499 28633 D NeuralSwipeTypingEngine: 🔥   juloo.keyboard2.AsyncPredictionHandler$1.handleMessage:57
+11-23 17:36:15.999 28499 28633 D NeuralSwipeTypingEngine: === PURE NEURAL PREDICTION START ===
+11-23 17:36:15.999 28499 28633 D NeuralSwipeTypingEngine: Input: keySeq=, pathLen=3625.4, duration=2.18s
+11-23 17:36:15.999 28499 28633 D NeuralSwipeTypingEngine: Using PURE NEURAL prediction - no classification needed
+11-23 17:36:15.999 28499 28633 D SwipeTrajectoryProcessor: 📐 QWERTY NORMALIZATION: top=0, height=595 (kb=1080x632)
+11-23 17:36:15.999 28499 28633 D SwipeTrajectoryProcessor: 📐 RAW first=(580,278) last=(583,69)
+11-23 17:36:15.999 28499 28633 D SwipeTrajectoryProcessor: 📐 NORMALIZED first=(0.537,0.467) last=(0.540,0.117)
+11-23 17:36:15.999 28499 28633 D SwipeTrajectoryProcessor: 📐 For z at pixel y=496: normalized y = 0.834
+11-23 17:36:15.999 28499 28633 D SwipeTrajectoryProcessor: 🔍 Resampling check: size=161, max=250, mode=DISCARD, needsResample=false
+11-23 17:36:15.999 28499 28633 D SwipeTrajectoryProcessor: 🔍 Detecting keys from 161 normalized points: first=(0.537,0.467) last=(0.540,0.117)
+11-23 17:36:15.999 28499 28633 D SwipeTrajectoryProcessor: 🎯 DETECTED KEY SEQUENCE: "gfrerfghbnbhgfdrertyuioklkoiuhgfgy" (from 161 points)
+11-23 17:36:16.085 28499 28633 D OnnxSwipePredictor: 🔥 BEAM SEARCH MODE: beam_width=4, max_length=15
+11-23 17:36:16.177 28499 28633 D OptimizedVocabulary: DEBUG: Checking for 'asshole' in vocabulary. Is present: true
+11-23 17:36:16.177 28499 28633 D OptimizedVocabulary: 📊 DETAILED FILTERING PROCESS:
+11-23 17:36:16.177 28499 28633 D OptimizedVocabulary: ─────────────────────────────────────────────────────────
+11-23 17:36:16.177 28499 28633 D OptimizedVocabulary: ─────────────────────────────────────────────────────────
+11-23 17:36:16.177 28499 28633 I OnnxSwipePredictor: ⏱️ Swipe prediction latency breakdown:
+11-23 17:36:16.177 28499 28633 I OnnxSwipePredictor:    Preprocessing:    0ms (trajectory extraction, key detection)
+11-23 17:36:16.177 28499 28633 I OnnxSwipePredictor:    Encoder:         13ms (swipe → embeddings)
+11-23 17:36:16.177 28499 28633 I OnnxSwipePredictor:    Beam search:     91ms (decoder inference)
+11-23 17:36:16.177 28499 28633 I OnnxSwipePredictor:    Postprocessing:   0ms (vocab filtering, ranking)
+11-23 17:36:16.177 28499 28633 I OnnxSwipePredictor:    TOTAL:          178ms
+11-23 17:36:16.177 28499 28633 D NeuralSwipeTypingEngine: Neural prediction successful: 0 candidates
+11-23 17:36:16.177 28499 28633 E AsyncPredictionHandler: ⏱️ PREDICTION COMPLETED in 179ms (ID: 32)
+11-23 17:36:16.177 28499 28499 E AsyncPredictionHandler: ⏱️ CALLBACK DELAY: 0ms (time from post to run)
+11-23 17:36:16.178 28499 28499 E InputCoordinator: ⏱️ HANDLE_PREDICTIONS START
+11-23 17:36:16.178 28499 28499 D SuggestionBar: clearSuggestions called - showing empty list instead of hiding
+11-23 17:36:16.178 28499 28499 E InputCoordinator: ⏱️ HANDLE_PREDICTIONS COMPLETE (empty): 0ms
+11-23 17:36:16.178 28499 28499 E AsyncPredictionHandler: ⏱️ CALLBACK EXECUTION: 0ms (onPredictionsReady)
+11-23 17:36:18.128 28499 28499 I VRI[SwipeDebugActivity]@d02771: handleAppVisibility mAppVisible = true visible = false
+11-23 17:36:18.128 28499 28499 D VRI[SwipeDebugActivity]@d02771: visibilityChanged oldVisibility=true newVisibility=false
+11-23 17:36:18.130 28499 28499 D InputMethodManagerUtils: startInputInner - Id : 0
+11-23 17:36:18.130 28499 28499 I InputMethodManager: startInputInner - IInputMethodManagerGlobalInvoker.startInputOrWindowGainedFocus
+11-23 17:36:18.131 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=170
+11-23 17:36:18.131 28499 28499 D SuggestionBar: clearSuggestions called - showing empty list instead of hiding
+11-23 17:36:18.131 28499 28499 D InputMethodService: unregisterCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:18.131 28499 28499 D InputMethodService: updateClientDisplayId: displayId=0, mClientDisplayId=0
+11-23 17:36:18.132 28499 28499 W Config  : Fixed clipboard_history_limit type mismatch: 0
+11-23 17:36:18.132 28499 28499 D OptimizedVocabulary: Config cached: confidenceWeight=0.75, autocorrect=true
+11-23 17:36:18.132 28499 28499 D OnnxSwipePredictor: Config updated: verbose_logging=true, show_raw=true, batch_beams=false
+11-23 17:36:18.132 28499 28499 D SwipeTrajectoryProcessor: Resampling mode set to: DISCARD
+11-23 17:36:18.132 28499 28499 D NeuralSwipeTypingEngine: Neural config updated
+11-23 17:36:18.132 28499 28499 D Keyboard2View: Pre-calculated keyWidth=106.425 for immediate touch handling
+11-23 17:36:18.132 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x783
+11-23 17:36:18.132 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:18.132 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:18.132 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:18.133 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:18.133 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:18.133 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:18.133 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:18.133 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:18.133 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:18.134 28499 28499 D juloo.keyboard2: inputType=0x0 imeOptions=0x0 privateImeOptions=null
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: actionLabel=null actionId=0
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: initialSelStart=-1 initialSelEnd=-1 initialToolType=1 initialCapsMode=0x0
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: hintText=null label=null
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: packageName=com.sec.android.app.launcher autofillId=0 fieldId=0 fieldName=null
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: extras=Bundle[{appShowRequested=false, isTextEditor=false, displayId=0}]
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: hintLocales=null
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: supportedHandwritingGestureTypes=(none)
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: supportedHandwritingGesturePreviewTypes=(none)
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: isStylusHandwritingEnabled=false
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: writingToolsEnabled=true
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: contentMimeTypes=null
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: extras: Bundle[{appShowRequested=false, isTextEditor=false, displayId=0}]
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: swapEnterActionKey: true
+11-23 17:36:18.135 28499 28499 D juloo.keyboard2: actionLabel: null
+11-23 17:36:18.135 28499 28499 D InputMethodService: registerCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:18.140 28499 28499 I VRI[SwipeDebugActivity]@d02771: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)8 dur=1 res=0x2 s={false 0x0} ch=true seqId=0
+11-23 17:36:18.140 28499 28499 D VRI[SwipeDebugActivity]@d02771: Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility
+11-23 17:36:18.141 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:18.141 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:18.141 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:18.141 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:18.141 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:18.141 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:18.141 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:18.141 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:18.141 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:18.144 28499 28499 I ImeFocusController: onPreWindowFocus: skipped hasWindowFocus=false mHasImeFocus=true
+11-23 17:36:18.144 28499 28499 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=ImeCallback=ImeOnBackInvokedCallback@99975460 Callback=android.window.ImeOnBackInvokedDispatcher$ImeOnBackInvokedCallbackWrapper@9c2b27c
+11-23 17:36:18.144 28499 28499 I ImeFocusController: onPostWindowFocus: skipped hasWindowFocus=false mHasImeFocus=true
+11-23 17:36:18.145 28499 28499 I VRI[SwipeDebugActivity]@d02771: stopped(true) old = false
+11-23 17:36:18.145 28499 28499 D VRI[SwipeDebugActivity]@d02771: WindowStopped on juloo.keyboard2.debug/juloo.keyboard2.SwipeDebugActivity set to true
+11-23 17:36:18.145 28499 28620 D HWUI    : CacheManager::trimMemory(20)
+11-23 17:36:18.156 28499 28499 I AutofillManager: onInvisibleForAutofill(): expiringResponse
+11-23 17:36:18.163 28499 28499 I InputMethod: hideSoftInput(): flags=0
+11-23 17:36:18.164 28499 28499 D SuggestionBar: clearSuggestions called - showing empty list instead of hiding
+11-23 17:36:18.164 28499 28499 D InputMethodService: unregisterCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:18.164 28499 28499 D InputMethodService: sendBroadcastImeShownState: isInputViewShown=false candidatesVisibility=4
+11-23 17:36:18.164 28499 28499 D InputMethodService: sendInputViewShownStateSSRM(): false
+11-23 17:36:18.165 28499 28499 I InputMethodService: scheduleImeSurfaceRemoval: removeImeSurface is posted.
+11-23 17:36:18.165 28499 28499 I ImeTracker: system_server:5f37abe: onHidden
+11-23 17:36:18.171 28499 28499 I InputMethodService: scheduleImeSurfaceRemoval: canceled, mShowInputRequested=false, mWindowVisible=false, IsmWindowNull=false, IsmImeSurfaceRemoverRunnableNotNull=true
+11-23 17:36:18.173 28499 28499 I VRI[SwipeDebugActivity]@d02771: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)8 dur=1 res=0x2 s={false 0x0} ch=false seqId=0
+11-23 17:36:18.173 28499 28499 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = VRI[InputMethod]@485b086 mNativeObject= 0xb4000075aa345200 sc.mNativeObject= 0xb4000076ba27b210 format= -2 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3574 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 
+11-23 17:36:18.173 28499 28499 I VRI[InputMethod]@485b086: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=true req=(1080,2340)0 dur=0 res=0x0 s={true 0xb40000751a25ee50} ch=false seqId=0
+11-23 17:36:18.174 28499 28499 I VRI[InputMethod]@485b086: registerCallbackForPendingTransactions
+11-23 17:36:18.175 28499 28619 I VRI[InputMethod]@485b086: mWNT: t=0xb40000763a39f910 mBlastBufferQueue=0xb4000075aa345200 fn= 539 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$10.onFrameDraw:6536 android.view.ViewRootImpl$4.onFrameDraw:2489 android.view.ThreadedRenderer$1.onFrameDraw:718 
+11-23 17:36:18.176 28499 28499 D BBA2    : setIsFg isFg = false; delayValue 3999ms
+11-23 17:36:18.665 28499 28499 I InputMethodService: removeImeSurface
+11-23 17:36:18.665 28499 28499 I InputMethodService: cancelImeSurfaceRemoval: removeCallbacks
+11-23 17:36:18.676 28499 28620 D HWUI    : CacheManager::trimMemory(20)
+11-23 17:36:18.685 28499 28499 I VRI[InputMethod]@485b086: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)8 dur=5 res=0x2 s={false 0x0} ch=true seqId=0
+11-23 17:36:18.685 28499 28499 D VRI[InputMethod]@485b086: Not drawing due to not visible. Reason=View.GONE
+11-23 17:36:19.469 28499 28499 D InputMethodService: unregisterCompatOnBackInvokedCallback return because registered : false
+11-23 17:36:19.470 28499 28499 D InputMethodService: updateClientDisplayId: displayId=0, mClientDisplayId=0
+11-23 17:36:19.471 28499 28499 I InputMethod: showSoftInput(): flags=1
+11-23 17:36:19.472 28499 28499 W Config  : Fixed clipboard_history_limit type mismatch: 0
+11-23 17:36:19.473 28499 28499 D OptimizedVocabulary: Config cached: confidenceWeight=0.75, autocorrect=true
+11-23 17:36:19.473 28499 28499 D OnnxSwipePredictor: Config updated: verbose_logging=true, show_raw=true, batch_beams=false
+11-23 17:36:19.473 28499 28499 D SwipeTrajectoryProcessor: Resampling mode set to: DISCARD
+11-23 17:36:19.473 28499 28499 D NeuralSwipeTypingEngine: Neural config updated
+11-23 17:36:19.473 28499 28499 D Keyboard2View: Pre-calculated keyWidth=106.425 for immediate touch handling
+11-23 17:36:19.473 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x783
+11-23 17:36:19.474 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:19.474 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:19.474 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:19.474 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:19.474 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:19.474 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:19.474 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:19.474 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:19.474 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: inputType=0x0 imeOptions=0x2000000 privateImeOptions=null
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: actionLabel=null actionId=0
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: initialSelStart=-1 initialSelEnd=-1 initialToolType=1 initialCapsMode=0x0
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: hintText=null label=null
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: packageName=com.termux autofillId=1073741825 fieldId=2131231121 fieldName=null
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: extras=Bundle[{appShowRequested=false, isTextEditor=true, displayId=0}]
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: hintLocales=null
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: supportedHandwritingGestureTypes=(none)
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: supportedHandwritingGesturePreviewTypes=(none)
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: isStylusHandwritingEnabled=false
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: writingToolsEnabled=true
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: contentMimeTypes=null
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: extras: Bundle[{appShowRequested=false, isTextEditor=true, displayId=0}]
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: swapEnterActionKey: true
+11-23 17:36:19.475 28499 28499 D juloo.keyboard2: actionLabel: null
+11-23 17:36:19.475 28499 28499 D InputMethodService: sendBroadcastImeShownState: isInputViewShown=true candidatesVisibility=4
+11-23 17:36:19.475 28499 28499 D InputMethodService: sendInputViewShownStateSSRM(): true
+11-23 17:36:19.476 28499 28499 D InputMethodService: registerCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:19.476 28499 28499 I InputMethod: showSoftInput(): flags=1
+11-23 17:36:19.476 28499 28499 I InputMethodService: startViews: mShowInputRequested=true, mInputViewStarted=true, mCandidatesViewStarted= false
+11-23 17:36:19.476 28499 28499 D InputMethodService: sendBroadcastImeShownState: isInputViewShown=true candidatesVisibility=4
+11-23 17:36:19.476 28499 28499 D InputMethodService: registerCompatOnBackInvokedCallback return because registered : true
+11-23 17:36:19.478 28499 28499 I BufferQueueProducer: [](id:6f5300000021,api:0,p:2049323504,c:28499) setDequeueTimeout:2077252342
+11-23 17:36:19.479 28499 28499 I BLASTBufferQueue_Java: new BLASTBufferQueue, mName= VRI[InputMethod]@485b086 mNativeObject= 0xb4000075aa345200 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3585 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 android.view.Choreographer.doCallbacks:1367 android.view.Choreographer.doFrame:1292 android.view.Choreographer$FrameDisplayEventReceiver.run:1870 
+11-23 17:36:19.479 28499 28499 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = VRI[InputMethod]@485b086 mNativeObject= 0xb4000075aa345200 sc.mNativeObject= 0xb4000076ba27b210 format= -2 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3590 android.view.ViewRootImpl.relayoutWindow:11685 android.view.ViewRootImpl.performTraversals:4804 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 
+11-23 17:36:19.479 28499 28499 I VRI[InputMethod]@485b086: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)0 dur=1 res=0x3 s={true 0xb40000751a3cca00} ch=true seqId=0
+11-23 17:36:19.479 28499 28499 D VRI[InputMethod]@485b086: mThreadedRenderer.initialize() mSurface={isValid=true 0xb40000751a3cca00} hwInitialized=true
+11-23 17:36:19.479 28499 28499 D NeuralSwipeTypingEngine: Set keyboard dimensions: 1080x632
+11-23 17:36:19.480 28499 28499 D NeuralSwipeTypingEngine: Set key positions: 27 keys
+11-23 17:36:19.480 28499 28499 D NeuralLayoutHelper: Set 27 key positions on neural engine
+11-23 17:36:19.480 28499 28499 D SwipeTrajectoryProcessor: 📐 QWERTY area bounds set: top=0, height=595 (full kb height=632)
+11-23 17:36:19.480 28499 28499 D NeuralSwipeTypingEngine: Set QWERTY area bounds: top=0, height=595
+11-23 17:36:19.480 28499 28499 D NeuralLayoutHelper: Set QWERTY bounds: top=0, height=595 (q.y=99, m.y=496)
+11-23 17:36:19.480 28499 28499 D SwipeTrajectoryProcessor: 📐 Touch Y-offset set: 0 pixels
+11-23 17:36:19.480 28499 28499 D NeuralSwipeTypingEngine: Set touch Y-offset: 0 pixels
+11-23 17:36:19.480 28499 28499 D NeuralLayoutHelper: Touch Y-offset: 0 pixels (DISABLED for debugging, row height=198)
+11-23 17:36:19.481 28499 28499 D VRI[InputMethod]@485b086: reportNextDraw android.view.ViewRootImpl.performTraversals:5443 android.view.ViewRootImpl.doTraversal:3924 android.view.ViewRootImpl$TraversalRunnable.run:12903 android.view.Choreographer$CallbackRecord.run:1901 android.view.Choreographer$CallbackRecord.run:1910 
+11-23 17:36:19.481 28499 28499 D VRI[InputMethod]@485b086: Setup new sync=wmsSync-VRI[InputMethod]@485b086#72
+11-23 17:36:19.481 28499 28499 I VRI[InputMethod]@485b086: Creating new active sync group VRI[InputMethod]@485b086#73
+11-23 17:36:19.481 28499 28499 D VRI[InputMethod]@485b086: Start draw after previous draw not visible
+11-23 17:36:19.481 28499 28499 D VRI[InputMethod]@485b086: registerCallbacksForSync syncBuffer=false
+11-23 17:36:19.482 28499 28618 D VRI[InputMethod]@485b086: Received frameDrawingCallback syncResult=0 frameNum=1.
+11-23 17:36:19.482 28499 28618 I VRI[InputMethod]@485b086: mWNT: t=0xb40000763a4cf4d0 mBlastBufferQueue=0xb4000075aa345200 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$12.onFrameDraw:15441 android.view.ThreadedRenderer$1.onFrameDraw:718 <bottom of call stack> 
+11-23 17:36:19.482 28499 28618 I VRI[InputMethod]@485b086: Setting up sync and frameCommitCallback
+11-23 17:36:19.483 28499 28620 I BLASTBufferQueue: [VRI[InputMethod]@485b086#33](f:0,a:0,s:0) onFrameAvailable the first frame is available
+11-23 17:36:19.483 28499 28620 I SurfaceComposerClient: apply transaction with the first frame. layerId: 42556, bufferData(ID: 122402272968839, frameNumber: 1)
+11-23 17:36:19.483 28499 28620 I VRI[InputMethod]@485b086: Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+11-23 17:36:19.483 28499 28499 D VRI[InputMethod]@485b086: reportDrawFinished seqId=0
+11-23 17:36:19.502 28499 28499 I VRI[InputMethod]@485b086: handleResized, frames=ClientWindowFrames{frame=[0,0][1080,2340] display=[0,0][1080,2340] parentFrame=[0,0][0,0]} displayId=0 dragResizing=false compatScale=1.0 frameChanged=false attachedFrameChanged=false configChanged=false displayChanged=false compatScaleChanged=false dragResizingChanged=false
+11-23 17:36:23.245 28499 29418 D Choreographer: BBA2 receive callback when in bg : 4
+11-23 17:36:23.246 28499 28499 I InputMethodService: onDestroy
+11-23 17:36:23.254 28499 28499 D InputMethodService: notifyKeyboardClosed called.
+11-23 17:36:23.255 28499 28499 D SuggestionBar: clearSuggestions called - showing empty list instead of hiding
+11-23 17:36:23.255 28499 28499 D InputMethodService: unregisterCompatOnBackInvokedCallback : android.inputmethodservice.InputMethodService$$ExternalSyntheticLambda2@5f58124
+11-23 17:36:23.255 28499 28499 I WindowManager: WindowManagerGlobal#removeView, ty=2011, view=com.android.internal.policy.DecorView{3f817e5 V.E...... R.....ID 0,0-1080,2340}[InputMethod], caller=android.view.WindowManagerGlobal.removeView:654 android.view.WindowManagerImpl.removeViewImmediate:216 android.app.Dialog.dismissDialog:850 
+11-23 17:36:23.255 28499 28499 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda16@17156e3
+11-23 17:36:23.256 28499 28620 D HWUI    : CacheManager::trimMemory(20)
+11-23 17:36:23.267 28499 28499 I VRI[InputMethod]@485b086: dispatchDetachedFromWindow
+11-23 17:36:23.267 28499 28499 D InputTransport: Input channel destroyed: '26207e5', fd=120
+11-23 17:36:23.279 28499 28499 I ClipboardHistory: Clipboard listener cleanup on service destroy
+11-23 17:36:23.279 28499 28499 D AsyncPredictionHandler: All pending predictions cancelled
+11-23 17:36:23.279 28499 28499 D UserDictionaryObserver: Stopped observing dictionary changes
+11-23 17:36:23.279 28499 28499 D WordPredictor: Stopped observing dictionary changes
+11-23 17:36:23.279 28499 28499 D PredictionCoordinator: PredictionCoordinator shutdown complete
+11-23 17:36:23.280 28499 28499 W WindowTokenClientController: Can't find attached WindowTokenClient for android.window.WindowTokenClient@8028684
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=132
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=111
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=143
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=131
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=156
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=160
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=182
+11-23 17:36:23.280 28499 28499 D InputTransport: Input channel destroyed: 'ClientS', fd=140
+11-23 17:36:23.280 28499 28620 D HWUI    : CacheManager::trimMemory(20)
+11-23 17:36:23.281 28499 28620 D HWUI    : CacheManager::trimMemory(40)

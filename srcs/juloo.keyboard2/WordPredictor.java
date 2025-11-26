@@ -54,7 +54,7 @@ public class WordPredictor
   {
     _dictionary = new AtomicReference<>(new HashMap<>());
     _prefixIndex = new AtomicReference<>(new HashMap<>());
-    _bigramModel = new BigramModel();
+    _bigramModel = BigramModel.getInstance(null);
     _languageDetector = new LanguageDetector();
     _currentLanguage = "en"; // Default to English
     _recentWords = new ArrayList<>();
