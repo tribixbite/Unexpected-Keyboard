@@ -79,9 +79,13 @@
 68. ProbabilisticKeyDetector.java → ProbabilisticKeyDetector.kt (347→267 lines, 23% reduction)
 69. ClipboardManager.java → ClipboardManager.kt (348→279 lines, 20% reduction)
 70. NgramModel.java → NgramModel.kt (350→309 lines, 12% reduction)
+71. ContractionManager.java → ContractionManager.kt (366→275 lines, 25% reduction)
+72. ContinuousSwipeGestureRecognizer.java → ContinuousSwipeGestureRecognizer.kt (382→299 lines, 22% reduction)
+73. SwipeGestureRecognizer.java → SwipeGestureRecognizer.kt (389→328 lines, 16% reduction)
+74. WordGestureTemplateGenerator.java → WordGestureTemplateGenerator.kt (406→331 lines, 18% reduction)
 
-**Total: 13,766 lines Java → 11,684 lines Kotlin (15% reduction)**
-**Remaining: 28 Java files** (from 98 total - 71% complete!)
+**Total: 15,309 lines Java → 12,917 lines Kotlin (16% reduction)**
+**Remaining: 24 Java files** (from 98 total - 76% complete!)
 
 All builds successful ✅
 
