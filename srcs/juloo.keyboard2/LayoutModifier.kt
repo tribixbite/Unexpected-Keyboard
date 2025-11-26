@@ -73,7 +73,7 @@ object LayoutModifier {
             )
         }
 
-        newKw = newKw.mapKeys(object : KeyboardData.MapKeyValues {
+        newKw = newKw.mapKeys(object : KeyboardData.MapKeyValues() {
             override fun apply(key: KeyValue, localized: Boolean): KeyValue? {
                 if (localized && !extra_keys.containsKey(key)) return null
                 if (remove_keys.contains(key)) return null
@@ -107,7 +107,7 @@ object LayoutModifier {
     @JvmStatic
     fun modify_numpad(kw: KeyboardData, main_kw: KeyboardData): KeyboardData {
         val map_digit = KeyModifier.modify_numpad_script(main_kw.numpad_script)
-        return kw.mapKeys(object : KeyboardData.MapKeyValues {
+        return kw.mapKeys(object : KeyboardData.MapKeyValues() {
             override fun apply(key: KeyValue, localized: Boolean): KeyValue? {
                 when (key.getKind()) {
                     KeyValue.Kind.Char -> {
@@ -154,7 +154,7 @@ object LayoutModifier {
         val map_digit = KeyModifier.modify_numpad_script(numpad_script)
         if (map_digit == -1) return null
 
-        return object : KeyboardData.MapKeyValues {
+        return object : KeyboardData.MapKeyValues() {
             override fun apply(key: KeyValue, localized: Boolean): KeyValue {
                 val modified = ComposeKey.apply(map_digit, key)
                 return modified ?: key

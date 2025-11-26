@@ -71,12 +71,12 @@ class SuggestionBar : LinearLayout {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
 
             // Use theme label color for text with fallback
-            textColor = if (theme?.labelColor != 0) {
+            setTextColor(if (theme?.labelColor != 0) {
                 theme?.labelColor ?: Color.WHITE
             } else {
                 // Fallback to white text if theme not initialized
                 Color.WHITE
-            }
+            })
 
             setPadding(dpToPx(context, 12), 0, dpToPx(context, 12), 0)
             maxLines = 2
@@ -104,12 +104,12 @@ class SuggestionBar : LinearLayout {
 
             // Use theme sublabel color with some transparency for divider
             val dividerColor = theme?.subLabelColor ?: Color.GRAY
-            backgroundColor = Color.argb(
+            setBackgroundColor(Color.argb(
                 100,
                 Color.red(dividerColor),
                 Color.green(dividerColor),
                 Color.blue(dividerColor)
-            )
+            ))
         }
     }
 
@@ -210,10 +210,10 @@ class SuggestionBar : LinearLayout {
                     // Highlight first suggestion with activated color
                     if (i == 0) {
                         typeface = Typeface.DEFAULT_BOLD
-                        textColor = theme?.activatedColor?.takeIf { it != 0 } ?: Color.CYAN
+                        setTextColor(theme?.activatedColor?.takeIf { it != 0 } ?: Color.CYAN)
                     } else {
                         typeface = Typeface.DEFAULT
-                        textColor = theme?.labelColor?.takeIf { it != 0 } ?: Color.WHITE
+                        setTextColor(theme?.labelColor?.takeIf { it != 0 } ?: Color.WHITE)
                     }
                 }
 

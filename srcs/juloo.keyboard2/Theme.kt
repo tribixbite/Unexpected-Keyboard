@@ -29,7 +29,9 @@ class Theme(context: Context, attrs: AttributeSet?) {
     val keyBorderColorRight: Int
     val keyBorderColorBottom: Int
 
+    @JvmField
     val colorNavBar: Int
+    @JvmField
     val isLightNavBar: Boolean
 
     init {
@@ -86,14 +88,21 @@ class Theme(context: Context, attrs: AttributeSet?) {
         keyWidth: Float,
         layout: KeyboardData
     ) {
+        @JvmField
         val vertical_margin: Float
+        @JvmField
         val horizontal_margin: Float
+        @JvmField
         val margin_top: Float
+        @JvmField
         val margin_left: Float
+        @JvmField
         val row_height: Float
         val indication_paint: Paint
 
+        @JvmField
         val key: Key
+        @JvmField
         val key_activated: Key
 
         init {
@@ -127,7 +136,9 @@ class Theme(context: Context, attrs: AttributeSet?) {
         ) {
             val bg_paint = Paint()
             val border_paint: Paint
+            @JvmField
             val border_width: Float
+            @JvmField
             val border_radius: Float
             private val _label_paint: Paint
             private val _special_label_paint: Paint

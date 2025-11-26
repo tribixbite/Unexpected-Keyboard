@@ -9,7 +9,7 @@ import android.widget.ListView
  * A scrollable ListView that limits its maximum height.
  * Used for pinned clipboard items - shows max 2 items with internal scrolling.
  */
-class MaxHeightListView @JvmOverloads constructor(
+open class MaxHeightListView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0

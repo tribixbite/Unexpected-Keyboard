@@ -35,8 +35,12 @@ import juloo.keyboard2.prefs.LayoutsPreference
  */
 class SubtypeManager(private val context: Context) {
 
-    private val imm: InputMethodManager =
+    @JvmField
+    val inputMethodManager: InputMethodManager =
         context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+    @Deprecated("Use inputMethodManager instead", ReplaceWith("inputMethodManager"))
+    private val imm: InputMethodManager get() = inputMethodManager
 
     /**
      * Gets list of enabled subtypes for this keyboard.
@@ -135,12 +139,9 @@ class SubtypeManager(private val context: Context) {
         return defaultLayout
     }
 
-    /**
-     * Gets InputMethodManager instance.
-     *
-     * @return InputMethodManager for IME operations
-     */
-    fun getInputMethodManager(): InputMethodManager = imm
+    /** @deprecated Use inputMethodManager field instead */
+    @Deprecated("Use inputMethodManager field instead", ReplaceWith("inputMethodManager"))
+    fun getInputMethodManager(): InputMethodManager = inputMethodManager
 
     companion object {
         private const val TAG = "SubtypeManager"

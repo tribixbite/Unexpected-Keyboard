@@ -63,7 +63,7 @@ class LayoutsPreference(ctx: Context, attrs: AttributeSet?) : ListGroupPreferenc
         return values.size > 1 && value !is CustomLayout
     }
 
-    override fun getSerializer(): Serializer<Layout> = SERIALIZER
+    override fun getSerializer(): ListGroupPreference.Serializer<Layout> = SERIALIZER
 
     private fun selectDialog(callback: SelectionCallback<Layout>) {
         val layouts = ArrayAdapter(context, android.R.layout.simple_list_item_1, layoutDisplayNames)
@@ -151,6 +151,7 @@ class LayoutsPreference(ctx: Context, attrs: AttributeSet?) : ListGroupPreferenc
     /** The XML description of a custom layout. */
     data class CustomLayout(val xml: String, val parsed: KeyboardData?) : Layout {
         companion object {
+            @JvmStatic
             fun parse(xml: String): CustomLayout {
                 val parsed = try {
                     KeyboardData.load_string_exn(xml)
@@ -231,6 +232,12 @@ class LayoutsPreference(ctx: Context, attrs: AttributeSet?) : ListGroupPreferenc
 
         /** [null] for the "system" layout. */
         @JvmStatic
+        @Deprecated("Use loadFromPreferences instead", ReplaceWith("loadFromPreferences(res, prefs)"))
+        fun load_from_preferences(res: Resources, prefs: SharedPreferences): List<KeyboardData?> {
+            return loadFromPreferences(res, prefs)
+        }
+
+        @JvmStatic
         fun loadFromPreferences(res: Resources, prefs: SharedPreferences): List<KeyboardData?> {
             val layouts = mutableListOf<KeyboardData?>()
             for (l in loadFromPreferences(KEY, prefs, DEFAULT, SERIALIZER) ?: DEFAULT) {
@@ -244,6 +251,12 @@ class LayoutsPreference(ctx: Context, attrs: AttributeSet?) : ListGroupPreferenc
         }
 
         /** Does not call [prefs.commit]. */
+        @JvmStatic
+        @Deprecated("Use saveToPreferences instead", ReplaceWith("saveToPreferences(prefs, items)"))
+        fun save_to_preferences(prefs: SharedPreferences.Editor, items: List<Layout>) {
+            saveToPreferences(prefs, items)
+        }
+
         @JvmStatic
         fun saveToPreferences(prefs: SharedPreferences.Editor, items: List<Layout>) {
             saveToPreferences(KEY, prefs, items, SERIALIZER)

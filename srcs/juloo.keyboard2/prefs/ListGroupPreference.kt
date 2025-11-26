@@ -19,7 +19,7 @@ import org.json.JSONException
  */
 abstract class ListGroupPreference<E>(context: Context, attrs: AttributeSet?) : PreferenceGroup(context, attrs) {
     private var attached = false
-    private var values: MutableList<E> = mutableListOf()
+    protected var values: MutableList<E> = mutableListOf()
     /** The "add" button currently displayed. */
     private var addButton: AddButton? = null
 
@@ -151,7 +151,7 @@ abstract class ListGroupPreference<E>(context: Context, attrs: AttributeSet?) : 
         }
     }
 
-    inner class AddButton(ctx: Context) : Preference(ctx) {
+    open inner class AddButton(ctx: Context) : Preference(ctx) {
         init {
             isPersistent = false
             layoutResource = R.layout.pref_listgroup_add_btn

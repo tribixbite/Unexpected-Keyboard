@@ -12,7 +12,7 @@ import android.widget.GridView
 import android.widget.TextView
 
 class EmojiGridView(context: Context, attrs: AttributeSet?) :
-    GridView(context, attrs), GridView.OnItemClickListener {
+    GridView(context, attrs), AdapterView.OnItemClickListener {
 
     private var emojiArray: List<Emoji> = emptyList()
     private val lastUsed: MutableMap<Emoji, Int> = mutableMapOf()

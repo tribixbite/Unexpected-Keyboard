@@ -329,6 +329,12 @@ class ExtraKeysPreference(context: Context, attrs: AttributeSet?) : PreferenceCa
 
         /** Get the set of enabled extra keys. */
         @JvmStatic
+        @Deprecated("Use getExtraKeys instead", ReplaceWith("getExtraKeys(prefs)"))
+        fun get_extra_keys(prefs: SharedPreferences): Map<KeyValue, KeyboardData.PreferredPos> {
+            return getExtraKeys(prefs)
+        }
+
+        @JvmStatic
         fun getExtraKeys(prefs: SharedPreferences): Map<KeyValue, KeyboardData.PreferredPos> {
             val ks = mutableMapOf<KeyValue, KeyboardData.PreferredPos>()
             for (keyName in EXTRA_KEYS) {
