@@ -278,11 +278,7 @@ public final class Pointers implements Handler.Callback
         _swipeRecognizer.reset();
       }
     }
-    if (ptr.gesture != null && ptr.gesture.is_in_progress())
-    {
-      // A gesture was in progress
-      ptr.gesture.pointer_up();
-    }
+    // REMOVED: Legacy gesture.pointer_up() call - curved gestures obsolete
     Pointer latched = getLatched(ptr);
     if (latched != null) // Already latched
     {
@@ -480,6 +476,10 @@ public final class Pointers implements Handler.Callback
       return;
     }
 
+    // SIMPLIFIED: Legacy curved gesture system removed.
+    // Swipe-to-corner gestures now handled in onTouchUp for unified logic.
+    // Only Slider mode still handled during move events.
+
     // The position in a IME windows is clampled to view.
     // For a better up swipe behaviour, set the y position to a negative value when clamped.
     if (y == 0.0) y = -400;
@@ -487,55 +487,21 @@ public final class Pointers implements Handler.Callback
     float dy = y - ptr.downY;
 
     float dist = Math.abs(dx) + Math.abs(dy);
-    if (dist < _config.swipe_dist_px)
+    if (dist >= _config.swipe_dist_px && ptr.gesture == null)
     {
-      // Pointer is still on the center.
-      if (ptr.gesture == null || !ptr.gesture.is_in_progress())
-        return;
-      // Gesture ended
-      ptr.gesture.moved_to_center();
-      ptr.value = apply_gesture(ptr, ptr.gesture.get_gesture());
-      ptr.flags = 0;
-
-    }
-    else
-    { // Pointer is on a quadrant.
-      // See [getKeyAtDirection()] for the meaning. The starting point on the
-      // circle is the top direction.
+      // Pointer moved significantly - check for Slider activation
       double a = Math.atan2(dy, dx) + Math.PI;
-      // a is between 0 and 2pi, 0 is pointing to the left
-      // add 12 to align 0 to the top
       int direction = ((int)(a * 8 / Math.PI) + 12) % 16;
-      if (ptr.gesture == null)
-      { // Gesture starts
 
-        ptr.gesture = new Gesture(direction);
-        KeyValue new_value = getNearestKeyAtDirection(ptr, direction);
-        if (new_value != null)
-        { // Pointer is swiping into a side key.
-
-          ptr.value = new_value;
-          ptr.flags = pointer_flags_of_kv(new_value);
-          // Start sliding mode
-          if (new_value.getKind() == KeyValue.Kind.Slider)
-            startSliding(ptr, x, y, dx, dy, new_value);
-          _handler.onPointerDown(new_value, true);
-        }
-
-      }
-      else if (ptr.gesture.changed_direction(direction))
-      { // Gesture changed state
-        if (!ptr.gesture.is_in_progress())
-        { // Gesture ended
-          _handler.onPointerFlagsChanged(true);
-        }
-        else
-        {
-          ptr.value = apply_gesture(ptr, ptr.gesture.get_gesture());
-          restartLongPress(ptr);
-          ptr.flags = 0; // Special behaviors are ignored during a gesture.
-          _handler.onPointerFlagsChanged(true); // Vibrate
-        }
+      ptr.gesture = new Gesture(direction); // Keep for Slider compatibility
+      KeyValue new_value = getNearestKeyAtDirection(ptr, direction);
+      if (new_value != null && new_value.getKind() == KeyValue.Kind.Slider)
+      {
+        // Slider keys still activate during move
+        ptr.value = new_value;
+        ptr.flags = pointer_flags_of_kv(new_value);
+        startSliding(ptr, x, y, dx, dy, new_value);
+        _handler.onPointerDown(new_value, true);
       }
     }
   }
@@ -702,34 +668,9 @@ public final class Pointers implements Handler.Callback
   }
 
   // Gestures
-
-  /** Apply a gesture to the current key. */
-  KeyValue apply_gesture(Pointer ptr, Gesture.Name gesture)
-  {
-    switch (gesture)
-    {
-      case None:
-        return ptr.value;
-      case Swipe:
-        return ptr.value;
-      case Roundtrip:
-      case Circle:
-      case Anticircle:
-        // DEPRECATED: Curved gestures functionally disabled.
-        // These complex gestures are obsolete - bypassed when swipe typing is enabled.
-        // Treat as a simple swipe (return current value).
-        return ptr.value;
-    }
-    return ptr.value; // Unreachable
-  }
-
-  KeyValue modify_key_with_extra_modifier(Pointer ptr, KeyValue kv,
-      KeyValue.Modifier extra_mod)
-  {
-    return
-      _handler.modifyKey(kv,
-        ptr.modifiers.with_extra_mod(KeyValue.makeInternalModifier(extra_mod)));
-  }
+  // REMOVED: apply_gesture() and modify_key_with_extra_modifier()
+  // These methods supported curved gestures (Roundtrip, Circle, Anticircle)
+  // which are now obsolete with the new swipe typing system.
 
   // Pointers
 
