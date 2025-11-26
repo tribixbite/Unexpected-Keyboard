@@ -1,3 +1,20 @@
+=== Unexpected Keyboard Termux Build Script ===
+Building debug APK on Termux ARM64
+
+Step 1: Checking prerequisites...
+Step 2: Auto-incrementing version...
+  Current: versionCode 878, versionName 1.32.878
+  New:     versionCode 879, versionName 1.32.879
+  ✅ Version updated in build.gradle
+
+Step 3: Preparing layout resources...
+Step 4: Cleaning previous builds...
+> Task :clean
+
+BUILD SUCCESSFUL in 1s
+1 actionable task: 1 executed
+Step 5: Building Debug APK...
+This may take a few minutes on first run...
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -788,3 +805,12 @@ Execution failed for task ':dexBuilderDebug'.
 
 BUILD FAILED in 1m 42s
 39 actionable tasks: 31 executed, 8 from cache
+
+=== BUILD FAILED ===
+Check build-debug.log for details
+
+Common issues:
+1. AAPT2 compatibility - ensure qemu-x86_64 is installed
+2. Memory issues - try closing other apps
+3. Missing layouts - check if srcs/layouts/*.xml exist
+4. SDK version mismatch - check Android SDK installation
