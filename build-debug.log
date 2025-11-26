@@ -26,22 +26,21 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
-> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
-> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
+> Task :parseDebugLocalResources
+> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
-> Task :mergeDebugResources
 > Task :processDebugManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :processDebugManifestForPackage
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
+> Task :mergeDebugResources
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -50,6 +49,7 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -66,8 +66,7 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :processDebugResources
 
 > Task :compileDebugKotlin FAILED
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ExtraKeys.kt:3:17 'public' function exposes its 'internal' parameter type argument ExtraKey
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VoiceImeSwitcher.kt:84:59 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Window?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VoiceImeSwitcher.kt:84:42 Type mismatch: inferred type is IBinder? but IBinder was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:162:71 Smart cast to 'Context' is impossible, because 'context' is a mutable property that could have been changed by this time
 
 FAILURE: Build failed with an exception.
@@ -83,5 +82,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 59s
+BUILD FAILED in 57s
 35 actionable tasks: 27 executed, 8 from cache

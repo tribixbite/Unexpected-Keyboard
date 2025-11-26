@@ -1,6 +1,6 @@
 package juloo.keyboard2
 
-class ExtraKeys(private val ks: Collection<ExtraKey>) {
+class ExtraKeys internal constructor(private val ks: Collection<ExtraKey>) {
 
     /**
      * Add the keys that should be added to the keyboard into [dst]. Keys
