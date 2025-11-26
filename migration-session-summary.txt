@@ -86,9 +86,10 @@
 75. ExtraKeysPreference.java → ExtraKeysPreference.kt (412→348 lines, 16% reduction)
 76. Emoji.java → Emoji.kt (794→745 lines, 6% reduction) - massive when expression with 689 emoji mappings
 77. KeyModifier.java → KeyModifier.kt (527→506 lines, 4% reduction) - object declaration, modifier handling
+78. ComposeKeyData.java → ComposeKeyData.kt (286→289 lines, AUTO-GENERATED) - updated build system + Python script
 
-**Total: 17,042 lines Java → 14,516 lines Kotlin (15% reduction)**
-**Remaining: 22 Java files** (from 99 total - 78% complete!)
+**Total: 17,328 lines Java → 14,805 lines Kotlin (15% reduction)**
+**Remaining: 21 Java files** (from 99 total - 79% complete!)
 
 ✅ **BUILD STATUS: SUCCESS** ✅
 
