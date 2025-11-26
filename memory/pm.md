@@ -9,7 +9,7 @@
 
 ## 🔥 Current Status (2025-11-26 - UPDATED)
 
-**Latest Version**: v1.32.874 🎯
+**Latest Version**: v1.32.875 🎯
 **Build Status**: ⚠️  Kotlin Compilation ✅ 100% | DEX Compilation ❌ (R8 8.6.17 bug - see [../R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md))
 **Branch**: feature/swipe-typing
 **Current Focus**: ✅ Keyboard2View.java migrated + All null safety fixes complete! (Migration successful, R8 bug blocking APK build)
@@ -49,12 +49,14 @@
 - ✅ All 38 test files compile successfully
 - ✅ 3 commits: Pointers fix, first null safety batch, second null safety batch
 
-**R8/D8 Bug Investigation** (commits 29c96369, ce5e146b):
+**R8/D8 Bug Investigation** (commits 29c96369, ce5e146b, d93b63c1):
 - ❌ Attempted R8 fullMode=false workaround - no effect
 - ❌ Attempted AGP downgrade to 8.5.2 - dependencies require 8.6.0+
-- ❌ Attempted AGP upgrade to 8.7.3 - requires Gradle 8.9
+- ❌ Attempted AGP upgrade to 8.7.3 - requires Gradle 8.9 (AAPT2 breaks)
+- ❌ Attempted Gradle 8.9 upgrade - breaks AAPT2 ARM64 wrapper
 - ✅ Documented comprehensive workaround guide: [R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md)
 - ✅ Confirmed issue is in R8 8.6.17 internal code, not our Kotlin code
+- ✅ Verified Kotlin compilation 100% successful on v1.32.875
 - 📋 **Decision**: Migration complete from code perspective, waiting for R8 bug fix
 - 🔧 **Workaround**: Can test using v1.32.860 build (commit 2544cf9d)
 

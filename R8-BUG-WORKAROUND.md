@@ -47,6 +47,21 @@ id 'com.android.application' version '8.7.3'
 ```
 **Result**: Requires Gradle 8.9, we have 8.7
 
+### 4. Upgrade Gradle to 8.9 ❌ (Breaks AAPT2)
+```properties
+# gradle-wrapper.properties
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-bin.zip
+```
+**Result**: Gradle 8.9 changes transform cache structure, breaking ARM64 AAPT2 wrapper mechanism
+
+### 5. Gradle 8.9 + AGP 8.7.3 ❌ (AAPT2 incompatible)
+```gradle
+# Combined upgrade
+distributionUrl=gradle-8.9-bin.zip
+id 'com.android.application' version '8.7.3'
+```
+**Result**: AAPT2 8.7.3 not compatible with ARM64 QEMU wrapper, build fails earlier
+
 ## Solutions
 
 ### Short-term: Use Previous Working Build
@@ -117,12 +132,13 @@ The migration is successful from a code perspective:
 
 ## Timeline
 
-- **2025-11-26**: Migrated Keyboard2View.java (1,035 → 888 lines)
-- **2025-11-26**: Fixed all 23 null safety issues
-- **2025-11-26**: Kotlin compilation 100% successful
-- **2025-11-26**: Discovered R8/D8 crash
-- **2025-11-26**: Attempted multiple workarounds
-- **2025-11-26**: Documented issue and solutions
+- **2025-11-26 09:00**: Migrated Keyboard2View.java (1,035 → 888 lines)
+- **2025-11-26 10:00**: Fixed all 23 null safety issues
+- **2025-11-26 11:00**: Kotlin compilation 100% successful
+- **2025-11-26 12:00**: Discovered R8/D8 crash
+- **2025-11-26 13:00**: Attempted 5 workarounds (all failed)
+- **2025-11-26 14:00**: Documented issue and solutions
+- **2025-11-26 15:00**: Verified Kotlin compilation still works on v1.32.875
 
 ## Conclusion
 

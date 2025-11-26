@@ -43,13 +43,13 @@ Generated version info:  ()
 > Task :compressDebugAssets FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeExtDexDebug FROM-CACHE
+> Task :processDebugManifestForPackage
+> Task :mergeExtDexDebug
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -786,5 +786,5 @@ Execution failed for task ':dexBuilderDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 30s
-39 actionable tasks: 31 executed, 8 from cache
+BUILD FAILED in 2m 23s
+39 actionable tasks: 32 executed, 7 from cache
