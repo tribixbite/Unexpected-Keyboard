@@ -26,11 +26,11 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
+> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
-> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
@@ -38,9 +38,10 @@ Generated version info:  ()
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :compressDebugAssets FROM-CACHE
 > Task :mergeDebugResources
+> Task :compressDebugAssets FROM-CACHE
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -49,7 +50,6 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -66,6 +66,9 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :processDebugResources
 
 > Task :compileDebugKotlin FAILED
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:15:40 Unresolved reference: OnItemClickListener
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:23:31 Type mismatch: inferred type is EmojiGridView but AdapterView.OnItemClickListener? was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:37:5 'onItemClick' overrides nothing
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VoiceImeSwitcher.kt:84:42 Type mismatch: inferred type is IBinder? but IBinder was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:162:71 Smart cast to 'Context' is impossible, because 'context' is a mutable property that could have been changed by this time
 
@@ -82,5 +85,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 57s
+BUILD FAILED in 55s
 35 actionable tasks: 27 executed, 8 from cache
