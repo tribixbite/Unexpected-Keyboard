@@ -1,16 +1,19 @@
 ## Java→Kotlin Migration Progress
 
-### Completed This Session (7 files total)
+### Completed This Session (10 files total)
 
 1. BigramModel.java → BigramModel.kt (551→507 lines, 8% reduction)
-2. LanguageDetector.java → LanguageDetector.kt (312→290 lines, 7% reduction)  
+2. LanguageDetector.java → LanguageDetector.kt (312→290 lines, 7% reduction)
 3. AsyncDictionaryLoader.java → AsyncDictionaryLoader.kt (240→227 lines, 5% reduction)
 4. UserDictionaryObserver.java → UserDictionaryObserver.kt (398→330 lines, 17% reduction)
 5. WordPredictor.java → WordPredictor.kt (1,298→1,060 lines, 18% reduction)
 6. AsyncPredictionHandler.java → AsyncPredictionHandler.kt (205→157 lines, 23% reduction)
 7. BinaryDictionaryLoader.java → BinaryDictionaryLoader.kt (312→271 lines, 13% reduction)
+8. SwipeInput.java → SwipeInput.kt (201→189 lines, 6% reduction) - Added @JvmField for Java interop
+9. PredictionContextTracker.java → PredictionContextTracker.kt (261→225 lines, 14% reduction)
+10. PredictionCoordinator.java → PredictionCoordinator.kt (316→271 lines, 14% reduction)
 
-**Total: 3,316 lines Java → 2,842 lines Kotlin (14% reduction)**
-**Remaining: 91 Java files** (from 98 total)
+**Total: 4,094 lines Java → 3,527 lines Kotlin (14% reduction)**
+**Remaining: 88 Java files** (from 98 total)
 
 All builds successful ✅
