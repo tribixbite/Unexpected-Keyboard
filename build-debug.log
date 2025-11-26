@@ -28,8 +28,8 @@ Generated version info:  ()
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
 > Task :checkDebugAarMetadata
-> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
+> Task :parseDebugLocalResources
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest
 > Task :processDebugManifest
@@ -37,16 +37,16 @@ Generated version info:  ()
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugAssets
-> Task :compressDebugAssets FROM-CACHE
 > Task :mergeDebugResources
+> Task :mergeDebugAssets
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :processDebugManifestForPackage
+> Task :compressDebugAssets FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
+> Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -67,6 +67,8 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :compileDebugKotlin
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BigramModel.kt:28:25 Parameter 'context' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BinaryDictionaryLoader.kt:99:21 Variable 'prefixOffset' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:48 'getColor(Int): Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:73 'secondary_text_dark: Int' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:388:22 Variable 'dx' initializer is redundant
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:389:22 Variable 'dy' initializer is redundant
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:296:32 Parameter 'point' is never used
@@ -143,5 +145,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 34s
+BUILD SUCCESSFUL in 1m 26s
 42 actionable tasks: 34 executed, 8 from cache
