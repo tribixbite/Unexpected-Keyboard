@@ -47,8 +47,17 @@
 40. VoiceImeSwitcher.java → VoiceImeSwitcher.kt (152→158 lines)
 41. ExtraKeys.java → ExtraKeys.kt (150→145 lines, 3% reduction)
 
-**Total: 7,053 lines Java → 5,970 lines Kotlin (15% reduction)**
-**Remaining: 56 Java files** (from 98 total)
+42. CustomExtraKeysPreference.java → CustomExtraKeysPreference.kt (73→62 lines, 15% reduction)
+43. IntSlideBarPreference.java → IntSlideBarPreference.kt (120→97 lines, 19% reduction)
+44. CustomLayoutEditDialog.java → CustomLayoutEditDialog.kt (138→134 lines, 3% reduction)
+45. ConfigurationManager.java → ConfigurationManager.kt (164→130 lines, 21% reduction)
+46. BinaryContractionLoader.java → BinaryContractionLoader.kt (165→144 lines, 13% reduction)
+47. SwipeDebugActivity.java → SwipeDebugActivity.kt (165→139 lines, 16% reduction)
+48. SlideBarPreference.java → SlideBarPreference.kt (171→145 lines, 15% reduction)
+49. PerformanceProfiler.java → PerformanceProfiler.kt (180→165 lines, 8% reduction)
+
+**Total: 8,229 lines Java → 6,991 lines Kotlin (15% reduction)**
+**Remaining: 49 Java files** (from 98 total - 50% complete!)
 
 All builds successful ✅
 
