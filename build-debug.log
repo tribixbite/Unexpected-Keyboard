@@ -26,15 +26,15 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
+> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
 > Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
-> Task :mergeDebugResources
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :mergeDebugResources
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifestForPackage
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
@@ -83,5 +83,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 55s
+BUILD FAILED in 59s
 35 actionable tasks: 27 executed, 8 from cache
