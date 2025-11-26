@@ -713,17 +713,12 @@ public final class Pointers implements Handler.Callback
       case Swipe:
         return ptr.value;
       case Roundtrip:
-        return
-          modify_key_with_extra_modifier(
-              ptr,
-              getNearestKeyAtDirection(ptr, ptr.gesture.current_direction()),
-              KeyValue.Modifier.GESTURE);
       case Circle:
-        return
-          modify_key_with_extra_modifier(ptr, ptr.key.keys[0],
-              KeyValue.Modifier.GESTURE);
       case Anticircle:
-        return _handler.modifyKey(ptr.key.anticircle, ptr.modifiers);
+        // DEPRECATED: Curved gestures functionally disabled.
+        // These complex gestures are obsolete - bypassed when swipe typing is enabled.
+        // Treat as a simple swipe (return current value).
+        return ptr.value;
     }
     return ptr.value; // Unreachable
   }
