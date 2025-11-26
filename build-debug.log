@@ -29,27 +29,27 @@ Generated version info:  ()
 > Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
 > Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugAssets
-> Task :processDebugManifestForPackage
-> Task :compressDebugAssets FROM-CACHE
 > Task :mergeDebugResources
-> Task :checkDebugDuplicateClasses
+> Task :mergeDebugAssets
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :compressDebugAssets FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
+> Task :checkDebugDuplicateClasses
+> Task :mergeDebugJniLibFolders
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
-> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -64,53 +64,15 @@ Generated version info:  ()
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
-> Task :compileDebugKotlin
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ConfigPropagator.kt:91:23 Unresolved reference: reset
+
+> Task :compileDebugKotlin FAILED
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyModifier.kt:29:27 Type mismatch: inferred type is KeyValue? but KeyValue was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:17:1 Class 'Keyboard2View' is not abstract and does not implement abstract member public abstract fun isPointWithinKey(x: Float, y: Float, key: KeyboardData.Key): Boolean defined in juloo.keyboard2.Pointers.IPointerEventHandler
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:23:39 Unresolved reference: DEFAULT
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:24:45 Unresolved reference: DEFAULT
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:80:28 Unresolved reference: getTheme
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:81:25 Unresolved reference: computeTheme
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:90:33 Unresolved reference: colorAccent
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:99:47 Unresolved reference: colorAccent
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:113:20 Cannot access 'clearLatched': it is private in 'Pointers'
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:171:34 Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: 
-public operator fun <T, R> DeepRecursiveFunction<TypeVariable(T), TypeVariable(R)>.invoke(value: TypeVariable(T)): TypeVariable(R) defined in kotlin
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:191:58 Unresolved reference: isKeyLocked
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:202:13 Smart cast to 'Config' is impossible, because '_config' is a mutable property that could have been changed by this time
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:203:13 Overload resolution ambiguity: 
-private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
-private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:211:5 Conflicting overloads: private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View, private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:236:19 Unresolved reference: KeyStyle
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:242:44 Unresolved reference: keyRadius
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:242:59 Unresolved reference: keyRadius
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:247:44 Unresolved reference: keyRadius
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:247:59 Unresolved reference: keyRadius
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:258:19 Unresolved reference: KeyStyle
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:263:30 Unresolved reference: textSize
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:264:44 Unresolved reference: descent
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:264:62 Unresolved reference: ascent
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:277:19 Unresolved reference: KeyStyle
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:304:98 Unresolved reference: KeyStyle
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:310:5 Conflicting overloads: private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View, private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:358:36 Type mismatch: inferred type is KeyboardData.Key? but Int was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:358:41 Type mismatch: inferred type is Int but KeyboardData.Key was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:374:9 'onSwipeMove' hides member of supertype 'IPointerEventHandler' and needs 'override' modifier
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:381:9 'onSwipeEnd' hides member of supertype 'IPointerEventHandler' and needs 'override' modifier
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:456:5 'onPointerUp' overrides nothing
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:460:5 'onPointerHold' overrides nothing
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:464:5 'onPointerFlagsChanged' overrides nothing
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:112:43 Overload resolution ambiguity: 
 public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
 public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:210:9 Conflicting overloads: public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:437:44 Cannot access 'keysflags': it is private in 'Key'
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:527:32 Type mismatch: inferred type is KeyboardData? but TypeVariable(V) was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:184:22 Unresolved reference: set_shift_state
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:188:22 Unresolved reference: set_compose_pending
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:192:22 Unresolved reference: set_selection_state
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutManager.kt:151:16 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:47:45 Unresolved reference: keys
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:64:26 Unresolved reference: keys
@@ -120,9 +82,6 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:144:35 Type mismatch: inferred type is String? but String was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:150:35 Type mismatch: inferred type is String? but String was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LoopGestureDetector.kt:183:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:168:50 Unresolved reference: getCGRPredictions
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:183:50 Unresolved reference: getCGRPredictions
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:184:44 Unresolved reference: areCGRPredictionsFinal
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:363:31 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:364:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:299:38 Smart cast to 'KeyValue' is impossible, because 'p.value' is a mutable property that could have been changed by this time
@@ -136,6 +95,7 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:635:18 'internal' function exposes its 'private-in-class' return type Pointer
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:707:25 'public' function exposes its 'private-in-class' parameter type Pointer
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:735:23 'public' function exposes its 'private-in-class' parameter type Pointer
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PreferenceUIUpdateHandler.kt:47:35 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:183:15 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:187:19 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:68:55 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
@@ -153,3 +113,19 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:85:49 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:86:47 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:116:38 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 48s
+35 actionable tasks: 27 executed, 8 from cache
