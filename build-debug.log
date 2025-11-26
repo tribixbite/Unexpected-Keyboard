@@ -27,21 +27,21 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
-> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
+> Task :checkDebugAarMetadata
 > Task :parseDebugLocalResources
-> Task :mergeDebugResources
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :processDebugManifestForPackage
+> Task :mergeDebugResources
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -133,19 +133,27 @@ To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecatio
 warning: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
 warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardPinView.java:18: error: cannot inherit from final MaxHeightListView
+public final class ClipboardPinView extends MaxHeightListView
+                                            ^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
+1 error
 3 warnings
 
-> Task :processDebugJavaRes
-> Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
+> Task :compileDebugJavaWithJavac FAILED
 
-BUILD SUCCESSFUL in 1m 30s
-42 actionable tasks: 34 executed, 8 from cache
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1m 26s
+36 actionable tasks: 28 executed, 8 from cache
