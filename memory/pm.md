@@ -9,15 +9,16 @@
 
 ## 🔥 Current Status (2025-11-26 - UPDATED)
 
-**Latest Version**: v1.32.862 🎯
-**Build Status**: ⚠️  Kotlin Compilation ✅ | DEX Compilation ❌ (R8/D8 bug)
+**Latest Version**: v1.32.874 🎯
+**Build Status**: ⚠️  Kotlin Compilation ✅ 100% | DEX Compilation ❌ (R8 8.6.17 bug - see [../R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md))
 **Branch**: feature/swipe-typing
-**Current Focus**: ✅ Keyboard2View.java migrated + All null safety fixes complete!
+**Current Focus**: ✅ Keyboard2View.java migrated + All null safety fixes complete! (Migration successful, R8 bug blocking APK build)
 **Migration Progress**: 145 Kotlin files, 2 Java files remaining (98.6% complete, 3,134 lines)
 **Test Coverage**: ✅ 38 test files total! 5 comprehensive Kotlin test suites (190+ tests)
-**Migration Plan**: ✅ [migration-plan.md](migration-plan.md) - Next: SwipeCalibrationActivity.java
+**Migration Plan**: ✅ [migration-plan.md](migration-plan.md) - Migration paused pending R8 bug fix
 **Critical Fixes**: 56 fixes applied (see history below) - ALL OPTIMIZATIONS COMPLETE
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
+**Last Working Build**: v1.32.860 (commit 2544cf9d - Pointers migration)
 
 ### 🔄 Latest Work (2025-11-26) - KEYBOARD2VIEW MIGRATION + NULL SAFETY FIXES COMPLETE! ⭐⭐⭐
 
@@ -47,6 +48,15 @@
 - ❌ DEX compilation: R8/D8 NullPointerException (Android build tools bug, not our code)
 - ✅ All 38 test files compile successfully
 - ✅ 3 commits: Pointers fix, first null safety batch, second null safety batch
+
+**R8/D8 Bug Investigation** (commits 29c96369, ce5e146b):
+- ❌ Attempted R8 fullMode=false workaround - no effect
+- ❌ Attempted AGP downgrade to 8.5.2 - dependencies require 8.6.0+
+- ❌ Attempted AGP upgrade to 8.7.3 - requires Gradle 8.9
+- ✅ Documented comprehensive workaround guide: [R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md)
+- ✅ Confirmed issue is in R8 8.6.17 internal code, not our Kotlin code
+- 📋 **Decision**: Migration complete from code perspective, waiting for R8 bug fix
+- 🔧 **Workaround**: Can test using v1.32.860 build (commit 2544cf9d)
 
 ---
 
