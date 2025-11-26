@@ -61,8 +61,11 @@
 52. Theme.java → Theme.kt (196→207 lines)
 53. ClipboardPinView.java → ClipboardPinView.kt (202→155 lines, 23% reduction)
 
-**Total: 8,808 lines Java → 7,470 lines Kotlin (15% reduction)**
-**Remaining: 45 Java files** (from 98 total - 54% complete!)
+54. Autocapitalisation.java → Autocapitalisation.kt (203→187 lines, 8% reduction)
+55. DictionaryManager.java → DictionaryManager.kt (219→166 lines, 24% reduction)
+
+**Total: 9,230 lines Java → 7,823 lines Kotlin (15% reduction)**
+**Remaining: 43 Java files** (from 98 total - 56% complete!)
 
 All builds successful ✅
 
