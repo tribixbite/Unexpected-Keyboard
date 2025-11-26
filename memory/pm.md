@@ -9,16 +9,42 @@
 
 ## 🔥 Current Status (2025-11-26 - UPDATED)
 
-**Latest Version**: v1.32.848 🎯
-**Build Status**: ✅ PRODUCTION READY - InputCoordinator Migrated!
+**Latest Version**: v1.32.851 🎯
+**Build Status**: ✅ PRODUCTION READY - Calibration Screen Fixed!
 **Branch**: feature/swipe-typing
-**Current Focus**: ✅ Kotlin Migration - 95.2% Complete (140/147 files)!
+**Current Focus**: ✅ Kotlin Migration - 95.2% Complete (140/147 files) + Bug Fixes
 **Migration Progress**: 140 Kotlin files, 7 Java files remaining (95.2% complete)
 **Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
 **Critical Fixes**: 54 fixes applied (see history below) - ALL OPTIMIZATIONS COMPLETE
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 
-### 🔄 Latest Work (2025-11-26) - KOTLIN MIGRATION: InputCoordinator - Text Input Orchestration! 🎯
+### 🔄 Latest Work (2025-11-26) - BUG FIX: Calibration Screen Crash Fixed! 🐛
+
+**CRITICAL BUG FIX**:
+
+**Issue**: SwipeCalibrationActivity crashed with NullPointerException on launch
+**Root Cause**: Config.handler parameter was non-null but SwipeCalibrationActivity passed null
+
+**Fix Applied**:
+- **Config.kt**: Made handler parameter nullable (IKeyEventHandler?)
+- **EmojiGridView.kt**: Added safe call operator (handler?.key_up())
+- **Build Status**: ✅ SUCCESS (v1.32.851)
+- **Crash**: ✅ FIXED - Calibration screen now opens without crashing
+
+**Technical Details**:
+```kotlin
+// Before (crashed):
+fun initGlobalConfig(..., handler: IKeyEventHandler, ...)
+
+// After (fixed):
+fun initGlobalConfig(..., handler: IKeyEventHandler?, ...)
+```
+
+**Files Changed**:
+- Config.kt (nullable handler parameter)
+- EmojiGridView.kt (safe call operator)
+
+### 📚 Previous Work (2025-11-26) - KOTLIN MIGRATION: InputCoordinator - Text Input Orchestration! 🎯
 
 **SUCCESSFUL JAVA→KOTLIN MIGRATION**:
 
