@@ -71,9 +71,11 @@
 60. TemplateBrowserActivity.java → TemplateBrowserActivity.kt (289→269 lines, 7% reduction)
 61. ListGroupPreference.java → ListGroupPreference.kt (289→256 lines, 11% reduction)
 62. KeyboardReceiver.java → KeyboardReceiver.kt (290→237 lines, 18% reduction)
+63. UserAdaptationManager.java → UserAdaptationManager.kt (290→250 lines, 14% reduction)
+64. LayoutsPreference.java → LayoutsPreference.kt (302→280 lines, 7% reduction)
 
-**Total: 11,133 lines Java → 9,534 lines Kotlin (14% reduction)**
-**Remaining: 36 Java files** (from 98 total - 63% complete!)
+**Total: 11,725 lines Java → 10,064 lines Kotlin (14% reduction)**
+**Remaining: 34 Java files** (from 98 total - 65% complete!)
 
 All builds successful ✅
 
