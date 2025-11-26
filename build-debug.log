@@ -27,21 +27,20 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
-> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugAssets
 > Task :mergeDebugResources
-> Task :compressDebugAssets FROM-CACHE
+> Task :mergeDebugAssets
 > Task :dataBindingGenBaseClassesDebug FROM-CACHE
-> Task :processDebugManifestForPackage
+> Task :compressDebugAssets FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -50,6 +49,7 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
+> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -65,7 +65,7 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 
 > Task :processDebugResources
 
-> Task :compileDebugKotlin FAILED
+> Task :compileDebugKotlin
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardPinView.kt:12:62 This type is final, so it cannot be inherited from
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:15:40 Unresolved reference: OnItemClickListener
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:23:31 Type mismatch: inferred type is EmojiGridView but AdapterView.OnItemClickListener? was expected
@@ -86,6 +86,8 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:46:5 'get_serializer' overrides nothing
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:56:28 Unresolved reference: load_from_preferences
 
+> Task :compileDebugKotlin FAILED
+
 FAILURE: Build failed with an exception.
 
 * What went wrong:
@@ -99,5 +101,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 58s
+BUILD FAILED in 55s
 35 actionable tasks: 27 executed, 8 from cache
