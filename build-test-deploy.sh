@@ -47,7 +47,7 @@ section_header() {
 section_header "STEP 1: Running Unit Tests"
 
 log_info "Running Kotlin/Java compilation check..."
-if ./gradlew compileDebugKotlin compileDebugJavaWithJavac --no-daemon 2>&1 | grep -qi "failed\|error"; then
+if ./gradle-with-aapt2.sh compileDebugKotlin compileDebugJavaWithJavac --no-daemon 2>&1 | grep -qi "failed\|error"; then
     log_error "Compilation failed! Fix compilation errors first"
     exit 1
 else
@@ -60,7 +60,7 @@ log_info "Executing unit tests (using build-on-termux method to avoid AAPT2 issu
 # TODO: Set up proper Android unit test infrastructure for ARM64
 
 # For now, verify test files compile
-if find test -name "*.kt" -exec ./gradlew compileDebugKotlin --no-daemon \; 2>&1 | grep -qi "error"; then
+if find test -name "*.kt" -exec ./gradle-with-aapt2.sh compileDebugKotlin --no-daemon \; 2>&1 | grep -qi "error"; then
     log_error "Test compilation failed!"
     exit 1
 else

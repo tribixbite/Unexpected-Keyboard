@@ -14,8 +14,8 @@ echo ""
 
 # Test 1: Gradle compilation
 echo -e "${BLUE}[1/4]${NC} Checking Kotlin/Java compilation..."
-# Note: On ARM64 Termux, we can't run full AAPT2, so we check compilation only
-COMPILE_OUTPUT=$(./gradlew compileDebugKotlin compileDebugJavaWithJavac --no-daemon 2>&1)
+# Use gradle wrapper that auto-detects Termux and applies custom AAPT2
+COMPILE_OUTPUT=$(./gradle-with-aapt2.sh compileDebugKotlin compileDebugJavaWithJavac --no-daemon 2>&1)
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ] && echo "$COMPILE_OUTPUT" | grep -q "error:"; then
     echo -e "${RED}✗ Compilation failed${NC}"
