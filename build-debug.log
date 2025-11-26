@@ -26,27 +26,27 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
-> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
 > Task :processDebugManifest
+> Task :mergeDebugResources
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :mergeDebugResources
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -64,7 +64,6 @@ Generated version info:  ()
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
-
 > Task :compileDebugKotlin
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Autocapitalisation.kt:97:27 Parameter 'old_cursor' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BigramModel.kt:28:25 Parameter 'context' is never used
@@ -94,15 +93,15 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:31 Parameter 'prev' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:55 Parameter 'curr' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:79 Parameter 'next' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:86:17 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:89:51 Type mismatch: inferred type is String? but String was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:97:54 Type mismatch: inferred type is String? but String was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:105:13 Unsafe use of a nullable receiver of type String?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:108:13 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:212:25 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:220:21 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:229:20 Unsafe use of a nullable receiver of type String?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:236:20 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:87:17 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:90:51 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:98:54 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:106:13 Unsafe use of a nullable receiver of type String?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:109:13 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:213:25 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:221:21 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:230:20 Unsafe use of a nullable receiver of type String?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:237:20 Type mismatch: inferred type is String? but String was expected
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardGrid.kt:158:26 Variable 'pos' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:134:55 'switchToLastInputMethod(IBinder!): Boolean' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:179:13 'when' is exhaustive so 'else' is redundant here
@@ -149,7 +148,7 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:122:54 Elvis operator (?:) always returns the left operand of non-nullable type List<String>
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:153:13 Condition 'template.pts == null' is always 'false'
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:254:37 Condition 'template.pts == null' is always 'false'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Theme.kt:200:42 Parameter 'config' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Theme.kt:209:42 Parameter 'config' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VibratorCompat.kt:31:28 'vibrate(Long): Unit' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VibratorCompat.kt:39:63 'VIBRATOR_SERVICE: String' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VocabularyCache.kt:34:25 Variable 'wordCount' initializer is redundant
@@ -250,7 +249,7 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:117:13 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:133:9 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
 
-> Task :compileDebugJavaWithJavac FAILED
+> Task :compileDebugJavaWithJavac
 Java compiler version 21 has deprecated support for compiling with source/target version 8.
 Try one of the following options:
     1. [Recommended] Use Java toolchain with a lower language version
@@ -261,52 +260,19 @@ To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecatio
 warning: [options] source value 8 is obsolete and will be removed in a future release
 warning: [options] target value 8 is obsolete and will be removed in a future release
 warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValue.java:511: error: exception ParseError is never thrown in body of corresponding try statement
-    catch (KeyValueParser.ParseError _e)
-    ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:840: error: bg_paint has private access in Key
-    canvas.drawRoundRect(_tmpRect, r, r, tc.bg_paint);
-                                           ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:843: error: border_paint has private access in Key
-      canvas.drawRoundRect(_tmpRect, r, r, tc.border_paint);
-                                             ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:855: error: lockedColor has private access in Theme
-          return _theme.lockedColor;
-                       ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:856: error: activatedColor has private access in Theme
-        return _theme.activatedColor;
-                     ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:862: error: greyedLabelColor has private access in Theme
-        return _theme.greyedLabelColor;
-                     ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:863: error: secondaryLabelColor has private access in Theme
-      return _theme.secondaryLabelColor;
-                   ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:865: error: subLabelColor has private access in Theme
-    return sublabel ? _theme.subLabelColor : _theme.labelColor;
-                            ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:865: error: labelColor has private access in Theme
-    return sublabel ? _theme.subLabelColor : _theme.labelColor;
-                                                   ^
-/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.java:912: error: indication_paint has private access in Computed
-    Paint p = tc.indication_paint;
-                ^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: /data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValue.java uses unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-10 errors
 3 warnings
 
-FAILURE: Build failed with an exception.
+> Task :processDebugJavaRes
+> Task :mergeDebugJavaResource
+> Task :dexBuilderDebug
+> Task :mergeProjectDexDebug
+> Task :packageDebug
+> Task :createDebugApkListingFileRedirect
+> Task :assembleDebug
 
-* What went wrong:
-Execution failed for task ':compileDebugJavaWithJavac'.
-> Compilation failed; see the compiler error output for details.
-
-* Try:
-> Run with --info option to get more log output.
-> Run with --scan to get full insights.
-
-BUILD FAILED in 41s
-36 actionable tasks: 28 executed, 8 from cache
+BUILD SUCCESSFUL in 1m 33s
+42 actionable tasks: 34 executed, 8 from cache

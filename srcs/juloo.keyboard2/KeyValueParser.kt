@@ -29,6 +29,7 @@ object KeyValueParser {
     private lateinit var WORD_PAT: Pattern
 
     @JvmStatic
+    @Throws(ParseError::class)
     fun parse(input: String): KeyValue {
         val input_len = input.length
         var symbol_ends = 0

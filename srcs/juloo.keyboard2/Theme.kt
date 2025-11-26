@@ -13,11 +13,17 @@ class Theme(context: Context, attrs: AttributeSet?) {
     val colorKeyActivated: Int
 
     // Label colors
+    @JvmField
     val lockedColor: Int
+    @JvmField
     val activatedColor: Int
+    @JvmField
     val labelColor: Int
+    @JvmField
     val subLabelColor: Int
+    @JvmField
     val secondaryLabelColor: Int
+    @JvmField
     val greyedLabelColor: Int
 
     // Key borders
@@ -98,6 +104,7 @@ class Theme(context: Context, attrs: AttributeSet?) {
         val margin_left: Float
         @JvmField
         val row_height: Float
+        @JvmField
         val indication_paint: Paint
 
         @JvmField
@@ -134,7 +141,9 @@ class Theme(context: Context, attrs: AttributeSet?) {
             keyWidth: Float,
             activated: Boolean
         ) {
+            @JvmField
             val bg_paint = Paint()
+            @JvmField
             val border_paint: Paint
             @JvmField
             val border_width: Float
