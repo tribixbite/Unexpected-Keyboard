@@ -377,10 +377,10 @@ open class ImprovedSwipeGestureRecognizer {
     private fun isValidAlphabeticKey(key: KeyboardData.Key): Boolean {
         val kv = key.keys.getOrNull(0) ?: return false
         
-        if (kv.kind != KeyValue.Kind.Char)
+        if (kv.getKind() != KeyValue.Kind.Char)
             return false
         
-        val c = kv.char
+        val c = kv.getChar()
         return (c in 'a'..'z') || (c in 'A'..'Z')
     }
     

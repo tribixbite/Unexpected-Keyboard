@@ -53,9 +53,9 @@ class KeyEventHandler(
         if (key == null) return
 
         // Stop auto capitalisation when pressing some keys
-        when (key.kind) {
+        when (key.getKind()) {
             KeyValue.Kind.Modifier -> {
-                when (key.modifier) {
+                when (key.getModifier()) {
                     KeyValue.Modifier.CTRL,
                     KeyValue.Modifier.ALT,
                     KeyValue.Modifier.META -> autocap.stop()
@@ -66,7 +66,7 @@ class KeyEventHandler(
             KeyValue.Kind.Slider -> {
                 // Don't wait for the next key_up and move the cursor right away. This
                 // is called after the trigger distance have been travelled.
-                handleSlider(key.slider, key.sliderRepeat, true)
+                handleSlider(key.getSlider(), key.getSliderRepeat(), true)
             }
             else -> {}
         }
@@ -79,27 +79,27 @@ class KeyEventHandler(
         val oldMods = this.mods
         updateMetaState(mods)
 
-        when (key.kind) {
-            KeyValue.Kind.Char -> sendText(key.char.toString())
-            KeyValue.Kind.String -> sendText(key.string)
-            KeyValue.Kind.Event -> recv.handle_event_key(key.event)
+        when (key.getKind()) {
+            KeyValue.Kind.Char -> sendText(key.getChar().toString())
+            KeyValue.Kind.String -> sendText(key.getString())
+            KeyValue.Kind.Event -> recv.handle_event_key(key.getEvent())
             KeyValue.Kind.Keyevent -> {
                 // Handle backspace in clipboard search mode
-                if (key.keyevent == KeyEvent.KEYCODE_DEL && recv.isClipboardSearchMode()) {
+                if (key.getKeyevent() == KeyEvent.KEYCODE_DEL && recv.isClipboardSearchMode()) {
                     recv.backspaceClipboardSearch()
                 } else {
-                    send_key_down_up(key.keyevent)
+                    send_key_down_up(key.getKeyevent())
                     // Handle backspace for word prediction
-                    if (key.keyevent == KeyEvent.KEYCODE_DEL) {
+                    if (key.getKeyevent() == KeyEvent.KEYCODE_DEL) {
                         recv.handle_backspace()
                     }
                 }
             }
             KeyValue.Kind.Modifier -> {}
-            KeyValue.Kind.Editing -> handleEditingKey(key.editing)
+            KeyValue.Kind.Editing -> handleEditingKey(key.getEditing())
             KeyValue.Kind.Compose_pending -> recv.set_compose_pending(true)
-            KeyValue.Kind.Slider -> handleSlider(key.slider, key.sliderRepeat, false)
-            KeyValue.Kind.Macro -> evaluateMacro(key.macro)
+            KeyValue.Kind.Slider -> handleSlider(key.getSlider(), key.getSliderRepeat(), false)
+            KeyValue.Kind.Macro -> evaluateMacro(key.getMacro())
             else -> {} // Handle Hangul_initial, Hangul_medial, Placeholder
         }
 
@@ -145,9 +145,9 @@ class KeyEventHandler(
     }
 
     private fun sendMetaKeyForModifier(kv: KeyValue, down: Boolean) {
-        when (kv.kind) {
+        when (kv.getKind()) {
             KeyValue.Kind.Modifier -> {
-                when (kv.modifier) {
+                when (kv.getModifier()) {
                     KeyValue.Modifier.CTRL -> sendMetaKey(
                         KeyEvent.KEYCODE_CTRL_LEFT,
                         KeyEvent.META_CTRL_LEFT_ON or KeyEvent.META_CTRL_ON,
@@ -416,7 +416,7 @@ class KeyEventHandler(
     }
 
     private fun waitAfterMacroKey(kv: KeyValue): Boolean {
-        return when (kv.kind) {
+        return when (kv.getKind()) {
             KeyValue.Kind.Keyevent,
             KeyValue.Kind.Editing,
             KeyValue.Kind.Event -> true

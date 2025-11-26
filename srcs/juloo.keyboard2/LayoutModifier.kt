@@ -174,11 +174,12 @@ object LayoutModifier {
                         }
                     }
                     KeyValue.Event.ACTION -> {
-                        if (globalConfig.actionLabel == null) return null // Remove the action key
+                        val label = globalConfig.actionLabel  // Local variable for smart cast
+                        if (label == null) return null // Remove the action key
                         if (globalConfig.swapEnterActionKey) {
                             return KeyValue.getKeyByName("enter")
                         }
-                        return KeyValue.makeActionKey(globalConfig.actionLabel)
+                        return KeyValue.makeActionKey(label)
                     }
                     KeyValue.Event.SWITCH_FORWARD -> {
                         return if (globalConfig.layouts.size > 1) orig else null
@@ -196,8 +197,9 @@ object LayoutModifier {
             KeyValue.Kind.Keyevent -> {
                 when (orig.getKeyevent()) {
                     KeyEvent.KEYCODE_ENTER -> {
-                        if (globalConfig.swapEnterActionKey && globalConfig.actionLabel != null) {
-                            return KeyValue.makeActionKey(globalConfig.actionLabel)
+                        val label = globalConfig.actionLabel  // Local variable for smart cast
+                        if (globalConfig.swapEnterActionKey && label != null) {
+                            return KeyValue.makeActionKey(label)
                         }
                     }
                 }

@@ -717,8 +717,8 @@ class InputCoordinator(
         val gestureTrackerKeys = StringBuilder()
         swipedKeys.forEach { key ->
             key.keys[0]?.let { kv ->
-                if (kv.kind == KeyValue.Kind.Char) {
-                    val c = kv.char
+                if (kv.getKind() == KeyValue.Kind.Char) {
+                    val c = kv.getChar()
                     gestureTrackerKeys.append(c)
                     // Add to ML data
                     currentSwipeData?.addRegisteredKey(c.toString())
