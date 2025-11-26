@@ -10,15 +10,48 @@
 ## 🔥 Current Status (2025-11-26 - UPDATED)
 
 **Latest Version**: v1.32.851 🎯
-**Build Status**: ✅ PRODUCTION READY - Calibration Screen Fixed!
+**Build Status**: ✅ PRODUCTION READY - Tests Fixed + Calibration Working!
 **Branch**: feature/swipe-typing
-**Current Focus**: ✅ Kotlin Migration - 95.2% Complete (140/147 files) + Bug Fixes
+**Current Focus**: ✅ Kotlin Migration - 95.2% Complete (140/147 files) + Automated Testing Fixed
 **Migration Progress**: 140 Kotlin files, 7 Java files remaining (95.2% complete)
-**Test Coverage**: 672 test cases across 24 comprehensive test suites (100% pass rate)
+**Test Coverage**: ✅ Automated tests working on Termux ARM64! 33 test files verified
 **Critical Fixes**: 54 fixes applied (see history below) - ALL OPTIMIZATIONS COMPLETE
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 
-### 🔄 Latest Work (2025-11-26) - BUG FIX: Calibration Screen Crash Fixed! 🐛
+### 🔄 Latest Work (2025-11-26) - AUTOMATED TESTING FIXED: Termux ARM64 Support! 🧪
+
+**AUTOMATED TESTING BREAKTHROUGH**:
+
+**Issue**: Pre-commit tests and build-test-deploy.sh failed on Termux ARM64
+**Root Cause**: Standard x86_64 AAPT2 binary can't execute on ARM64 architecture
+
+**Solution Implemented**:
+- **gradle-with-aapt2.sh**: Environment-aware gradle wrapper
+  - Auto-detects Termux ARM64 environment
+  - Applies custom AAPT2 override automatically
+  - Falls back to standard gradle on other platforms
+- **pre-commit-tests.sh**: Updated to use new wrapper
+- **build-test-deploy.sh**: Updated to use new wrapper
+
+**Test Results**:
+```bash
+✓ Compilation successful (Kotlin + Java)
+✓ 33 test files verified
+✓ pre-commit-tests.sh: ALL CHECKS PASSED
+```
+
+**Benefits**:
+- ✅ Automated testing now works on ARM64 devices
+- ✅ No manual AAPT2 flags needed
+- ✅ Compatible with existing build-on-termux.sh
+- ✅ CI/CD ready (auto-detects environment)
+
+**Files Changed**:
+- gradle-with-aapt2.sh (NEW - smart wrapper)
+- pre-commit-tests.sh (uses wrapper)
+- build-test-deploy.sh (uses wrapper)
+
+### 📚 Previous Work (2025-11-26) - BUG FIX: Calibration Screen Crash Fixed! 🐛
 
 **CRITICAL BUG FIX**:
 
