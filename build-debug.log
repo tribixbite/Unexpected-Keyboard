@@ -27,20 +27,20 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
-> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
+> Task :mergeDebugResources
 > Task :compileDebugShaders NO-SOURCE
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :mergeDebugResources
 > Task :compressDebugAssets FROM-CACHE
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -77,6 +77,10 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:75:62 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VoiceImeSwitcher.kt:84:42 Type mismatch: inferred type is IBinder? but IBinder was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:162:71 Smart cast to 'Context' is impossible, because 'context' is a mutable property that could have been changed by this time
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:18:1 Class 'CustomExtraKeysPreference' is not abstract and does not implement abstract base class member public abstract fun labelOfValue(value: String, i: Int): String defined in juloo.keyboard2.prefs.ListGroupPreference
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:27:5 'label_of_value' overrides nothing
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:46:5 'get_serializer' overrides nothing
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:56:28 Unresolved reference: load_from_preferences
 
 FAILURE: Build failed with an exception.
 
@@ -91,5 +95,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 1s
+BUILD FAILED in 52s
 35 actionable tasks: 27 executed, 8 from cache
