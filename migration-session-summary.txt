@@ -64,8 +64,11 @@
 54. Autocapitalisation.java → Autocapitalisation.kt (203→187 lines, 8% reduction)
 55. DictionaryManager.java → DictionaryManager.kt (219→166 lines, 24% reduction)
 
-**Total: 9,230 lines Java → 7,823 lines Kotlin (15% reduction)**
-**Remaining: 43 Java files** (from 98 total - 56% complete!)
+56. LayoutModifier.java → LayoutModifier.kt (228→234 lines)
+57. LayoutManager.java → LayoutManager.kt (257→214 lines, 17% reduction)
+
+**Total: 9,715 lines Java → 8,271 lines Kotlin (15% reduction)**
+**Remaining: 41 Java files** (from 98 total - 58% complete!)
 
 All builds successful ✅
 
