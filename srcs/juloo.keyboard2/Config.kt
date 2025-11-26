@@ -13,7 +13,7 @@ import juloo.keyboard2.prefs.LayoutsPreference
 class Config private constructor(
     private val _prefs: SharedPreferences,
     res: Resources,
-    @JvmField val handler: IKeyEventHandler,
+    @JvmField val handler: IKeyEventHandler?,
     foldableUnfolded: Boolean?
 ) {
     // From resources
@@ -416,7 +416,7 @@ class Config private constructor(
         fun initGlobalConfig(
             prefs: SharedPreferences,
             res: Resources,
-            handler: IKeyEventHandler,
+            handler: IKeyEventHandler?,
             foldableUnfolded: Boolean?
         ) {
             migrate(prefs)

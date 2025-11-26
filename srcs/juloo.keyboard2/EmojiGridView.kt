@@ -39,7 +39,7 @@ class EmojiGridView(context: Context, attrs: AttributeSet?) :
         val emoji = emojiArray[pos]
         val used = lastUsed[emoji]
         lastUsed[emoji] = (used ?: 0) + 1
-        config.handler.key_up(emoji.kv(), Pointers.Modifiers.EMPTY)
+        config.handler?.key_up(emoji.kv(), Pointers.Modifiers.EMPTY)
         saveLastUsed() // TODO: opti
     }
 
