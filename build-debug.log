@@ -31,15 +31,16 @@ Generated version info:  ()
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
 > Task :parseDebugLocalResources
-> Task :mergeDebugResources
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :generateDebugAssets UP-TO-DATE
+> Task :mergeDebugResources
 > Task :mergeDebugAssets
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :compressDebugAssets FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
@@ -49,7 +50,6 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -66,6 +66,9 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 > Task :processDebugResources
 > Task :compileDebugKotlin
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Autocapitalisation.kt:97:27 Parameter 'old_cursor' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:40:43 'versionCode: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:448:41 Parameter 'key' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:458:39 Parameter 'key' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BigramModel.kt:28:25 Parameter 'context' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BinaryDictionaryLoader.kt:99:21 Variable 'prefixOffset' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:48 'getColor(Int): Int' is deprecated. Deprecated in Java
