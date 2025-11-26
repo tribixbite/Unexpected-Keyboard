@@ -484,10 +484,10 @@ class SwipeMLDataStore private constructor(context: Context) :
      * Statistics class
      */
     data class DataStatistics(
-        var totalCount: Int = 0,
-        var calibrationCount: Int = 0,
-        var userSelectionCount: Int = 0,
-        var uniqueWords: Int = 0
+        @JvmField var totalCount: Int = 0,
+        @JvmField var calibrationCount: Int = 0,
+        @JvmField var userSelectionCount: Int = 0,
+        @JvmField var uniqueWords: Int = 0
     ) {
         override fun toString(): String {
             return String.format(

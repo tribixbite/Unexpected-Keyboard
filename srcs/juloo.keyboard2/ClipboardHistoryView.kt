@@ -29,8 +29,8 @@ class ClipboardHistoryView(ctx: Context, attrs: AttributeSet?) : NonScrollListVi
         clipboardAdapter = ClipboardEntriesAdapter()
 
         service?.let {
-            it.set_on_clipboard_history_change(this)
-            history = it.clear_expired_and_get_history()
+            it.setOnClipboardHistoryChange(this)
+            history = it.clearExpiredAndGetHistory()
             filteredHistory = history
         }
 
@@ -88,7 +88,7 @@ class ClipboardHistoryView(ctx: Context, attrs: AttributeSet?) : NonScrollListVi
         val clip = filteredHistory[pos].content
 
         // Set pinned status in database instead of removing
-        service?.set_pinned_status(clip, true)
+        service?.setPinnedStatus(clip, true)
 
         // Notify pin view to refresh
         val pinView = (parent.parent as? ViewGroup)?.findViewById<ClipboardPinView>(R.id.clipboard_pin_view)
@@ -111,7 +111,7 @@ class ClipboardHistoryView(ctx: Context, attrs: AttributeSet?) : NonScrollListVi
     }
 
     private fun update_data() {
-        history = service?.clear_expired_and_get_history() ?: emptyList()
+        history = service?.clearExpiredAndGetHistory() ?: emptyList()
         applyFilter() // Reapply current search filter
     }
 

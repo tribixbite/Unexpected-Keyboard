@@ -27,7 +27,7 @@ class ClipboardPinView(ctx: Context, attrs: AttributeSet?) : MaxHeightListView(c
     /** Refresh pinned items from database */
     fun refresh_pinned_items() {
         if (service != null) {
-            entries = service.get_pinned_entries()
+            entries = service.getPinnedEntries()
             adapter.notifyDataSetChanged()
             invalidate()
 
@@ -58,7 +58,7 @@ class ClipboardPinView(ctx: Context, attrs: AttributeSet?) : MaxHeightListView(c
         val clip = entries[pos].content
 
         // Delete entirely from database
-        service?.remove_history_entry(clip)
+        service?.removeHistoryEntry(clip)
         refresh_pinned_items()
     }
 

@@ -113,7 +113,7 @@ class NeuralLayoutHelper(
 
             // Check foldable state
             val foldTracker = FoldStateTracker(_context)
-            val foldableUnfolded = foldTracker.isUnfolded
+            val foldableUnfolded = foldTracker.isUnfolded()
 
             // Check orientation
             val isLandscape = _context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -144,7 +144,7 @@ class NeuralLayoutHelper(
     fun getUserKeyboardHeightPercent(): Int {
         return try {
             val foldTracker = FoldStateTracker(_context)
-            val foldableUnfolded = foldTracker.isUnfolded
+            val foldableUnfolded = foldTracker.isUnfolded()
             val isLandscape = _context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
             val prefs = DirectBootAwarePreferences.get_shared_preferences(_context)
@@ -226,7 +226,7 @@ class NeuralLayoutHelper(
      * CRITICAL for neural swipe typing - without this, key detection fails completely!
      */
     fun setNeuralKeyboardLayout() {
-        if (_predictionCoordinator.neuralEngine == null || _keyboardView == null) {
+        if (_predictionCoordinator.getNeuralEngine() == null || _keyboardView == null) {
             Log.w(TAG, "Cannot set neural layout - engine or view is null")
             return
         }
@@ -234,7 +234,7 @@ class NeuralLayoutHelper(
         val keyPositions = extractKeyPositionsFromLayout()
 
         if (keyPositions != null && keyPositions.isNotEmpty()) {
-            _predictionCoordinator.neuralEngine!!.setRealKeyPositions(keyPositions)
+            _predictionCoordinator.getNeuralEngine()!!.setRealKeyPositions(keyPositions)
             Log.d(TAG, "Set ${keyPositions.size} key positions on neural engine")
 
             // Calculate QWERTY area bounds from key positions
@@ -261,7 +261,7 @@ class NeuralLayoutHelper(
                 }
 
                 // Set bounds on neural engine
-                _predictionCoordinator.neuralEngine!!.setQwertyAreaBounds(qwertyTop, qwertyHeight)
+                _predictionCoordinator.getNeuralEngine()!!.setQwertyAreaBounds(qwertyTop, qwertyHeight)
                 Log.d(
                     TAG,
                     String.format(
@@ -275,7 +275,7 @@ class NeuralLayoutHelper(
                 // with top row key detection. Setting to 0 to isolate QWERTY bounds fix.
                 // TODO: Re-enable with smaller offset (10-15%) after verifying bounds work correctly
                 val touchYOffset = 0.0f // Was: rowHeight * 0.37f
-                _predictionCoordinator.neuralEngine!!.setTouchYOffset(touchYOffset)
+                _predictionCoordinator.getNeuralEngine()!!.setTouchYOffset(touchYOffset)
                 Log.d(
                     TAG,
                     String.format(

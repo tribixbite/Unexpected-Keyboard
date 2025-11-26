@@ -1,4 +1,9 @@
-> Task :checkKotlinGradlePluginConfigurationErrors
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/tools/aapt2-arm64/aapt2' is experimental.
+
 > Task :copyLayoutDefinitions UP-TO-DATE
 > Task :copyRawQwertyUS UP-TO-DATE
 
@@ -14,211 +19,267 @@ Generated version info:  ()
 > Task :initDebugKeystore UP-TO-DATE
 > Task :preBuild
 > Task :preDebugBuild
+> Task :mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :checkKotlinGradlePluginConfigurationErrors
 > Task :dataBindingMergeDependencyArtifactsDebug
-> Task :generateDebugResValues
+> Task :generateDebugResValues FROM-CACHE
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
-> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
-> Task :createDebugCompatibleScreenManifests
+> Task :parseDebugLocalResources
 > Task :checkDebugAarMetadata
-> Task :extractDeepLinksDebug
-> Task :mergeDebugResources
+> Task :createDebugCompatibleScreenManifests
+> Task :extractDeepLinksDebug FROM-CACHE
 > Task :processDebugMainManifest
-> Task :dataBindingGenBaseClassesDebug
 > Task :processDebugManifest
+> Task :javaPreCompileDebug FROM-CACHE
+> Task :mergeDebugResources
+> Task :mergeDebugShaders
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :compileDebugShaders NO-SOURCE
+> Task :generateDebugAssets UP-TO-DATE
+> Task :mergeDebugAssets
+> Task :compressDebugAssets FROM-CACHE
 > Task :processDebugManifestForPackage
-AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Unexpected error output: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fcdf5283e87f60780fff2e7b9a71fc13/transformed/aapt2-8.6.0-11315950-linux/aapt2: 2: Syntax error: "(" unexpected
-> Task :processDebugResources FAILED
+> Task :checkDebugDuplicateClasses
+> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
+> Task :validateSigningDebug
+> Task :writeDebugAppMetadata
+> Task :writeDebugSigningConfigVersions
+> Task :mergeDebugNativeLibs
 
-FAILURE: Build failed with an exception.
+> Task :stripDebugDebugSymbols
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-* What went wrong:
-Execution failed for task ':processDebugResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
-     This should not happen under normal circumstances, please file an issue if it does.
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
 
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
-For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+> Task :processDebugResources
+> Task :compileDebugKotlin
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Autocapitalisation.kt:97:27 Parameter 'old_cursor' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BigramModel.kt:28:25 Parameter 'context' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BinaryDictionaryLoader.kt:99:21 Variable 'prefixOffset' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:48 'getColor(Int): Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:73 'secondary_text_dark: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardManager.kt:55:26 Parameter 'layoutInflater' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardManager.kt:178:13 Variable 'modeGroup' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:27:38 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:32:28 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:39:46 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:388:22 Variable 'dx' initializer is redundant
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:389:22 Variable 'dy' initializer is redundant
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousSwipeGestureRecognizer.kt:95:13 Variable 'now' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousSwipeGestureRecognizer.kt:157:41 Unnecessary safe call on a non-null receiver of type List<ContinuousGestureRecognizer.Result>
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:7:27 'PreferenceManager' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:21:20 'PreferenceManager' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:21:38 'getDefaultSharedPreferences(Context!): SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:42:24 'PreferenceManager' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:42:42 'getDefaultSharedPreferencesName(Context!): String!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:52:13 'PreferenceManager' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:52:31 'getDefaultSharedPreferences(Context!): SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGroupButtonsBar.kt:27:39 'FILL_PARENT: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/FoldStateTracker.kt:39:29 The corresponding parameter in the supertype 'Consumer' is named 'value'. This may cause problems when calling this function with named arguments.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:226:21 Condition 'probabilisticKeys != null' is always 'true'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:296:32 Parameter 'point' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:31 Parameter 'prev' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:55 Parameter 'curr' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:79 Parameter 'next' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyModifier.kt:90:13 'when' is exhaustive so 'else' is redundant here
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:87:17 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:90:51 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:98:54 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:106:13 Unsafe use of a nullable receiver of type String?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:109:13 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:213:25 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:221:21 Unreachable code
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:230:20 Unsafe use of a nullable receiver of type String?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:237:20 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardGrid.kt:158:26 Variable 'pos' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:134:55 'switchToLastInputMethod(IBinder!): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:179:13 'when' is exhaustive so 'else' is redundant here
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LanguageDetector.kt:279:32 Parameter 'threshold' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LauncherActivity.kt:73:28 Parameter 'btn' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LauncherActivity.kt:77:26 Parameter 'v' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LoopGestureDetector.kt:177:32 Parameter 'point' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:112:16 'getter for defaultDisplay: Display!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:112:31 'getMetrics(DisplayMetrics!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:184:17 Variable 'areFinal' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralSwipeTypingEngine.kt:107:17 Condition 'result != null' is always 'true'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:136:55 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:139:54 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:256:51 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:264:39 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:423:59 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:555:79 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:696:40 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:753:42 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:892:13 Condition 'context == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:901:55 Type mismatch: inferred type is String? but String was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:905:48 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:954:60 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:983:13 Condition 'context == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:991:37 Type mismatch: inferred type is (Mutable)Set<String!>? but (MutableCollection<out String!>..Collection<String!>) was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1005:13 Condition 'context == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1029:48 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1035:83 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1065:57 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1066:79 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1087:13 Condition 'context == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:114:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:132:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:112:63 Parameter 'key' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:168:34 Parameter 'key' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:52:21 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:54:24 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:98:20 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:103:30 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:284:13 Variable 'pathStr' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:297:13 Variable 'keysStr' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:309:17 Variable 'avgVelocity' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:318:17 Variable 'straightnessRatio' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:103:9 Parameter 'point' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeResampler.kt:41:13 Variable 'numFeatures' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeResampler.kt:59:13 Variable 'numFeatures' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeTrajectoryProcessor.kt:237:21 Variable 'p' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeTrajectoryProcessor.kt:238:21 Variable 'key' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:122:54 Elvis operator (?:) always returns the left operand of non-nullable type List<String>
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:153:13 Condition 'template.pts == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:254:37 Condition 'template.pts == null' is always 'false'
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Theme.kt:209:42 Parameter 'config' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VibratorCompat.kt:31:28 'vibrate(Long): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VibratorCompat.kt:39:63 'VIBRATOR_SERVICE: String' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VocabularyCache.kt:34:25 Variable 'wordCount' initializer is redundant
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:422:40 The corresponding parameter in the supertype 'LoadCallback' is named 'language'. This may cause problems when calling this function with named arguments.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:428:17 The corresponding parameter in the supertype 'LoadCallback' is named 'context'. This may cause problems when calling this function with named arguments.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:468:39 The corresponding parameter in the supertype 'LoadCallback' is named 'language'. This may cause problems when calling this function with named arguments.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ml/SwipeMLData.kt:119:31 Parameter 'screenWidth' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ml/SwipeMLData.kt:119:49 Parameter 'keyboardHeight' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ml/SwipeMLTrainer.kt:194:15 Variable 'word' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:90:58 Parameter 'useBatched' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:204:9 Parameter 'step' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:232:55 Unchecked cast: Any! to Array<Array<FloatArray>>
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:360:25 Type mismatch: inferred type is Int? but Int was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/GreedySearchEngine.kt:68:59 Unchecked cast: Any! to Array<Array<FloatArray>>
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/ModelLoader.kt:248:24 Parameter 'sessionOptions' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/SwipePredictorOrchestrator.kt:203:24 Parameter 'logger' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:24:9 'setter for key: String!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:29:62 The corresponding parameter in the supertype 'ListGroupPreference' is named 'oldValue'. This may cause problems when calling this function with named arguments.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:30:36 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:33:29 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:7:27 'CheckBoxPreference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:8:27 'PreferenceCategory' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:16:69 'constructor PreferenceCategory(Context!, AttributeSet!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:16:69 'PreferenceCategory' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:20:9 'setOrderingAsAdded(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:27:13 'addPreference(Preference!): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:27:54 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:35:9 'constructor CheckBoxPreference(Context!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:35:9 'CheckBoxPreference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:42:13 'setter for key: String!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:43:13 'setDefaultValue(Any!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:44:13 'setTitle(CharSequence!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:46:17 'setter for isSingleLineTitle: Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:51:19 'onBindView(View!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:53:47 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:5:27 'DialogPreference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:28:5 'constructor DialogPreference(Context!, AttributeSet!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:28:5 'DialogPreference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:37:26 'getter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:49:31 'getContext(): Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:66:13 'getPersistedInt(Int): Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:68:42 'persistInt(Int): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:80:13 'persistInt(Int): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:82:32 'getPersistedInt(Int): Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:96:9 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:23:9 'setter for key: String!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:38:45 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:46:21 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:49:32 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:55:16 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:59:44 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:69:36 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:70:29 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:71:35 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:73:43 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:90:13 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:129:23 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:138:13 'setter for layoutResource: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:5:27 'Preference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:6:27 'PreferenceGroup' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:20:81 'constructor PreferenceGroup(Context!, AttributeSet!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:20:81 'PreferenceGroup' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:27:9 'setter for isOrderingAsAdded: Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:28:9 'setter for layoutResource: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:42:37 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:71:13 'persistString(String!): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:93:39 'getPersistedString(String!): String!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:101:15 'onAttachedToActivity(): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:109:9 'removeAll(): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:112:13 'addPreference(Preference!): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:112:32 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:116:20 'setter for order: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:116:28 'Preference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:116:39 'DEFAULT_ORDER: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:117:26 'addPreference(Preference!): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:120:84 'constructor Preference(Context!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:120:84 'Preference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:122:13 'setter for isPersistent: Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:123:13 'setter for title: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:125:17 'setter for widgetLayoutResource: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:130:27 'onCreateView(ViewGroup!): View!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:154:48 'constructor Preference(Context!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:154:48 'Preference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:156:13 'setter for isPersistent: Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:157:13 'setter for layoutResource: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:5:27 'DialogPreference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:30:5 'constructor DialogPreference(Context!, AttributeSet!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:30:5 'DialogPreference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:41:26 'getter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:55:31 'getContext(): Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:77:13 'getPersistedFloat(Float): Float' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:81:32 'getPersistedInt(Int): Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:83:17 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:88:36 'getPersistedString(String!): String!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:90:21 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:94:21 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:105:44 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:117:13 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:133:9 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
 
-BUILD FAILED in 7s
-20 actionable tasks: 20 executed
-> Task :checkKotlinGradlePluginConfigurationErrors
-> Task :copyLayoutDefinitions UP-TO-DATE
-> Task :copyRawQwertyUS UP-TO-DATE
+> Task :compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: /data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValue.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+3 warnings
 
-> Task :generateBinaryContractions
-Binary contractions up-to-date: contractions.bin
+> Task :processDebugJavaRes
+> Task :mergeDebugJavaResource
+> Task :dexBuilderDebug
+> Task :mergeProjectDexDebug
+> Task :packageDebug
+> Task :createDebugApkListingFileRedirect
+> Task :assembleDebug
 
-> Task :generateBinaryDictionaries
-Binary dictionary up-to-date: en_enhanced.bin
-
-> Task :generateVersionInfo
-Generated version info:  ()
-
-> Task :initDebugKeystore UP-TO-DATE
-> Task :preBuild
-> Task :preDebugBuild
-> Task :dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
-> Task :generateDebugResValues UP-TO-DATE
-> Task :generateDebugResources
-> Task :mergeDebugResources
-> Task :packageDebugResources
-> Task :generateDebugBuildConfig UP-TO-DATE
-> Task :checkDebugAarMetadata UP-TO-DATE
-> Task :parseDebugLocalResources
-> Task :mapDebugSourceSetPaths
-> Task :dataBindingGenBaseClassesDebug UP-TO-DATE
-> Task :createDebugCompatibleScreenManifests UP-TO-DATE
-> Task :extractDeepLinksDebug UP-TO-DATE
-> Task :processDebugMainManifest UP-TO-DATE
-> Task :processDebugManifest UP-TO-DATE
-> Task :processDebugManifestForPackage UP-TO-DATE
-AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Unexpected error output: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fcdf5283e87f60780fff2e7b9a71fc13/transformed/aapt2-8.6.0-11315950-linux/aapt2: 2: Syntax error: "(" unexpected
-> Task :processDebugResources FAILED
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':processDebugResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
-     This should not happen under normal circumstances, please file an issue if it does.
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
-
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD FAILED in 2s
-20 actionable tasks: 10 executed, 10 up-to-date
-> Task :checkKotlinGradlePluginConfigurationErrors
-> Task :copyLayoutDefinitions UP-TO-DATE
-> Task :copyRawQwertyUS UP-TO-DATE
-
-> Task :generateBinaryContractions
-Binary contractions up-to-date: contractions.bin
-
-> Task :generateBinaryDictionaries
-Binary dictionary up-to-date: en_enhanced.bin
-
-> Task :generateVersionInfo
-Generated version info:  ()
-
-> Task :initDebugKeystore UP-TO-DATE
-> Task :preBuild
-> Task :preDebugBuild
-> Task :dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
-> Task :generateDebugResValues UP-TO-DATE
-> Task :generateDebugResources
-> Task :mergeDebugResources
-> Task :packageDebugResources
-> Task :generateDebugBuildConfig UP-TO-DATE
-> Task :checkDebugAarMetadata UP-TO-DATE
-> Task :parseDebugLocalResources
-> Task :mapDebugSourceSetPaths
-> Task :dataBindingGenBaseClassesDebug UP-TO-DATE
-> Task :createDebugCompatibleScreenManifests UP-TO-DATE
-> Task :extractDeepLinksDebug UP-TO-DATE
-> Task :processDebugMainManifest UP-TO-DATE
-> Task :processDebugManifest UP-TO-DATE
-> Task :processDebugManifestForPackage UP-TO-DATE
-AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Unexpected error output: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fcdf5283e87f60780fff2e7b9a71fc13/transformed/aapt2-8.6.0-11315950-linux/aapt2: 2: Syntax error: "(" unexpected
-> Task :processDebugResources FAILED
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':processDebugResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
-     This should not happen under normal circumstances, please file an issue if it does.
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
-
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD FAILED in 2s
-20 actionable tasks: 10 executed, 10 up-to-date
-> Task :checkKotlinGradlePluginConfigurationErrors
-> Task :copyLayoutDefinitions UP-TO-DATE
-> Task :copyRawQwertyUS UP-TO-DATE
-
-> Task :generateBinaryContractions
-Binary contractions up-to-date: contractions.bin
-
-> Task :generateBinaryDictionaries
-Binary dictionary up-to-date: en_enhanced.bin
-
-> Task :generateVersionInfo
-Generated version info:  ()
-
-> Task :initDebugKeystore UP-TO-DATE
-> Task :preBuild
-> Task :preDebugBuild
-> Task :dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
-> Task :generateDebugResValues UP-TO-DATE
-> Task :generateDebugResources
-> Task :mergeDebugResources
-> Task :packageDebugResources
-> Task :generateDebugBuildConfig UP-TO-DATE
-> Task :checkDebugAarMetadata UP-TO-DATE
-> Task :parseDebugLocalResources
-> Task :mapDebugSourceSetPaths
-> Task :dataBindingGenBaseClassesDebug UP-TO-DATE
-> Task :createDebugCompatibleScreenManifests UP-TO-DATE
-> Task :extractDeepLinksDebug UP-TO-DATE
-> Task :processDebugMainManifest UP-TO-DATE
-> Task :processDebugManifest UP-TO-DATE
-> Task :processDebugManifestForPackage UP-TO-DATE
-AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Unexpected error output: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fcdf5283e87f60780fff2e7b9a71fc13/transformed/aapt2-8.6.0-11315950-linux/aapt2: 2: Syntax error: "(" unexpected
-> Task :processDebugResources FAILED
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':processDebugResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
-     This should not happen under normal circumstances, please file an issue if it does.
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
-
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD FAILED in 2s
-20 actionable tasks: 10 executed, 10 up-to-date
+BUILD SUCCESSFUL in 1m 33s
+42 actionable tasks: 34 executed, 8 from cache

@@ -185,11 +185,16 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
     
     // Pass-through methods for compatibility
     fun isAvailable() = isModelLoaded
-    fun setKeyboardDimensions(w: Float, h: Float) = trajectoryProcessor.setKeyboardLayout(null, w, h)
+    fun setKeyboardDimensions(w: Float, h: Float) {
+        trajectoryProcessor.keyboardWidth = w
+        trajectoryProcessor.keyboardHeight = h
+    }
     fun setRealKeyPositions(keyPositions: Map<Char, PointF>?) {
-        val width = trajectoryProcessor._keyboardWidth
-        val height = trajectoryProcessor._keyboardHeight
-        trajectoryProcessor.setKeyboardLayout(keyPositions, width, height)
+        if (keyPositions != null) {
+            val width = trajectoryProcessor.keyboardWidth
+            val height = trajectoryProcessor.keyboardHeight
+            trajectoryProcessor.setKeyboardLayout(keyPositions, width, height)
+        }
     }
     fun setQwertyAreaBounds(top: Float, height: Float) = trajectoryProcessor.setQwertyAreaBounds(top, height)
     fun setTouchYOffset(offset: Float) = trajectoryProcessor.setTouchYOffset(offset)

@@ -36,10 +36,10 @@ class SwipeMLTrainer(context: Context) {
     }
 
     data class TrainingResult(
-        val samplesUsed: Int,
-        val trainingTimeMs: Long,
-        val accuracy: Float,
-        val modelVersion: String
+        @JvmField val samplesUsed: Int,
+        @JvmField val trainingTimeMs: Long,
+        @JvmField val accuracy: Float,
+        @JvmField val modelVersion: String
     )
 
     /**
@@ -276,8 +276,8 @@ class SwipeMLTrainer(context: Context) {
      * Calculate similarity between two swipe traces
      */
     private fun calculateTraceSimilarity(sample1: SwipeMLData, sample2: SwipeMLData): Float {
-        val trace1 = sample1.tracePoints
-        val trace2 = sample2.tracePoints
+        val trace1 = sample1.getTracePoints()
+        val trace2 = sample2.getTracePoints()
 
         if (trace1.isEmpty() || trace2.isEmpty()) return 0.0f
 
