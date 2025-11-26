@@ -44,7 +44,10 @@ class PreferenceUIUpdateHandler(
      * Update keyboard layout view with current layout.
      */
     private fun updateKeyboardLayout() {
-        keyboardView?.setKeyboard(layoutBridge?.getCurrentLayout())
+        val layout = layoutBridge?.getCurrentLayout()
+        if (layout != null) {
+            keyboardView?.setKeyboard(layout)
+        }
     }
 
     /**

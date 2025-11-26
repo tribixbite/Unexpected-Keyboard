@@ -81,9 +81,11 @@ class SwipePruner(private val dictionary: Map<String, Int>) {
                 val firstKey = touchedKeys[0]
                 val lastKey = touchedKeys[touchedKeys.size - 1]
 
-                if (firstKey.keys[0] != null && lastKey.keys[0] != null) {
-                    val first = firstKey.keys[0].getString().lowercase()[0]
-                    val last = lastKey.keys[0].getString().lowercase()[0]
+                val firstKv = firstKey.keys.getOrNull(0)
+                val lastKv = lastKey.keys.getOrNull(0)
+                if (firstKv != null && lastKv != null) {
+                    val first = firstKv.getString().lowercase()[0]
+                    val last = lastKv.getString().lowercase()[0]
                     val extremityKey = "$first$last"
                     extremityMap[extremityKey]?.let { candidates.addAll(it) }
                 }
@@ -111,9 +113,10 @@ class SwipePruner(private val dictionary: Map<String, Int>) {
         // This is a simplified approach - ideally we'd have access to key bounds
 
         for (key in keys) {
-            if (key.keys[0] == null || !isAlphabeticKey(key.keys[0])) continue
+            val kv = key.keys.getOrNull(0)
+            if (kv == null || !isAlphabeticKey(kv)) continue
 
-            val keyChar = key.keys[0].getString().lowercase()[0]
+            val keyChar = kv.getString().lowercase()[0]
             if (!result.contains(keyChar)) {
                 result.add(keyChar)
             }

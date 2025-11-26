@@ -175,11 +175,11 @@ class ProbabilisticKeyDetector(
      * Check if key is alphabetic
      */
     private fun isAlphabeticKey(key: KeyboardData.Key?): Boolean {
-        if (key == null || key.keys[0] == null) {
+        val kv = key?.keys?.getOrNull(0)
+        if (kv == null) {
             return false
         }
 
-        val kv = key.keys[0]
         if (kv.getKind() != KeyValue.Kind.Char) {
             return false
         }

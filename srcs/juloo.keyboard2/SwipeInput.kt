@@ -28,8 +28,8 @@ class SwipeInput(
         // Build key sequence
         keySequence = buildString {
             for (key in touchedKeys) {
-                if (key != null && key.keys[0] != null) {
-                    val kv = key.keys[0]
+                val kv = key?.keys?.getOrNull(0)
+                if (kv != null) {
                     if (kv.getKind() == KeyValue.Kind.Char) {
                         append(kv.getChar())
                     }

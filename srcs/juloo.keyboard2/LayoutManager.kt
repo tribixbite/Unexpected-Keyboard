@@ -147,7 +147,7 @@ class LayoutManager(
      * @param layoutId Resource ID of layout XML
      * @return Loaded layout
      */
-    fun loadLayout(layoutId: Int): KeyboardData {
+    fun loadLayout(layoutId: Int): KeyboardData? {
         return keyboardDataCache.get(layoutId) ?: run {
             val keyboardData = KeyboardData.load(context.resources, layoutId)
             keyboardDataCache.put(layoutId, keyboardData)
@@ -161,11 +161,13 @@ class LayoutManager(
      * @param layoutId Resource ID of layout XML
      * @return Loaded and modified numpad layout
      */
-    fun loadNumpad(layoutId: Int): KeyboardData {
-        return LayoutModifier.modify_numpad(
-            loadLayout(layoutId),
-            current_layout_unmodified()
-        )
+    fun loadNumpad(layoutId: Int): KeyboardData? {
+        val layout = loadLayout(layoutId)
+        return if (layout != null) {
+            LayoutModifier.modify_numpad(layout, current_layout_unmodified())
+        } else {
+            null
+        }
     }
 
     /**
@@ -174,11 +176,13 @@ class LayoutManager(
      * @param layoutId Resource ID of layout XML
      * @return Loaded and modified pinentry layout
      */
-    fun loadPinentry(layoutId: Int): KeyboardData {
-        return LayoutModifier.modify_pinentry(
-            loadLayout(layoutId),
-            current_layout_unmodified()
-        )
+    fun loadPinentry(layoutId: Int): KeyboardData? {
+        val layout = loadLayout(layoutId)
+        return if (layout != null) {
+            LayoutModifier.modify_pinentry(layout, current_layout_unmodified())
+        } else {
+            null
+        }
     }
 
     /**

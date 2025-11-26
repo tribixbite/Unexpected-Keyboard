@@ -29,7 +29,7 @@ class SubtypeLayoutInitializer(
      */
     data class InitializationResult(
         val subtypeManager: SubtypeManager,
-        val layoutManager: LayoutManager,
+        val layoutManager: LayoutManager?,
         val layoutBridge: LayoutBridge?
     )
 
@@ -60,20 +60,24 @@ class SubtypeLayoutInitializer(
             ?: KeyboardData.load(resources, R.xml.latn_qwerty_us)
 
         // Update or create LayoutManager
-        val layoutManager: LayoutManager
+        val layoutManager: LayoutManager?
         val layoutBridge: LayoutBridge?
 
-        if (existingLayoutManager != null) {
+        if (existingLayoutManager != null && defaultLayout != null) {
             // Update existing LayoutManager with locale layout
             existingLayoutManager.setLocaleTextLayout(defaultLayout)
             layoutManager = existingLayoutManager
             layoutBridge = null  // Don't recreate bridge
-        } else {
+        } else if (defaultLayout != null) {
             // First call - initialize LayoutManager with default layout
             layoutManager = LayoutManager(keyboard2, config, defaultLayout)
 
             // Initialize LayoutBridge
             layoutBridge = LayoutBridge.create(layoutManager, keyboardView)
+        } else {
+            // defaultLayout is null - return null result
+            layoutManager = null
+            layoutBridge = null
         }
 
         return InitializationResult(subtypeManager, layoutManager, layoutBridge)

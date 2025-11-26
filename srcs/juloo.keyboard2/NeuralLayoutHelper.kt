@@ -358,8 +358,8 @@ class NeuralLayoutHelper(
                     currentX += key.shift * scaleX
 
                     // Only process character keys
-                    if (key.keys != null && key.keys.isNotEmpty() && key.keys[0] != null) {
-                        val kv = key.keys[0]
+                    val kv = key.keys?.getOrNull(0)
+                    if (kv != null) {
                         if (kv.getKind() == KeyValue.Kind.Char) {
                             val c = kv.getChar()
                             val centerX = currentX + (key.width * scaleX / 2.0f)

@@ -74,7 +74,10 @@ class KeyboardReceiver(
             }
 
             KeyValue.Event.SWITCH_NUMERIC -> {
-                keyboardView.setKeyboard(layoutManager.loadNumpad(R.xml.numeric))
+                val numpad = layoutManager.loadNumpad(R.xml.numeric)
+                if (numpad != null) {
+                    keyboardView.setKeyboard(numpad)
+                }
             }
 
             KeyValue.Event.SWITCH_EMOJI -> {
@@ -150,7 +153,10 @@ class KeyboardReceiver(
             }
 
             KeyValue.Event.SWITCH_GREEKMATH -> {
-                keyboardView.setKeyboard(layoutManager.loadNumpad(R.xml.greekmath))
+                val greekmath = layoutManager.loadNumpad(R.xml.greekmath)
+                if (greekmath != null) {
+                    keyboardView.setKeyboard(greekmath)
+                }
             }
 
             KeyValue.Event.CAPS_LOCK -> {

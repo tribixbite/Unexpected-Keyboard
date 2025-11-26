@@ -179,8 +179,9 @@ class LoopGestureDetector(
         // For now, return the most recent key
         if (keys.isNotEmpty()) {
             val lastKey = keys.last()
-            if (lastKey.keys[0]?.getKind() == KeyValue.Kind.Char) {
-                return lastKey.keys[0].getChar()
+            val kv = lastKey.keys.getOrNull(0)
+            if (kv?.getKind() == KeyValue.Kind.Char) {
+                return kv.getChar()
             }
         }
         return ' '

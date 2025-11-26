@@ -81,7 +81,7 @@ class LayoutBridge(
      * @param layoutId Resource ID of the layout to load
      * @return Loaded keyboard layout
      */
-    fun loadLayout(layoutId: Int): KeyboardData {
+    fun loadLayout(layoutId: Int): KeyboardData? {
         return layoutManager.loadLayout(layoutId)
     }
 
@@ -91,7 +91,7 @@ class LayoutBridge(
      * @param layoutId Resource ID of the numpad layout to load
      * @return Loaded numpad keyboard layout
      */
-    fun loadNumpad(layoutId: Int): KeyboardData {
+    fun loadNumpad(layoutId: Int): KeyboardData? {
         return layoutManager.loadNumpad(layoutId)
     }
 
@@ -101,7 +101,7 @@ class LayoutBridge(
      * @param layoutId Resource ID of the pinentry layout to load
      * @return Loaded pinentry keyboard layout
      */
-    fun loadPinentry(layoutId: Int): KeyboardData {
+    fun loadPinentry(layoutId: Int): KeyboardData? {
         return layoutManager.loadPinentry(layoutId)
     }
 

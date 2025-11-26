@@ -492,7 +492,7 @@ class KeyboardData private constructor(
     }
 
     companion object {
-        private val _layoutCache = HashMap<Int, KeyboardData>()
+        private val _layoutCache = HashMap<Int, KeyboardData?>()
 
         @JvmStatic
         @Throws(Exception::class)
