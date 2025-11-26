@@ -186,7 +186,7 @@ tasks.register('checkKeyboardLayouts') {
 }
 
 tasks.register('compileComposeSequences') {
-  def out = "srcs/juloo.keyboard2/ComposeKeyData.java"
+  def out = "srcs/juloo.keyboard2/ComposeKeyData.kt"
   println "\nGenerating ${out}"
   exec {
     def sequences = new File(projectDir, "srcs/compose").listFiles().findAll {
