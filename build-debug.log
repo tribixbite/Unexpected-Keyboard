@@ -27,10 +27,10 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig FROM-CACHE
 > Task :mapDebugSourceSetPaths
-> Task :parseDebugLocalResources
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :processDebugMainManifest FROM-CACHE
 > Task :processDebugManifest FROM-CACHE
 > Task :processDebugManifestForPackage FROM-CACHE
@@ -156,6 +156,10 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:54:24 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:98:20 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:103:30 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:214:9 Parameter 'resources' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:307:25 Variable 'deletedLeadingSpace' is assigned but never accessed
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:318:29 The value 'true' assigned to 'var deletedLeadingSpace: Boolean defined in juloo.keyboard2.SuggestionHandler.onSuggestionSelected.`<anonymous>`' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:436:59 Elvis operator (?:) always returns the left operand of non-nullable type PredictionSource
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:284:13 Variable 'pathStr' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:297:13 Variable 'keysStr' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:309:17 Variable 'avgVelocity' is never used
@@ -295,5 +299,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 37s
+BUILD SUCCESSFUL in 1m 43s
 42 actionable tasks: 30 executed, 12 from cache
