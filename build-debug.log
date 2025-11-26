@@ -26,27 +26,27 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
-> Task :parseDebugLocalResources
 > Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
+> Task :parseDebugLocalResources
 > Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
-> Task :mergeDebugResources
 > Task :compileDebugShaders NO-SOURCE
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :generateDebugAssets UP-TO-DATE
+> Task :processDebugManifestForPackage
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
+> Task :mergeDebugResources
 > Task :checkDebugDuplicateClasses
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -97,6 +97,7 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1087:13 Condition 'context == null' is always 'false'
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:114:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:132:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:103:9 Parameter 'point' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VocabularyCache.kt:34:25 Variable 'wordCount' initializer is redundant
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:417:40 The corresponding parameter in the supertype 'LoadCallback' is named 'language'. This may cause problems when calling this function with named arguments.
@@ -135,5 +136,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 2m 16s
+BUILD SUCCESSFUL in 1m 25s
 42 actionable tasks: 34 executed, 8 from cache
