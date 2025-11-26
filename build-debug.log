@@ -26,16 +26,17 @@ Generated version info:  ()
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
+> Task :checkDebugAarMetadata
 > Task :mapDebugSourceSetPaths
+> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
-> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
@@ -46,7 +47,6 @@ Generated version info:  ()
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
 > Task :mergeDebugJniLibFolders
-> Task :processDebugManifestForPackage
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -65,13 +65,20 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 
 > Task :processDebugResources
 
-> Task :compileDebugKotlin FAILED
+> Task :compileDebugKotlin
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardPinView.kt:12:62 This type is final, so it cannot be inherited from
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:15:40 Unresolved reference: OnItemClickListener
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:23:31 Type mismatch: inferred type is EmojiGridView but AdapterView.OnItemClickListener? was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:37:5 'onItemClick' overrides nothing
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:76:40 This type has a constructor, and thus must be initialized here
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:110:36 This type has a constructor, and thus must be initialized here
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:157:25 This type has a constructor, and thus must be initialized here
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:70:55 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:75:62 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VoiceImeSwitcher.kt:84:42 Type mismatch: inferred type is IBinder? but IBinder was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:162:71 Smart cast to 'Context' is impossible, because 'context' is a mutable property that could have been changed by this time
+
+> Task :compileDebugKotlin FAILED
 
 FAILURE: Build failed with an exception.
 
