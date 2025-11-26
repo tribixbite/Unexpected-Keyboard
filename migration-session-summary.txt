@@ -75,9 +75,13 @@
 64. LayoutsPreference.java → LayoutsPreference.kt (302→280 lines, 7% reduction)
 65. PersonalizationManager.java → PersonalizationManager.kt (308→243 lines, 21% reduction)
 66. SuggestionBar.java → SuggestionBar.kt (343→280 lines, 18% reduction)
+67. LoopGestureDetector.java → LoopGestureDetector.kt (345→262 lines, 24% reduction)
+68. ProbabilisticKeyDetector.java → ProbabilisticKeyDetector.kt (347→267 lines, 23% reduction)
+69. ClipboardManager.java → ClipboardManager.kt (348→279 lines, 20% reduction)
+70. NgramModel.java → NgramModel.kt (350→309 lines, 12% reduction)
 
-**Total: 12,376 lines Java → 10,587 lines Kotlin (14% reduction)**
-**Remaining: 32 Java files** (from 98 total - 67% complete!)
+**Total: 13,766 lines Java → 11,684 lines Kotlin (15% reduction)**
+**Remaining: 28 Java files** (from 98 total - 71% complete!)
 
 All builds successful ✅
 
