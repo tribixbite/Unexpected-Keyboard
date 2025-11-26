@@ -9,7 +9,7 @@
 
 ## 🔥 Current Status (2025-11-26 - UPDATED)
 
-**Latest Version**: v1.32.875 🎯
+**Latest Version**: v1.32.879 🎯
 **Build Status**: ⚠️  Kotlin Compilation ✅ 100% | DEX Compilation ❌ (R8 8.6.17 bug - see [../R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md))
 **Branch**: feature/swipe-typing
 **Current Focus**: ✅ Keyboard2View.java migrated + All null safety fixes complete! (Migration successful, R8 bug blocking APK build)
@@ -49,15 +49,22 @@
 - ✅ All 38 test files compile successfully
 - ✅ 3 commits: Pointers fix, first null safety batch, second null safety batch
 
-**R8/D8 Bug Investigation** (commits 29c96369, ce5e146b, d93b63c1):
-- ❌ Attempted R8 fullMode=false workaround - no effect
-- ❌ Attempted AGP downgrade to 8.5.2 - dependencies require 8.6.0+
-- ❌ Attempted AGP upgrade to 8.7.3 - requires Gradle 8.9 (AAPT2 breaks)
-- ❌ Attempted Gradle 8.9 upgrade - breaks AAPT2 ARM64 wrapper
+**R8/D8 Bug Investigation** (commits 29c96369→8256b11e) - **8 Workarounds Attempted, ALL FAILED**:
+1. ❌ R8 fullMode=false - no effect
+2. ❌ AGP downgrade to 8.5.2 - dependencies require 8.6.0+
+3. ❌ AGP upgrade to 8.7.3 - requires Gradle 8.9 (AAPT2 breaks)
+4. ❌ Gradle 8.9 upgrade - breaks AAPT2 ARM64 wrapper
+5. ❌ Combined Gradle 8.9 + AGP 8.7.3 - AAPT2 incompatibility
+6. ❌ Kotlin 1.9.24 upgrade - same NPE in KeyboardData$Key.<clinit>()V
+7. ❌ Kotlin 2.0.21 (K2 compiler) upgrade - same NPE despite complete rewrite
+8. ❌ ProGuard -dontoptimize rules - no effect (D8 runs regardless)
+
+- ✅ Consulted Gemini 2.5 Pro for expert analysis
 - ✅ Documented comprehensive workaround guide: [R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md)
-- ✅ Confirmed issue is in R8 8.6.17 internal code, not our Kotlin code
-- ✅ Verified Kotlin compilation 100% successful on v1.32.875
-- 📋 **Decision**: Migration complete from code perspective, waiting for R8 bug fix
+- ✅ Identified exact crash point: KeyboardData$Key static initializer
+- ✅ Root cause: R8 8.6.17 bug with nullable array + companion object + self-referential types
+- ✅ Verified Kotlin compilation 100% successful on v1.32.879
+- 📋 **CONCLUSION**: **NO WORKAROUND EXISTS** - waiting for upstream R8 fix
 - 🔧 **Workaround**: Can test using v1.32.860 build (commit 2544cf9d)
 
 ---
