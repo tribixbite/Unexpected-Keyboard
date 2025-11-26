@@ -27,20 +27,21 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
-> Task :checkDebugAarMetadata
-> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
+> Task :parseDebugLocalResources
+> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
 > Task :processDebugManifest
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
-> Task :mergeDebugResources
 > Task :compileDebugShaders NO-SOURCE
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
+> Task :mergeDebugResources
 > Task :compressDebugAssets FROM-CACHE
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -49,7 +50,6 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -70,6 +70,10 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:15:40 Unresolved reference: OnItemClickListener
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:23:31 Type mismatch: inferred type is EmojiGridView but AdapterView.OnItemClickListener? was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:37:5 'onItemClick' overrides nothing
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:129:32 Unresolved reference: inputMethodManager
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:134:36 Unresolved reference: inputMethodManager
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:163:40 Unresolved reference: inputMethodManager
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:174:36 Unresolved reference: inputMethodManager
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:76:40 This type has a constructor, and thus must be initialized here
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:110:36 This type has a constructor, and thus must be initialized here
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:157:25 This type has a constructor, and thus must be initialized here
@@ -95,5 +99,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 52s
+BUILD FAILED in 58s
 35 actionable tasks: 27 executed, 8 from cache
