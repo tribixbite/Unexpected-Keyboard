@@ -4692,18 +4692,28 @@ None currently
 ## 🎯 Next Steps
 
 ### Immediate Tasks
-1. **Keyboard2.java Refactoring** - Reduce from 2,397 to <700 lines
-   - See **[docs/KEYBOARD2_REFACTORING_PLAN.md](../docs/KEYBOARD2_REFACTORING_PLAN.md)** for complete plan
-   - Phase 1 (Low Risk): ContractionManager, ClipboardManager, PredictionContextTracker
-   - Phase 2 (Medium Risk): ConfigurationManager, PredictionCoordinator
-   - Phase 3 (High Risk): InputCoordinator, ViewManager
-   - Estimated: 6 weeks + 2 week buffer
-2. Test auto-correction in both Termux and normal apps
+1. ⏸️ **WAITING**: R8/D8 bug fix (see [R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md))
+   - Migration 98.6% complete, cannot build APKs
+   - 3 Java files remaining (4,070 lines)
+   - See **[docs/REMAINING_JAVA_MIGRATION.md](../docs/REMAINING_JAVA_MIGRATION.md)** for detailed migration plans
+
+2. **When R8 Fixed**: Complete Kotlin Migration
+   - Phase 1: SwipeCalibrationActivity.java (1,321 lines, LOW risk)
+   - Phase 2: SettingsActivity.java (2,051 lines, LOW risk)
+   - Phase 3: Keyboard2.java (698 lines, HIGH risk - migrate LAST)
+   - Estimated: 10-14 hours total + comprehensive testing
+
+3. **Alternative Work** (doesn't require builds):
+   - Documentation improvements
+   - Test coverage expansion
+   - Code quality analysis
+   - Architecture documentation
 
 ### Future Enhancements
 - Consider ML-based auto-correction (learning from user corrections)
 - Improve context model with n-gram support (currently bigram only)
 - Add spell-check dictionary for rare/technical words
+- Modernize SettingsActivity to AndroidX Preferences
 
 ---
 
