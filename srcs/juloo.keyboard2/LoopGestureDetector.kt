@@ -144,8 +144,8 @@ class LoopGestureDetector(
             var angleDiff = angle2 - angle1
 
             // Normalize to [-π, π]
-            while (angleDiff > PI) angleDiff -= 2 * PI
-            while (angleDiff < -PI) angleDiff += 2 * PI
+            while (angleDiff > PI) angleDiff -= (2 * PI).toFloat()
+            while (angleDiff < -PI) angleDiff += (2 * PI).toFloat()
 
             totalAngle += angleDiff
         }

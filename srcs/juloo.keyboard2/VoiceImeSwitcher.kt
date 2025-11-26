@@ -81,7 +81,9 @@ internal object VoiceImeSwitcher {
         if (imeDisplayNames.isEmpty()) {
             dialog.setMessage(ims.resources.getString(R.string.toast_no_voice_input))
         }
-        Utils.show_dialog_on_ime(dialog, ims.window?.window?.decorView?.windowToken)
+        ims.window?.window?.decorView?.windowToken?.let {
+            Utils.show_dialog_on_ime(dialog, it)
+        }
     }
 
     private fun switchInputMethod(ims: InputMethodService, ime: IME) {

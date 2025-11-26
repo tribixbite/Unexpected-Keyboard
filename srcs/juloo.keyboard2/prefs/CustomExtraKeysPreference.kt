@@ -24,7 +24,7 @@ class CustomExtraKeysPreference(
         key = KEY
     }
 
-    override fun label_of_value(value: String, i: Int): String = value
+    override fun labelOfValue(value: String, i: Int): String = value
 
     override fun select(callback: SelectionCallback<String>, old_value: String?) {
         val content = View.inflate(context, R.layout.dialog_edit_text, null)
@@ -43,7 +43,7 @@ class CustomExtraKeysPreference(
             .show()
     }
 
-    override fun get_serializer(): Serializer<String> = SERIALIZER
+    override fun getSerializer(): Serializer<String> = SERIALIZER
 
     companion object {
         /** This pref stores a list of strings encoded as JSON. */
@@ -53,7 +53,7 @@ class CustomExtraKeysPreference(
         @JvmStatic
         fun get(prefs: SharedPreferences): Map<KeyValue, KeyboardData.PreferredPos> {
             val kvs = mutableMapOf<KeyValue, KeyboardData.PreferredPos>()
-            val keyNames = load_from_preferences(KEY, prefs, null, SERIALIZER)
+            val keyNames = loadFromPreferences(KEY, prefs, null, SERIALIZER)
             if (keyNames != null) {
                 for (keyName in keyNames) {
                     kvs[KeyValue.getKeyByName(keyName)] = KeyboardData.PreferredPos.DEFAULT

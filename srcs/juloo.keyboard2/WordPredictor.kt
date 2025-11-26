@@ -159,7 +159,12 @@ class WordPredictor {
             return
         }
 
-        val prefs = DirectBootAwarePreferences.get_shared_preferences(context)
+        val ctx = context
+        if (ctx == null) {
+            disabledWords = mutableSetOf()
+            return
+        }
+        val prefs = DirectBootAwarePreferences.get_shared_preferences(ctx)
         val disabledSet = prefs.getStringSet("disabled_words", emptySet()) ?: emptySet()
         // Create a new HashSet to avoid modifying the original
         disabledWords = disabledSet.toMutableSet()

@@ -126,7 +126,7 @@ class SubtypeManager(private val context: Context) {
             if (subtype != null) {
                 val s = subtype.getExtraValueOf("default_layout")
                 if (s != null) {
-                    defaultLayout = LayoutsPreference.layout_of_string(resources, s)
+                    defaultLayout = LayoutsPreference.layoutOfString(resources, s)
                 }
                 config.extra_keys_subtype = refreshAccentsOption(enabledSubtypes)
             }
