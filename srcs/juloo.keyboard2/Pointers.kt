@@ -716,7 +716,7 @@ class Pointers(
                 last_move_ms = System.currentTimeMillis()
             }
             d += ((x - last_x) * speed * direction_x +
-                (y - last_y) * speed * SPEED_VERTICAL_MULT * direction_y) /
+                (y - last_y) * speed * SLIDING_SPEED_VERTICAL_MULT * direction_y) /
                 _config.slide_step_px
             update_speed(travelled, x, y)
             // Send an event when [abs(d)] exceeds [1].
@@ -744,25 +744,11 @@ class Pointers(
          */
         private fun update_speed(travelled: Float, x: Float, y: Float) {
             val now = System.currentTimeMillis()
-            val instant_speed = min(SPEED_MAX, travelled / (now - last_move_ms) + 1f)
-            speed = speed + (instant_speed - speed) * SPEED_SMOOTHING
+            val instant_speed = min(SLIDING_SPEED_MAX, travelled / (now - last_move_ms) + 1f)
+            speed = speed + (instant_speed - speed) * SLIDING_SPEED_SMOOTHING
             last_move_ms = now
             last_x = x
             last_y = y
-        }
-
-        companion object {
-            const val SPEED_SMOOTHING = 0.7f
-
-            /** Avoid absurdly large values. */
-            const val SPEED_MAX = 4f
-
-            /**
-             * Make vertical sliders slower. The intention is to make the up/down
-             * slider slower, as we have less visibility and do smaller movements in
-             * that direction.
-             */
-            const val SPEED_VERTICAL_MULT = 0.5f
         }
     }
 
@@ -959,5 +945,10 @@ class Pointers(
         val DIRECTION_TO_INDEX = intArrayOf(
             7, 2, 2, 6, 4, 4, 4, 8, 8, 3, 3, 5, 5, 1, 1, 7
         )
+
+        // Sliding constants (moved from inner class companion object)
+        const val SLIDING_SPEED_SMOOTHING = 0.7f
+        const val SLIDING_SPEED_MAX = 4f
+        const val SLIDING_SPEED_VERTICAL_MULT = 0.5f
     }
 }

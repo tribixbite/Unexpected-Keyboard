@@ -29,19 +29,20 @@ Generated version info:  ()
 > Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
 > Task :parseDebugLocalResources
+> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
-> Task :mergeDebugResources
 > Task :processDebugManifest
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
+> Task :processDebugManifestForPackage
 > Task :compressDebugAssets FROM-CACHE
+> Task :mergeDebugResources
 > Task :checkDebugDuplicateClasses
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
@@ -49,7 +50,6 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -65,244 +65,91 @@ Unable to strip the following libraries, packaging them as they are: libonnxrunt
 
 > Task :processDebugResources
 > Task :compileDebugKotlin
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Autocapitalisation.kt:97:27 Parameter 'old_cursor' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:40:43 'versionCode: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:448:41 Parameter 'key' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:458:39 Parameter 'key' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BigramModel.kt:28:25 Parameter 'context' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BinaryDictionaryLoader.kt:99:21 Variable 'prefixOffset' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:48 'getColor(Int): Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:73 'secondary_text_dark: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardManager.kt:55:26 Parameter 'layoutInflater' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardManager.kt:178:13 Variable 'modeGroup' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:27:38 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:32:28 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:39:46 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComprehensiveTraceAnalyzer.kt:512:57 Parameter 'position' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:173:37 'load_from_preferences(Resources, SharedPreferences): List<KeyboardData?>' is deprecated. Use loadFromPreferences instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:212:48 'get_extra_keys(SharedPreferences): Map<KeyValue, KeyboardData.PreferredPos>' is deprecated. Use getExtraKeys instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:212:71 Elvis operator (?:) always returns the left operand of non-nullable type Map<KeyValue, KeyboardData.PreferredPos>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:213:67 Elvis operator (?:) always returns the left operand of non-nullable type Map<KeyValue, KeyboardData.PreferredPos>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:559:39 'save_to_preferences(SharedPreferences.Editor, List<LayoutsPreference.Layout>): Unit' is deprecated. Use saveToPreferences instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:388:22 Variable 'dx' initializer is redundant
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:389:22 Variable 'dy' initializer is redundant
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousSwipeGestureRecognizer.kt:95:13 Variable 'now' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousSwipeGestureRecognizer.kt:157:41 Unnecessary safe call on a non-null receiver of type List<ContinuousGestureRecognizer.Result>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:7:27 'PreferenceManager' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:21:20 'PreferenceManager' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:21:38 'getDefaultSharedPreferences(Context!): SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:42:24 'PreferenceManager' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:42:42 'getDefaultSharedPreferencesName(Context!): String!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:52:13 'PreferenceManager' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/DirectBootAwarePreferences.kt:52:31 'getDefaultSharedPreferences(Context!): SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGroupButtonsBar.kt:27:39 'FILL_PARENT: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/FoldStateTracker.kt:39:29 The corresponding parameter in the supertype 'Consumer' is named 'value'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:226:21 Condition 'probabilisticKeys != null' is always 'true'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:296:32 Parameter 'point' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:31 Parameter 'prev' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:55 Parameter 'curr' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ImprovedSwipeGestureRecognizer.kt:335:79 Parameter 'next' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/InputCoordinator.kt:164:59 Elvis operator (?:) always returns the left operand of non-nullable type PredictionSource
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/InputCoordinator.kt:306:21 Variable 'inTermuxApp' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/InputCoordinator.kt:638:16 'getter for defaultDisplay: Display!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/InputCoordinator.kt:638:31 'getMetrics(DisplayMetrics!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/InputCoordinator.kt:765:25 Variable 'predictionTime' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyEventHandler.kt:340:33 Parameter 'conn' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyEventHandler.kt:480:41 The corresponding parameter in the supertype 'Callback' is named 'should_enable'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyEventHandler.kt:480:64 The corresponding parameter in the supertype 'Callback' is named 'should_disable'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyEventReceiverBridge.kt:54:42 The corresponding parameter in the supertype 'IReceiver' is named 'selectionIsOngoing'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyModifier.kt:90:13 'when' is exhaustive so 'else' is redundant here
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:87:17 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:90:51 Type mismatch: inferred type is String? but String was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:98:54 Type mismatch: inferred type is String? but String was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:106:13 Unsafe use of a nullable receiver of type String?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:109:13 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:213:25 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:221:21 Unreachable code
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:230:20 Unsafe use of a nullable receiver of type String?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:237:20 Type mismatch: inferred type is String? but String was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardGrid.kt:158:26 Variable 'pos' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:134:55 'switchToLastInputMethod(IBinder!): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:179:13 'when' is exhaustive so 'else' is redundant here
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:191:42 The corresponding parameter in the supertype 'IReceiver' is named 'selectionIsOngoing'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LanguageDetector.kt:279:32 Parameter 'threshold' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LauncherActivity.kt:73:28 Parameter 'btn' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LauncherActivity.kt:77:26 Parameter 'v' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LoopGestureDetector.kt:177:32 Parameter 'point' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:112:16 'getter for defaultDisplay: Display!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:112:31 'getMetrics(DisplayMetrics!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:184:17 Variable 'areFinal' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralSwipeTypingEngine.kt:107:17 Condition 'result != null' is always 'true'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:136:55 Type mismatch: inferred type is String? but String was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:139:54 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:256:51 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:264:39 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:423:59 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:555:79 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:696:40 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:753:42 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:892:13 Condition 'context == null' is always 'false'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:901:55 Type mismatch: inferred type is String? but String was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:905:48 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:954:60 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:983:13 Condition 'context == null' is always 'false'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:991:37 Type mismatch: inferred type is (Mutable)Set<String!>? but (MutableCollection<out String!>..Collection<String!>) was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1005:13 Condition 'context == null' is always 'false'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1029:48 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1035:83 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1065:57 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1066:79 'toLowerCase(Locale): String' is deprecated. Use lowercase() instead.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.kt:1087:13 Condition 'context == null' is always 'false'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:114:30 Unnecessary safe call on a non-null receiver of type SuggestionBar?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PredictionViewSetup.kt:132:35 Unnecessary safe call on a non-null receiver of type LinearLayout?
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:112:63 Parameter 'key' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:168:34 Parameter 'key' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:52:21 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:54:24 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:98:20 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:103:30 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:214:9 Parameter 'resources' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:307:25 Variable 'deletedLeadingSpace' is assigned but never accessed
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:318:29 The value 'true' assigned to 'var deletedLeadingSpace: Boolean defined in juloo.keyboard2.SuggestionHandler.onSuggestionSelected.`<anonymous>`' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SuggestionHandler.kt:436:59 Elvis operator (?:) always returns the left operand of non-nullable type PredictionSource
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:284:13 Variable 'pathStr' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:297:13 Variable 'keysStr' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:309:17 Variable 'avgVelocity' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:318:17 Variable 'straightnessRatio' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:103:9 Parameter 'point' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeResampler.kt:41:13 Variable 'numFeatures' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeResampler.kt:59:13 Variable 'numFeatures' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeTrajectoryProcessor.kt:237:21 Variable 'p' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeTrajectoryProcessor.kt:238:21 Variable 'key' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:122:54 Elvis operator (?:) always returns the left operand of non-nullable type List<String>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:153:13 Condition 'template.pts == null' is always 'false'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/TemplateBrowserActivity.kt:254:37 Condition 'template.pts == null' is always 'false'
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Theme.kt:209:42 Parameter 'config' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VibratorCompat.kt:31:28 'vibrate(Long): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VibratorCompat.kt:39:63 'VIBRATOR_SERVICE: String' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VocabularyCache.kt:34:25 Variable 'wordCount' initializer is redundant
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WindowLayoutUtils.kt:112:20 'setDecorFitsSystemWindows(Boolean): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:422:40 The corresponding parameter in the supertype 'LoadCallback' is named 'language'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:428:17 The corresponding parameter in the supertype 'LoadCallback' is named 'context'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:468:39 The corresponding parameter in the supertype 'LoadCallback' is named 'language'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ml/SwipeMLData.kt:119:31 Parameter 'screenWidth' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ml/SwipeMLData.kt:119:49 Parameter 'keyboardHeight' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ml/SwipeMLTrainer.kt:194:15 Variable 'word' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:90:58 Parameter 'useBatched' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:204:9 Parameter 'step' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:232:55 Unchecked cast: Any! to Array<Array<FloatArray>>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:360:25 Type mismatch: inferred type is Int? but Int was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/GreedySearchEngine.kt:68:59 Unchecked cast: Any! to Array<Array<FloatArray>>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/ModelLoader.kt:248:24 Parameter 'sessionOptions' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/SwipePredictorOrchestrator.kt:203:24 Parameter 'logger' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:24:9 'setter for key: String!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:29:62 The corresponding parameter in the supertype 'ListGroupPreference' is named 'oldValue'. This may cause problems when calling this function with named arguments.
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:30:36 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:33:29 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:7:27 'CheckBoxPreference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:8:27 'PreferenceCategory' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:16:69 'constructor PreferenceCategory(Context!, AttributeSet!)' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:16:69 'PreferenceCategory' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:20:9 'setOrderingAsAdded(Boolean): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:27:13 'addPreference(Preference!): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:27:54 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:35:9 'constructor CheckBoxPreference(Context!)' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:35:9 'CheckBoxPreference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:42:13 'setter for key: String!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:43:13 'setDefaultValue(Any!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:44:13 'setTitle(CharSequence!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:46:17 'setter for isSingleLineTitle: Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:51:19 'onBindView(View!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:53:47 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:5:27 'DialogPreference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:28:5 'constructor DialogPreference(Context!, AttributeSet!)' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:28:5 'DialogPreference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:37:26 'getter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:49:31 'getContext(): Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:66:13 'getPersistedInt(Int): Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:68:42 'persistInt(Int): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:80:13 'persistInt(Int): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:82:32 'getPersistedInt(Int): Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPreference.kt:96:9 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:23:9 'setter for key: String!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:38:45 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:46:21 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:49:32 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:55:16 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:59:44 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:69:36 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:70:29 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:71:35 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:73:43 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:90:13 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:129:23 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:138:13 'setter for layoutResource: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:5:27 'Preference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:6:27 'PreferenceGroup' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:20:81 'constructor PreferenceGroup(Context!, AttributeSet!)' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:20:81 'PreferenceGroup' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:27:9 'setter for isOrderingAsAdded: Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:28:9 'setter for layoutResource: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:42:37 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:71:13 'persistString(String!): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:93:39 'getPersistedString(String!): String!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:101:15 'onAttachedToActivity(): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:109:9 'removeAll(): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:112:13 'addPreference(Preference!): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:112:32 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:116:20 'setter for order: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:116:28 'Preference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:116:39 'DEFAULT_ORDER: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:117:26 'addPreference(Preference!): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:120:84 'constructor Preference(Context!)' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:120:84 'Preference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:122:13 'setter for isPersistent: Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:123:13 'setter for title: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:125:17 'setter for widgetLayoutResource: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:130:27 'onCreateView(ViewGroup!): View!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:154:48 'constructor Preference(Context!)' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:154:48 'Preference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:156:13 'setter for isPersistent: Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ListGroupPreference.kt:157:13 'setter for layoutResource: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:5:27 'DialogPreference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:30:5 'constructor DialogPreference(Context!, AttributeSet!)' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:30:5 'DialogPreference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:41:26 'getter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:55:31 'getContext(): Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:77:13 'getPersistedFloat(Float): Float' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:81:32 'getPersistedInt(Int): Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:83:17 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:88:36 'getPersistedString(String!): String!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:90:21 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:94:21 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:105:44 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:117:13 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:133:9 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-
-> Task :compileDebugJavaWithJavac
-Java compiler version 21 has deprecated support for compiling with source/target version 8.
-Try one of the following options:
-    1. [Recommended] Use Java toolchain with a lower language version
-    2. Set a higher source/target version
-    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
-For more details on how to configure these settings, see https://developer.android.com/build/jdks.
-To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
-warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target value 8 is obsolete and will be removed in a future release
-warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: /data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValue.java uses unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-3 warnings
-
-> Task :processDebugJavaRes
-> Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
-
-BUILD SUCCESSFUL in 1m 34s
-42 actionable tasks: 34 executed, 8 from cache
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ConfigPropagator.kt:91:23 Unresolved reference: reset
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyModifier.kt:29:27 Type mismatch: inferred type is KeyValue? but KeyValue was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:17:1 Class 'Keyboard2View' is not abstract and does not implement abstract member public abstract fun isPointWithinKey(x: Float, y: Float, key: KeyboardData.Key): Boolean defined in juloo.keyboard2.Pointers.IPointerEventHandler
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:23:39 Unresolved reference: DEFAULT
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:24:45 Unresolved reference: DEFAULT
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:80:28 Unresolved reference: getTheme
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:81:25 Unresolved reference: computeTheme
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:90:33 Unresolved reference: colorAccent
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:99:47 Unresolved reference: colorAccent
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:113:20 Cannot access 'clearLatched': it is private in 'Pointers'
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:171:34 Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: 
+public operator fun <T, R> DeepRecursiveFunction<TypeVariable(T), TypeVariable(R)>.invoke(value: TypeVariable(T)): TypeVariable(R) defined in kotlin
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:191:58 Unresolved reference: isKeyLocked
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:202:13 Smart cast to 'Config' is impossible, because '_config' is a mutable property that could have been changed by this time
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:203:13 Overload resolution ambiguity: 
+private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
+private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:211:5 Conflicting overloads: private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View, private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:236:19 Unresolved reference: KeyStyle
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:242:44 Unresolved reference: keyRadius
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:242:59 Unresolved reference: keyRadius
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:247:44 Unresolved reference: keyRadius
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:247:59 Unresolved reference: keyRadius
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:258:19 Unresolved reference: KeyStyle
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:263:30 Unresolved reference: textSize
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:264:44 Unresolved reference: descent
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:264:62 Unresolved reference: ascent
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:277:19 Unresolved reference: KeyStyle
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:304:98 Unresolved reference: KeyStyle
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:310:5 Conflicting overloads: private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View, private final fun drawSwipeTrail(canvas: Canvas): Unit defined in juloo.keyboard2.Keyboard2View
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:358:36 Type mismatch: inferred type is KeyboardData.Key? but Int was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:358:41 Type mismatch: inferred type is Int but KeyboardData.Key was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:374:9 'onSwipeMove' hides member of supertype 'IPointerEventHandler' and needs 'override' modifier
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:381:9 'onSwipeEnd' hides member of supertype 'IPointerEventHandler' and needs 'override' modifier
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:456:5 'onPointerUp' overrides nothing
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:460:5 'onPointerHold' overrides nothing
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:464:5 'onPointerFlagsChanged' overrides nothing
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:112:43 Overload resolution ambiguity: 
+public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
+public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:210:9 Conflicting overloads: public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:437:44 Cannot access 'keysflags': it is private in 'Key'
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:527:32 Type mismatch: inferred type is KeyboardData? but TypeVariable(V) was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:184:22 Unresolved reference: set_shift_state
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:188:22 Unresolved reference: set_compose_pending
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardReceiver.kt:192:22 Unresolved reference: set_selection_state
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutManager.kt:151:16 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:47:45 Unresolved reference: keys
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:64:26 Unresolved reference: keys
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:78:68 Return type of 'apply' is not a subtype of the return type of the overridden member 'public abstract fun apply(c: KeyValue, localized: Boolean): KeyValue defined in juloo.keyboard2.KeyboardData.MapKeyValues'
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:90:43 Unresolved reference: keys
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:112:68 Return type of 'apply' is not a subtype of the return type of the overridden member 'public abstract fun apply(c: KeyValue, localized: Boolean): KeyValue defined in juloo.keyboard2.KeyboardData.MapKeyValues'
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:144:35 Type mismatch: inferred type is String? but String was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:150:35 Type mismatch: inferred type is String? but String was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LoopGestureDetector.kt:183:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:168:50 Unresolved reference: getCGRPredictions
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:183:50 Unresolved reference: getCGRPredictions
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:184:44 Unresolved reference: areCGRPredictionsFinal
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:363:31 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:364:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:299:38 Smart cast to 'KeyValue' is impossible, because 'p.value' is a mutable property that could have been changed by this time
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:331:24 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:417:34 Smart cast to 'KeyValue' is impossible, because 'ptr.value' is a mutable property that could have been changed by this time
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:424:48 Smart cast to 'KeyValue' is impossible, because 'ptr.value' is a mutable property that could have been changed by this time
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:549:52 Type mismatch: inferred type is Long but Int was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:575:48 Smart cast to 'KeyValue' is impossible, because 'ptr.value' is a mutable property that could have been changed by this time
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:589:17 Type mismatch: inferred type is Long but Int was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:601:31 'internal' function exposes its 'private-in-class' parameter type Pointer
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:635:18 'internal' function exposes its 'private-in-class' return type Pointer
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:707:25 'public' function exposes its 'private-in-class' parameter type Pointer
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:735:23 'public' function exposes its 'private-in-class' parameter type Pointer
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:183:15 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:187:19 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:68:55 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:73:62 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:44:67 Type mismatch: inferred type is KeyValue? but KeyValue was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:106:85 Type mismatch: inferred type is KeyValue? but KeyValue was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:166:52 Type mismatch: inferred type is KeyValue? but KeyValue was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:178:78 Type mismatch: inferred type is KeyValue? but KeyValue was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:232:55 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:233:40 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:300:55 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeGestureRecognizer.kt:301:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeInput.kt:33:27 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipeInput.kt:34:34 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:85:49 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:86:47 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:116:38 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
