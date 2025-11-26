@@ -26,7 +26,10 @@ object KeyModifier {
         val nMods = mods.size()
         var r: KeyValue = k
         for (i in 0 until nMods) {
-            r = modify(r, mods.get(i))
+            val mod = mods.get(i)
+            if (mod != null) {
+                r = modify(r, mod)
+            }
         }
         /* Keys with an empty string are placeholder keys. */
         if (r.getString().isEmpty()) return null

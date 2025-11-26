@@ -27,29 +27,29 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
+> Task :checkDebugAarMetadata
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :checkDebugAarMetadata
 > Task :parseDebugLocalResources
 > Task :processDebugMainManifest
 > Task :processDebugManifest
+> Task :mergeDebugResources
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :processDebugManifestForPackage
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugResources
 > Task :mergeDebugAssets
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :compressDebugAssets FROM-CACHE
-> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :checkDebugDuplicateClasses
-> Task :mergeDebugJniLibFolders
+> Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
 > Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -64,37 +64,12 @@ Generated version info:  ()
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
-
-> Task :compileDebugKotlin FAILED
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyModifier.kt:29:27 Type mismatch: inferred type is KeyValue? but KeyValue was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:112:43 Overload resolution ambiguity: 
-public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
-public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:210:9 Conflicting overloads: public final fun copy(keys: List<KeyboardData.Key> = ..., height: Float = ..., shift: Float = ...): KeyboardData.Row defined in juloo.keyboard2.KeyboardData.Row
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:437:44 Cannot access 'keysflags': it is private in 'Key'
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:527:32 Type mismatch: inferred type is KeyboardData? but TypeVariable(V) was expected
+> Task :compileDebugKotlin
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyboardData.kt:521:32 Type mismatch: inferred type is KeyboardData? but TypeVariable(V) was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutManager.kt:151:16 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:47:45 Unresolved reference: keys
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:64:26 Unresolved reference: keys
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:78:68 Return type of 'apply' is not a subtype of the return type of the overridden member 'public abstract fun apply(c: KeyValue, localized: Boolean): KeyValue defined in juloo.keyboard2.KeyboardData.MapKeyValues'
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:90:43 Unresolved reference: keys
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:112:68 Return type of 'apply' is not a subtype of the return type of the overridden member 'public abstract fun apply(c: KeyValue, localized: Boolean): KeyValue defined in juloo.keyboard2.KeyboardData.MapKeyValues'
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:144:35 Type mismatch: inferred type is String? but String was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:150:35 Type mismatch: inferred type is String? but String was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LoopGestureDetector.kt:183:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:363:31 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/NeuralLayoutHelper.kt:364:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:299:38 Smart cast to 'KeyValue' is impossible, because 'p.value' is a mutable property that could have been changed by this time
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:331:24 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:417:34 Smart cast to 'KeyValue' is impossible, because 'ptr.value' is a mutable property that could have been changed by this time
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:424:48 Smart cast to 'KeyValue' is impossible, because 'ptr.value' is a mutable property that could have been changed by this time
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:549:52 Type mismatch: inferred type is Long but Int was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:575:48 Smart cast to 'KeyValue' is impossible, because 'ptr.value' is a mutable property that could have been changed by this time
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:589:17 Type mismatch: inferred type is Long but Int was expected
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:601:31 'internal' function exposes its 'private-in-class' parameter type Pointer
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:635:18 'internal' function exposes its 'private-in-class' return type Pointer
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:707:25 'public' function exposes its 'private-in-class' parameter type Pointer
-e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Pointers.kt:735:23 'public' function exposes its 'private-in-class' parameter type Pointer
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/PreferenceUIUpdateHandler.kt:47:35 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:183:15 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt:187:19 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
@@ -114,6 +89,8 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:86:47 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SwipePruner.kt:116:38 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type KeyValue?
 
+> Task :compileDebugKotlin FAILED
+
 FAILURE: Build failed with an exception.
 
 * What went wrong:
@@ -127,5 +104,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 48s
+BUILD FAILED in 1m 8s
 35 actionable tasks: 27 executed, 8 from cache

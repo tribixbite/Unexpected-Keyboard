@@ -295,8 +295,9 @@ class Pointers(
     /** Whether an other pointer is down on a non-special key. */
     private fun isOtherPointerDown(): Boolean {
         for (p in _ptrs) {
+            val value = p.value
             if (!p.hasFlagsAny(FLAG_P_LATCHED) &&
-                (p.value == null || !p.value.hasFlagsAny(KeyValue.FLAG_SPECIAL))
+                (value == null || !value.hasFlagsAny(KeyValue.FLAG_SPECIAL))
             ) {
                 return true
             }
@@ -326,9 +327,10 @@ class Pointers(
         // CRITICAL FIX: Detect if this might be the start of a swipe gesture
         // Don't output character or start long press timer if so
         // This prevents tap/hold events from firing during swipes
+        val firstKey = key?.keys?.get(0)
         val mightBeSwipe = _config.swipe_typing_enabled && _ptrs.size == 1 &&
-            key != null && key.keys[0] != null &&
-            key.keys[0].getKind() == KeyValue.Kind.Char
+            key != null && firstKey != null &&
+            firstKey.getKind() == KeyValue.Kind.Char
 
         // Don't start long press timer if we might be swipe typing
         if (!mightBeSwipe && !(_config.swipe_typing_enabled && _swipeRecognizer.isSwipeTyping())) {
@@ -413,15 +415,16 @@ class Pointers(
 
         // CRITICAL: For potential swipe typing, ALWAYS track path during movement
         // Short gesture detection should only happen on touch UP, not during MOVE
+        val ptrValue = ptr.value
         val shouldCollectPath = _config.swipe_typing_enabled && _ptrs.size == 1 &&
-            ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char
+            ptrValue != null && ptrValue.getKind() == KeyValue.Kind.Char
 
         Log.d(
             "Pointers", "Path collection check: " +
                 "swipeEnabled=${_config.swipe_typing_enabled} " +
                 "ptrsSize=${_ptrs.size} " +
-                "hasValue=${ptr.value != null} " +
-                "isChar=${ptr.value != null && ptr.value.getKind() == KeyValue.Kind.Char} " +
+                "hasValue=${ptrValue != null} " +
+                "isChar=${ptrValue != null && ptrValue.getKind() == KeyValue.Kind.Char} " +
                 "shouldCollect=$shouldCollectPath"
         )
 
@@ -546,7 +549,7 @@ class Pointers(
     private fun startLongPress(ptr: Pointer) {
         val what = uniqueTimeoutWhat++
         ptr.timeoutWhat = what
-        _longpress_handler.sendEmptyMessageDelayed(what.toLong(), _config.longPressTimeout.toLong())
+        _longpress_handler.sendEmptyMessageDelayed(what, _config.longPressTimeout.toLong())
     }
 
     private fun stopLongPress(ptr: Pointer) {
@@ -568,12 +571,13 @@ class Pointers(
             return
         }
         // Latched key, no key
-        if (ptr.hasFlagsAny(FLAG_P_LATCHED) || ptr.value == null) {
+        val value = ptr.value
+        if (ptr.hasFlagsAny(FLAG_P_LATCHED) || value == null) {
             return
         }
         // Key is long-pressable
-        val kv = KeyModifier.modify_long_press(ptr.value)
-        if (kv != ptr.value) {
+        val kv = KeyModifier.modify_long_press(value)
+        if (kv != value) {
             ptr.value = kv
             _handler.onPointerDown(kv, true)
             return
@@ -586,7 +590,7 @@ class Pointers(
         if (_config.keyrepeat_enabled) {
             _handler.onPointerHold(kv, ptr.modifiers)
             _longpress_handler.sendEmptyMessageDelayed(
-                ptr.timeoutWhat.toLong(),
+                ptr.timeoutWhat,
                 _config.longPressInterval.toLong()
             )
         }
@@ -598,7 +602,7 @@ class Pointers(
      * When sliding is ongoing, key events are handled by the [Slider] class.
      * [kv] must be of kind [Slider].
      */
-    internal fun startSliding(ptr: Pointer, x: Float, y: Float, dx: Float, dy: Float, kv: KeyValue) {
+    private fun startSliding(ptr: Pointer, x: Float, y: Float, dx: Float, dy: Float, kv: KeyValue) {
         val r = kv.getSliderRepeat()
         val dirx = if (dx < 0) -r else r
         val diry = if (dy < 0) -r else r
@@ -632,7 +636,7 @@ class Pointers(
 
     // Pointers
 
-    internal fun make_pointer(
+    private fun make_pointer(
         p: Int,
         k: KeyboardData.Key,
         v: KeyValue?,
@@ -644,7 +648,7 @@ class Pointers(
         return Pointer(p, k, v, x, y, m, flags)
     }
 
-    private class Pointer(
+    internal class Pointer(
         /** -1 when latched. */
         var pointerId: Int,
         /** The Key pressed by this Pointer */
@@ -704,7 +708,7 @@ class Pointers(
          */
         var last_move_ms: Long = -1
 
-        fun onTouchMove(ptr: Pointer, x: Float, y: Float) {
+        internal fun onTouchMove(ptr: Pointer, x: Float, y: Float) {
             // Start sliding only after the pointer has travelled an other distance.
             // This allows to trigger the slider movements only once with a short
             // swipe.
@@ -732,7 +736,7 @@ class Pointers(
          * cleared to allow easy adjustments to the cursors. The pointer is
          * cancelled.
          */
-        fun onTouchUp(ptr: Pointer) {
+        internal fun onTouchUp(ptr: Pointer) {
             removePtr(ptr)
             _handler.onPointerFlagsChanged(false)
         }

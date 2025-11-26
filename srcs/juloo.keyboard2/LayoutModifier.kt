@@ -44,7 +44,7 @@ object LayoutModifier {
 
         if (globalConfig.show_numpad) {
             added_numpad = modify_numpad(num_pad, kw)
-            remove_keys.addAll(added_numpad.keys.keys)
+            remove_keys.addAll(added_numpad.getKeys().keys)
         } else if (globalConfig.add_number_row && !kw.embedded_number_row) {
             // The numpad removes the number row
             added_number_row = modify_number_row(
@@ -61,7 +61,7 @@ object LayoutModifier {
         // 'extra_keys_keyset' reflects changes made to 'extra_keys'
         val extra_keys_keyset = extra_keys.keys
         // 'kw_keys' contains the keys present on the layout without any extra keys
-        val kw_keys = kw.keys.keys
+        val kw_keys = kw.getKeys().keys
 
         val extraKeysSubtype = globalConfig.extra_keys_subtype
         if (extraKeysSubtype != null && kw.locale_extra_keys) {
@@ -87,7 +87,7 @@ object LayoutModifier {
         }
 
         // Add extra keys that are not on the layout (including 'loc' keys)
-        extra_keys_keyset.removeAll(newKw.keys.keys)
+        extra_keys_keyset.removeAll(newKw.getKeys().keys)
         if (extra_keys.isNotEmpty()) {
             newKw = newKw.addExtraKeys(extra_keys.entries.iterator())
         }
@@ -151,12 +151,13 @@ object LayoutModifier {
         return if (m == null) row else row.mapKeys(m)
     }
 
-    private fun numpad_script_map(numpad_script: String): KeyboardData.MapKeyValues? {
+    private fun numpad_script_map(numpad_script: String?): KeyboardData.MapKeyValues? {
+        if (numpad_script == null) return null
         val map_digit = KeyModifier.modify_numpad_script(numpad_script)
         if (map_digit == -1) return null
 
         return object : KeyboardData.MapKeyValues() {
-            override fun apply(key: KeyValue, localized: Boolean): KeyValue {
+            override fun apply(key: KeyValue, localized: Boolean): KeyValue? {
                 val modified = ComposeKey.apply(map_digit, key)
                 return modified ?: key
             }

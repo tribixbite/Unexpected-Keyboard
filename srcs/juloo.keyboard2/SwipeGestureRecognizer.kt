@@ -41,8 +41,9 @@ class SwipeGestureRecognizer {
         reset()
         swipePath.add(PointF(x, y))
         // android.util.Log.d("SwipeGesture", "startSwipe at $x,$y")
-        if (key != null && key.keys[0] != null && isAlphabeticKey(key.keys[0])) {
-            // android.util.Log.d("SwipeGesture", "Started on alphabetic key: ${key.keys[0].getString()}")
+        val firstKey = key?.keys?.get(0)
+        if (key != null && firstKey != null && isAlphabeticKey(firstKey)) {
+            // android.util.Log.d("SwipeGesture", "Started on alphabetic key: ${firstKey.getString()}")
             touchedKeys.add(key)
             lastKey = key
         } else {
@@ -103,7 +104,8 @@ class SwipeGestureRecognizer {
         val velocity = if (timeDelta > 0) distance / timeDelta else 0f
 
         // Add key if it's different from the last one and is alphabetic
-        if (key != null && key != lastKey && key.keys[0] != null && isAlphabeticKey(key.keys[0])) {
+        val keyVal = key?.keys?.get(0)
+        if (key != null && key != lastKey && keyVal != null && isAlphabeticKey(keyVal)) {
             // Apply velocity-based filtering (skip if moving too fast)
             if (velocity > VELOCITY_THRESHOLD && timeDelta < MIN_DWELL_TIME_MS) {
                 // Moving too fast - likely transitioning between keys
@@ -163,7 +165,8 @@ class SwipeGestureRecognizer {
 
         // Check if all touched keys are alphabetic
         return touchedKeys.all { key ->
-            key.keys[0] != null && isAlphabeticKey(key.keys[0])
+            val kv = key.keys.getOrNull(0)
+            kv != null && isAlphabeticKey(kv)
         }
     }
 
@@ -175,7 +178,10 @@ class SwipeGestureRecognizer {
         if (touchedKeys.size != 2) return false
 
         // Check if all touched keys are alphabetic
-        if (!touchedKeys.all { key -> key.keys[0] != null && isAlphabeticKey(key.keys[0]) }) {
+        if (!touchedKeys.all { key ->
+            val kv = key.keys.getOrNull(0)
+            kv != null && isAlphabeticKey(kv)
+        }) {
             return false
         }
 
@@ -229,8 +235,9 @@ class SwipeGestureRecognizer {
 
         return buildString {
             for (key in touchedKeys) {
-                if (key.keys[0] != null && key.keys[0].getKind() == KeyValue.Kind.Char) {
-                    val c = key.keys[0].getChar()
+                val kv = key.keys.getOrNull(0)
+                if (kv != null && kv.getKind() == KeyValue.Kind.Char) {
+                    val c = kv.getChar()
                     if (c.isLetter()) {
                         append(c)
                     }
@@ -297,8 +304,9 @@ class SwipeGestureRecognizer {
         val keysStr = buildString {
             append("Touched keys: ")
             for (key in touchedKeys) {
-                if (key.keys[0] != null && key.keys[0].getKind() == KeyValue.Kind.Char) {
-                    append(key.keys[0].getChar()).append(" ")
+                val kv = key.keys.getOrNull(0)
+                if (kv != null && kv.getKind() == KeyValue.Kind.Char) {
+                    append(kv.getChar()).append(" ")
                 }
             }
         }

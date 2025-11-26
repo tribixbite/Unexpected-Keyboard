@@ -207,12 +207,6 @@ class KeyboardData private constructor(
             kw
         }
 
-        fun copy(
-            keys: List<Key> = this.keys,
-            height: Float = this.height,
-            shift: Float = this.shift
-        ): Row = Row(keys, height, shift)
-
         fun getKeys(dst: MutableMap<KeyValue, KeyPos>, row: Int) {
             for (c in keys.indices)
                 keys[c].getKeys(dst, row, c)
@@ -270,7 +264,7 @@ class KeyboardData private constructor(
         /** Key accessed by the anti-clockwise circle gesture. */
         val anticircle: KeyValue?,
         /** Pack flags for every key values. Flags are: [F_LOC]. */
-        private val keysflags: Int,
+        internal val keysflags: Int,
         /** Key width in relative unit. */
         val width: Float,
         /** Extra empty space on the left of the key. */
@@ -425,7 +419,7 @@ class KeyboardData private constructor(
     }
 
     abstract class MapKeyValues : MapKey {
-        abstract fun apply(c: KeyValue, localized: Boolean): KeyValue
+        abstract fun apply(c: KeyValue, localized: Boolean): KeyValue?
 
         override fun apply(k: Key): Key {
             val ks = Array<KeyValue?>(k.keys.size) { i ->
