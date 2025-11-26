@@ -69,9 +69,11 @@
 58. ClipboardHistoryView.java → ClipboardHistoryView.kt (261→216 lines, 17% reduction)
 59. KeyValueParser.java → KeyValueParser.kt (289→285 lines, 1% reduction)
 60. TemplateBrowserActivity.java → TemplateBrowserActivity.kt (289→269 lines, 7% reduction)
+61. ListGroupPreference.java → ListGroupPreference.kt (289→256 lines, 11% reduction)
+62. KeyboardReceiver.java → KeyboardReceiver.kt (290→237 lines, 18% reduction)
 
-**Total: 10,554 lines Java → 9,041 lines Kotlin (14% reduction)**
-**Remaining: 38 Java files** (from 98 total - 61% complete!)
+**Total: 11,133 lines Java → 9,534 lines Kotlin (14% reduction)**
+**Remaining: 36 Java files** (from 98 total - 63% complete!)
 
 All builds successful ✅
 
