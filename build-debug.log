@@ -27,19 +27,20 @@ Generated version info:  ()
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
-> Task :checkDebugAarMetadata
-> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
+> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
+> Task :processDebugManifestForPackage
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
-> Task :mergeDebugResources
 > Task :mergeDebugAssets
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :compressDebugAssets FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
@@ -49,7 +50,6 @@ Generated version info:  ()
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
-> Task :processDebugManifestForPackage
 > Task :mergeDebugNativeLibs
 
 > Task :stripDebugDebugSymbols
@@ -64,7 +64,6 @@ Generated version info:  ()
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
 > Task :processDebugResources
-
 > Task :compileDebugKotlin
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardPinView.kt:12:62 This type is final, so it cannot be inherited from
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/EmojiGridView.kt:15:40 Unresolved reference: OnItemClickListener
@@ -79,12 +78,19 @@ e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/LayoutModifier.kt:157:25 This type has a constructor, and thus must be initialized here
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:70:55 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeLayoutInitializer.kt:75:62 Type mismatch: inferred type is KeyboardData? but KeyboardData was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:129:55 Unresolved reference: layout_of_string
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/VoiceImeSwitcher.kt:84:42 Type mismatch: inferred type is IBinder? but IBinder was expected
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/WordPredictor.kt:162:71 Smart cast to 'Context' is impossible, because 'context' is a mutable property that could have been changed by this time
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:18:1 Class 'CustomExtraKeysPreference' is not abstract and does not implement abstract base class member public abstract fun labelOfValue(value: String, i: Int): String defined in juloo.keyboard2.prefs.ListGroupPreference
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:27:5 'label_of_value' overrides nothing
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:46:5 'get_serializer' overrides nothing
 e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:56:28 Unresolved reference: load_from_preferences
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:30:13 Cannot access 'values': it is invisible (private in a supertype) in 'LayoutsPreference'
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:59:16 Type mismatch: inferred type is LayoutsPreference.LayoutsAddButton but ListGroupPreference<LayoutsPreference.Layout>.AddButton was expected
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:63:16 Cannot access 'values': it is invisible (private in a supertype) in 'LayoutsPreference'
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:66:45 No type arguments expected for class Serializer
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:88:53 Cannot access 'values': it is invisible (private in a supertype) in 'LayoutsPreference'
+e: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/LayoutsPreference.kt:136:50 This type is final, so it cannot be inherited from
 
 > Task :compileDebugKotlin FAILED
 
@@ -101,5 +107,5 @@ Execution failed for task ':compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 55s
+BUILD FAILED in 2m 6s
 35 actionable tasks: 27 executed, 8 from cache
