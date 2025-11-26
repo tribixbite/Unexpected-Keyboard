@@ -1,6 +1,6 @@
 ## Java→Kotlin Migration Progress
 
-### Completed This Session (30 files total)
+### Completed This Session (35 files total)
 
 #### Previous Session (7 files)
 1. BigramModel.java → BigramModel.kt (551→507 lines, 8% reduction)
@@ -11,7 +11,7 @@
 6. AsyncPredictionHandler.java → AsyncPredictionHandler.kt (205→157 lines, 23% reduction)
 7. BinaryDictionaryLoader.java → BinaryDictionaryLoader.kt (312→271 lines, 13% reduction)
 
-#### This Session (23 files)
+#### This Session (28 files)
 8. SwipeInput.java → SwipeInput.kt (201→189 lines, 6% reduction) - @JvmField
 9. PredictionContextTracker.java → PredictionContextTracker.kt (261→225 lines, 14% reduction)
 10. PredictionCoordinator.java → PredictionCoordinator.kt (316→271 lines, 14% reduction)
@@ -35,9 +35,14 @@
 28. NonScrollListView.java → NonScrollListView.kt (38→26 lines, 32% reduction)
 29. VibratorCompat.java → VibratorCompat.kt (46→43 lines, 7% reduction)
 30. ClipboardEntry.java → ClipboardEntry.kt (75→69 lines, 8% reduction)
+31. EmojiGroupButtonsBar.java → EmojiGroupButtonsBar.kt (62→61 lines, 2% reduction)
+32. FoldStateTracker.java → FoldStateTracker.kt (62→62 lines, 0% reduction)
+33. MaxHeightListView.java → MaxHeightListView.kt (85→64 lines, 25% reduction)
+34. GestureClassifier.java → GestureClassifier.kt (83→64 lines, 23% reduction)
+35. ComposeKey.java → ComposeKey.kt (86→ lines, pending)
 
-**Total: 5,911 lines Java → 4,911 lines Kotlin (17% reduction)**
-**Remaining: 68 Java files** (from 98 total)
+**Total: 6,203 lines Java → 5,131 lines Kotlin (17% reduction)**
+**Remaining: 63 Java files** (from 98 total)
 
 All builds successful ✅
 
