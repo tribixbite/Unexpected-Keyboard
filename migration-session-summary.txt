@@ -1,6 +1,6 @@
 ## Java→Kotlin Migration Progress
 
-### Completed This Session (35 files total)
+### Completed This Session (40 files total)
 
 #### Previous Session (7 files)
 1. BigramModel.java → BigramModel.kt (551→507 lines, 8% reduction)
@@ -39,10 +39,13 @@
 32. FoldStateTracker.java → FoldStateTracker.kt (62→62 lines, 0% reduction)
 33. MaxHeightListView.java → MaxHeightListView.kt (85→64 lines, 25% reduction)
 34. GestureClassifier.java → GestureClassifier.kt (83→64 lines, 23% reduction)
-35. ComposeKey.java → ComposeKey.kt (86→ lines, pending)
+35. ComposeKey.java → ComposeKey.kt (86→97 lines)
+36. DirectBootAwarePreferences.java → DirectBootAwarePreferences.kt (88→79 lines, 10% reduction)
+37. MLDataCollector.java → MLDataCollector.kt (104→94 lines, 10% reduction)
+38. LauncherActivity.java → LauncherActivity.kt (129→119 lines, 8% reduction)
 
-**Total: 6,203 lines Java → 5,131 lines Kotlin (17% reduction)**
-**Remaining: 63 Java files** (from 98 total)
+**Total: 6,610 lines Java → 5,520 lines Kotlin (16% reduction)**
+**Remaining: 58 Java files** (from 98 total)
 
 All builds successful ✅
 
