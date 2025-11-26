@@ -77,15 +77,18 @@ class PredictionViewSetup(
             }
 
             // Set keyboard dimensions for neural engine if available
-            if (config.swipe_typing_enabled &&
-                predictionCoordinator.getNeuralEngine() != null) {
-                predictionCoordinator.getNeuralEngine()
-                    .setKeyboardDimensions(keyboardView.getWidth().toFloat(),
-                                          keyboardView.getHeight().toFloat())
-                keyboardView.setSwipeTypingComponents(
-                    predictionCoordinator.getWordPredictor(),
-                    keyboard2
-                )
+            if (config.swipe_typing_enabled) {
+                val neuralEngine = predictionCoordinator.getNeuralEngine()
+                if (neuralEngine != null) {
+                    neuralEngine.setKeyboardDimensions(
+                        keyboardView.getWidth().toFloat(),
+                        keyboardView.getHeight().toFloat()
+                    )
+                    keyboardView.setSwipeTypingComponents(
+                        predictionCoordinator.getWordPredictor(),
+                        keyboard2
+                    )
+                }
             }
 
             // Create suggestion bar if needed
@@ -133,7 +136,8 @@ class PredictionViewSetup(
             val inputView = inputViewContainer ?: keyboardView
 
             // Set correct keyboard dimensions for CGR after view is laid out
-            if (predictionCoordinator.getNeuralEngine() != null) {
+            val neuralEngine = predictionCoordinator.getNeuralEngine()
+            if (neuralEngine != null) {
                 // Helper to update layout dimensions and keys
                 val updateNeuralLayout = {
                     if (keyboardView.width > 0 && keyboardView.height > 0) {
@@ -142,8 +146,7 @@ class PredictionViewSetup(
                         val keyboardHeight = neuralLayoutHelper?.calculateDynamicKeyboardHeight()
                             ?: keyboardView.height.toFloat()
 
-                        predictionCoordinator.getNeuralEngine()
-                            .setKeyboardDimensions(keyboardWidth, keyboardHeight)
+                        neuralEngine.setKeyboardDimensions(keyboardWidth, keyboardHeight)
 
                         // Set real key positions for accurate coordinate mapping
                         neuralLayoutHelper?.setNeuralKeyboardLayout()
