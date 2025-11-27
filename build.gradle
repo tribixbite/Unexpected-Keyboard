@@ -1,6 +1,7 @@
 plugins {
   id 'com.android.application' version '8.6.0'
   id 'org.jetbrains.kotlin.android' version '1.9.20'
+  id 'io.gitlab.arturbosch.detekt' version '1.23.4'
 }
 
 dependencies {
@@ -37,8 +38,8 @@ android {
     applicationId "juloo.keyboard2"
     minSdk 21
     targetSdkVersion 35
-    versionCode 894
-    versionName "1.32.894"
+    versionCode 895
+    versionName "1.32.895"
   }
 
   buildFeatures {
@@ -306,3 +307,24 @@ tasks.register('copyLayoutDefinitions')
     into "build/generated-resources/xml"
   }
 }
+
+// Detekt static analysis configuration
+detekt {
+  buildUponDefaultConfig = true
+  allRules = false
+  config.setFrom("$projectDir/detekt-config.yml")
+  
+  source.setFrom("srcs/juloo.keyboard2", "test")
+  
+  reports {
+    html.required = true
+    xml.required = false
+    txt.required = false
+    sarif.required = false
+  }
+}
+
+tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
+  jvmTarget = "1.8"
+}
+
