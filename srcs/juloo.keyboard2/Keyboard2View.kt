@@ -13,6 +13,7 @@ import android.inputmethodservice.InputMethodService
 import android.os.Build.VERSION
 import android.util.AttributeSet
 import android.util.DisplayMetrics
+import android.util.Log
 import android.util.LruCache
 import android.view.MotionEvent
 import android.view.View
