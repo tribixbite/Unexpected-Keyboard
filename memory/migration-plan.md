@@ -1,10 +1,19 @@
 # Kotlin Migration Plan - Remaining Files
 
-## Current Status (2025-11-26)
+## Current Status (2025-11-26) - UPDATED
 
-**Migration Progress**: 95.2% (140/147 files)
-**Test Coverage**: 38 test files, 190+ test methods for Kotlin migrations
-**Build Status**: ✅ All checks passing
+**⚠️ NOTE**: This file is now superseded by comprehensive migration documentation.
+
+**See instead**:
+- **[../MIGRATION_STATUS.md](../MIGRATION_STATUS.md)** - Complete overview
+- **[../MIGRATION_RESUME_CHECKLIST.md](../MIGRATION_RESUME_CHECKLIST.md)** - Execution plan
+- **[../docs/REMAINING_JAVA_MIGRATION.md](../docs/REMAINING_JAVA_MIGRATION.md)** - Main file plans
+- **[../docs/JAVA_TEST_MIGRATION.md](../docs/JAVA_TEST_MIGRATION.md)** - Test file plans
+
+**Migration Progress**: 98.6% (145/148 files)
+**Test Coverage**: 38 test files (30 Kotlin + 8 Java)
+**Build Status**: ⚠️ Kotlin compilation ✅ | DEX compilation ❌ (R8 8.6.17 bug)
+**Blocker**: R8/D8 bug prevents APK builds (see [../R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md))
 
 ## Remaining Files (7 files, 7,724 lines)
 
