@@ -12,8 +12,8 @@
 **Latest Version**: v1.32.919 (CRITICAL FIX: Short swipe gestures on all keys)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 54s)
 **Device Status**: ✅ FULLY FUNCTIONAL - All gestures working correctly
-**Branch**: main
-**Current Focus**: 🎯 **GESTURE BUG FIXED** - Delete word & clipboard swipes restored
+**Branch**: main (5 commits pushed: gesture fix + docs + cleanup)
+**Current Focus**: 🎯 **GESTURE FIX COMPLETE** - Ready for next phase
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)** 🎊
 **Main Files**: 148/148 (100%) ✅
 **Test Files**: 11/11 (100%) ✅
@@ -24,11 +24,16 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-27) - 🎯 CRITICAL KEYBOARD RENDERING BUG FIXED! ✅
+### 🔄 Latest Work (2025-11-27) - 🎯 SHORT SWIPE GESTURE FIX COMPLETE! ✅
 
 **Latest Commits:**
+- `169f021b` - chore(cleanup): remove 31 build log files from repository
+- `63551eb2` - chore(gitignore): add log file patterns to .gitignore
+- `7109e610` - docs(changelog): add v1.32.919 release notes for gesture fix
+- `b8225ca1` - docs(pm): document short swipe gesture fix in pm.md
 - `ac2bfe0f` - fix(gestures): enable short swipe gestures on non-character keys (v1.32.919)
 - `205c05ae` - fix(layouts): add delete_last_word gesture to all QWERTY variants
+- `7a958f64` - docs(pm): document delete_word gesture fix for all QWERTY layouts
 - `cd111b96` - perf(assets): move Python scripts from assets/models to ml_training (56KB)
 - `d7354104` - perf(assets): remove unused libjni_latinimegoogle.so library (1.1MB)
 
