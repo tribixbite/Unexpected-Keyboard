@@ -172,7 +172,7 @@ class KeyboardData private constructor(
     private constructor(src: KeyboardData, rows: List<Row>) : this(
         rows,
         compute_max_width(rows),
-        0f, // keysHeight computed below
+        compute_total_height(rows),  // FIXED: compute keysHeight properly
         src.modmap,
         src.script,
         src.numpad_script,
@@ -181,17 +181,6 @@ class KeyboardData private constructor(
         src.embedded_number_row,
         src.locale_extra_keys
     )
-
-    init {
-        // Compute keys height if this is the primary constructor
-        if (keysHeight == 0f) {
-            var kh = 0f
-            for (r in rows)
-                kh += r.height + r.shift
-            // Use reflection or a different approach - actually, we can't reassign val
-            // So we need to restructure this
-        }
-    }
 
     data class Row(
         val keys: List<Key>,
@@ -568,6 +557,14 @@ class KeyboardData private constructor(
             for (r in rows)
                 w = maxOf(w, r.keysWidth)
             return w
+        }
+
+        /** Compute total keyboard height from rows. */
+        private fun compute_total_height(rows: List<Row>): Float {
+            var h = 0f
+            for (r in rows)
+                h += r.height + r.shift
+            return h
         }
 
         @JvmStatic
