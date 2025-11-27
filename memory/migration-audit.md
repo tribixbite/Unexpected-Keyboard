@@ -5,7 +5,7 @@
 **Method**: Read ENTIRE file contents (no grep/sed), compare with current Kotlin, identify issues.
 
 **Started**: 2025-11-27
-**Status**: IN PROGRESS (9/100 files completed - 9%)
+**Status**: IN PROGRESS (11/100 files completed - 11%)
 
 ---
 
@@ -437,11 +437,56 @@
 3. Elvis operators for null handling (`r ?: k`)
 4. Scoped functions (`.let { }`) for modmap checks
 5. uppercaseChar() instead of Character.toUpperCase()
-6. @JvmStatic annotations for Java interop
-7. Deprecation annotations for snake_case → camelCase migration
-8. 6% fewer lines (527 → 494) with identical logic
 
-**Verdict**: **EXEMPLARY** migration. Complex modifier logic with 32 modifier types, 47 keyevent mappings, Hangul composition (49 vowel/consonant mappings), and dead key/accent handling all perfectly preserved.
+**Verdict**: **EXEMPLARY** migration. All 527 lines of complex modifier logic correctly preserved in 494 Kotlin lines (6% reduction). Zero bugs found.
+
+---
+
+#### 11. LayoutModifier.java → LayoutModifier.kt ✅ **PERFECT MIGRATION**
+
+**File**: `migration2/srcs/juloo.keyboard2/LayoutModifier.java` (228 lines)
+**Kotlin**: `srcs/juloo.keyboard2/LayoutModifier.kt` (237 lines)
+**Lines Read**: Full file - layout modification and caching logic
+**Status**: ✅ **PERFECT MIGRATION**
+
+**Issues Found**: **NONE** ✅
+
+**Critical Sections Audited**:
+1. **Layout caching (Java 28-34, Kotlin 26-28)**: LruCache lookup with early return ✅
+2. **Extra keys management (Java 38-73, Kotlin 32-75)**: TreeMap creation, config key guarantee ✅
+3. **Numpad/number row logic (Java 45-58, Kotlin 45-55)**: Conditional addition with remove_keys ✅
+4. **Bottom row insertion (Java 60-61, Kotlin 58)**: Conditional row insertion ✅
+5. **Key mapping callback (Java 74-83, Kotlin 77-83)**: Anonymous inner class → object expression ✅
+   - localized check: `if (localized && !extra_keys.containsKey(key)) return null` ✅
+   - remove_keys check: `if (remove_keys.contains(key)) return null` ✅
+   - modify_key fallthrough preserved ✅
+6. **Numpad modification (Java 100-126, Kotlin 109-136)**: Digit mapping and inversion ✅
+   - Script mapping with ComposeKey.apply() ✅
+   - inverse_numpad config check ✅
+   - Early returns for modified/inverted chars ✅
+7. **Pin entry modification (Java 130-134, Kotlin 143-146)**: Null-safe script mapping ✅
+8. **Number row script mapping (Java 144-156, Kotlin 154-165)**: Null checks for numpad_script ✅
+9. **Key modification (Java 160-197, Kotlin 168-211)**: Event and Keyevent switch → when ✅
+   - CHANGE_METHOD_PICKER → change_method_prev (if switch_input_immediate) ✅
+   - ACTION: null removal, enter swap, makeActionKey ✅
+   - SWITCH_FORWARD: only if layouts.size > 1 ✅
+   - SWITCH_BACKWARD: only if layouts.size > 2 ✅
+   - Voice typing: conditional on shouldOfferVoiceTyping ✅
+   - KEYCODE_ENTER swap with action key ✅
+   - **Smart cast improvement**: Local variables for actionLabel (lines 178, 201) ✅
+10. **Numpad character inversion (Java 199-211, Kotlin 213-223)**: 6 mappings (7↔1, 8↔2, 9↔3) ✅
+11. **Initialization (Java 213-227, Kotlin 226-236)**: Resource loading with exception handling ✅
+
+**Notable Improvements**:
+1. Object singleton pattern instead of static class
+2. lateinit properties (cleaner than nullable fields)
+3. Smart cast optimization with local variable capture (actionLabel)
+4. Elvis operators: `modified ?: key` vs ternary
+5. String templates: `"${kw.name ?: ""}_${globalConfig.version}"` vs concatenation
+6. Scoped functions: `.let { return it }` for cache hit
+7. `isNotEmpty()` vs `size() > 0`
+
+**Verdict**: **PERFECT** migration. All 228 lines of layout modification logic correctly preserved in 237 Kotlin lines. Zero bugs found.
 
 ---
 
@@ -451,7 +496,7 @@
 
 ---
 
-## ⏳ PENDING (90/100)
+## ⏳ PENDING (89/100)
 
 ### High Priority Files (Core Functionality)
 
@@ -465,8 +510,8 @@ These files handle critical keyboard operations and should be audited next:
 6. ~~**GestureClassifier.java**~~ ✅ COMPLETE - NO BUGS
 7. ~~**EnhancedSwipeGestureRecognizer.java**~~ ✅ COMPLETE - NO BUGS (simple wrapper)
 8. ~~**KeyValue.java**~~ ✅ COMPLETE - NO BUGS (massive 868-line value class)
-9. **KeyModifier.java** - Key modifier logic ← NEXT
-10. **LayoutModifier.java** - Layout modification logic
+9. ~~**KeyModifier.java**~~ ✅ COMPLETE - NO BUGS (527 lines, modifier composition)
+10. ~~**LayoutModifier.java**~~ ✅ COMPLETE - NO BUGS (228 lines, layout caching)
 
 ### Medium Priority Files (Features)
 
@@ -625,12 +670,12 @@ For each file:
 ## Summary Statistics
 
 - **Total Files**: 100
-- **Completed**: 9 (9%)
+- **Completed**: 11 (11%)
 - **In Progress**: 0
-- **Pending**: 91 (91%)
+- **Pending**: 89 (89%)
 - **Critical Bugs Found**: 1 (swipePath.size condition - inherited from Java)
 - **Bugs Fixed**: 2 (v1.32.923 gesture fix, v1.32.917 keysHeight fix already in Kotlin)
-- **Perfect Migrations**: 9/9 (100%) ✅
+- **Perfect Migrations**: 11/11 (100%) ✅
   - Pointers (1,049 lines) - see note below*
   - KeyEventHandler (540→491 lines)
   - Keyboard2View (1,034→925 lines)
@@ -640,6 +685,8 @@ For each file:
   - GestureClassifier (83→63 lines)
   - EnhancedSwipeGestureRecognizer (14→8 lines) - simple wrapper
   - KeyValue (868→744 lines) - massive value class, 627-line switch→when
+  - KeyModifier (527→494 lines) - modifier composition with Hangul
+  - LayoutModifier (228→237 lines) - layout caching and modification
 - **User-Reported Issues**: 1 (gestures not working - FIX DEPLOYED in v1.32.923)
 - **Resolution**: v1.32.923 installed, awaiting user testing
 
