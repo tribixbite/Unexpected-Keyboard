@@ -5,7 +5,7 @@
 **Method**: Read ENTIRE file contents (no grep/sed), compare with current Kotlin, identify issues.
 
 **Started**: 2025-11-27
-**Status**: IN PROGRESS (17/100 files completed - 17%)
+**Status**: IN PROGRESS (18/100 files completed - 18%)
 
 ---
 
@@ -742,13 +742,60 @@
 
 ---
 
+#### 18. Theme.java → Theme.kt ✅ **PERFECT MIGRATION**
+
+**File**: `migration2/srcs/juloo.keyboard2/Theme.java` (197 lines)
+**Kotlin**: `srcs/juloo.keyboard2/Theme.kt` (232 lines)
+**Lines Read**: Full file - theme colors, borders, Paint configuration
+**Status**: ✅ **PERFECT MIGRATION**
+
+**Issues Found**: **NONE** ✅
+
+**Critical Sections Audited**:
+1. **Public fields (Java 12-34, Kotlin 11-41)**: All fields with @JvmField for Java interop ✅
+2. **Constructor/init (Java 36-61, Kotlin 43-71)**: TypedArray attribute loading sequence identical ✅
+3. **adjustLight() HSV formula (Java 64-71, Kotlin 74-80)**: CRITICAL color manipulation ✅
+   - Formula: `hsv[2] = alpha - (2 * alpha - 1) * v` (mathematically identical) ✅
+   - Color.colorToHSV() and Color.HSVToColor() preserved ✅
+4. **initIndicationPaint() (Java 73-80, Kotlin 82-89)**: Manual setters → apply block ✅
+5. **getKeyFont() singleton (Java 84-89, Kotlin 224-229)**: Static → companion object with @JvmStatic ✅
+   - Lazy initialization: `if (_key_font == null)` preserved ✅
+6. **Computed class (Java 91-195, Kotlin 91-218)**: Static inner → nested class ✅
+7. **Computed constructor row height (Java 110-112, Kotlin 121-124)**: Math.min() formula ✅
+   - `Math.min(config.screenHeightPixels * config.keyboardHeightPercent / 100 / 3.95f, ...)` ✅
+8. **Key inner class (Java 125-175, Kotlin 138-197)**: Constructor parameters with @JvmField ✅
+9. **Key init bitwise ops (Java 156, Kotlin 175)**: CRITICAL alpha bits calculation ✅
+   - Java: `(config.labelBrightness & 0xFF) << 24`
+   - Kotlin: `(config.labelBrightness and 0xFF) shl 24` ✅
+10. **label_paint() bitwise (Java 162, Kotlin 180)**: Color masking and OR ✅
+    - Java: `(color & 0x00FFFFFF) | _label_alpha_bits`
+    - Kotlin: `(color and 0x00FFFFFF) or _label_alpha_bits` ✅
+11. **sublabel_paint() (Java 167-174, Kotlin 185-196)**: Same bitwise logic ✅
+12. **Helper methods (Java 177-194, Kotlin 199-217)**: Static → companion object methods ✅
+    - init_border_paint(): Paint.Style.STROKE, strokeWidth, alpha all preserved ✅
+    - init_label_paint(): ANTI_ALIAS_FLAG, textAlign, typeface all preserved ✅
+
+**Notable Improvements**:
+1. Bitwise operators: `&` → `and`, `|` → `or`, `<<` → `shl` (more readable)
+2. Math.min() → min() from kotlin.math
+3. Property syntax for Paint: `color =`, `alpha =`, `textSize =` instead of setters
+4. Apply blocks for Paint configuration: cleaner initialization
+5. Primary constructors for nested classes
+6. Companion objects for static members with @JvmStatic
+7. @JvmField annotations for all public fields (Java interop)
+8. 18% line increase (197 → 232) due to better formatting, not bloat
+
+**Verdict**: **PERFECT** migration. All 197 lines of theme logic correctly preserved in 232 Kotlin lines. HSV color formula (`alpha - (2*alpha-1)*v`), bitwise operations (`& 0xFF`, `shl 24`, `or`), row height calculation, singleton font loading, and Paint initialization all verified. Zero bugs found.
+
+---
+
 ## 🔄 IN PROGRESS (0/100)
 
 *None currently*
 
 ---
 
-## ⏳ PENDING (83/100)
+## ⏳ PENDING (82/100)
 
 ### High Priority Files (Core Functionality)
 
@@ -773,11 +820,12 @@ These files handle critical keyboard operations and should be audited next:
 14. ~~**ExtraKeys.java**~~ ✅ COMPLETE - NO BUGS (150 lines, extra key system)
 15. ~~**ClipboardManager.java**~~ ✅ COMPLETE - NO BUGS (349 lines, clipboard/search management)
 16. ~~**EmojiGridView.java**~~ ✅ COMPLETE - NO BUGS (197 lines, emoji grid with usage tracking)
-17. **CustomExtraKeys.java** - Custom extra keys
+17. ~~**Theme.java**~~ ✅ COMPLETE - NO BUGS (197 lines, theme colors/Paint config)
+18. **CustomExtraKeys.java** - Custom extra keys
 
 ### Lower Priority Files (UI/Utils)
 
-18-100. Remaining files (see full list below)
+19-100. Remaining files (see full list below)
 
 ---
 
