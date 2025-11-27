@@ -475,8 +475,13 @@ class KeyboardData private constructor(
 
         @JvmStatic
         @Throws(Exception::class)
-        fun load_row(res: Resources, res_id: Int): Row =
-            Row.parse(res.getXml(res_id))
+        fun load_row(res: Resources, res_id: Int): Row {
+            val parser = res.getXml(res_id)
+            // Skip to the <row> tag
+            if (!expect_tag(parser, "row"))
+                throw error(parser, "Expected tag <row>")
+            return Row.parse(parser)
+        }
 
         @JvmStatic
         @Throws(Exception::class)
