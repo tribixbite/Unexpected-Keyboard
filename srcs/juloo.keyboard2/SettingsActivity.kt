@@ -141,7 +141,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
         findPreference("export_swipe_ml_data")?.let { pref ->
             try {
                 val dataStore = SwipeMLDataStore.getInstance(this)
-                val stats = dataStore.statistics
+                val stats = dataStore.getStatistics()
                 pref.summary = "Export all collected swipe data (${stats.totalCount} samples)"
             } catch (e: Exception) {
                 pref.summary = "Export all collected swipe data"
@@ -164,7 +164,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
         findPreference("train_swipe_ml_model")?.let { pref ->
             try {
                 val dataStore = SwipeMLDataStore.getInstance(this)
-                val stats = dataStore.statistics
+                val stats = dataStore.getStatistics()
                 pref.summary = "Train model with ${stats.totalCount} samples (min 100 required)"
             } catch (e: Exception) {
                 pref.summary = "Train swipe prediction model"
@@ -237,7 +237,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
     private fun exportSwipeMLData() {
         try {
             val dataStore = SwipeMLDataStore.getInstance(this)
-            val stats = dataStore.statistics
+            val stats = dataStore.getStatistics()
 
             if (stats.totalCount == 0) {
                 Toast.makeText(this, "No swipe data to export", Toast.LENGTH_SHORT).show()
@@ -309,7 +309,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                     Toast.LENGTH_LONG).show()
 
                 findPreference("export_swipe_ml_data")?.let { pref ->
-                    val stats = dataStore.statistics
+                    val stats = dataStore.getStatistics()
                     pref.summary = "Export all collected swipe data (${stats.totalCount} samples)"
                 }
             } else {
@@ -1241,7 +1241,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
         try {
             val service = ClipboardHistoryService.get_service(this)
             statsPref.summary = if (service != null) {
-                service.storageStats
+                service.getStorageStats()
             } else {
                 "Clipboard service not available"
             }
