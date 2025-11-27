@@ -222,4 +222,14 @@
     <item>365</item>
     <item>999999</item>
   </string-array>
+  <string-array name="pref_learning_aggression_values">
+    <item>CONSERVATIVE</item>
+    <item>BALANCED</item>
+    <item>AGGRESSIVE</item>
+  </string-array>
+  <string-array name="pref_learning_aggression_entries">
+    <item>Conservative (0.5x - subtle personalization)</item>
+    <item>Balanced (1.0x - recommended)</item>
+    <item>Aggressive (1.5x - strong personalization)</item>
+  </string-array>
 </resources>

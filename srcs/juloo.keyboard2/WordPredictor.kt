@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.provider.UserDictionary
 import android.util.Log
 import juloo.keyboard2.contextaware.ContextModel
+import juloo.keyboard2.personalization.PersonalizationEngine
+import juloo.keyboard2.personalization.PersonalizedScorer
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -47,6 +49,8 @@ class WordPredictor {
     private val prefixIndex: AtomicReference<MutableMap<String, MutableSet<String>>> = AtomicReference(mutableMapOf())
     private var bigramModel: BigramModel? = BigramModel.getInstance(null)
     private var contextModel: ContextModel? = null // Phase 7.1: Dynamic N-gram model
+    private var personalizationEngine: PersonalizationEngine? = null // Phase 7.2: Personalized learning
+    private var personalizedScorer: PersonalizedScorer? = null // Phase 7.2: Adaptive scoring
     private var languageDetector: LanguageDetector? = LanguageDetector()
     private var currentLanguage: String = "en" // Default to English
     private val recentWords: MutableList<String> = mutableListOf() // For language detection
@@ -76,6 +80,13 @@ class WordPredictor {
         if (contextModel == null) {
             contextModel = ContextModel(context)
             Log.d(TAG, "ContextModel initialized for dynamic N-gram predictions")
+        }
+
+        // Phase 7.2: Initialize PersonalizationEngine for personalized learning
+        if (personalizationEngine == null) {
+            personalizationEngine = PersonalizationEngine(context)
+            personalizedScorer = PersonalizedScorer(personalizationEngine!!)
+            Log.d(TAG, "PersonalizationEngine and PersonalizedScorer initialized for adaptive predictions")
         }
 
         // Initialize dictionary observer for automatic updates
@@ -229,6 +240,19 @@ class WordPredictor {
      */
     fun setConfig(config: Config) {
         this.config = config
+
+        // Phase 7.2: Update personalization engine settings when config changes
+        personalizationEngine?.let { engine ->
+            engine.setEnabled(config.personalized_learning_enabled)
+
+            // Parse learning aggression from config
+            val aggression = try {
+                PersonalizationEngine.LearningAggression.valueOf(config.learning_aggression)
+            } catch (e: IllegalArgumentException) {
+                PersonalizationEngine.LearningAggression.BALANCED // Default if invalid
+            }
+            engine.setLearningAggression(aggression)
+        }
     }
 
     /**
@@ -285,6 +309,13 @@ class WordPredictor {
             val sequenceLength = kotlin.math.min(4, recentWords.size)
             val sequence = recentWords.takeLast(sequenceLength)
             contextModel?.recordSequence(sequence)
+        }
+
+        // Phase 7.2: Record word usage for personalized learning
+        // Learn individual word frequencies for adaptive prediction boosting
+        val personalizationEnabled = config?.personalized_learning_enabled ?: true
+        if (personalizationEnabled && personalizationEngine != null) {
+            personalizationEngine?.recordWordTyped(normalizedWord)
         }
 
         // Try to detect language change if we have enough words
@@ -890,10 +921,11 @@ class WordPredictor {
     /**
      * UNIFIED SCORING - Combines all prediction signals (early fusion)
      *
-     * Combines: prefix quality + frequency + user adaptation + context probability
+     * Combines: prefix quality + frequency + user adaptation + context probability + personalization
      * Context is evaluated for ALL candidates, not just top N (key improvement)
      *
-     * Phase 7.1: Now includes dynamic N-gram boost from ContextModel alongside static BigramModel
+     * Phase 7.1: Includes dynamic N-gram boost from ContextModel alongside static BigramModel
+     * Phase 7.2: Includes personalization boost from user's typing frequency and recency
      *
      * @param word The word being scored
      * @param keySequence The typed prefix
@@ -931,6 +963,19 @@ class WordPredictor {
         // Maximum of the two to take best prediction (user patterns override static when stronger)
         val contextMultiplier = kotlin.math.max(staticContextMultiplier, dynamicContextBoost)
 
+        // 3d. Phase 7.2: Personalization boost from user vocabulary
+        // Boosts words the user frequently types, independent of context
+        // Combines frequency and recency scoring for adaptive predictions
+        val personalizationEnabled = config?.personalized_learning_enabled ?: true
+        val personalizationMultiplier = if (personalizationEnabled && personalizationEngine != null) {
+            val boost = personalizationEngine?.getPersonalizationBoost(word) ?: 0.0f
+            // Convert boost (0-6 range) to multiplier (1.0-2.5 range)
+            // Formula: 1.0 + (boost / 4.0) gives smooth 1.0-2.5x range
+            1.0f + (boost / 4.0f)
+        } else {
+            1.0f
+        }
+
         // 4. Frequency scaling (log to prevent common words from dominating)
         // Using log1p helps balance: "the" (freq ~10000) vs "think" (freq ~100)
         // Without log: "the" would always win. With log: context can override frequency
@@ -939,12 +984,13 @@ class WordPredictor {
         val frequencyFactor = 1.0f + ln1p((frequency / frequencyScale).toDouble()).toFloat()
 
         // COMBINE ALL SIGNALS
-        // Formula: prefixScore × adaptation × (1 + boosted_context) × freq_factor
+        // Formula: prefixScore × adaptation × personalization × (1 + boosted_context) × freq_factor
         // Context boost is configurable (default: 2.0)
         // Higher boost = context has more influence on predictions
         val contextBoost = config?.prediction_context_boost ?: 2.0f
         val finalScore = prefixScore *
             adaptationMultiplier *
+            personalizationMultiplier *  // Phase 7.2: Personalization boost
             (1.0f + (contextMultiplier - 1.0f) * contextBoost) *  // Configurable context boost
             frequencyFactor
 
