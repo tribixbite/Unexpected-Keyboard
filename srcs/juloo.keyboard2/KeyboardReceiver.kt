@@ -85,14 +85,19 @@ class KeyboardReceiver(
                     emojiPane = keyboard2.inflate_view(R.layout.emoji_pane) as ViewGroup
                 }
 
+                // Capture for null safety
+                val pane = emojiPane
+
                 // Show emoji pane in content container (keyboard stays visible below)
                 contentPaneContainer?.let {
                     it.removeAllViews()
-                    it.addView(emojiPane)
+                    it.addView(pane)
                     it.visibility = View.VISIBLE
                 } ?: run {
                     // Fallback for when predictions disabled (no container)
-                    keyboard2.setInputView(emojiPane)
+                    if (pane != null) {
+                        keyboard2.setInputView(pane)
+                    }
                 }
             }
 

@@ -18,7 +18,7 @@ import android.util.Log
  * @since v1.32.412
  */
 class PreferenceUIUpdateHandler(
-    private val config: Config,
+    private val config: Config?,
     private val layoutBridge: LayoutBridge?,
     private val predictionCoordinator: PredictionCoordinator?,
     private val keyboardView: Keyboard2View?,
@@ -54,7 +54,9 @@ class PreferenceUIUpdateHandler(
      * Update suggestion bar opacity from config.
      */
     private fun updateSuggestionBarOpacity() {
-        suggestionBar?.setOpacity(config.suggestion_bar_opacity)
+        config?.let { cfg ->
+            suggestionBar?.setOpacity(cfg.suggestion_bar_opacity)
+        }
     }
 
     /**
@@ -67,7 +69,7 @@ class PreferenceUIUpdateHandler(
 
         val isModelSetting = key in MODEL_RELATED_KEYS
 
-        if (isModelSetting) {
+        if (isModelSetting && config != null) {
             val neuralEngine = predictionCoordinator?.getNeuralEngine()
             if (neuralEngine != null) {
                 neuralEngine.setConfig(config)
@@ -101,7 +103,7 @@ class PreferenceUIUpdateHandler(
          */
         @JvmStatic
         fun create(
-            config: Config,
+            config: Config?,
             layoutBridge: LayoutBridge?,
             predictionCoordinator: PredictionCoordinator?,
             keyboardView: Keyboard2View?,

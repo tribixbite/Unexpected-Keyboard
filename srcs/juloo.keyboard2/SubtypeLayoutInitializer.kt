@@ -17,7 +17,7 @@ import android.content.res.Resources
  */
 class SubtypeLayoutInitializer(
     private val keyboard2: Keyboard2,
-    private val config: Config,
+    private val config: Config?,
     private val keyboardView: Keyboard2View
 ) {
     /**
@@ -56,8 +56,12 @@ class SubtypeLayoutInitializer(
         val subtypeManager = existingSubtypeManager ?: SubtypeManager(keyboard2)
 
         // Refresh subtype and get default layout
-        val defaultLayout = subtypeManager.refreshSubtype(config, resources)
-            ?: KeyboardData.load(resources, R.xml.latn_qwerty_us)
+        val defaultLayout = if (config != null) {
+            subtypeManager.refreshSubtype(config, resources)
+                ?: KeyboardData.load(resources, R.xml.latn_qwerty_us)
+        } else {
+            KeyboardData.load(resources, R.xml.latn_qwerty_us)
+        }
 
         // Update or create LayoutManager
         val layoutManager: LayoutManager?
@@ -68,7 +72,7 @@ class SubtypeLayoutInitializer(
             existingLayoutManager.setLocaleTextLayout(defaultLayout)
             layoutManager = existingLayoutManager
             layoutBridge = null  // Don't recreate bridge
-        } else if (defaultLayout != null) {
+        } else if (defaultLayout != null && config != null) {
             // First call - initialize LayoutManager with default layout
             layoutManager = LayoutManager(keyboard2, config, defaultLayout)
 
@@ -95,7 +99,7 @@ class SubtypeLayoutInitializer(
         @JvmStatic
         fun create(
             keyboard2: Keyboard2,
-            config: Config,
+            config: Config?,
             keyboardView: Keyboard2View
         ): SubtypeLayoutInitializer {
             return SubtypeLayoutInitializer(keyboard2, config, keyboardView)

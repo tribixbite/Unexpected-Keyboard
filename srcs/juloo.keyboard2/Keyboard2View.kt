@@ -265,7 +265,8 @@ class Keyboard2View @JvmOverloads constructor(
     override fun onSwipeEnd(recognizer: ImprovedSwipeGestureRecognizer) {
         if (recognizer.isSwipeTyping()) {
             val result = recognizer.endSwipe()
-            if (_keyboard2 != null && result.keys != null && result.keys.isNotEmpty()) {
+            if (_keyboard2 != null && result.keys != null && result.keys.isNotEmpty() &&
+                result.path != null && result.timestamps != null) {
                 // Pass full swipe data for ML collection
                 _keyboard2!!.handleSwipeTyping(result.keys, result.path, result.timestamps)
             }

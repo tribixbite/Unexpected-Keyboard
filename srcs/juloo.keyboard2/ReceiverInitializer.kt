@@ -26,7 +26,7 @@ class ReceiverInitializer(
     private val clipboardManager: ClipboardManager,
     private val contextTracker: PredictionContextTracker,
     private val inputCoordinator: InputCoordinator,
-    private val subtypeManager: SubtypeManager,
+    private val subtypeManager: SubtypeManager?,
     private val handler: Handler,
     private val receiverBridge: KeyEventReceiverBridge?
 ) {
@@ -47,8 +47,8 @@ class ReceiverInitializer(
             return existingReceiver
         }
 
-        // Cannot create receiver without layoutManager - defer until layout is initialized
-        if (layoutManager == null) {
+        // Cannot create receiver without layoutManager or subtypeManager - defer until initialized
+        if (layoutManager == null || subtypeManager == null) {
             return null
         }
 
@@ -96,7 +96,7 @@ class ReceiverInitializer(
             clipboardManager: ClipboardManager,
             contextTracker: PredictionContextTracker,
             inputCoordinator: InputCoordinator,
-            subtypeManager: SubtypeManager,
+            subtypeManager: SubtypeManager?,
             handler: Handler,
             receiverBridge: KeyEventReceiverBridge?
         ): ReceiverInitializer {

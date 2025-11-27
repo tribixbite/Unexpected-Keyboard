@@ -28,7 +28,7 @@ class SuggestionBridge(
     private val mlDataCollector: MLDataCollector,
     private val inputCoordinator: InputCoordinator,
     private val contextTracker: PredictionContextTracker,
-    private val predictionCoordinator: PredictionCoordinator,
+    private val predictionCoordinator: PredictionCoordinator?,
     private val keyboardView: Keyboard2View
 ) {
     /**
@@ -100,7 +100,7 @@ class SuggestionBridge(
         val currentSwipeData = inputCoordinator.getCurrentSwipeData()
 
         if (isSwipeAutoInsert && currentSwipeData != null &&
-            predictionCoordinator.getMlDataStore() != null) {
+            predictionCoordinator?.getMlDataStore() != null) {
             mlDataCollector.collectAndStoreSwipeData(
                 word,
                 currentSwipeData,
@@ -141,7 +141,7 @@ class SuggestionBridge(
             mlDataCollector: MLDataCollector,
             inputCoordinator: InputCoordinator,
             contextTracker: PredictionContextTracker,
-            predictionCoordinator: PredictionCoordinator,
+            predictionCoordinator: PredictionCoordinator?,
             keyboardView: Keyboard2View
         ): SuggestionBridge {
             return SuggestionBridge(

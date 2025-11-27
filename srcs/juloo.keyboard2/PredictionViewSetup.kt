@@ -26,7 +26,7 @@ class PredictionViewSetup(
     private val keyboard2: Keyboard2,
     private val config: Config,
     private val keyboardView: Keyboard2View,
-    private val predictionCoordinator: PredictionCoordinator,
+    private val predictionCoordinator: PredictionCoordinator?,
     private val inputCoordinator: InputCoordinator?,
     private val suggestionHandler: SuggestionHandler?,
     private val neuralLayoutHelper: NeuralLayoutHelper?,
@@ -70,14 +70,14 @@ class PredictionViewSetup(
             // CRITICAL FIX: Initialize prediction engines in background thread to avoid 3-second UI freeze
             // ONNX model loading takes 2.8-4.4s and MUST NOT block the main thread
             // OPTIMIZATION: Only spawn thread if neural engine not yet ready
-            if (!predictionCoordinator.isSwipeTypingAvailable()) {
+            if (predictionCoordinator?.isSwipeTypingAvailable() == false) {
                 Thread {
                     predictionCoordinator.ensureInitialized()
                 }.start()
             }
 
             // Set keyboard dimensions for neural engine if available
-            if (config.swipe_typing_enabled) {
+            if (config.swipe_typing_enabled && predictionCoordinator != null) {
                 val neuralEngine = predictionCoordinator.getNeuralEngine()
                 if (neuralEngine != null) {
                     neuralEngine.setKeyboardDimensions(
@@ -136,7 +136,7 @@ class PredictionViewSetup(
             val inputView = inputViewContainer ?: keyboardView
 
             // Set correct keyboard dimensions for CGR after view is laid out
-            val neuralEngine = predictionCoordinator.getNeuralEngine()
+            val neuralEngine = predictionCoordinator?.getNeuralEngine()
             if (neuralEngine != null) {
                 // Helper to update layout dimensions and keys
                 val updateNeuralLayout = {
@@ -201,7 +201,7 @@ class PredictionViewSetup(
             keyboard2: Keyboard2,
             config: Config,
             keyboardView: Keyboard2View,
-            predictionCoordinator: PredictionCoordinator,
+            predictionCoordinator: PredictionCoordinator?,
             inputCoordinator: InputCoordinator?,
             suggestionHandler: SuggestionHandler?,
             neuralLayoutHelper: NeuralLayoutHelper?,

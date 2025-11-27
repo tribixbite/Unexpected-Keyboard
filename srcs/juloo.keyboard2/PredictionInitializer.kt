@@ -17,8 +17,8 @@ package juloo.keyboard2
  * @since v1.32.405
  */
 class PredictionInitializer(
-    private val config: Config,
-    private val predictionCoordinator: PredictionCoordinator,
+    private val config: Config?,
+    private val predictionCoordinator: PredictionCoordinator?,
     private val keyboardView: Keyboard2View,
     private val keyboard2: Keyboard2
 ) {
@@ -36,19 +36,19 @@ class PredictionInitializer(
      * first swipe works immediately. Singleton persists, so subsequent loads are instant.
      */
     fun initializeIfEnabled() {
-        if (config.word_prediction_enabled || config.swipe_typing_enabled) {
+        if (config?.word_prediction_enabled == true || config?.swipe_typing_enabled == true) {
             android.util.Log.d("PredictionInitializer", "Starting model initialization (synchronous)...")
             val startTime = System.currentTimeMillis()
 
             // Load models synchronously to guarantee first swipe works
             // Singleton persists, so this only happens once per app lifecycle
-            predictionCoordinator.initialize()
+            predictionCoordinator?.initialize()
 
             val loadTime = System.currentTimeMillis() - startTime
             android.util.Log.i("PredictionInitializer", "✅ Models loaded in ${loadTime}ms (ready for swipes)")
 
             // Set swipe typing components on keyboard view if swipe is enabled
-            if (config.swipe_typing_enabled && predictionCoordinator.isSwipeTypingAvailable()) {
+            if (config?.swipe_typing_enabled == true && predictionCoordinator?.isSwipeTypingAvailable() == true) {
                 android.util.Log.d(
                     "Keyboard2",
                     "Neural engine initialized - dimensions and key positions will be set after layout"
@@ -73,8 +73,8 @@ class PredictionInitializer(
          */
         @JvmStatic
         fun create(
-            config: Config,
-            predictionCoordinator: PredictionCoordinator,
+            config: Config?,
+            predictionCoordinator: PredictionCoordinator?,
             keyboardView: Keyboard2View,
             keyboard2: Keyboard2
         ): PredictionInitializer {
