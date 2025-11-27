@@ -5,7 +5,7 @@
 **Method**: Read ENTIRE file contents (no grep/sed), compare with current Kotlin, identify issues.
 
 **Started**: 2025-11-27
-**Status**: IN PROGRESS (12/100 files completed - 12%)
+**Status**: IN PROGRESS (13/100 files completed - 13%)
 
 ---
 
@@ -536,13 +536,53 @@
 
 ---
 
+#### 13. Autocapitalisation.java → Autocapitalisation.kt ✅ **PERFECT MIGRATION**
+
+**File**: `migration2/srcs/juloo.keyboard2/Autocapitalisation.java` (203 lines)
+**Kotlin**: `srcs/juloo.keyboard2/Autocapitalisation.kt` (183 lines)
+**Lines Read**: Full file - auto-capitalization state machine
+**Status**: ✅ **PERFECT MIGRATION**
+
+**Issues Found**: **NONE** ✅
+
+**Critical Sections Audited**:
+1. **Class structure (Java 10-33, Kotlin 10-23)**: Constructor injection for Handler/Callback ✅
+2. **started() - Initialization (Java 40-53, Kotlin 30-41)**: Caps mode, early returns, state setup ✅
+3. **typed() - Character input (Java 55-60, Kotlin 43-48)**: Loop refactored to `c.indices`, type_one_char calls ✅
+4. **event_sent() - Key events (Java 62-81, Kotlin 50-66)**: Meta check, KEYCODE_DEL/ENTER handling ✅
+5. **pause/unpause (Java 91-106, Kotlin 75-90)**: State save/restore logic identical ✅
+6. **Callback interface (Java 108-111, Kotlin 92-94)**: Static interface → fun interface (SAM) ✅
+7. **selection_updated() (Java 114-128, Kotlin 97-111)**: Cursor tracking, clear detection ✅
+8. **delayed_callback (Java 130-141, Kotlin 113-119)**: Anonymous class → lambda property ✅
+9. **callback() methods (Java 147-160, Kotlin 127-138)**: 50ms delay logic preserved ✅
+10. **type_one_char() (Java 162-169, Kotlin 140-147)**: Trigger character logic identical ✅
+11. **is_trigger_character() (Java 171-180, Kotlin 149-154)**: Space detection only ✅
+12. **started_should_update_state() (Java 184-202, Kotlin 160-175)**: 6 text variation checks ✅
+13. **SUPPORTED_CAPS_MODES (Java 25-27, Kotlin 177-182)**: Moved to companion object with @JvmField ✅
+
+**Notable Improvements**:
+1. Constructor injection for Handler and Callback (better DI)
+2. Snake_case → camelCase: `_should_enable_shift` → `shouldEnableShift`
+3. Private visibility for all internal state
+4. Nullable types: `ic: InputConnection?` with safe call operators
+5. Fun interface for Callback (SAM conversion)
+6. Range iteration: `c.indices` instead of manual loop
+7. When expressions with multi-case syntax
+8. Companion object for static field with @JvmField
+9. Lambda property for delayed_callback
+10. 10% line reduction (203 → 183)
+
+**Verdict**: **PERFECT** migration. All 203 lines of auto-capitalization state machine logic correctly preserved in 183 Kotlin lines. Event handling, callback timing (50ms delay), trigger character detection, and text variation checks all identical. Zero bugs found.
+
+---
+
 ## 🔄 IN PROGRESS (0/100)
 
 *None currently*
 
 ---
 
-## ⏳ PENDING (88/100)
+## ⏳ PENDING (87/100)
 
 ### High Priority Files (Core Functionality)
 
@@ -562,7 +602,7 @@ These files handle critical keyboard operations and should be audited next:
 ### Medium Priority Files (Features)
 
 11. ~~**ComposeKey.java**~~ ✅ COMPLETE - NO BUGS (86 lines, state machine)
-12. **Autocapitalisation.java** - Auto-capitalization logic
+12. ~~**Autocapitalisation.java**~~ ✅ COMPLETE - NO BUGS (203 lines, auto-caps state machine)
 13. **ClipboardManager.java** - Clipboard management
 14. **EmojiGridView.java** - Emoji picker
 15. **CustomExtraKeys.java** - Custom extra keys
@@ -716,12 +756,12 @@ For each file:
 ## Summary Statistics
 
 - **Total Files**: 100
-- **Completed**: 12 (12%)
+- **Completed**: 13 (13%)
 - **In Progress**: 0
-- **Pending**: 88 (88%)
+- **Pending**: 87 (87%)
 - **Critical Bugs Found**: 1 (swipePath.size condition - inherited from Java)
 - **Bugs Fixed**: 2 (v1.32.923 gesture fix, v1.32.917 keysHeight fix already in Kotlin)
-- **Perfect Migrations**: 12/12 (100%) ✅
+- **Perfect Migrations**: 13/13 (100%) ✅
   - Pointers (1,049 lines) - see note below*
   - KeyEventHandler (540→491 lines)
   - Keyboard2View (1,034→925 lines)
@@ -734,6 +774,7 @@ For each file:
   - KeyModifier (527→494 lines) - modifier composition with Hangul
   - LayoutModifier (228→237 lines) - layout caching and modification
   - ComposeKey (86→92 lines) - compose key state machine with binary search
+  - Autocapitalisation (203→183 lines) - auto-caps state machine with 50ms delay
 - **User-Reported Issues**: 1 (gestures not working - FIX DEPLOYED in v1.32.923)
 - **Resolution**: v1.32.923 installed, awaiting user testing
 
