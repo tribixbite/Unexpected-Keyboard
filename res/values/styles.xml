@@ -22,7 +22,7 @@
     <item name="android:layout_width">fill_parent</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:layout_marginHorizontal">14dp</item>
-    <item name="android:layout_marginVertical">14dp</item>
+    <item name="android:layout_marginVertical">7dp</item>
     <item name="android:textSize">16dp</item>
     <item name="android:textColor">?attr/colorLabel</item>
   </style>
@@ -84,5 +84,21 @@
     <!-- Setting this in the activity theme so it propagate to nested
          preference screens. -->
     <item name="android:fitsSystemWindows">true</item>
+  </style>
+  <!-- Dictionary Manager -->
+  <style name="DictionaryManagerTheme" parent="Theme.Material3.DayNight.NoActionBar">
+    <item name="android:fitsSystemWindows">true</item>
+    <item name="colorPrimary">#1E88E5</item>
+    <item name="colorOnPrimary">#FFFFFF</item>
+    <item name="colorSurface">#121212</item>
+    <item name="colorOnSurface">#E0E0E0</item>
+    <item name="colorSurfaceVariant">#1E1E1E</item>
+    <item name="colorOnSurfaceVariant">#AAAAAA</item>
+    <item name="android:statusBarColor">#000000</item>
+    <item name="android:navigationBarColor">#000000</item>
+  </style>
+  <style name="ToggleSwitchStyle">
+    <item name="android:thumbTint">@android:color/holo_green_light</item>
+    <item name="android:trackTint">@android:color/darker_gray</item>
   </style>
 </resources>

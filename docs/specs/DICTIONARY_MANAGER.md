@@ -1,0 +1,986 @@
+# Dictionary Manager Specification
+
+**Version**: 1.0
+**Status**: Implemented
+**Platform**: Android API 21+
+**Implementation**: Kotlin with Material Design
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [User Requirements](#user-requirements)
+3. [Architecture](#architecture)
+4. [UI Components](#ui-components)
+5. [Data Sources](#data-sources)
+6. [User Workflows](#user-workflows)
+7. [Technical Implementation](#technical-implementation)
+8. [Performance Requirements](#performance-requirements)
+9. [Error Handling](#error-handling)
+10. [Testing](#testing)
+
+---
+
+## Overview
+
+The Dictionary Manager provides a comprehensive UI for managing dictionary words used in prediction and auto-correction features. Users can view, enable/disable, add, edit, and delete words across four different dictionary sources.
+
+### Goals
+
+- Provide fine-grained control over dictionary words
+- Support multiple dictionary sources (main, user, custom)
+- Enable users to disable problematic words without deleting them
+- Allow custom word additions with frequency control
+- Integrate with Android's system UserDictionary
+- Maintain high performance with large dictionaries (50k+ words)
+
+### Non-Goals
+
+- Editing main BigramModel dictionary words
+- Modifying word frequencies for main dictionary
+- ~~Bulk import/export of custom dictionaries~~ ✅ IMPLEMENTED v1.32.306
+- Spell checking or word validation
+
+---
+
+## User Requirements
+
+### Functional Requirements
+
+1. **FR-1**: User must be able to view all words from the main dictionary
+2. **FR-2**: User must be able to disable/enable main dictionary words
+3. **FR-3**: User must be able to view all disabled words
+4. **FR-4**: User must be able to re-enable disabled words
+5. **FR-5**: User must be able to view Android UserDictionary words
+6. **FR-6**: User must be able to manage Android UserDictionary (add/delete)
+7. **FR-7**: User must be able to add custom words with frequency
+8. **FR-8**: User must be able to edit custom words
+9. **FR-9**: User must be able to delete custom words
+10. **FR-10**: User must be able to search all words in real-time
+11. **FR-11**: User must be able to filter words by source (MAIN/USER/CUSTOM)
+12. **FR-12**: ~~UI must auto-switch tabs when current tab has no search results~~ **(REMOVED v1.32.200)**
+13. **FR-13**: UI must show result counts under each tab name (added v1.32.200)
+14. **FR-14**: User must be able to export custom words and disabled words to JSON file (added v1.32.305-306)
+15. **FR-15**: User must be able to import custom words and disabled words from JSON file with smart merge (added v1.32.305-306)
+
+### Non-Functional Requirements
+
+1. **NFR-1**: Search must debounce at 300ms to prevent excessive filtering
+2. **NFR-2**: UserDictionary search must use database-level filtering for performance
+3. **NFR-3**: ~~UI must use RecyclerView with DiffUtil for efficient updates~~ UI uses direct list updates with notifyDataSetChanged() for instant performance with 50k words (v1.32.199). Trade-off: No animations but <100ms update time.
+4. **NFR-4**: Dark mode UI must be touch-friendly and mobile-optimized
+5. **NFR-5**: Must work on Android API 21+ (Android 5.0 Lollipop)
+6. **NFR-6**: Must not require external permissions (except READ_USER_DICTIONARY)
+7. **NFR-7**: Search must use prefix indexing for O(1) lookup performance with 50k words (v1.32.191)
+
+---
+
+## Architecture
+
+### Component Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              DictionaryManagerActivity                       │
+│  - Search Input (debounced 300ms)                           │
+│  - Filter Spinner (ALL/MAIN/USER/CUSTOM)                    │
+│  - Reset Button                                              │
+│  - TabLayout (4 tabs)                                        │
+│  - ViewPager2                                                │
+└──────────────┬──────────────────────────────────────────────┘
+               │
+               ├── WordListFragment (Active)
+               │   └── WordToggleAdapter
+               │       └── MainDictionarySource + DisabledDictionarySource
+               │
+               ├── WordListFragment (Disabled)
+               │   └── WordToggleAdapter
+               │       └── DisabledDictionarySource
+               │
+               ├── WordListFragment (User Dict)
+               │   └── WordToggleAdapter
+               │       └── UserDictionarySource
+               │
+               └── WordListFragment (Custom)
+                   └── WordEditableAdapter
+                       └── CustomDictionarySource
+```
+
+### Data Flow
+
+```
+User Input (Search/Filter)
+    ↓
+DictionaryManagerActivity (debounce + state)
+    ↓
+performSearch(query, sourceFilter)
+    ↓
+WordListFragment.filter(query, sourceFilter)
+    ↓
+[Coroutine on lifecycleScope] Cancel previous search
+    ↓
+dataSource.searchWords(query) [O(1) prefix indexing]
+    ↓
+Optional source filtering (MAIN/USER/CUSTOM)
+    ↓
+BaseWordAdapter.setWords(filteredList)
+    ↓
+notifyDataSetChanged() [Instant, no animations]
+    ↓
+RecyclerView updates
+    ↓
+updateTabCounts() [Show (451) result counts]
+```
+
+---
+
+## UI Components
+
+### Main Activity Layout
+
+**File**: `res/layout/activity_dictionary_manager.xml`
+
+```xml
+┌──────────────────────────────────────────────────────┐
+│  [Search Input] [Filter ▼] [Reset]                  │
+├──────────────────────────────────────────────────────┤
+│  [ Active  ] [ Disabled] [ User Dict] [ Custom ]    │
+│    (8234)      (142)        (5)          (23)       │
+├──────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────┐ │
+│  │ word1                           [Toggle]       │ │
+│  │ word2                           [Toggle]       │ │
+│  │ word3                           [Toggle]       │ │
+│  │ ...                                            │ │
+│  └────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────┘
+```
+
+**Note**: Tab counts (v1.32.200) show result numbers in format "Title\n(count)"
+
+**Components**:
+- `EditText search_input`: Real-time search with TextWatcher
+- `Spinner filter_spinner`: WordSource filter (ALL/MAIN/USER/CUSTOM)
+- `Button reset_button`: Clears search and filter
+- `TabLayout tab_layout`: 4 tabs navigation
+- `ViewPager2 view_pager`: Fragment container
+
+### Fragment Layout
+
+**File**: `res/layout/fragment_word_list.xml`
+
+**Components**:
+- `RecyclerView recycler_view`: Main word list
+- `TextView empty_text`: "No words found" message
+- `ProgressBar loading_progress`: Loading indicator
+
+### List Item Layouts
+
+#### Toggle Item (Active/Disabled/User)
+
+**File**: `res/layout/item_word_toggle.xml`
+
+```
+┌─────────────────────────────────────────────┐
+│ word_text (bold, 16sp)        [○ Toggle]   │
+│ frequency_text (gray, 12sp)                 │
+└─────────────────────────────────────────────┘
+```
+
+#### Editable Item (Custom)
+
+**File**: `res/layout/item_word_editable.xml`
+
+```
+┌─────────────────────────────────────────────────┐
+│ word_text (bold, 16sp)     [Edit] [Del]        │
+│ frequency_text (gray, 12sp)                     │
+└─────────────────────────────────────────────────┘
+```
+
+**Special**: First item is "+ Add New Word" with hidden buttons
+
+---
+
+## Data Sources
+
+### 1. MainDictionarySource
+
+**Purpose**: Read-only access to main dictionary (50k words with real frequencies)
+
+**Data Source**: `assets/dictionaries/en_enhanced.json`
+
+**Format**: JSON object
+```json
+{"the": 255, "of": 254, "to": 254, "and": 254, ...}
+```
+
+**Statistics**:
+- **Word Count**: 49,981
+- **File Size**: 789 KB
+- **Frequency Range**: 128-255 (raw values displayed in UI)
+
+**Operations**:
+- `getAllWords()`: Returns List<DictionaryWord> with WordSource.MAIN
+- `searchWords(query)`: Filters getAllWords() by query (in-memory)
+- `toggleWord(word, enabled)`: Delegates to DisabledDictionarySource
+
+**Notes**:
+- Words are marked disabled based on DisabledDictionarySource
+- Frequencies displayed as-is (128-255) in Dictionary Manager UI
+- Internal prediction engines scale frequencies for scoring:
+  - WordPredictor: 128-255 → 100-10000
+  - OptimizedVocabulary: 128-255 → 0.0-1.0
+
+### 2. DisabledDictionarySource
+
+**Purpose**: Manage list of disabled words
+
+**Data Source**: `SharedPreferences` key: `"disabled_words"` (StringSet)
+
+**Operations**:
+- `getAllWords()`: Returns disabled words as List<DictionaryWord>
+- `searchWords(query)`: Filters disabled words by query
+- `toggleWord(word, enabled)`: Adds/removes from StringSet
+- `setWordEnabled(word, enabled)`: Helper method
+
+**Storage Format**:
+```json
+{
+  "disabled_words": ["word1", "word2", "word3"]
+}
+```
+
+### 3. UserDictionarySource
+
+**Purpose**: Access Android system UserDictionary
+
+**Data Source**: `UserDictionary.Words` ContentProvider
+
+**Operations**:
+- `getAllWords()`: Query ContentProvider with null selection
+- `searchWords(query)`: Query with `WORD LIKE ?` for performance
+- `addWord(word, frequency)`: Use `UserDictionary.Words.addWord()`
+- `deleteWord(word)`: Delete via ContentProvider
+- `updateWord(old, new, freq)`: Delete + Add
+
+**Performance**:
+- Search uses database-level filtering: `WHERE WORD LIKE '%query%'`
+- Avoids loading entire dictionary into memory
+
+**Permissions**:
+- Requires `READ_USER_DICTIONARY` in AndroidManifest.xml
+
+### 4. CustomDictionarySource
+
+**Purpose**: App-specific custom words
+
+**Data Source**: `SharedPreferences` key: `"custom_words"` (JSON)
+
+**Operations**:
+- `getAllWords()`: Parse JSON to Map<String, Int>
+- `searchWords(query)`: Filter custom words by query
+- `addWord(word, frequency)`: Add to map, save JSON
+- `deleteWord(word)`: Remove from map, save JSON
+- `updateWord(old, new, freq)`: Remove old, add new, save JSON
+
+**Storage Format**:
+```json
+{
+  "custom_words": "{\"word1\":100,\"word2\":200,\"word3\":50}"
+}
+```
+
+---
+
+## User Workflows
+
+### Workflow 1: Search Words (Updated v1.32.191-200)
+
+1. User types in search box
+2. TextWatcher triggers after 300ms debounce
+3. DictionaryManagerActivity calls performSearch(query)
+4. All 4 fragments filter their lists via coroutines (cancel previous searches)
+5. dataSource.searchWords(query) uses O(1) prefix indexing (v1.32.191)
+6. RecyclerView updates instantly via notifyDataSetChanged() (v1.32.199)
+7. Tab counts update after 100ms delay showing "(451)" format (v1.32.200)
+
+### Workflow 2: Filter by Source
+
+1. User selects filter from Spinner (MAIN/USER/CUSTOM)
+2. onItemSelected() calls applyFilter(filterType)
+3. performSearch() maps FilterType → WordSource
+4. All fragments filter by both query AND source
+5. RecyclerView updates
+
+### Workflow 3: Disable Main Dictionary Word
+
+1. User navigates to Active tab
+2. User toggles switch for word
+3. WordToggleAdapter calls onToggle(word, false)
+4. WordListFragment calls dataSource.toggleWord(word, false)
+5. DisabledDictionarySource adds word to StringSet
+6. Fragment calls loadWords() to refresh
+7. Activity calls refreshAllTabs() to update other tabs
+
+### Workflow 4: Add Custom Word
+
+1. User navigates to Custom tab
+2. User taps "+ Add New Word" item
+3. Dialog shows with EditText
+4. User enters word and taps "Add"
+5. Validation: word.isNotBlank()
+6. CustomDictionarySource.addWord(word, 100)
+7. Fragment calls loadWords() to refresh
+
+### Workflow 5: Edit Custom Word
+
+1. User navigates to Custom tab
+2. User taps "Edit" button on word
+3. Dialog shows with EditText pre-filled
+4. User modifies word and taps "Save"
+5. Validation: newWord.isNotBlank() && newWord != oldWord
+6. CustomDictionarySource.updateWord(old, new, freq)
+7. Fragment calls loadWords() to refresh
+
+### Workflow 6: Delete Custom Word
+
+1. User navigates to Custom tab
+2. User taps "Del" button on word
+3. Confirmation dialog shows
+4. User taps "Delete"
+5. CustomDictionarySource.deleteWord(word)
+6. Fragment calls loadWords() to refresh
+
+### Workflow 7: Export Custom Dictionary (v1.32.305-306)
+
+1. User navigates to Settings → Backup & Restore
+2. User taps "Export Custom Dictionary" preference
+3. System shows Storage Access Framework file picker
+4. User selects save location
+5. SettingsActivity.performExportCustomDictionary():
+   - Reads custom_words from DirectBootAwarePreferences.get_shared_preferences()
+   - Reads disabled_words StringSet
+   - Creates structured JSON with metadata
+6. File saved with name: `custom-dictionary-YYYYMMDD_HHMMSS.json`
+7. Toast shows: "Successfully exported:\n• N custom word(s)\n• M disabled word(s)"
+
+**File Structure**:
+- res/xml/settings.xml:138 - Export button preference
+- srcs/juloo.keyboard2/SettingsActivity.java:33 - REQUEST_CODE_EXPORT_CUSTOM_DICT
+- srcs/juloo.keyboard2/SettingsActivity.java:1142-1220 - performExportCustomDictionary()
+
+**SharedPreferences Access**:
+- Must use `DirectBootAwarePreferences.get_shared_preferences(context)`
+- NOT `getPreferenceManager().getSharedPreferences()` (wrong storage)
+
+**JSON Format**:
+```json
+{
+  "custom_words": {"hello": 150, "world": 200},
+  "disabled_words": ["the", "of"],
+  "export_version": 1,
+  "export_date": "2025-11-11 16:56:00"
+}
+```
+
+### Workflow 8: Import Custom Dictionary (v1.32.305-306)
+
+1. User navigates to Settings → Backup & Restore
+2. User taps "Import Custom Dictionary" preference
+3. System shows Storage Access Framework file picker
+4. User selects JSON file
+5. SettingsActivity.performImportCustomDictionary():
+   - Parses JSON from file
+   - Validates structure (custom_words object, disabled_words array)
+   - Smart merge for custom words:
+     - Add new words
+     - Update existing words only if imported frequency is higher
+   - Smart merge for disabled words:
+     - StringSet automatically handles duplicates
+   - Saves to SharedPreferences
+6. Toast shows: "Successfully imported:\n• N custom word(s) added\n• M disabled word(s) added\n• K duplicate(s) skipped (not updated)"
+
+**File Structure**:
+- res/xml/settings.xml:139 - Import button preference
+- srcs/juloo.keyboard2/SettingsActivity.java:34 - REQUEST_CODE_IMPORT_CUSTOM_DICT
+- srcs/juloo.keyboard2/SettingsActivity.java:1222-1315 - performImportCustomDictionary()
+
+**Duplicate Prevention**:
+- Custom words: Compare by word key, update only if new frequency > existing frequency
+- Disabled words: StringSet naturally prevents duplicates
+
+**Error Handling**:
+- Invalid JSON format: Show error toast
+- Missing required fields: Show error toast
+- File read failure: Show error toast
+- Empty dictionary: Show "No words to import" message
+
+---
+
+## Technical Implementation
+
+### Data Models
+
+#### DictionaryWord
+
+```kotlin
+data class DictionaryWord(
+    val word: String,           // The word text
+    val frequency: Int = 0,     // Frequency range varies by source
+    val source: WordSource,     // MAIN/USER/CUSTOM
+    val enabled: Boolean = true // Disabled state
+) : Comparable<DictionaryWord>
+```
+
+**Frequency Ranges by Source**:
+- **MAIN**: 128-255 (raw values from JSON dictionary)
+- **USER**: Typically 250 (Android UserDictionary default)
+- **CUSTOM**: 1-10000 (user-editable, default 100)
+
+**Sorting**: By frequency descending, then alphabetically
+
+#### WordSource
+
+```kotlin
+enum class WordSource {
+    MAIN,   // BigramModel dictionary
+    USER,   // Android UserDictionary
+    CUSTOM  // App-specific custom words
+}
+```
+
+#### FilterType
+
+```kotlin
+enum class FilterType {
+    ALL,    // Show all sources
+    MAIN,   // Show only MAIN source
+    USER,   // Show only USER source
+    CUSTOM  // Show only CUSTOM source
+}
+```
+
+### Adapters
+
+#### BaseWordAdapter
+
+```kotlin
+abstract class BaseWordAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    protected var allWords: List<DictionaryWord> = emptyList()
+    protected var filteredWords: List<DictionaryWord> = emptyList()
+
+    fun setWords(words: List<DictionaryWord>)
+    fun filter(query: String, sourceFilter: WordSource? = null)
+    fun getFilteredCount(): Int
+}
+```
+
+**Filtering Logic**:
+```kotlin
+filteredWords = allWords.filter { word ->
+    val matchesQuery = if (query.isBlank()) true
+        else word.word.contains(query, ignoreCase = true)
+
+    val matchesSource = if (sourceFilter == null) true
+        else word.source == sourceFilter
+
+    matchesQuery && matchesSource
+}
+```
+
+**DiffUtil**: Used for efficient RecyclerView updates
+
+#### WordToggleAdapter
+
+Extends BaseWordAdapter
+
+**ViewHolder**: ToggleViewHolder
+- `TextView word_text`
+- `TextView frequency_text`
+- `SwitchCompat enable_toggle`
+
+**Callback**: `onToggle: (DictionaryWord, Boolean) -> Unit`
+
+#### WordEditableAdapter
+
+Extends BaseWordAdapter
+
+**ViewHolders**:
+1. AddViewHolder (position 0): "+ Add New Word"
+2. EditableViewHolder (position 1+): Word with Edit/Del buttons
+
+**Callbacks**:
+- `onEdit: (DictionaryWord) -> Unit`
+- `onDelete: (DictionaryWord) -> Unit`
+- `onAdd: () -> Unit`
+
+### Fragment Lifecycle
+
+```kotlin
+onCreate() → initializeDataSource()
+onViewCreated() → setupAdapter() → loadWords()
+loadWords() → lifecycleScope.launch → dataSource.getAllWords()
+filter() → adapter.filter() → updateEmptyState()
+```
+
+### Activity State Management
+
+```kotlin
+private var currentSearchQuery = ""
+private var currentFilter: FilterType = FilterType.ALL
+```
+
+**Issue**: State lost on configuration changes (rotation)
+**Future**: Use ViewModel for state persistence
+
+---
+
+## Performance Requirements
+
+### Search Performance (v1.32.191-199)
+
+- **Debounce**: 300ms to prevent excessive filtering
+- **Prefix Indexing** (v1.32.191): O(1) lookup for 1-3 character prefixes
+  - Reduces iterations from 50k → 100-500 per keystroke
+  - Main dictionary search: <100ms with 50k words ✅
+- **UserDictionary**: Database-level filtering (`LIKE` clause)
+- **Custom**: In-memory filtering (typically < 100 words)
+- **Coroutine Cancellation** (v1.32.197): Prevents concurrent searches
+
+### Memory Usage
+
+- **RecyclerView**: Only visible items in memory
+- **Prefix Index** (v1.32.191): +2 MB for prefix index (acceptable)
+- **Coroutines**: Background loading with cancellation support
+
+### UI Responsiveness
+
+- **Target**: < 100ms for filter updates ✅ ACHIEVED
+- **Search Performance**: Instant with prefix indexing (<100ms)
+- **Update Performance** (v1.32.199): notifyDataSetChanged() provides instant updates
+  - Trade-off: No animations, but <100ms update time with 50k words
+  - Previous AsyncListDiffer approach: 19 second delay ❌
+- **Loading indicators**: Show during initial data load
+- **Empty states**: Show when filtered results = 0
+- **Tab Counts** (v1.32.200): Update 100ms after search completion
+
+### Dictionary Loading Performance (v1.32.537-539)
+
+**Asynchronous Loading** (perftodos3.md Todo 1):
+- **Binary Format**: 5-10x faster than JSON (BinaryDictionaryLoader)
+  - 50k words load in ~30-60ms (was 300ms+ with JSON)
+  - Pre-built prefix index eliminates runtime indexing overhead
+- **Background Thread**: ExecutorService with single-threaded loading
+  - NO UI freeze during language switching ✅
+  - NO UI freeze during app startup ✅
+  - Callback-based completion on main thread
+- **Loading State**: `isLoading()` API for UI feedback
+  - DictionaryManager.isLoading() checks current predictor
+  - WordPredictor.isLoading() tracks async state
+  - getPredictions() returns empty list while loading
+
+**Auto-Update Observers** (perftodos3.md Todo 2):
+- **ContentObserver**: Monitors UserDictionary.Words for system changes
+  - Instant updates when user adds words via system settings
+  - NO app restart required ✅
+- **SharedPreferences Listener**: Monitors custom words
+  - Instant updates when user adds/edits custom words in Dictionary Manager
+  - NO app restart required ✅
+- **Activation**: `startObservingDictionaryChanges()` called after dictionary loads
+  - Previously: Observer code existed but never activated (dead code)
+  - Now: Active for all loaded dictionaries (setLanguage + preloadLanguages)
+
+---
+
+## Error Handling
+
+### UserDictionary Permission Denied
+
+**Scenario**: App not set as default IME
+
+**Current**: Shows empty list
+
+**Future**: Show message "Set as default keyboard to access UserDictionary"
+
+### Add Word Failure
+
+**Scenario**: UserDictionary.Words.addWord() throws exception
+
+**Handling**: Show AlertDialog with error message
+
+### Delete Word Failure
+
+**Scenario**: ContentResolver.delete() throws exception
+
+**Handling**: Show AlertDialog with error message
+
+### Edit Word Failure
+
+**Scenario**: updateWord() throws exception
+
+**Handling**: Show AlertDialog with error message
+
+### Empty Search Results
+
+**Scenario**: Search/filter returns 0 results
+
+**Handling**:
+1. Show "No words found" TextView
+2. If query not empty, auto-switch to first tab with results
+
+---
+
+## Testing
+
+### Unit Tests
+
+Not implemented - Kotlin code not yet covered by unit tests
+
+### Manual Test Cases
+
+#### TC-1: View Active Words
+
+**Steps**:
+1. Open Settings → Dictionary Manager
+2. Verify Active tab selected by default
+3. Verify words from BigramModel displayed
+4. Verify frequency shown for each word
+
+**Expected**: List of words with frequencies, sorted by frequency
+
+#### TC-2: Search Words
+
+**Steps**:
+1. Open Dictionary Manager
+2. Type "the" in search box
+3. Wait 300ms
+4. Verify results filtered
+
+**Expected**: Only words containing "the" (case-insensitive)
+
+#### TC-3: Filter by Source
+
+**Steps**:
+1. Open Dictionary Manager
+2. Select "CUSTOM" from filter dropdown
+3. Verify only custom words shown across all tabs
+
+**Expected**: Only words with WordSource.CUSTOM visible
+
+#### TC-4: Disable Word
+
+**Steps**:
+1. Navigate to Active tab
+2. Toggle off switch for "the"
+3. Navigate to Disabled tab
+4. Verify "the" appears
+
+**Expected**: Word moved from Active to Disabled
+
+#### TC-5: Add Custom Word
+
+**Steps**:
+1. Navigate to Custom tab
+2. Tap "+ Add New Word"
+3. Enter "test123"
+4. Tap "Add"
+
+**Expected**: "test123" appears in list with frequency 100
+
+#### TC-6: Auto-Switch Tabs
+
+**Steps**:
+1. Open Dictionary Manager (Active tab)
+2. Select "CUSTOM" filter
+3. Verify tab switches to Custom
+
+**Expected**: Automatically switches to first tab with results
+
+#### TC-7: Reset Search/Filter
+
+**Steps**:
+1. Enter search query "abc"
+2. Select "USER" filter
+3. Tap "Reset" button
+
+**Expected**: Search cleared, filter = ALL, all words shown
+
+---
+
+## Known Issues
+
+### 1. State Loss on Configuration Change
+
+**Severity**: Medium
+
+**Description**: Search query and filter selection lost on screen rotation
+
+**Workaround**: User must re-enter search/filter
+
+**Fix**: Implement ViewModel for state persistence
+
+### 2. ~~Full List Reload on Changes~~ ✅ FIXED v1.32.191
+
+**Severity**: Low
+
+**Description**: Toggle/add/delete triggers full data reload instead of incremental update
+
+**Status**: FIXED - refreshAllTabs() now properly updates predictions after dictionary changes
+
+### 3. No Permission Error Message
+
+**Severity**: Low
+
+**Description**: UserDictionary tab shows empty if app not default IME
+
+**Workaround**: User must set app as default keyboard
+
+**Fix**: Show explanatory message instead of empty list
+
+---
+
+## Bugs Fixed
+
+### v1.32.191 - Dictionary Manager Bug Fixes
+
+1. **Search Lag**: Fixed search iterating all 50k words on main thread
+   - Root cause: filter() did linear search instead of using prefix indexing
+   - Fix: Use dataSource.searchWords() with O(1) prefix indexing
+
+2. **Wrong Word Labels**: Fixed incorrect labels after filtering/adding custom words
+   - Root cause: RecyclerView using stale position parameter
+   - Fix: Use holder.bindingAdapterPosition with bounds checking
+
+3. **Deleted Words Still in Predictions**: Fixed dictionary changes not updating predictions
+   - Root cause: Missing refreshAllTabs() calls
+   - Fix: Call refreshAllTabs() after add/delete/edit operations
+
+### v1.32.197 - System Freeze Fix
+
+1. **System Freeze During Search**: Fixed complete system freeze when typing
+   - Root cause: DiffUtil.calculateDiff() blocking main thread with O(n²) on 50k words
+   - Investigation: Used zen MCP with Gemini-2.5-pro for systematic analysis
+   - Fix: AsyncListDiffer + coroutine cancellation
+   - Result: No freeze, but introduced 19-second delay
+
+### v1.32.199 - Instant Search Fix
+
+1. **19-Second Search Delay**: Fixed extreme delay for results to appear
+   - Root cause: AsyncListDiffer O(n²) diff too slow for 50k words
+   - Analysis: AsyncListDiffer designed for small datasets (hundreds), not 50k
+   - Fix: Removed AsyncListDiffer, replaced with direct list updates
+   - Trade-off: No animations, but instant <100ms updates
+   - Performance: Speed > animations for utility app ✅
+
+### v1.32.200 - UX Improvements
+
+1. **Auto Tab-Switching**: Removed disorienting automatic tab changes
+2. **Tab Result Counts**: Added "(451)" count display under tab names
+   - Updates on search, reset, and word modifications
+   - Modular design: automatically works with any number of tabs
+
+---
+
+## Future Enhancements
+
+### 1. ViewModel Architecture
+
+- Centralized DataSource instances
+- State persistence across config changes
+- LiveData/StateFlow for reactive updates
+
+### 2. Bulk Operations
+
+- Select multiple words for bulk disable/delete
+- Import/export custom dictionary CSV
+
+### 3. Word Statistics
+
+- Show usage frequency for custom words
+- Show last used timestamp
+- Sort by most recently used
+
+### 4. Advanced Filtering
+
+- Filter by frequency range
+- Filter by word length
+- Combine multiple filters (AND/OR logic)
+
+### 5. Undo/Redo
+
+- Undo accidental deletions
+- Redo operations
+- Operation history
+
+---
+
+## File Structure
+
+```
+srcs/juloo.keyboard2/
+├── DictionaryWord.kt              # Data model
+├── DictionaryDataSource.kt        # Interface + 4 implementations
+├── WordListAdapter.kt             # BaseWordAdapter + 2 subclasses
+├── WordListFragment.kt            # Fragment for each tab
+└── DictionaryManagerActivity.kt   # Main activity
+
+res/layout/
+├── activity_dictionary_manager.xml  # Main activity layout
+├── fragment_word_list.xml           # Fragment layout
+├── item_word_toggle.xml             # Toggle item layout
+└── item_word_editable.xml           # Editable item layout
+
+res/values/
+└── styles.xml                       # ToggleSwitchStyle
+
+res/xml/
+└── settings.xml                     # Dictionary Manager preference
+
+AndroidManifest.xml                  # Activity + permission
+```
+
+---
+
+## Integration Points
+
+### BigramModel
+
+**Methods Used**:
+- `BigramModel.getInstance(Context)`: Get singleton instance
+- `BigramModel.getAllWords()`: Get all words from current language
+- `BigramModel.getWordFrequency(String)`: Get frequency (0-1000)
+
+**Files Modified**:
+- `srcs/juloo.keyboard2/BigramModel.java`: Added getAllWords() and getWordFrequency() methods
+
+### SharedPreferences
+
+**Keys**:
+- `disabled_words`: StringSet of disabled word strings
+- `custom_words`: JSON string of {word: frequency} map
+
+**Access**:
+- `DirectBootAwarePreferences.get_shared_preferences(Context)`
+
+### UserDictionary
+
+**ContentProvider**:
+- URI: `UserDictionary.Words.CONTENT_URI`
+- Columns: `WORD`, `FREQUENCY`
+
+**API**:
+- `UserDictionary.Words.addWord(context, word, frequency, null, null)`
+- `contentResolver.delete(URI, selection, args)`
+
+---
+
+## Dependencies
+
+### Kotlin
+- `kotlin-stdlib:1.9.20`
+- `kotlinx-coroutines-android:1.7.3`
+
+### Material Design
+- `material:1.11.0`
+- `recyclerview:1.3.2`
+- `viewpager2:1.0.0`
+- `appcompat:1.6.1`
+- `constraintlayout:2.1.4`
+
+### Build
+- Kotlin plugin: `org.jetbrains.kotlin.android:1.9.20`
+- ViewBinding enabled
+
+---
+
+## Changelog
+
+### v1.32.305-306 (2025-11-11)
+- **FEATURE**: Added export custom dictionary to JSON
+  - Button in Settings → Backup & Restore
+  - Exports both custom_words and disabled_words
+  - Structured JSON format with metadata (version, date, counts)
+  - Filename: `custom-dictionary-YYYYMMDD_HHMMSS.json`
+  - Toast shows export summary with counts
+- **FEATURE**: Added import custom dictionary from JSON
+  - Button in Settings → Backup & Restore
+  - Smart merge: adds new words, updates only if higher frequency
+  - Duplicate prevention for both custom and disabled words
+  - Validates JSON structure and shows error messages
+  - Toast shows import summary with added/skipped counts
+- **BUGFIX**: Fixed SharedPreferences access
+  - Changed from getPreferenceManager().getSharedPreferences()
+  - Now uses DirectBootAwarePreferences.get_shared_preferences()
+  - Matches how CustomDictionarySource and DisabledDictionarySource access data
+- **Files Modified**:
+  - res/xml/settings.xml: Added export/import preference buttons
+  - srcs/juloo.keyboard2/SettingsActivity.java: Added export/import implementation
+- **Integration**: Uses Storage Access Framework for file picker
+- **Known Issues**: None - feature working as designed
+
+### v1.32.200 (2025-10-22)
+- **UX**: Removed automatic tab switching after search (disorienting)
+- **FEATURE**: Added result count display under tab names in format "(451)"
+- Modular tab count system: automatically works with any number of tabs
+- Counts update on search, reset, and word modifications (100ms delay)
+- Added getFilteredCount() to adapters and fragments
+
+### v1.32.199 (2025-10-22)
+- **PERFORMANCE**: Fixed 19-second search delay with 50k words
+- Removed AsyncListDiffer (too slow for large datasets)
+- Replaced with direct list updates: currentList + notifyDataSetChanged()
+- Trade-off: No animations, but instant <100ms updates
+- Performance: Speed > animations for utility app ✅
+
+### v1.32.197 (2025-10-22)
+- **BUGFIX**: Fixed system freeze during search (main thread blocking)
+- Investigation: Used zen MCP with Gemini-2.5-pro for systematic analysis
+- Root cause: DiffUtil.calculateDiff() synchronous O(n²) with 50k words
+- Fix: AsyncListDiffer + coroutine cancellation (lifecycleScope.launch)
+- Result: No freeze, but introduced 19-second delay (fixed in v1.32.199)
+
+### v1.32.191 (2025-10-22)
+- **BUGFIX**: Fixed search lag with 50k words (was iterating all words on main thread)
+  - Changed filter() to use dataSource.searchWords() with O(1) prefix indexing
+  - Search now instant with <100ms performance
+- **BUGFIX**: Fixed wrong word labels after filtering/adding custom words
+  - Changed onBindViewHolder() to use holder.bindingAdapterPosition
+  - Added bounds checking to prevent stale position bugs
+- **BUGFIX**: Fixed deleted/added custom words not updating predictions
+  - Added refreshAllTabs() calls to deleteWord(), showAddDialog(), showEditDialog()
+  - Signals WordPredictor lazy reload + reloads OnnxSwipePredictor vocabulary
+
+### v1.32.181-184 (2025-10-21)
+- **MAJOR**: Upgraded main dictionary from 10k to 50k words with real frequencies
+- Dictionary source changed from BigramModel to JSON (assets/dictionaries/en_enhanced.json)
+- Frequency range changed: probability*1000 (0-1000) → raw values (128-255)
+- Added editable frequency for custom words (default 100, range 1-10000)
+- Display raw frequency values in UI (128-255 for main, 1-10000 for custom)
+- Internal scoring engines scale frequencies appropriately:
+  - WordPredictor: 128-255 → 100-10000
+  - OptimizedVocabulary: 128-255 → 0.0-1.0
+- Updated spec to reflect 50k vocabulary scaling
+
+### v1.32.157 (2025-10-20)
+- Initial implementation
+- 4 tabs: Active, Disabled, User Dict, Custom
+- Search with debouncing
+- Filter dropdown
+- Auto-tab-switching
+
+### v1.32.160 (2025-10-20)
+- Fixed filter dropdown to filter by source (not switch tabs)
+- Optimized UserDictionary search with database LIKE filtering
+- Changed isNotEmpty() to isNotBlank() for validation
+- Gemini code review improvements
+
+---
+
+## References
+
+- [Android UserDictionary API](https://developer.android.com/reference/android/provider/UserDictionary.Words)
+- [Material Design Components](https://material.io/components)
+- [RecyclerView DiffUtil](https://developer.android.com/reference/androidx/recyclerview/widget/DiffUtil)
+- [ViewPager2](https://developer.android.com/reference/androidx/viewpager2/widget/ViewPager2)

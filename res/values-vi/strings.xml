@@ -35,8 +35,6 @@
     <!-- <string name="pref_extra_keys_custom">Add custom keys</string> -->
     <!-- <string name="pref_extra_keys_internal">Select keys to add to the keyboard</string> -->
     <string name="pref_category_typing">Gõ</string>
-    <string name="pref_swipe_dist_title">Khoảng cách vuốt</string>
-    <string name="pref_swipe_dist_summary">Khoảng cách giữa các ký tự ở góc phím (%s)</string>
     <!-- <string name="pref_long_timeout_title">Long press timeout</string> -->
     <string name="pref_long_interval_title">Khoảng thời gian lặp phím</string>
     <!-- <string name="pref_keyrepeat_enabled">Key repeat on long press</string> -->
@@ -73,11 +71,6 @@
     <!-- <string name="pref_theme_e_monetlight">Monet (Light)</string> -->
     <!-- <string name="pref_theme_e_monetdark">Monet (Dark)</string> -->
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">Rất gần</string>
-    <string name="pref_swipe_dist_e_short">Gần</string>
-    <string name="pref_swipe_dist_e_default">Trungbình</string>
-    <string name="pref_swipe_dist_e_far">Xa</string>
-    <string name="pref_swipe_dist_e_very_far">Rất xa</string>
     <string name="pref_key_horizontal_space">Khoảng cách giữa các phím theo chiều ngang</string>
     <string name="pref_key_vertical_space">Khoảng cách giữa các phím theo chiều dọc</string>
     <!-- <string name="pref_border_config_title">Customize borders</string> -->

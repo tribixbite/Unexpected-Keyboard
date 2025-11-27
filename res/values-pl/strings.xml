@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Dodaj niestandardowe klawisze</string>
     <string name="pref_extra_keys_internal">Wybierz klawisze, które chcesz dodać do klawiatury</string>
     <string name="pref_category_typing">Pisanie</string>
-    <string name="pref_swipe_dist_title">Odległość przesuwania</string>
-    <string name="pref_swipe_dist_summary">Odległość znaków od rogów klawiszy (%s)</string>
     <string name="pref_long_timeout_title">Opóźnienie przytrzymania klawisza</string>
     <string name="pref_long_interval_title">Czas pomiędzy powtórzeniem klawisza</string>
     <string name="pref_keyrepeat_enabled">Powtarzanie klawisza po przytrzymaniu</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (Jasny)</string>
     <string name="pref_theme_e_monetdark">Monet (Ciemny)</string>
     <string name="pref_theme_e_rosepine">Rosé Pine</string>
-    <string name="pref_swipe_dist_e_very_short">Bardzo mała</string>
-    <string name="pref_swipe_dist_e_short">Mała</string>
-    <string name="pref_swipe_dist_e_default">Normalna</string>
-    <string name="pref_swipe_dist_e_far">Duża</string>
-    <string name="pref_swipe_dist_e_very_far">Bardzo duża</string>
     <string name="pref_key_horizontal_space">Odległość pomiędzy klawiszami w poziomie</string>
     <string name="pref_key_vertical_space">Odległość pomiędzy klawiszami w pionie</string>
     <string name="pref_border_config_title">Dostosuj krawędzie</string>

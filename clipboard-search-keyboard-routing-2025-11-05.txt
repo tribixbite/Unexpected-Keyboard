@@ -1,0 +1,252 @@
+## Clipboard Search Box Keyboard Input Routing (2025-11-05)
+
+### Session Summary
+Implemented internal keyboard routing for clipboard search box and fixed clipboard persistence issues.
+
+---
+
+### Issues Fixed
+
+1. **Clipboard History Persistence Between App Updates**
+   - **Problem**: After app updates, only 1 clipboard item shown despite "unlimited" setting
+   - **Root Cause**: TTL was 5 minutes - on service restart after update, all items >5 min old were deleted
+   - **Fix**: Changed TTL from 5 minutes to 7 days (ClipboardHistoryService.java:78)
+   ```java
+   // BEFORE:
+   public static final long HISTORY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+   // AFTER:
+   public static final long HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000L; // 7 days
+   ```
+
+2. **Search Box Keyboard Input Not Working**
+   - **Problem**: Search box was EditText, but InputMethodService cannot show keyboard for its own views
+   - **User Report**: "still no way to enter text in search bar consult gemini"
+   - **Root Cause**: IME IS the keyboard - fundamental Android limitation
+   - **Solution**: Changed EditText → TextView and implemented internal keyboard routing
+
+---
+
+### Implementation Details
+
+#### 1. Extended IReceiver Interface (KeyEventHandler.java:494-508)
+Added three new methods for clipboard search mode:
+```java
+public default boolean isClipboardSearchMode() { return false; }
+public default void appendToClipboardSearch(String text) {}
+public default void backspaceClipboardSearch() {}
+```
+
+#### 2. Modified Text Routing (KeyEventHandler.java:219-234)
+Intercept text BEFORE sending to app's InputConnection:
+```java
+void send_text(CharSequence text)
+{
+  // Route to clipboard search box if in search mode
+  if (_recv.isClipboardSearchMode())
+  {
+    _recv.appendToClipboardSearch(text.toString());
+    return;
+  }
+
+  InputConnection conn = _recv.getCurrentInputConnection();
+  if (conn == null)
+    return;
+  conn.commitText(text, 1);
+  _autocap.typed(text);
+  _recv.handle_text_typed(text.toString());
+}
+```
+
+#### 3. Modified Backspace Handling (KeyEventHandler.java:98-115)
+Intercept backspace for search box:
+```java
+case Keyevent:
+  // Handle backspace in clipboard search mode
+  if (key.getKeyevent() == KeyEvent.KEYCODE_DEL && _recv.isClipboardSearchMode())
+  {
+    _recv.backspaceClipboardSearch();
+    break;
+  }
+
+  send_key_down_up(key.getKeyevent());
+  // ... normal backspace handling ...
+```
+
+#### 4. Implemented Search Methods (Keyboard2.java:841-879)
+Three new methods in Receiver class:
+```java
+@Override
+public boolean isClipboardSearchMode()
+{
+  return _clipboardSearchMode;
+}
+
+@Override
+public void appendToClipboardSearch(String text)
+{
+  if (_clipboardSearchBox != null && _clipboardHistoryView != null)
+  {
+    // Append text to search box
+    CharSequence current = _clipboardSearchBox.getText();
+    String newText = current + text;
+    _clipboardSearchBox.setText(newText);
+
+    // Update search filter in history view (real-time filtering)
+    _clipboardHistoryView.setSearchFilter(newText);
+  }
+}
+
+@Override
+public void backspaceClipboardSearch()
+{
+  if (_clipboardSearchBox != null && _clipboardHistoryView != null)
+  {
+    CharSequence current = _clipboardSearchBox.getText();
+    if (current.length() > 0)
+    {
+      // Remove last character
+      String newText = current.subSequence(0, current.length() - 1).toString();
+      _clipboardSearchBox.setText(newText);
+
+      // Update search filter
+      _clipboardHistoryView.setSearchFilter(newText);
+    }
+  }
+}
+```
+
+#### 5. Search Mode State Management (Keyboard2.java:717-757)
+- Enter search mode: Click search box sets `_clipboardSearchMode = true`
+- Exit search mode: Switching back from clipboard view resets search state
+- Clear search: Reset text and hint when exiting
+
+---
+
+### Files Modified
+
+1. **srcs/juloo.keyboard2/ClipboardHistoryService.java**
+   - Line 78: Changed TTL from 5 minutes to 7 days
+
+2. **srcs/juloo.keyboard2/KeyEventHandler.java**
+   - Lines 505-507: Added search mode methods to IReceiver interface
+   - Lines 219-234: Modified send_text() to route to search box
+   - Lines 98-115: Modified backspace handling for search mode
+
+3. **srcs/juloo.keyboard2/Keyboard2.java**
+   - Line 25: Added TextView import
+   - Line 55: Added _clipboardSearchBox field
+   - Lines 722-736: Initialize search box with click listener
+   - Lines 747-757: Exit search mode cleanup
+   - Lines 841-879: Implemented search mode methods
+
+---
+
+### Architecture Insights
+
+**Key Event Flow:**
+```
+User touches keyboard
+  ↓
+Keyboard2View (touch/gesture detection)
+  ↓
+KeyEventHandler.key_up()
+  ↓
+Routes based on KeyValue type:
+  - Char/String → send_text()
+    ↓
+    Check isClipboardSearchMode()
+      - Yes → appendToClipboardSearch()
+      - No  → InputConnection.commitText()
+
+  - Keyevent (backspace) →
+    Check isClipboardSearchMode()
+      - Yes → backspaceClipboardSearch()
+      - No  → send_key_down_up()
+```
+
+**IReceiver Pattern:**
+- KeyEventHandler has IReceiver interface
+- Keyboard2.Receiver implements IReceiver
+- Allows bidirectional communication between view and service
+- Clean separation of concerns
+
+---
+
+### Testing Requirements
+
+**Build Status:** ✅ BUILD SUCCESSFUL
+- Version: v1.32.287 (337)
+- Build time: 1m 8s
+- APK: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.287-337.apk
+
+**On-Device Testing Needed:**
+1. Test clipboard persistence after app update (should retain entries for 7 days)
+2. Test search box accepts keyboard input
+3. Test search filtering works in real-time
+4. Test backspace removes characters from search box
+5. Test search mode exits when switching back to keyboard
+6. Test long clipboard items with many entries
+
+---
+
+### Commit Details
+
+```
+feat(clipboard): implement search box keyboard input and fix persistence
+
+BREAKING CHANGES:
+- Clipboard history now persists for 7 days instead of 5 minutes
+- Search box now accepts keyboard input using internal routing
+
+Changes:
+1. Extended TTL from 5 minutes to 7 days (ClipboardHistoryService.java:78)
+   - Fixes data loss on app updates when service restarts
+   - Entries now persist across app restarts for reasonable duration
+
+2. Implemented internal keyboard routing for clipboard search box
+   - Added IReceiver methods: isClipboardSearchMode(), appendToClipboardSearch(), backspaceClipboardSearch()
+   - Modified KeyEventHandler.send_text() to route text to search box when in search mode
+   - Modified KeyEventHandler backspace handling to work with search box
+   - Added search mode state management in Keyboard2.Receiver
+
+3. Real-time search filtering
+   - Search box updates ClipboardHistoryView filter as user types
+   - Backspace properly updates filter
+   - Exit search mode when leaving clipboard view
+
+Files modified:
+- srcs/juloo.keyboard2/ClipboardHistoryService.java (TTL fix)
+- srcs/juloo.keyboard2/KeyEventHandler.java (routing logic)
+- srcs/juloo.keyboard2/Keyboard2.java (search mode implementation)
+
+Testing:
+- Build successful on Termux ARM64
+- Requires on-device testing for search functionality
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+Commit hash: 2a11f728
+
+---
+
+### Next Steps
+
+1. **Testing** - Install APK and verify:
+   - Clipboard persistence across app updates
+   - Search box keyboard input functionality
+   - Real-time search filtering
+   - Backspace handling in search mode
+
+2. **Potential Enhancements** (future):
+   - Add ESC key to exit search mode explicitly
+   - Consider visual feedback when entering search mode
+   - Add clear button for search box
+   - Show count of filtered results
+
+3. **Documentation**:
+   - Update memory/pm.md with clipboard fixes
+   - Document search box UX pattern for future reference

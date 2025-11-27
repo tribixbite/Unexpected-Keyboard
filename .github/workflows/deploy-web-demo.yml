@@ -1,0 +1,72 @@
+name: Deploy Web Demo
+
+on:
+  push:
+    branches: [ main, feature/swipe-typing ]
+    paths: [ 'web_demo/**' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # (Optional) Ensure LFS files are pulled if you’ve had issues
+      - name: Ensure LFS
+        run: git lfs install && git lfs pull
+
+      - name: Prepare deployment files
+        run: |
+          cd web_demo
+          echo "📁 Web demo files:"
+          ls -la
+          mkdir -p ../deploy
+          echo "📦 Copying files..."
+          cp *.html ../deploy/ 2>/dev/null || echo "No HTML files found"
+          cp *.js ../deploy/ 2>/dev/null || echo "No JS files found"
+          cp *.css ../deploy/ 2>/dev/null || echo "No CSS files found"
+          cp *.wasm ../deploy/ 2>/dev/null || echo "No WASM files found"
+          cp *.onnx ../deploy/ 2>/dev/null || echo "No ONNX files found"
+          cp *.json ../deploy/ 2>/dev/null || echo "No JSON files found"
+          cp -r assets ../deploy/ 2>/dev/null || echo "No assets directory found"
+          
+          # Create index.html that redirects to the main demo
+          if [ -f "../deploy/swipe-onnx.html" ]; then
+            echo "<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0; url=./swipe-onnx.html'></head><body><p>Redirecting to <a href='./swipe-onnx.html'>Swipe Demo</a>...</p></body></html>" > ../deploy/index.html
+            echo "📝 Created index.html redirect"
+          fi
+          
+          echo "✅ Deployment files prepared"
+          ls -la ../deploy/
+          
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./deploy
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

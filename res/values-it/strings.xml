@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Aggiungere tasti personalizzati</string>
     <string name="pref_extra_keys_internal">Selezionare tasti da aggiungere alla tastiera</string>
     <string name="pref_category_typing">Digitando</string>
-    <string name="pref_swipe_dist_title">Distanza swipe</string>
-    <string name="pref_swipe_dist_summary">Distanza dei caratteri negli angoli dei tasti (%s)</string>
     <string name="pref_long_timeout_title">Durata tasto premuto a lungo</string>
     <string name="pref_long_interval_title">Intervallo ripetizione tasto</string>
     <string name="pref_keyrepeat_enabled">Ripetizione carattere su tasto premuto a lungo</string>
@@ -73,11 +71,6 @@
     <!-- <string name="pref_theme_e_monetlight">Monet (Light)</string> -->
     <!-- <string name="pref_theme_e_monetdark">Monet (Dark)</string> -->
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">Veramente breve</string>
-    <string name="pref_swipe_dist_e_short">Breve</string>
-    <string name="pref_swipe_dist_e_default">Normale</string>
-    <string name="pref_swipe_dist_e_far">Distante</string>
-    <string name="pref_swipe_dist_e_very_far">Molto distante</string>
     <string name="pref_key_horizontal_space">Spazio orizzontale tra i tasti</string>
     <string name="pref_key_vertical_space">Spazio verticale tra i tasti</string>
     <!-- <string name="pref_border_config_title">Customize borders</string> -->

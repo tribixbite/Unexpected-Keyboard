@@ -1,0 +1,633 @@
+[17:52:41.536] ✅ Neural engine initialized successfully
+[17:52:45.007] 🌀 Swipe recorded for 'icelands': 172 points, 1439ms, keys: iiiiiiuuuuuuuhhhhhgvvvvvccccccccccccxxxxddddddeeeeeeeeeeeeerrrttyyhjjkkkklllllllllllllkkkjjhhgfddssaaaaaaasssddfcvvbbnnnnnnmmnnnnnnbbbvggfffffddddddsssssssssssss
+[17:52:45.286] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. invelands 0.264 [filtered out]
+  2. ivelands 0.149 [filtered out]
+  3. inveland 0.110 [filtered out]
+  4. ibvelands 0.067 [filtered out]
+  5. ibelands 0.048 [filtered out]
+
+[17:52:45.287] 🧠 Neural prediction completed in 272ms
+[17:52:45.287]    Predictions: 4 candidates
+[17:52:45.288]    1. invent (score: 49)
+[17:52:45.288]    2. raw:invelands (score: 4)
+[17:52:45.289]    3. raw:ivelands (score: 4)
+[17:52:45.289]    4. raw:inveland (score: 4)
+[17:52:45.290] ❌ Incorrect. Expected 'icelands', got: 'invent'
+[17:52:51.217] 🌀 Swipe recorded for 'descends': 190 points, 1590ms, keys: dddddddddddddeeeeeeeeeeeeeeeeeeeeewwwsssssssssssssssssssssdddddddxxxxxxxxccccccccccccccccxdddssssswwwwwweeeeeerrrrttgghhhnnnnnmmmmmmmmmmmmmmmnnnnbbbvvvvcffffffdddddddddddddsssssssssssa
+[17:52:51.499] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. descends 0.737 [kept by vocab]
+  2. descreds 0.064 [filtered out]
+  3. descrends 0.024 [filtered out]
+  4. descens 0.019 [filtered out]
+  5. descenda 0.018 [filtered out]
+
+[17:52:51.501] 🧠 Neural prediction completed in 283ms
+[17:52:51.502]    Predictions: 5 candidates
+[17:52:51.503]    1. descends (score: 536)
+[17:52:51.504]    2. desired (score: 94)
+[17:52:51.505]    3. describes (score: 64)
+[17:52:51.505]    4. raw:descreds (score: 6)
+[17:52:51.506]    5. raw:descrends (score: 6)
+[17:52:51.507] ✅ Correct! Target 'descends' found at rank 1
+[17:52:55.055] 🌀 Swipe recorded for 'aria': 98 points, 818ms, keys: aaaaaaaaaaaaaaaasssseeeeeerrrrrttttttyyyyyyyuuuuiiiiiiiiiiiiiiiiiiiiiiuuuyyyttrdddssssssssaaaaaaa
+[17:52:55.166] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. ara 0.293 [kept by vocab]
+  2. aria 0.236 [kept by vocab]
+  3. aroa 0.131 [filtered out]
+  4. asa 0.090 [kept by vocab]
+  5. aiaa 0.037 [filtered out]
+
+[17:52:55.167] 🧠 Neural prediction completed in 111ms
+[17:52:55.169]    Predictions: 4 candidates
+[17:52:55.170]    1. ara (score: 286)
+[17:52:55.171]    2. aria (score: 275)
+[17:52:55.172]    3. asa (score: 203)
+[17:52:55.173]    4. raw:aroa (score: 20)
+[17:52:55.174] ✅ Correct! Target 'aria' found at rank 2
+[17:53:00.690] 🌀 Swipe recorded for 'degenerated': 262 points, 2200ms, keys: dddddddddddsseeeeeeeeeeeeeeeeerrrffgggggbbbbbbbbggggffffdreeeeeeeeeeeeeeeerrfffggbbbnnnnnnnnnnnnnnnnnnnnbbbvgfffdddddeeeeeeeeeeeeeeeeeeeeeerrrrrrrrrrrrrrrrrreeesssaaaaaaaaaaaaaaaaaaaaaassssseeerrrrrrrtttttttttttttttttttttttrrreeeeewwwwwwwweeeeedddddddddd
+[17:53:00.982] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. deferated 0.247 [filtered out]
+  2. deverated 0.233 [filtered out]
+  3. deferation 0.102 [filtered out]
+  4. deberated 0.063 [filtered out]
+  5. deferate 0.042 [filtered out]
+
+[17:53:00.987] 🧠 Neural prediction completed in 295ms
+[17:53:00.989]    Predictions: 5 candidates
+[17:53:00.991]    1. decorated (score: 156)
+[17:53:00.992]    2. delegation (score: 121)
+[17:53:00.994]    3. raw:deferated (score: 12)
+[17:53:00.995]    4. raw:deverated (score: 12)
+[17:53:00.997]    5. raw:deferation (score: 12)
+[17:53:00.998] ❌ Incorrect. Expected 'degenerated', got: 'decorated'
+[17:53:07.037] 🌀 Swipe recorded for 'facsimile': 216 points, 1805ms, keys: fffffffffdddddssssaaaaaaaaaaaaaaaaasssszxxxccccvvvvvvvvvvvvvvccccccxdddsssssssssssssssssssssdddffttyyyuuuuuuuuuuuuuiiijjkkkmmmmmnnnjjjjjuuuuuuuuuuuuuiiiiiiikkkkkkklllllllllllllkkkkjuuyyttttrrrrrrrreeeeeee
+[17:53:07.270] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. favile 0.226 [filtered out]
+  2. favilable 0.151 [filtered out]
+  3. facaule 0.135 [filtered out]
+  4. famile 0.084 [filtered out]
+  5. favilite 0.052 [filtered out]
+
+[17:53:07.272] 🧠 Neural prediction completed in 232ms
+[17:53:07.274]    Predictions: 7 candidates
+[17:53:07.276]    1. family (score: 142)
+[17:53:07.277]    2. favorable (score: 120)
+[17:53:07.279]    3. facade (score: 77)
+[17:53:07.281]    4. facile (score: 54)
+[17:53:07.283]    5. raw:favile (score: 5)
+[17:53:07.285] ❌ Incorrect. Expected 'facsimile', got: 'family'
+[17:53:10.384] 🌀 Swipe recorded for 'pt': 38 points, 342ms, keys: pppoooooiiiiuuuuyyyyyyyyttttttttttt
+[17:53:10.472] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. ptt 0.509 [filtered out]
+  2. pttt 0.152 [filtered out]
+  3. pt 0.133 [kept by vocab]
+  4. put 0.066 [kept by vocab]
+  5. ot 0.038 [kept by vocab]
+
+[17:53:10.475] 🧠 Neural prediction completed in 87ms
+[17:53:10.477]    Predictions: 7 candidates
+[17:53:10.479]    1. put (score: 455)
+[17:53:10.481]    2. out (score: 412)
+[17:53:10.483]    3. pt (score: 323)
+[17:53:10.485]    4. ot (score: 228)
+[17:53:10.487]    5. pte (score: 65)
+[17:53:10.489] ✅ Correct! Target 'pt' found at rank 3
+[17:53:14.205] 🌀 Swipe recorded for 'smother': 155 points, 1292ms, keys: ssssssssddddffgvbbbnnnnnmmmmmmmmmmmmmmkkkkkkkoooooooooooooooiiiiuuuyyyttttttttttttttttttttttgghhhhhhhhhhhhhhhhhgggffrrrrrreeeeewwwwwwwweeeeeerrrrrrrrrtt
+[17:53:14.458] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. smother 0.737 [kept by vocab]
+  2. smoother 0.075 [kept by vocab]
+  3. slother 0.067 [filtered out]
+  4. snother 0.042 [filtered out]
+  5. smothers 0.019 [filtered out]
+
+[17:53:14.461] 🧠 Neural prediction completed in 251ms
+[17:53:14.464]    Predictions: 4 candidates
+[17:53:14.466]    1. smother (score: 473)
+[17:53:14.469]    2. smoother (score: 159)
+[17:53:14.471]    3. sloth (score: 44)
+[17:53:14.473]    4. raw:slother (score: 4)
+[17:53:14.476] ✅ Correct! Target 'smother' found at rank 1
+[17:53:17.352] 🌀 Swipe recorded for 'say': 53 points, 509ms, keys: ssssssssaaaaaaaaaaaaaaaaaaaasseeerrrtttyyyyyyyyuuuuu
+[17:53:17.484] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. say 0.925 [kept by vocab]
+  2. sairty 0.015 [filtered out]
+  3. day 0.014 [kept by vocab]
+  4. sai 0.006 [kept by vocab]
+  5. sau 0.006 [kept by vocab]
+
+[17:53:17.488] 🧠 Neural prediction completed in 132ms
+[17:53:17.491]    Predictions: 5 candidates
+[17:53:17.494]    1. say (score: 1027)
+[17:53:17.497]    2. day (score: 431)
+[17:53:17.500]    3. sai (score: 132)
+[17:53:17.503]    4. sau (score: 12)
+[17:53:17.506]    5. raw:sairty (score: 1)
+[17:53:17.509] ✅ Correct! Target 'say' found at rank 1
+[17:53:21.538] 🌀 Swipe recorded for 'flathead': 181 points, 1566ms, keys: fffgghjjkkkkkkklllllllllllllkkkjjhhggffdddssssaaaaaaaaaaaaaaaaaaaaassseerrrrtttttttttttttttttttyyyyhhhhhhhhhhhhhhgggfrrrreeeeeeeeeeeeeeeewwwwaaaaaaaaaaaaaaaaaaaasssdddddddddffff
+[17:53:21.754] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. flathead 0.885 [kept by vocab]
+  2. flatheads 0.010 [filtered out]
+  3. flared 0.007 [kept by vocab]
+  4. fathead 0.006 [filtered out]
+  5. flathers 0.005 [filtered out]
+
+[17:53:21.758] 🧠 Neural prediction completed in 215ms
+[17:53:21.762]    Predictions: 4 candidates
+[17:53:21.765]    1. flathead (score: 516)
+[17:53:21.769]    2. glad (score: 359)
+[17:53:21.772]    3. flared (score: 96)
+[17:53:21.776]    4. raw:flatheads (score: 9)
+[17:53:21.779] ✅ Correct! Target 'flathead' found at rank 1
+[17:53:26.750] 🌀 Swipe recorded for 'symbolized': 256 points, 2132ms, keys: sssssssdddddrrtttttyyyyyyyyyyyuuujjjjjjnmmmmmmmmmmmmmmmmmmmmmmmmmmmmnnnnnnbbbbbbbbbbbbbbbbbbbbhjjjjjjjiiiiiioooooooooooooooooollllllllllllllllkkkkkoiiiiiiiiiiiiiiiiiiuuuuuyyytfffdddddxzzzzzzzzzzzzzzzzzzzzzzzzzssssseeeeeeeeeeeeeeeeeeeeeeeeddddddddddddddd
+[17:53:27.021] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. symbolized 0.157 [kept by vocab]
+  2. symblozed 0.147 [filtered out]
+  3. symblosed 0.127 [filtered out]
+  4. sumblized 0.064 [filtered out]
+  5. symbazed 0.053 [filtered out]
+
+[17:53:27.026] 🧠 Neural prediction completed in 271ms
+[17:53:27.030]    Predictions: 4 candidates
+[17:53:27.034]    1. symbolized (score: 158)
+[17:53:27.038]    2. symbols (score: 44)
+[17:53:27.042]    3. raw:symblozed (score: 4)
+[17:53:27.046]    4. raw:symblosed (score: 4)
+[17:53:27.050] ✅ Correct! Target 'symbolized' found at rank 1
+[17:53:31.077] 🌀 Swipe recorded for 'narrator': 196 points, 1642ms, keys: nnnnnnnnnbbbvvvcccddssssaaaaaaaaaaaaaaaaaaawwwwweeeeeerrrrrrrrrrrrrrrrrrrrrrrrrrrrrdddsssssaaaaaaaaaaaaaaaaaaaaaaswweeeerrrrttttttttttttttttyyyyyuuuuiiiiioooooooooooooooiiiiuuuyyytttrrrrrreeeeee
+[17:53:31.350] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. varator 0.202 [filtered out]
+  2. carator 0.140 [filtered out]
+  3. varators 0.138 [filtered out]
+  4. carators 0.073 [filtered out]
+  5. varature 0.058 [filtered out]
+
+[17:53:31.355] 🧠 Neural prediction completed in 272ms
+[17:53:31.359]    Predictions: 5 candidates
+[17:53:31.364]    1. carlton (score: 83)
+[17:53:31.368]    2. vacate (score: 39)
+[17:53:31.372]    3. raw:varator (score: 3)
+[17:53:31.377]    4. raw:carator (score: 3)
+[17:53:31.381]    5. raw:varators (score: 3)
+[17:53:31.386] ❌ Incorrect. Expected 'narrator', got: 'carlton'
+[17:53:52.411] 🌀 Swipe recorded for 'kirkwood': 203 points, 1717ms, keys: kkkkkkkkkiiiiiiiiiiiiiiiiiiuuuuuuyyyytttttrrrrrrrrrrrrrrrrrrrrrrrrrttttyyyuhjjjjjjkkkkkkkkkkkkkkkkjjjjjhhhggtrrreeeeeewwwwwwwwwwwweeeerrrttyyuuuiiiiioooooooooooooooooooooiiiiuuhhhggggfffffffddddddddddd
+[17:53:52.686] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. irkwood 0.194 [filtered out]
+  2. irleood 0.131 [filtered out]
+  3. itleod 0.068 [filtered out]
+  4. kirkwood 0.061 [kept by vocab]
+  5. irlood 0.049 [filtered out]
+
+[17:53:52.692] 🧠 Neural prediction completed in 270ms
+[17:53:52.698]    Predictions: 5 candidates
+[17:53:52.703]    1. kirkwood (score: 67)
+[17:53:52.709]    2. it'll (score: 25)
+[17:53:52.714]    3. raw:irkwood (score: 2)
+[17:53:52.720]    4. raw:irleood (score: 2)
+[17:53:52.725]    5. raw:itleod (score: 2)
+[17:53:52.731] ✅ Correct! Target 'kirkwood' found at rank 1
+[17:53:56.189] 🌀 Swipe recorded for 'trendy': 129 points, 1075ms, keys: tttttttttttttttrrrrrrrreeeeeeeeeeeeeeeeeerrffggghhhbnnnnnnnnnnnnnnnnnnnnnbbbbvvvffffffdddddddddddddddddddddfrtttttttyyyyyyyyyyyy
+[17:53:56.333] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. teny 0.150 [filtered out]
+  2. terry 0.108 [kept by vocab]
+  3. tendy 0.092 [filtered out]
+  4. tenet 0.072 [kept by vocab]
+  5. tent 0.071 [kept by vocab]
+
+[17:53:56.339] 🧠 Neural prediction completed in 143ms
+[17:53:56.344]    Predictions: 5 candidates
+[17:53:56.349]    1. terry (score: 312)
+[17:53:56.355]    2. tent (score: 273)
+[17:53:56.360]    3. tenet (score: 118)
+[17:53:56.365]    4. raw:teny (score: 11)
+[17:53:56.371]    5. raw:tendy (score: 11)
+[17:53:56.377] ❌ Incorrect. Expected 'trendy', got: 'terry'
+[17:54:00.301] 🌀 Swipe recorded for 'belongs': 141 points, 1173ms, keys: bbbbbbbbvvvgffffdddeeeeeeeeeeeeeerrrrtggghhjjjkkkkkkkklllllloooooooooooooooooooikkkjnnnnnnnnnnnnnnnnnbbbbbhhgggggggggffffffffffdddssssssaaa
+[17:54:00.564] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. beloongs 0.160 [filtered out]
+  2. belooogs 0.104 [filtered out]
+  3. beloogs 0.089 [filtered out]
+  4. belooos 0.086 [filtered out]
+  5. beloooks 0.082 [filtered out]
+
+[17:54:00.570] 🧠 Neural prediction completed in 262ms
+[17:54:00.576]    Predictions: 5 candidates
+[17:54:00.582]    1. belongs (score: 292)
+[17:54:00.588]    2. belong (score: 130)
+[17:54:00.593]    3. raw:beloongs (score: 13)
+[17:54:00.599]    4. raw:belooogs (score: 13)
+[17:54:00.605]    5. raw:beloogs (score: 13)
+[17:54:00.611] ✅ Correct! Target 'belongs' found at rank 1
+[17:54:04.615] 🌀 Swipe recorded for 'cashier': 179 points, 1509ms, keys: ccccccccccxxxxxzssssaaaaaaaaaaaaaaaaaaaaaasssssssssssssssssssssdddddddddfffffffggggghhhhhhhhhhjjjjuuuuuuuuuuuiiiiiiiiiiiiuuuuuyyyttrrrreeeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrttttttttt
+[17:54:04.839] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. casher 0.358 [filtered out]
+  2. caster 0.283 [kept by vocab]
+  3. cassiet 0.043 [filtered out]
+  4. casquer 0.037 [filtered out]
+  5. caset 0.028 [filtered out]
+
+[17:54:04.845] 🧠 Neural prediction completed in 223ms
+[17:54:04.850]    Predictions: 5 candidates
+[17:54:04.856]    1. caster (score: 253)
+[17:54:04.860]    2. cashier (score: 229)
+[17:54:04.865]    3. cassie (score: 77)
+[17:54:04.870]    4. raw:casher (score: 7)
+[17:54:04.875]    5. raw:cassiet (score: 7)
+[17:54:04.880] ✅ Correct! Target 'cashier' found at rank 2
+[17:54:08.640] 🌀 Swipe recorded for 'cactus': 134 points, 1141ms, keys: cccccxxxzssaaaaaaaaaaaaaaaaassszxxxxcccccccccccccccccccffffffrrtttttttttttttttttttttyyyuuuuuuuuuuuuuuuuyyyttfffddddsssssssssssss
+[17:54:08.819] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. cacts 0.749 [filtered out]
+  2. cactus 0.160 [kept by vocab]
+  3. factus 0.011 [filtered out]
+  4. cactos 0.010 [filtered out]
+  5. facts 0.009 [kept by vocab]
+
+[17:54:08.825] 🧠 Neural prediction completed in 179ms
+[17:54:08.830]    Predictions: 4 candidates
+[17:54:08.835]    1. cactus (score: 352)
+[17:54:08.841]    2. facts (score: 349)
+[17:54:08.846]    3. raw:cacts (score: 34)
+[17:54:08.851]    4. raw:factus (score: 11)
+[17:54:08.856] ✅ Correct! Target 'cactus' found at rank 1
+[17:54:13.118] 🌀 Swipe recorded for 'exited': 133 points, 1116ms, keys: eeeeedddddddxxxxxxxxxxccccccfggggggyyuuuiiiiiiiiiiiiiiiiiiiiiuuuyyytttttrrrrrrrrrrrrrrrrrrrrreeeeeeeeeeeeeeeeeeeeddddddddddddddddd
+[17:54:13.276] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. exitted 0.524 [filtered out]
+  2. exited 0.341 [kept by vocab]
+  3. excited 0.030 [kept by vocab]
+  4. ed 0.020 [kept by vocab]
+  5. ecited 0.010 [filtered out]
+
+[17:54:13.282] 🧠 Neural prediction completed in 157ms
+[17:54:13.287]    Predictions: 5 candidates
+[17:54:13.293]    1. ed (score: 366)
+[17:54:13.298]    2. excited (score: 355)
+[17:54:13.304]    3. exited (score: 332)
+[17:54:13.309]    4. excess (score: 250)
+[17:54:13.315]    5. raw:exitted (score: 25)
+[17:54:13.320] ✅ Correct! Target 'exited' found at rank 3
+[17:54:16.639] 🌀 Swipe recorded for 'homes': 100 points, 843ms, keys: hhhhhhhhjjjjjiiiiiooooooooooooooookkkkmmmmmmmmmmmnnnnnbbbgggfffrreeeeeeeeeeeeeeewwwwsssssssssssssss
+[17:54:16.772] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. homes 0.707 [kept by vocab]
+  2. holes 0.121 [kept by vocab]
+  3. holds 0.088 [kept by vocab]
+  4. hold 0.037 [kept by vocab]
+  5. homs 0.021 [kept by vocab]
+
+[17:54:16.779] 🧠 Neural prediction completed in 133ms
+[17:54:16.785]    Predictions: 9 candidates
+[17:54:16.791]    1. homes (score: 795)
+[17:54:16.797]    2. home's (score: 755)
+[17:54:16.803]    3. home (score: 427)
+[17:54:16.810]    4. hold (score: 409)
+[17:54:16.816]    5. holds (score: 386)
+[17:54:16.822] ✅ Correct! Target 'homes' found at rank 1
+[17:54:21.226] 🌀 Swipe recorded for 'venerable': 230 points, 1916ms, keys: vvvvvvvvvvvvvffffddddeeeeeeeeeeeeeeeerrrrffggggbbbnnnnnnnnnnnnnnnnnnnbbbhggffdreeeeeeeeeeeeeeeeeeerrrrrrrttttttttrrrrrdddsssssaaaaaaaaaaaaaaaaaasssssdddxcccvvvvvvvbbbbbbbbnnnnjjjkkkkkkkkkkklllllllllkkkkkjjhhhgtrrrreeeewwwwwwww
+[17:54:21.501] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. benerable 0.906 [filtered out]
+  2. beverable 0.048 [filtered out]
+  3. venerable 0.016 [kept by vocab]
+  4. benerables 0.006 [filtered out]
+  5. bentable 0.003 [filtered out]
+
+[17:54:21.508] 🧠 Neural prediction completed in 274ms
+[17:54:21.515]    Predictions: 4 candidates
+[17:54:21.521]    1. venerable (score: 137)
+[17:54:21.528]    2. beverage (score: 81)
+[17:54:21.534]    3. raw:benerable (score: 8)
+[17:54:21.541]    4. raw:beverable (score: 8)
+[17:54:21.547] ✅ Correct! Target 'venerable' found at rank 1
+[17:54:26.245] 🌀 Swipe recorded for 'privately': 224 points, 1891ms, keys: ppooiiiuuuyyytttrrrrrrrrreeeeeeeeeerrrrtttyyuuuiiiiiiiiiiiiiiiiiiuujhhhhhhbvvvvvvvvvvvvvvvvvvccccxxdsssaaaaaaaaaaaaaaaaaaaassseerrrrtttttttttttttttttttrrreeeeeeeeeeeeeeerrttyhhjjjkkkkkkkkkkkkkkkkkkkkkkkkkkjjjhhhhyyyttttttt
+[17:54:26.501] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. privately 0.661 [kept by vocab]
+  2. pribately 0.250 [filtered out]
+  3. probately 0.044 [filtered out]
+  4. peribately 0.013 [filtered out]
+  5. pribatly 0.008 [filtered out]
+
+[17:54:26.508] 🧠 Neural prediction completed in 255ms
+[17:54:26.514]    Predictions: 3 candidates
+[17:54:26.521]    1. privately (score: 601)
+[17:54:26.527]    2. raw:pribately (score: 60)
+[17:54:26.534]    3. raw:probately (score: 44)
+[17:54:26.540] ✅ Correct! Target 'privately' found at rank 1
+
+
+
+
+[17:56:34.107] ✅ Neural engine initialized successfully
+[17:56:36.515] 🌀 Swipe recorded for 'widow': 126 points, 1050ms, keys: wwwwwwweeerrtttyyuuuiiiiiiiiiiiiiiiiuuhhhhgggffffddddddddddddddddddddddffftyyyuuiiiiiooooooooooooooiiiiiuuyytttrrreeeeeeeeww
+[17:56:36.641] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. widow 0.938 [kept by vocab]
+  2. widoe 0.012 [filtered out]
+  3. widowe 0.008 [filtered out]
+  4. widows 0.006 [kept by vocab]
+  5. wifow 0.004 [filtered out]
+
+[17:56:36.642] 🧠 Neural prediction completed in 123ms
+[17:56:36.643]    Predictions: 6 candidates
+[17:56:36.643]    1. widow (score: 771)
+[17:56:36.643]    2. widow's (score: 732)
+[17:56:36.644]    3. wide (score: 370)
+[17:56:36.644]    4. widows (score: 144)
+[17:56:36.644]    5. raw:widoe (score: 11)
+[17:56:36.644] ✅ Correct! Target 'widow' found at rank 1
+[17:56:39.715] 🌀 Swipe recorded for 'trey': 73 points, 625ms, keys: tttttttttttttrrrrrrreeeeeeeeeeeeeeeeeeeeeeeeeeeerrrrrtttttyyyyyyyyyyuuu
+[17:56:39.798] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. try 0.868 [kept by vocab]
+  2. terry 0.030 [kept by vocab]
+  3. ty 0.017 [kept by vocab]
+  4. tay 0.010 [kept by vocab]
+  5. tey 0.009 [filtered out]
+
+[17:56:39.799] 🧠 Neural prediction completed in 81ms
+[17:56:39.799]    Predictions: 4 candidates
+[17:56:39.800]    1. try (score: 969)
+[17:56:39.800]    2. terry (score: 268)
+[17:56:39.801]    3. ty (score: 201)
+[17:56:39.801]    4. tay (score: 113)
+[17:56:39.802] ❌ Incorrect. Expected 'trey', got: 'try'
+[17:56:44.480] 🌀 Swipe recorded for 'sexuality': 266 points, 2225ms, keys: ssssssssssssssseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeessddddddxxxxxxxxxxxxxxxxxxxxxxxxxxcccfffgggyyuuuuuuuuuuuuuuuuuuuuuuuyyttrredsssaaaaaaaaaaaaaaaaasssddffgghhjjkkkkklllllllllllllllllkooiiiiiiiiiiiiiiiiiiiiiiiiiuuuuyyyytttttttttttttttttttttttttttyyyyyyyyyyyyy
+[17:56:44.728] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. sexuation 0.450 [filtered out]
+  2. secualities 0.225 [filtered out]
+  3. secuality 0.089 [filtered out]
+  4. sexualities 0.043 [filtered out]
+  5. sexuality 0.026 [kept by vocab]
+
+[17:56:44.729] 🧠 Neural prediction completed in 246ms
+[17:56:44.730]    Predictions: 5 candidates
+[17:56:44.730]    1. sexuality (score: 233)
+[17:56:44.731]    2. sensation (score: 214)
+[17:56:44.732]    3. raw:sexuation (score: 21)
+[17:56:44.733]    4. raw:secualities (score: 21)
+[17:56:44.734]    5. raw:secuality (score: 21)
+[17:56:44.735] ✅ Correct! Target 'sexuality' found at rank 1
+[17:56:47.991] 🌀 Swipe recorded for 'busts': 94 points, 784ms, keys: bbbbbbbbbbhhhhhuuuuuuuuuyyyytttrrrdddssssssssssssssssssssddrrrttttyyyyyytttttrrrrddsssssssssss
+[17:56:48.114] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. busts 0.952 [kept by vocab]
+  2. buses 0.017 [kept by vocab]
+  3. busis 0.007 [filtered out]
+  4. buss 0.006 [kept by vocab]
+  5. busys 0.004 [filtered out]
+
+[17:56:48.115] 🧠 Neural prediction completed in 122ms
+[17:56:48.116]    Predictions: 6 candidates
+[17:56:48.117]    1. busts (score: 656)
+[17:56:48.118]    2. buses (score: 240)
+[17:56:48.119]    3. but (score: 205)
+[17:56:48.120]    4. buss (score: 57)
+[17:56:48.121]    5. busta (score: 15)
+[17:56:48.123] ✅ Correct! Target 'busts' found at rank 1
+[17:56:51.432] 🌀 Swipe recorded for 'crs': 65 points, 546ms, keys: cccccccccccfffffffffrrrrrrrrrrrrrrrrrrrreeeeeesssssssssssssssss
+[17:56:51.561] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. crss 0.552 [filtered out]
+  2. crass 0.151 [kept by vocab]
+  3. cress 0.125 [filtered out]
+  4. crs 0.048 [kept by vocab]
+  5. cross 0.025 [kept by vocab]
+
+[17:56:51.562] 🧠 Neural prediction completed in 128ms
+[17:56:51.564]    Predictions: 5 candidates
+[17:56:51.565]    1. cross (score: 386)
+[17:56:51.566]    2. crass (score: 161)
+[17:56:51.567]    3. crs (score: 99)
+[17:56:51.569]    4. raw:crss (score: 9)
+[17:56:51.570]    5. raw:cress (score: 9)
+[17:56:51.571] ✅ Correct! Target 'crs' found at rank 3
+[17:56:55.981] 🌀 Swipe recorded for 'quicksand': 215 points, 1797ms, keys: qqqqqqwwwweerrrttyyyuuuuiiiiiiiiiiiiiiiiiuuuyhggggffffccxxxxxxxxxxxxxcccccvvvhhhjjjjjjkkkkkkkkkkkkkjjjhhhggffdddssssssssssssssaaaaaaaaaaaaaaaaaaaaassssddfffgvbbbnnnnnnnnnnnnnnnnnnnnbbbbbbvvggffffffdddddddsssss
+[17:56:56.189] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. quickland 0.588 [filtered out]
+  2. quickand 0.127 [filtered out]
+  3. quicks 0.106 [filtered out]
+  4. quicklands 0.047 [filtered out]
+  5. wicks 0.009 [kept by vocab]
+
+[17:56:56.191] 🧠 Neural prediction completed in 208ms
+[17:56:56.193]    Predictions: 7 candidates
+[17:56:56.194]    1. quicksand (score: 290)
+[17:56:56.196]    2. quick (score: 204)
+[17:56:56.197]    3. quickly (score: 90)
+[17:56:56.199]    4. wicks (score: 53)
+[17:56:56.201]    5. raw:quickland (score: 5)
+[17:56:56.202] ✅ Correct! Target 'quicksand' found at rank 1
+[17:57:01.257] 🌀 Swipe recorded for 'crompton': 176 points, 1499ms, keys: ccccccccccfffffdrrrrrrrrrrrrrrrrrrrtttyyuuuiiiiiiiiiiiiiiiiiijjjjjjnnnnnnnnnnnmmmmkkkkkoooooooooooooooooooooiiuuuyyytttttrrrrrrttttttyyuuiiioooooooooooooooooikjjjjnnnnnnnn
+[17:57:01.478] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. crimotion 0.655 [filtered out]
+  2. cribotton 0.030 [filtered out]
+  3. criboton 0.029 [filtered out]
+  4. cromotion 0.029 [filtered out]
+  5. crimpton 0.026 [filtered out]
+
+[17:57:01.480] 🧠 Neural prediction completed in 220ms
+[17:57:01.482]    Predictions: 5 candidates
+[17:57:01.484]    1. cremation (score: 234)
+[17:57:01.485]    2. crichton (score: 28)
+[17:57:01.487]    3. raw:crimotion (score: 2)
+[17:57:01.489]    4. raw:cribotton (score: 2)
+[17:57:01.491]    5. raw:criboton (score: 2)
+[17:57:01.493] ❌ Incorrect. Expected 'crompton', got: 'cremation'
+[17:57:06.551] 🌀 Swipe recorded for 'battlefront': 290 points, 2430ms, keys: bbbbbbbbbvvvvccdddssssaaaaaaaaaaaaaaaaaawweeerrrrtttttttttttttttttttttttttttttttttttttttyyyyyyuuhjjjjjjkkkkkkkkkllllllllllllkkkkjjjhhgggtrrrreeeeeeeeeeeeeeeeeeeeeeerdfffffffggggggggggftttrrrrrrrrrrrrrrrrrrrrtttyyuuuiiiiiiooooooooooookkkkkkkknnnnnnnnnnnnnnnnnnnnbbbhhhggytttttttrrr
+[17:57:06.813] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. cattality 0.070 [filtered out]
+  2. cattalities 0.065 [filtered out]
+  3. cattalies 0.052 [filtered out]
+  4. capacity 0.040 [kept by vocab]
+  5. battegraphic 0.021 [filtered out]
+
+[17:57:06.815] 🧠 Neural prediction completed in 261ms
+[17:57:06.818]    Predictions: 7 candidates
+[17:57:06.821]    1. capacity (score: 376)
+[17:57:06.823]    2. catholics (score: 56)
+[17:57:06.826]    3. captivity (score: 53)
+[17:57:06.828]    4. causality (score: 15)
+[17:57:06.830]    5. raw:cattality (score: 1)
+[17:57:06.833] ❌ Incorrect. Expected 'battlefront', got: 'capacity'
+[17:57:09.683] 🌀 Swipe recorded for 'imo': 55 points, 460ms, keys: iiiiiiiikkkkkkmmmmmmmmmmmmmmmmmmmmmmkkkkkkkooooooooooo
+[17:57:09.782] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. ipo 0.361 [kept by vocab]
+  2. ip 0.203 [kept by vocab]
+  3. in 0.073 [kept by vocab]
+  4. ilo 0.055 [kept by vocab]
+  5. io 0.043 [kept by vocab]
+
+[17:57:09.786] 🧠 Neural prediction completed in 94ms
+[17:57:09.788]    Predictions: 7 candidates
+[17:57:09.791]    1. in (score: 440)
+[17:57:09.793]    2. ip (score: 349)
+[17:57:09.796]    3. ipo (score: 337)
+[17:57:09.798]    4. io (score: 171)
+[17:57:09.801]    5. ilo (score: 127)
+[17:57:09.803] ❌ Incorrect. Expected 'imo', got: 'in'
+[17:57:13.678] 🌀 Swipe recorded for 'baird': 131 points, 1107ms, keys: bbbbbbbbvvvvvcccxxddsssaaaaaaaaaaaaaaaaaaaaaaasssdrtttyyyuuuuuuiiiiiiiiiiiiiiiiiuuuuyyytttttrrrrrrrrrrrrrrrrrrrrrrrrdddddddddddddd
+[17:57:13.807] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. baid 0.831 [filtered out]
+  2. baird 0.081 [kept by vocab]
+  3. baids 0.052 [filtered out]
+  4. bairs 0.012 [filtered out]
+  5. bard 0.006 [kept by vocab]
+
+[17:57:13.810] 🧠 Neural prediction completed in 128ms
+[17:57:13.812]    Predictions: 6 candidates
+[17:57:13.815]    1. bad (score: 395)
+[17:57:13.818]    2. baird (score: 192)
+[17:57:13.820]    3. bard (score: 135)
+[17:57:13.823]    4. bands (score: 118)
+[17:57:13.826]    5. raw:baid (score: 11)
+[17:57:13.828] ✅ Correct! Target 'baird' found at rank 2
+[17:57:17.358] 🌀 Swipe recorded for 'santa': 109 points, 931ms, keys: sssssssssssaaaaaaaaaaaaaaaaassddffgghbnnnnnnnmmmmmmmmmmmmnnnnnjhhhhhhgyyyyyyttttttrrrrrrrrreeeeeeessssaaa
+[17:57:17.480] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. sala 0.503 [kept by vocab]
+  2. salra 0.379 [filtered out]
+  3. sama 0.025 [kept by vocab]
+  4. salea 0.019 [filtered out]
+  5. salta 0.011 [filtered out]
+
+[17:57:17.484] 🧠 Neural prediction completed in 121ms
+[17:57:17.487]    Predictions: 4 candidates
+[17:57:17.490]    1. sala (score: 364)
+[17:57:17.493]    2. salsa (score: 193)
+[17:57:17.496]    3. sama (score: 136)
+[17:57:17.498]    4. raw:salra (score: 13)
+[17:57:17.501] ❌ Incorrect. Expected 'santa', got: 'sala'
+[17:57:21.168] 🌀 Swipe recorded for 'injure': 114 points, 966ms, keys: iiiiiiiiiijjjjjnnnnnnnnnnnnnnnnnnnnnnnnnjjjjjjjjjjjjjjjjuuuuuuuuuuuuuuuuyyyyyytttttrrrrrrrrrrrrreeeeeeeeeeeeeewww
+[17:57:21.266] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. iw 0.341 [kept by vocab]
+  2. iq 0.190 [kept by vocab]
+  3. ow 0.073 [kept by vocab]
+  4. injure 0.060 [kept by vocab]
+  5. is 0.037 [kept by vocab]
+
+[17:57:21.269] 🧠 Neural prediction completed in 96ms
+[17:57:21.272]    Predictions: 8 candidates
+[17:57:21.276]    1. is (score: 418)
+[17:57:21.279]    2. issue (score: 410)
+[17:57:21.282]    3. i's (score: 397)
+[17:57:21.285]    4. iq (score: 290)
+[17:57:21.288]    5. iw (score: 266)
+[17:57:21.291] ✅ Correct! Target 'injure' found at rank 7
+[17:57:25.063] 🌀 Swipe recorded for 'literacy': 172 points, 1456ms, keys: llllllllkkkooiiiiiiiiiiiiiuuuuuyyyytttttrrrrrrrrrrreeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrrrrrrrrrrrreeeessaaaaaaaaaaaaaaaaaaaassssssxxxxccccccccccccvvvcffffggggtyyyyyyyyyyy
+[17:57:25.253] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. literacy 0.845 [kept by vocab]
+  2. lieracy 0.125 [filtered out]
+  3. learly 0.005 [filtered out]
+  4. lireacy 0.002 [filtered out]
+  5. leracy 0.002 [filtered out]
+
+[17:57:25.257] 🧠 Neural prediction completed in 187ms
+[17:57:25.261]    Predictions: 5 candidates
+[17:57:25.264]    1. literacy (score: 700)
+[17:57:25.267]    2. library (score: 132)
+[17:57:25.271]    3. learn (score: 85)
+[17:57:25.274]    4. raw:lieracy (score: 8)
+[17:57:25.278]    5. raw:learly (score: 4)
+[17:57:25.281] ✅ Correct! Target 'literacy' found at rank 1
+[17:57:28.750] 🌀 Swipe recorded for 'world': 137 points, 1140ms, keys: wwwwwwwwwwwwwweeeerrttyyuuuiiiiiiiioooooooooooooiiiiuuuyyytttrrrrrrrrrrrrrrrrrrtttgghhhjjjkkkkklllllllllllllkkkjjjhhhgggffffdddddsssss
+[17:57:28.876] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. world 0.914 [kept by vocab]
+  2. worlds 0.058 [kept by vocab]
+  3. works 0.015 [kept by vocab]
+  4. words 0.008 [kept by vocab]
+  5. would 0.001 [kept by vocab]
+
+[17:57:28.880] 🧠 Neural prediction completed in 123ms
+[17:57:28.884]    Predictions: 8 candidates
+[17:57:28.888]    1. world (score: 1019)
+[17:57:28.892]    2. world's (score: 968)
+[17:57:28.896]    3. works (score: 400)
+[17:57:28.900]    4. would (score: 394)
+[17:57:28.904]    5. words (score: 393)
+[17:57:28.908] ✅ Correct! Target 'world' found at rank 1
+[17:57:32.863] 🌀 Swipe recorded for 'duchess': 142 points, 1201ms, keys: dddddddddddffftttyyyyuuuuuuuuuuuuuuuuuuuuuuuyygggggfccccccccccccccccccccccvvggghhhhhhhhhhhhhhhggggffrrreeeeeeeeeeeeeeeeeeeesssssssssssssssssss
+[17:57:33.007] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. duchess 0.280 [kept by vocab]
+  2. dives 0.279 [kept by vocab]
+  3. duches 0.143 [filtered out]
+  4. diverse 0.046 [kept by vocab]
+  5. divers 0.034 [kept by vocab]
+
+[17:57:33.011] 🧠 Neural prediction completed in 143ms
+[17:57:33.016]    Predictions: 5 candidates
+[17:57:33.020]    1. duchess (score: 351)
+[17:57:33.025]    2. dives (score: 290)
+[17:57:33.030]    3. diverse (score: 280)
+[17:57:33.036]    4. divers (score: 204)
+[17:57:33.041]    5. raw:duches (score: 20)
+[17:57:33.045] ✅ Correct! Target 'duchess' found at rank 1
+[17:57:37.125] 🌀 Swipe recorded for 'interrupt': 201 points, 1712ms, keys: iiiiiiiijjjjjjnnnnnnnnnnnnnnnnnhhhhhhyyyyttttrrrrrrrrrrrrrrrrrrrreeeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrttttyyyyyyyuuuuuuuuiiiiiooooooooppppppppppppppppoooooooiiiuuuyyyyttttttttttrr
+[17:57:37.380] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. interpriot 0.339 [filtered out]
+  2. interruption 0.083 [kept by vocab]
+  3. interrupt 0.069 [kept by vocab]
+  4. interrator 0.051 [filtered out]
+  5. interpriots 0.051 [filtered out]
+
+[17:57:37.385] 🧠 Neural prediction completed in 253ms
+[17:57:37.390]    Predictions: 4 candidates
+[17:57:37.394]    1. interrupt (score: 216)
+[17:57:37.398]    2. interpret (score: 194)
+[17:57:37.402]    3. interruption (score: 194)
+[17:57:37.407]    4. raw:interpriot (score: 19)
+[17:57:37.411] ✅ Correct! Target 'interrupt' found at rank 1
+[17:57:40.704] 🌀 Swipe recorded for 'wadi': 94 points, 782ms, keys: wwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaasssssddddddddddddddddddffffffggyyuuuuuuiiiiiiiiiiiiiiiiiiiii
+[17:57:40.845] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. way 0.210 [kept by vocab]
+  2. waition 0.176 [filtered out]
+  3. waitional 0.112 [filtered out]
+  4. waitionali 0.104 [filtered out]
+  5. waiter 0.050 [kept by vocab]
+
+[17:57:40.851] 🧠 Neural prediction completed in 140ms
+[17:57:40.856]    Predictions: 5 candidates
+[17:57:40.861]    1. way (score: 563)
+[17:57:40.865]    2. waiter (score: 205)
+[17:57:40.870]    3. waiting (score: 151)
+[17:57:40.876]    4. raw:waition (score: 15)
+[17:57:40.881]    5. raw:waitional (score: 15)
+[17:57:40.886] ❌ Incorrect. Expected 'wadi', got: 'way'
+[17:57:45.906] 🌀 Swipe recorded for 'conditioners': 283 points, 2365ms, keys: cccccccccvvvghhhjjjiioooooooooooooooooooooooooooookkkkjnnnnbbbbbbbbbvvvgffffdddddddddddddddddddddfffgyyyuuuuiiiiiiiiiiiiiiiiiiiiuuuyyyttttttttttttttttttyyyyyuuuuiiiiiooooooooooooooooookkkjjnnnnnnnnnnnnnnnbbbbbvvgfffdeeeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrrrrrrrrrrrrrdddddddssssssssssss
+[17:57:46.165] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. conspire 0.107 [kept by vocab]
+  2. coaptomers 0.072 [filtered out]
+  3. constitute 0.043 [kept by vocab]
+  4. conditional 0.039 [kept by vocab]
+  5. conditioners 0.025 [kept by vocab]
+
+[17:57:46.172] 🧠 Neural prediction completed in 258ms
+[17:57:46.177]    Predictions: 5 candidates
+[17:57:46.182]    1. constitute (score: 251)
+[17:57:46.187]    2. conditional (score: 210)
+[17:57:46.192]    3. conspire (score: 108)
+[17:57:46.196]    4. conditioners (score: 61)
+[17:57:46.201]    5. raw:coaptomers (score: 6)
+[17:57:46.206] ✅ Correct! Target 'conditioners' found at rank 4
+[17:57:50.559] 🌀 Swipe recorded for 'memorial': 212 points, 1762ms, keys: mmmmmmmmmmnnnnbbhgggfffdreeeeeeeeeeeeeeeeeeerrfffgghhhnnnmmmmmmmmmmmmmmmkkkkkkkiiiiiooooooooooooooiiiiuuuyyyttttrrrrrrrrrrrrrrrrrtttyyyuuuiiiiiiiiiiiiiuuuyyttrredssssaaaaaaaaaaaaaaaasssddffgghhjjjkkkklllllll
+[17:57:50.769] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. memorial 0.950 [kept by vocab]
+  2. pemorial 0.026 [filtered out]
+  3. nemorial 0.005 [filtered out]
+  4. vemorial 0.004 [filtered out]
+  5. pemitual 0.002 [filtered out]
+
+[17:57:50.774] 🧠 Neural prediction completed in 209ms
+[17:57:50.779]    Predictions: 4 candidates
+[17:57:50.785]    1. memorial (score: 810)
+[17:57:50.789]    2. pelosi (score: 13)
+[17:57:50.794]    3. raw:pemorial (score: 1)
+[17:57:50.799]    4. raw:nemorial (score: 1)
+[17:57:50.805] ✅ Correct! Target 'memorial' found at rank 1
+[17:57:54.954] 🌀 Swipe recorded for 'deficit': 184 points, 1550ms, keys: ddddddddddddsseeeeeeeeeeeeeeeeedddffffffffffffffffffffffffffffffdddreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddxxccccccccccccccccvgggghhhuuiiiiiiiiiiiiiiiiiiuuuuuyyyyttttttrrrrrr
+[17:57:55.148] 🔍 Raw NN Beam Search (with vocab filtering):
+  1. defector 0.530 [kept by vocab]
+  2. defect 0.378 [kept by vocab]
+  3. defective 0.025 [kept by vocab]
+  4. diffector 0.017 [filtered out]
+  5. deficit 0.010 [kept by vocab]
+
+[17:57:55.154] 🧠 Neural prediction completed in 192ms
+[17:57:55.159]    Predictions: 6 candidates
+[17:57:55.165]    1. defect (score: 403)
+[17:57:55.170]    2. defector (score: 320)
+[17:57:55.176]    3. deficit (score: 244)
+[17:57:55.181]    4. defects (score: 202)
+[17:57:55.186]    5. defective (score: 175)
+[17:57:55.192] ✅ Correct! Target 'deficit' found at rank 3

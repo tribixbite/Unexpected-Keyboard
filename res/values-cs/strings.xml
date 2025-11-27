@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Přidat vlastní klávesy</string>
     <string name="pref_extra_keys_internal">Výbrané klávesy k přidaní do klávesnice</string>
     <string name="pref_category_typing">Psaní</string>
-    <string name="pref_swipe_dist_title">Vzdálenost posunutí prstem</string>
-    <string name="pref_swipe_dist_summary">Jak daleko je třeba posunout prst pro zadání znaku/znaménka v rohu klávey (%s)</string>
     <string name="pref_long_timeout_title">Doba pro aktivaci dlouhého podržení</string>
     <string name="pref_long_interval_title">Interval opakování znaků</string>
     <string name="pref_keyrepeat_enabled">Opakování kláves při držení</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (Světlý)</string>
     <string name="pref_theme_e_monetdark">Monet (Tmavý)</string>
     <string name="pref_theme_e_rosepine">Růžová borovice</string>
-    <string name="pref_swipe_dist_e_very_short">Velmi krátká</string>
-    <string name="pref_swipe_dist_e_short">Krátká</string>
-    <string name="pref_swipe_dist_e_default">Běžná</string>
-    <string name="pref_swipe_dist_e_far">Dlouhá</string>
-    <string name="pref_swipe_dist_e_very_far">Velmi dlouhá</string>
     <string name="pref_key_horizontal_space">Horizontální mezery mezi klávesami</string>
     <string name="pref_key_vertical_space">Vertikální mezery mezi klávesami</string>
     <string name="pref_border_config_title">Přizpůsobit okraje</string>

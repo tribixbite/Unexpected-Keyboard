@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:hardwareAccelerated="false">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:hardwareAccelerated="true">
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.READ_USER_DICTIONARY"/>
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
-  <application android:label="@string/app_name" android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:hardwareAccelerated="false">
+  <application android:label="@string/app_name" android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:hardwareAccelerated="true">
     <service android:name="juloo.keyboard2.Keyboard2" android:label="@string/app_name" android:permission="android.permission.BIND_INPUT_METHOD" android:exported="true" android:directBootAware="true">
       <intent-filter>
         <action android:name="android.view.InputMethod"/>
@@ -23,6 +25,12 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
+
+    <activity android:name="juloo.keyboard2.SwipeCalibrationActivity" android:label="@string/pref_swipe_calibration_title" android:theme="@style/settingsTheme" android:exported="false" android:directBootAware="true"/>
+
+    <activity android:name="juloo.keyboard2.SwipeDebugActivity" android:label="Swipe Debug" android:theme="@style/settingsTheme" android:exported="false" android:directBootAware="true"/>
+
+    <activity android:name="juloo.keyboard2.DictionaryManagerActivity" android:label="Dictionary Manager" android:theme="@style/DictionaryManagerTheme" android:exported="true" android:directBootAware="true"/>
   </application>
 
   <!-- To query enabled input methods for voice IME detection -->

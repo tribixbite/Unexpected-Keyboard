@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Menambahkan tombol khusus</string>
     <string name="pref_extra_keys_internal">Pilih tombol untuk ditambahkan ke keyboard</string>
     <string name="pref_category_typing">Mengetik</string>
-    <string name="pref_swipe_dist_title">Jarak menggeser</string>
-    <string name="pref_swipe_dist_summary">Jarak karakter di sudut tombol (%s)</string>
     <string name="pref_long_timeout_title">Waktu tekan lama</string>
     <string name="pref_long_interval_title">Interval pengulangan tombol</string>
     <string name="pref_keyrepeat_enabled">Ulangi tombol pada tekan lama</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (Terang)</string>
     <string name="pref_theme_e_monetdark">Monet (Gelap)</string>
     <string name="pref_theme_e_rosepine">Rosé Pine</string>
-    <string name="pref_swipe_dist_e_very_short">Sangat pendek</string>
-    <string name="pref_swipe_dist_e_short">Pendek</string>
-    <string name="pref_swipe_dist_e_default">Normal</string>
-    <string name="pref_swipe_dist_e_far">Jauh</string>
-    <string name="pref_swipe_dist_e_very_far">Sangat jauh</string>
     <string name="pref_key_horizontal_space">Jarak horizontal di antara tombol</string>
     <string name="pref_key_vertical_space">Jarak vertikal antara tombol</string>
     <string name="pref_border_config_title">Kustomisasi tepi</string>

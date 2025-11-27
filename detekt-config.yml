@@ -1,0 +1,67 @@
+# Detekt configuration for Unexpected Keyboard
+# Minimal configuration focused on critical issues
+
+build:
+  maxIssues: -1
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+console-reports:
+  active: true
+
+complexity:
+  active: true
+  LongMethod:
+    active: true
+    threshold: 60
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+    constructorThreshold: 7
+  LargeClass:
+    active: true
+    threshold: 800
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+
+empty-blocks:
+  active: true
+  EmptyCatchBlock:
+    active: true
+    allowedExceptionNameRegex: '_|(ignore|expected).*'
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: true
+    exceptionNames:
+      - Error
+      - Exception
+      - RuntimeException
+      - Throwable
+    allowedExceptionNameRegex: '_|(ignore|expected).*'
+
+potential-bugs:
+  active: true
+  EqualsWithHashCodeExist:
+    active: true
+  UnreachableCode:
+    active: true
+  UnsafeCallOnNullableType:
+    active: true
+
+style:
+  active: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  MayBeConst:
+    active: true
+  UnusedImports:
+    active: true
+  UnusedPrivateClass:
+    active: true

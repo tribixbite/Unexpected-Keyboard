@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Özel tuş ekle</string>
     <string name="pref_extra_keys_internal">Klavyeye eklenecek tuşları seçin</string>
     <string name="pref_category_typing">Yazma</string>
-    <string name="pref_swipe_dist_title">Kaydırma mesafesi</string>
-    <string name="pref_swipe_dist_summary">Tuşların köşelerinden kaydırma mesafesi (%s)</string>
     <string name="pref_long_timeout_title">Uzun basma süresi</string>
     <string name="pref_long_interval_title">Tuşların tekrarlama sıklığı</string>
     <string name="pref_keyrepeat_enabled">Uzun basınca tuş tekrarlamaları</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (Açık)</string>
     <string name="pref_theme_e_monetdark">Monet (Koyu)</string>
     <string name="pref_theme_e_rosepine">Gül Çamı(Rosé Pine)</string>
-    <string name="pref_swipe_dist_e_very_short">Çok kısa</string>
-    <string name="pref_swipe_dist_e_short">Kısa</string>
-    <string name="pref_swipe_dist_e_default">Normal</string>
-    <string name="pref_swipe_dist_e_far">Uzun</string>
-    <string name="pref_swipe_dist_e_very_far">Çok uzun</string>
     <string name="pref_key_horizontal_space">Tuşlar arasındaki yatay boşluk</string>
     <string name="pref_key_vertical_space">Tuşlar arasındaki dikey boşluk</string>
     <string name="pref_border_config_title">Çerçeveyi özelleştir</string>

@@ -32,6 +32,37 @@ Nix users can call gradle directly: `gradle assembleDebug`.
 
 If the build succeeds, the debug apk is located in `build/outputs/apk/debug/app-debug.apk`.
 
+### Building on Termux (Android ARM64)
+
+Building on Termux requires additional setup due to architecture compatibility:
+
+1. **Install prerequisites:**
+```bash
+pkg install openjdk-17 gradle
+```
+
+2. **Install Android SDK** (if not already installed):
+   - Download and extract Android SDK to `$HOME/android-sdk`
+   - Ensure you have platforms/android-35 and build-tools/35.0.0
+
+3. **Install Termux-compatible build tools:**
+```bash
+pkg install aapt2 --overwrite '*'
+```
+
+4. **Run the Termux build script:**
+```bash
+./build-on-termux.sh
+```
+
+**Note:** The standard gradle build may fail on Termux due to AAPT2 being compiled for x86-64. The `build-on-termux.sh` script handles replacing the incompatible binaries with ARM64-compatible versions from Termux packages.
+
+**Known Issues on Termux:**
+- AAPT2 from Android SDK is x86-64 only and won't run on ARM64 without emulation
+- The Termux AAPT2 may have issues accessing android.jar from the SDK
+- Build times are significantly longer on mobile devices
+- Memory constraints may require closing other apps during build
+
 ## Debugging on your phone
 
 First [Enable adb debugging on your device](https://developer.android.com/studio/command-line/adb#Enabling).

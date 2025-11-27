@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Voeg aangepaste toetsen toe</string>
     <string name="pref_extra_keys_internal">Selecteer toetsen om aan toetsenbord toe te voegen</string>
     <string name="pref_category_typing">Typen</string>
-    <string name="pref_swipe_dist_title">Veeg afstand</string>
-    <string name="pref_swipe_dist_summary">Afstand van tekens in de hoeken van de toetsen (%s)</string>
     <string name="pref_long_timeout_title">Time-out lang indrukken</string>
     <string name="pref_long_interval_title">Toetsherhaalinterval</string>
     <string name="pref_keyrepeat_enabled">Toetsherhaling bij lang indrukken</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (Licht)</string>
     <string name="pref_theme_e_monetdark">Monet (Donker)</string>
     <string name="pref_theme_e_rosepine">Rosé Pine</string>
-    <string name="pref_swipe_dist_e_very_short">Zeer kort</string>
-    <string name="pref_swipe_dist_e_short">Kort</string>
-    <string name="pref_swipe_dist_e_default">Normaal</string>
-    <string name="pref_swipe_dist_e_far">Ver</string>
-    <string name="pref_swipe_dist_e_very_far">Zeer ver</string>
     <string name="pref_key_horizontal_space">Hor. ruimte tussen toetsen</string>
     <string name="pref_key_vertical_space">Vert. ruimte tussen toetsen</string>
     <string name="pref_border_config_title">Randen aanpassen</string>

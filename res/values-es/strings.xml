@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Agregar teclas personalizadas</string>
     <string name="pref_extra_keys_internal">Selecciona teclas para agregar al teclado</string>
     <string name="pref_category_typing">Escritura</string>
-    <string name="pref_swipe_dist_title">Distancia de deslizamiento</string>
-    <string name="pref_swipe_dist_summary">Distancia de caracteres en las esquinas de las teclas (%s)</string>
     <string name="pref_long_timeout_title">Duración para toque largo</string>
     <string name="pref_long_interval_title">Intervalo de repetición de tecla</string>
     <string name="pref_keyrepeat_enabled">Permitir repetición de toque largo</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monet (claro)</string>
     <string name="pref_theme_e_monetdark">Monet (oscuro)</string>
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">Muy corta</string>
-    <string name="pref_swipe_dist_e_short">Corta</string>
-    <string name="pref_swipe_dist_e_default">Normal</string>
-    <string name="pref_swipe_dist_e_far">Larga</string>
-    <string name="pref_swipe_dist_e_very_far">Muy larga</string>
     <string name="pref_key_horizontal_space">Espacio horizontal entre las teclas</string>
     <string name="pref_key_vertical_space">Espacio vertical entre las teclas</string>
     <string name="pref_border_config_title">Bordes personalizados</string>

@@ -1,0 +1,533 @@
+
+ ▐▛███▜▌   Claude Code v2.0.0
+▝▜█████▛▘  Sonnet 4.5 · Claude Max
+  ▘▘ ▝▝    /…/files/home/git/swype/Unexpected-Keyboard
+═══════════ Conversation compacted · ctrl+o for history ══════════
+  ⎿  Read srcs/juloo.keyboard2/DictionaryDataSource.kt (353 lines)
+  ⎿  Referenced file srcs/juloo.keyboard2/OptimizedVocabulary.java
+  ⎿  Referenced file srcs/juloo.keyboard2/WordPredictor.java
+  ⎿  Read memory/pm.md (260 lines)
+  ⎿  Read build.gradle (244 lines)
+  ⎿  Todo list read (5 items)
+
+● I'll build and test the 50k dictionary implementation now.
+
+● Bash(./build-on-termux.sh) timeout: 5m 0s
+  ⎿  === Unexpected Keyboard Termux Build Script ===
+     Building debug APK on Termux ARM64
+     … +163 lines (ctrl+o to expand)
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 12 additions and 4 removals 
+        9    
+       10    ## 🔥 Current Status (2025-10-21)
+       11    
+       12 -  **Latest Version**: v1.32.180 (229)
+       13 -  **Build Status**: ✅ BUILD SUCCESSFUL - 
+          -  Editable Frequency Feature
+       12 +  **Latest Version**: v1.32.181 (230)
+       13 +  **Build Status**: ✅ BUILD SUCCESSFUL - 50k 
+          +  Dictionary Upgrade
+       14    **Branch**: feature/swipe-typing
+       15    
+       16 -  ### Recent Work (v1.32.180)
+       16 +  ### Recent Work (v1.32.181)
+       17    
+       18 -  **Editable Frequency - Full Control Over Word 
+          - Priority**
+       18 +  **50k Enhanced Dictionary - 5x Dictionary Size
+          +  with Real Frequencies**
+       19 +  - **Size**: Upgraded from 10k to 49,981 words
+       20 +  - **Format**: JSON format with actual 
+          + frequency data (128-255 range)
+       21 +  - **Scaling**: 
+          + WordPredictor/DictionaryDataSource scale to 
+          + 100-10000, OptimizedVocabulary normalizes to 
+          + 0-1
+       22 +  - **Tier System**: OptimizedVocabulary assigns
+          +  tiers by sorted frequency (top 100 = tier 2, 
+          + top 5000 = tier 1)
+       23 +  - **Fallback**: All three loaders 
+          + (WordPredictor, OptimizedVocabulary, 
+          + DictionaryDataSource) support both JSON and 
+          + text formats
+       24 +  - **Impact**: Better prediction accuracy with 
+          + real word frequency data, expanded vocabulary 
+          + coverage
+       25 +  
+       26 +  **Previous (v1.32.180)**: Editable Frequency -
+          +  Full Control Over Word Priority
+       27    - **Add Dialog**: Two fields (word + 
+            frequency), default 100, range 1-10000
+       28    - **Edit Dialog**: Edit both word and 
+            frequency, preserves values
+       29    - **Validation**: Numeric keyboard, automatic 
+            range clamping via coerceIn()
+
+● Read(memory/CHANGELOG.md)
+  ⎿  Read 50 lines (ctrl+o to expand)
+
+● Update(memory/CHANGELOG.md)
+  ⎿  Updated memory/CHANGELOG.md with 29 additions         
+        4    
+        5    ---
+        6    
+        7 +  ## v1.32.179-181 - Enhanced Dictionary & 
+          + Frequency Control (2025-10-21)
+        8 +  
+        9 +  ### 50k Dictionary Upgrade with Real Frequency
+          +  Data
+       10 +  
+       11 +  **v1.32.181** (230) - ✅ BUILD SUCCESSFUL - 
+          + 50k Dictionary with Real Frequencies
+       12 +  - feat(dictionary): upgrade from 10k to 50k 
+          + words with actual frequency data
+       13 +  - Format: JSON format `{"word": freq, ...}` 
+          + with 49,981 words
+       14 +  - Frequency range: 128-255 raw values from 
+          + source data
+       15 +  - **WordPredictor.java**: Loads JSON, scales 
+          + frequencies 128-255 → 100-10000 for scoring
+       16 +  - **OptimizedVocabulary.java**: Two-pass 
+          + loading (collect, sort by freq, assign tiers)
+       17 +    - Tier assignment based on sorted position: 
+          + top 100 = tier 2, top 5000 = tier 1, rest = 
+          + tier 0
+       18 +    - Normalizes frequencies to 0-1 range for 
+          + beam search
+       19 +  - **DictionaryDataSource.kt**: Displays 
+          + frequencies in Dictionary Manager UI (100-10000
+          +  range)
+       20 +  - All three loaders support JSON format with 
+          + fallback to text format
+       21 +  - APK size: 47MB → 48MB (+789K dictionary 
+          + file)
+       22 +  - Impact: Better prediction accuracy with real
+          +  word frequency data, 5x vocabulary coverage
+       23 +  
+       24 +  **v1.32.180** (229) - Editable Word Frequency 
+          + in Custom Tab
+       25 +  - feat(dictionary): add editable frequency 
+          + fields to custom word dialogs
+       26 +  - Add dialog: Two fields (word + frequency), 
+          + default 100, range 1-10000
+       27 +  - Edit dialog: Both word and frequency 
+          + editable, preserves existing values
+       28 +  - Validation: Numeric keyboard for frequency 
+          + input, automatic range clamping via coerceIn()
+       29 +  - UI: Clean LinearLayout with proper padding 
+          + and hints
+       30 +  - Impact: Frequency directly affects 
+          + prediction ranking in both typing and swipe
+       31 +  
+       32 +  **v1.32.179** - (skipped, version 
+          + auto-increment)
+       33 +  
+       34 +  ---
+       35 +  
+       36    ## v1.32.157-178 - Dictionary Manager 
+            (2025-10-21)
+       37    
+       38    ### Complete Dictionary Management System
+
+● Bash(git add -A && git status)
+  ⎿ On branch feature/swipe-typing                           
+    Your branch is up to date with 'origin/feature/swipe-typi
+    ng'.
+    … +14 lines (ctrl+o to expand)
+
+
+● Bash(git restore --staged 50k_words.json data.json.1 && rm -f
+      data.json.1 && git status)
+  ⎿ On branch feature/swipe-typing                           
+    Your branch is up to date with 'origin/feature/swipe-typi
+    ng'.
+    … +17 lines (ctrl+o to expand)
+
+
+● Bash(git commit -m "feat(dictionary): upgrade to 50k words with
+      real frequency data…)
+  ⎿ [feature/swipe-typing fc6ec646] feat(dictionary): upgrade
+     to 50k words with real frequency data
+     8 files changed, 245 insertions(+), 74 deletions(-)
+     create mode 100644 assets/dictionaries/en_enhanced.json
+
+
+● Bash(git log --oneline -5)
+  ⎿ fc6ec646 feat(dictionary): upgrade to 50k words with real
+     frequency data
+    ddf6ad3f docs(pm): update to v1.32.180 with editable freq
+    … +7 lines (ctrl+o to expand)
+
+
+
+● ✅ v1.32.181 built successfully - 50k dictionary upgrade
+  complete
+
+  Changes:
+  - Upgraded from 10k → 49,981 words with real frequency data
+  - JSON format: {"word": freq, ...} with frequencies 128-255
+  - WordPredictor: Scales to 100-10000 for scoring
+  - OptimizedVocabulary: Two-pass loading (collect → sort →
+  assign tiers), normalizes to 0-1
+  - DictionaryDataSource: Displays frequencies in UI
+  (100-10000 range)
+  - All three loaders support both JSON and text formats with
+  fallback
+  - APK: 47MB → 48MB (+789K dictionary)
+
+  Testing:
+  - Install APK from /sdcard/unexpected/debug-kb.apk
+  - Open Dictionary Manager (Settings → 📚 Dictionary Manager)
+  - Active tab should now show ~50k words instead of 10k
+  - Predictions should use real frequency values for better
+  ranking
+
+  Files updated:
+  - assets/dictionaries/en_enhanced.json (new, 789K)
+  - srcs/juloo.keyboard2/WordPredictor.java:48-70
+  - srcs/juloo.keyboard2/OptimizedVocabulary.java:79-140
+  - srcs/juloo.keyboard2/DictionaryDataSource.kt:46-91
+  - memory/pm.md, memory/CHANGELOG.md
+
+> it looks like you didnt use the freq values from the json 
+
+● Let me check what actually got saved in the code:
+
+● Read(srcs/juloo.keyboard2/WordPredictor.java)
+  ⎿  Read 50 lines (ctrl+o to expand)
+
+● Search(pattern: "public void loadDictionary", path:
+        "srcs/juloo.keyboard2/WordPredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "assets.*dictionar", path:
+        "srcs/juloo.keyboard2/WordPredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "getAllWords", path:
+        "srcs/juloo.keyboard2/WordPredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Read(srcs/juloo.keyboard2/WordPredictor.java)
+  ⎿  Read 100 lines (ctrl+o to expand)
+
+● Search(pattern: "_dictionary\.put", path:
+        "srcs/juloo.keyboard2/WordPredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "_bigramModel\.get", path:
+        "srcs/juloo.keyboard2/WordPredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "public.*predict", path:
+        "srcs/juloo.keyboard2/WordPredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "public.*get.*uggestion", path:
+        "srcs/juloo.keyboard2/WordPredictor.java", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+● Read(srcs/juloo.keyboard2/WordPredictor.java)
+  ⎿  Read 764 lines (ctrl+o to expand)
+
+● Good! WordPredictor.java is loading the JSON correctly
+  (lines 253-278). Let me check OptimizedVocabulary.java:
+
+● Read(srcs/juloo.keyboard2/OptimizedVocabulary.java)
+  ⎿  Read 100 lines (ctrl+o to expand)
+
+● Search(pattern: "private void loadWordFrequencies", path:
+        "srcs/juloo.keyboard2/OptimizedVocabulary.java",
+        output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "void loadWordFrequencies", path:
+        "srcs/juloo.keyboard2/OptimizedVocabulary.java",
+        output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "loadWord", path:
+        "srcs/juloo.keyboard2/OptimizedVocabulary.java",
+        output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Bash(wc -l /data/data/com.termux/files/home/git/swype/Unexpected
+      -Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.java)
+  ⎿ 631 /data/data/com.termux/files/home/git/swype/Unexpected
+    -Keyboard/srcs/juloo.keyboard2/OptimizedVocabulary.java
+
+
+● Search(pattern: "dictionaries.*enhanced", path:
+        "srcs/juloo.keyboard2/OptimizedVocabulary.java",
+        output_mode: "content")
+  ⎿  Found 0 lines 
+
+> for the new dictionary, each word has a frequency in the 
+json 
+
+● Let me check if OptimizedVocabulary loads from the JSON
+  file:
+
+● Search(pattern: "assets\.open", path:
+        "srcs/juloo.keyboard2/OptimizedVocabulary.java",
+        output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Bash(git show fc6ec646 --stat)
+  ⎿  commit fc6ec6463c8f268f7373fcc7025b28116203c905
+     Author: tribixbite <willstone@gmail.com>
+     Date:   Tue Oct 21 15:01:05 2025 -0400
+     … +43 lines (ctrl+o to expand)
+
+● Bash(git show fc6ec646
+      srcs/juloo.keyboard2/OptimizedVocabulary.java | head -200)
+  ⎿  commit fc6ec6463c8f268f7373fcc7025b28116203c905
+     Author: tribixbite <willstone@gmail.com>
+     Date:   Tue Oct 21 15:01:05 2025 -0400
+     … +215 lines (ctrl+o to expand)
+
+● I see the code IS loading JSON with frequencies. Let me
+  verify the JSON file exists in assets:
+
+● Bash(ls -lh assets/dictionaries/)
+  ⎿  total 956K                                            
+     -rw-------. 1 u0_a364 u0_a364  615 Sep  8 13:11 de.txt
+     -rw-------. 1 u0_a364 u0_a364  76K Sep  8 13:11 en.txt
+     … +6 lines (ctrl+o to expand)
+
+● Bash(head -c 500 assets/dictionaries/en_enhanced.json | jq -r
+      'to_entries | .[:10] | .[] | "\(.key): \(.value)"')
+  ⎿  Error: jq: parse error: Unfinished JSON term at EOF at line 1,
+      column 500
+
+● Bash(python3 << 'EOF'
+      import json…)
+  ⎿  the: 255                      
+     of: 254
+     to: 254
+     … +10 lines (ctrl+o to expand)
+
+● The JSON file is correct with 49,981 words and frequencies
+  128-255. The code IS loading and using these frequencies.
+  Let me verify by checking if there are any syntax errors in
+  my implementations. Let me also look at a sample to confirm
+  the scaling:
+
+● Bash(python3 << 'EOF'
+      # Verify the frequency scaling matches what I implemented…)
+  ⎿  WordPredictor scaling (100-10000 range):
+       'the' (255) → 10000
+       min (128) → 100
+     … +4 lines (ctrl+o to expand)
+
+● The code IS using the frequency values correctly:
+
+  Evidence:
+  1. ✅ JSON file exists: assets/dictionaries/en_enhanced.json
+   (789K, 49,981 words)
+  2. ✅ Frequencies in JSON: 128-255 range
+  3. ✅ WordPredictor.java:273-276 loads JSON and scales to
+  100-10000
+  4. ✅ OptimizedVocabulary.java (git diff shown) loads JSON
+  and normalizes to 0-1
+  5. ✅ DictionaryDataSource.kt loads JSON and scales to
+  100-10000
+  6. ✅ Scaling verified: 'the'(255) → 10000 (WordPredictor),
+  → 1.0 (OptimizedVocabulary)
+
+  What specifically makes you think the frequencies aren't 
+  being used? Are you seeing:
+  - Dictionary Manager showing wrong frequencies?
+  - Predictions not ranking by frequency?
+  - Logcat showing "text format" instead of "JSON"?
+  - Something else?
+
+  The APK was built successfully at v1.32.181, but I can't
+  install it via ADB from Termux. Can you install
+  /sdcard/unexpected/debug-kb.apk and share what you're
+  observing?
+
+> dictionary mgr showing  2516 for 'inflicting' but the 
+50k_words,json i provided has it as 159 
+
+● You're right! I scaled the frequencies for display in the
+  Dictionary Manager, but you want to see the raw values from
+  the JSON (128-255 range). Let me fix that:
+
+● Read(srcs/juloo.keyboard2/DictionaryDataSource.kt)
+  ⎿  Read 50 lines (ctrl+o to expand)
+
+● Update(srcs/juloo.keyboard2/DictionaryDataSource.kt)
+  ⎿  Updated srcs/juloo.keyboard2/DictionaryDataSource.kt wit
+      2 additions and 3 removals
+       53                    while (keys.hasNext()) {
+       54                        val word = 
+            keys.next().lowercase()
+       55                        if 
+            (word.matches(Regex("^[a-z]+$"))) {
+       56 -                          val rawFreq
+          -   = jsonDict.getInt(word)
+       57 -                          // Scale from 128-255 
+          -  to 100-10000
+       58 -                          val frequency = 100 + 
+          - ((rawFreq - 128) / 127.0 * 9900).toInt()
+       56 +                          val frequency
+          +   = jsonDict.getInt(word)
+       57 +                          // Use raw frequency 
+          +  from JSON (128-255 range)
+       58                            words.add(
+       59                                DictionaryWord(
+       60                                    word = word,
+
+● Bash(./build-on-termux.sh 2>&1 | tail -50) timeout: 5m 0s
+  ⎿  > Task :processDebugResources 
+     > Task :compileDebugKotlin
+     … +62 lines (ctrl+o to expand)
+
+● Update(memory/pm.md)
+  ⎿  Updated memory/pm.md with 11 additions and 5 removals 
+        9    
+       10    ## 🔥 Current Status (2025-10-21)
+       11    
+       12 -  **Latest Version**: v1.32.181 (230)
+       13 -  **Build Status**: ✅ BUILD SUCCESSFUL - 50k 
+          -  Dictionary Upgrade
+       12 +  **Latest Version**: v1.32.182 (231)
+       13 +  **Build Status**: ✅ BUILD SUCCESSFUL - 50k 
+          +  Dictionary with Raw Frequencies
+       14    **Branch**: feature/swipe-typing
+       15    
+       16 -  ### Recent Work (v1.32.181)
+       16 +  ### Recent Work (v1.32.182)
+       17    
+       18 -  **50k Enhanced Dictionary - 5x Dictionary Size
+          -  with Real Frequencies**
+       18 +  **Dictionary Manager UI - Display Raw 
+          + Frequencies**
+       19 +  - **UI**: Dictionary Manager now shows raw 
+          + frequency values from JSON (128-255)
+       20 +  - **Fixed**: Was showing scaled values (2516 
+          + for 'inflicting'), now shows raw (159)
+       21 +  - **Internal**: 
+          + WordPredictor/OptimizedVocabulary still use 
+          + scaled values for scoring
+       22 +  - **Consistency**: Main dictionary shows 
+          + 128-255, custom words use 1-10000 
+          + (user-editable range)
+       23 +  
+       24 +  **Previous (v1.32.181)**: 50k Enhanced 
+          + Dictionary - 5x Dictionary Size with Real 
+          + Frequencies
+       25    - **Size**: Upgraded from 10k to 49,981 words
+       26    - **Format**: JSON format with actual 
+            frequency data (128-255 range)
+       27 -  - **Scaling**: WordPredictor
+          -  /DictionaryDataSource scale
+          -   to 100-10000, OptimizedVocabulary normalizes 
+          -  to 0-1
+       27 +  - **Scaling**: WordPredictor scales
+          +   to 100-10000, OptimizedVocabulary normalizes 
+          +  to 0-1
+       28    - **Tier System**: OptimizedVocabulary assigns
+             tiers by sorted frequency (top 100 = tier 2, 
+            top 5000 = tier 1)
+       29    - **Fallback**: All three loaders 
+            (WordPredictor, OptimizedVocabulary, 
+            DictionaryDataSource) support both JSON and 
+            text formats
+       30    - **Impact**: Better prediction accuracy with 
+            real word frequency data, expanded vocabulary 
+            coverage
+
+● Update(memory/CHANGELOG.md)
+  ⎿  Updated memory/CHANGELOG.md with 9 additions and 2      
+     removals
+        4    
+        5    ---
+        6    
+        7 -  ## v1.32.179-181
+          -   - Enhanced Dictionary & Frequency Control 
+          -  (2025-10-21)
+        7 +  ## v1.32.179-182
+          +   - Enhanced Dictionary & Frequency Control 
+          +  (2025-10-21)
+        8    
+        9    ### 50k Dictionary Upgrade with Real Frequency
+             Data
+       10    
+       11 -  **v1.32.181** (230) - ✅ BUILD SUCCESSFUL - 
+          - 50k Dictionary with Real Frequencies
+       11 +  **v1.32.182** (231) - ✅ BUILD SUCCESSFUL - 
+          + Display Raw Frequencies in UI
+       12 +  - fix(dictionary): show raw frequency values 
+          + in Dictionary Manager
+       13 +  - Dictionary Manager now displays raw JSON 
+          + frequencies (128-255 range)
+       14 +  - Fixed: was showing scaled values (e.g., 2516
+          +  for 'inflicting' instead of raw 159)
+       15 +  - Internal scoring still uses scaled values 
+          + (WordPredictor: 100-10000, OptimizedVocabulary:
+          +  0-1)
+       16 +  - Main dictionary shows 128-255, custom words 
+          + use 1-10000 (user-editable range)
+       17 +  
+       18 +  **v1.32.181** (230) - 50k Dictionary with Real
+          +  Frequencies
+       19    - feat(dictionary): upgrade from 10k to 50k 
+            words with actual frequency data
+       20    - Format: JSON format `{"word": freq, ...}` 
+            with 49,981 words
+       21    - Frequency range: 128-255 raw values from 
+            source data
+
+● Bash(git add -A && git commit -m "fix(dictionary): display raw
+      frequencies in Dictionary Manager UI…)
+  ⎿  [feature/swipe-typing 1552db83] fix(dictionary): display
+     raw frequencies in Dictionary Manager UI
+      6 files changed, 30 insertions(+), 17 deletions(-)
+      create mode 100644 50k_words.json
+
+● Bash(git log --oneline -5)
+  ⎿ 1552db83 fix(dictionary): display raw frequencies in Dict
+    ionary Manager UI
+    fc6ec646 feat(dictionary): upgrade to 50k words with real
+    … +7 lines (ctrl+o to expand)
+
+
+
+● ✅ Fixed! Dictionary Manager now shows raw frequencies from
+  the JSON.
+
+  What changed:
+  - Before: Scaled 159 → 2516 (computed as 100 + 
+  (159-128)/127*9900)
+  - After: Raw 159 (directly from JSON)
+
+  Verification:
+  # Your JSON has: "inflicting": 159
+  # Before (v1.32.181): 100 + ((159-128)/127*9900) = 2516
+  # After (v1.32.182): 159 (raw value)
+
+  Internal scoring unchanged:
+  - WordPredictor (typing): Still scales 128-255 → 100-10000
+  for better scoring precision
+  - OptimizedVocabulary (swipe): Still normalizes 128-255 →
+  0-1 for beam search
+
+  Note: Custom words use 1-10000 range (editable in dialog),
+  main dictionary shows 128-255 (from JSON). Both work
+  correctly for predictions.
+
+  Install: /sdcard/unexpected/debug-kb.apk (v1.32.182)
+
+
+
+

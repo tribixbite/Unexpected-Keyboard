@@ -299,18 +299,21 @@ def gen_java(entry_states, machine):
         return "\" +\n    \"".join(map(lambda b: "".join(b), batched(chars, 72)))
     def gen_entry_state(s):
         name, state = s
-        return "  public static final int %s = %d;" % (name, state)
-    print("""package juloo.keyboard2;
+        return "  const val %s = %d" % (name, state)
+    print("""package juloo.keyboard2
 
 /** This file is generated, see [srcs/compose/compile.py]. */
 
-public final class ComposeKeyData
-{
-  public static final char[] states =
-    ("%s").toCharArray();
+object ComposeKeyData {
+  @JvmField
+  val states: CharArray = (
+    "%s"
+  ).toCharArray()
 
-  public static final char[] edges =
-    ("%s").toCharArray();
+  @JvmField
+  val edges: CharArray = (
+    "%s"
+  ).toCharArray()
 
 %s
 }""" % (

@@ -1,11 +1,33 @@
 plugins {
   id 'com.android.application' version '8.6.0'
+  id 'org.jetbrains.kotlin.android' version '1.9.20'
+  id 'io.gitlab.arturbosch.detekt' version '1.23.4'
 }
 
 dependencies {
   implementation "androidx.window:window-java:1.3.0"
   implementation "androidx.core:core:1.16.0"
+
+  // Kotlin
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.20"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+
+  // Material Design for Dictionary Manager UI
+  implementation "com.google.android.material:material:1.11.0"
+  implementation "androidx.recyclerview:recyclerview:1.3.2"
+  implementation "androidx.viewpager2:viewpager2:1.0.0"
+  implementation "androidx.appcompat:appcompat:1.6.1"
+  implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+
+  // ONNX Runtime for neural swipe prediction (upgraded for boolean tensor support)
+  implementation "com.microsoft.onnxruntime:onnxruntime-android:1.20.0"
+
+  // Gson for backup/restore JSON serialization
+  implementation "com.google.code.gson:gson:2.10.1"
+
   testImplementation "junit:junit:4.13.2"
+  testImplementation "org.mockito:mockito-core:4.11.0"
+  testImplementation "org.mockito:mockito-inline:4.11.0"
 }
 
 android {
@@ -16,8 +38,12 @@ android {
     applicationId "juloo.keyboard2"
     minSdk 21
     targetSdkVersion 35
-    versionCode 50
-    versionName "1.32.1"
+    versionCode 905
+    versionName "1.32.905"
+  }
+
+  buildFeatures {
+    buildConfig = true
   }
 
   sourceSets {
@@ -63,6 +89,9 @@ android {
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
       resValue "string", "app_name", "@string/app_name_release"
       signingConfig signingConfigs.release
+
+      // OPTIMIZATION: Disable verbose logging in release builds for maximum performance
+      buildConfigField "boolean", "ENABLE_VERBOSE_LOGGING", "false"
     }
 
     debug {
@@ -73,6 +102,9 @@ android {
       resValue "string", "app_name", "@string/app_name_debug"
       resValue "bool", "debug_logs", "true"
       signingConfig signingConfigs.debug
+
+      // OPTIMIZATION: Enable verbose logging in debug builds for development
+      buildConfigField "boolean", "ENABLE_VERBOSE_LOGGING", "true"
     }
   }
 
@@ -88,7 +120,23 @@ android {
     targetCompatibility JavaVersion.VERSION_1_8
   }
 
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
+
+  buildFeatures {
+    viewBinding true
+  }
+
   lintOptions {
+    // Suppress warnings about missing default values for removed swipe_dist settings
+    disable 'MissingDefaultResource'
+  }
+
+  // Suppress llvm-strip warnings on Termux ARM64 (x86_64 binaries can't run, libraries packaged unstripped)
+  packagingOptions {
+    doNotStrip "*/armeabi-v7a/*.so"
+    doNotStrip "*/arm64-v8a/*.so"
   }
 }
 
@@ -139,11 +187,11 @@ tasks.register('checkKeyboardLayouts') {
 }
 
 tasks.register('compileComposeSequences') {
-  def out = "srcs/juloo.keyboard2/ComposeKeyData.java"
+  def out = "srcs/juloo.keyboard2/ComposeKeyData.kt"
   println "\nGenerating ${out}"
   exec {
     def sequences = new File(projectDir, "srcs/compose").listFiles().findAll {
-      !it.name.endsWith(".py") && !it.name.endsWith(".md")
+      !it.name.endsWith(".py") && !it.name.endsWith(".md") && !it.name.endsWith(".pyc") && it.name != "__pycache__" && it.name != "src"
     }
     workingDir = projectDir
     commandLine("python", "srcs/compose/compile.py", *sequences)
@@ -151,10 +199,85 @@ tasks.register('compileComposeSequences') {
   }
 }
 
+tasks.register('generateBinaryDictionaries') {
+  description 'Generate optimized binary dictionaries from JSON sources'
+  doLast {
+    def dictDir = file("assets/dictionaries")
+    def jsonFiles = dictDir.listFiles().findAll { it.name.endsWith(".json") && !it.name.contains("contraction") }
+
+    jsonFiles.each { jsonFile ->
+      def binFile = new File(dictDir, jsonFile.name.replace(".json", ".bin"))
+
+      // Only regenerate if JSON is newer than binary, or binary doesn't exist
+      if (!binFile.exists() || jsonFile.lastModified() > binFile.lastModified()) {
+        println "Generating binary dictionary: ${binFile.name}"
+        exec {
+          workingDir = projectDir
+          commandLine "python", "scripts/generate_binary_dict.py", jsonFile.absolutePath, binFile.absolutePath
+        }
+      } else {
+        println "Binary dictionary up-to-date: ${binFile.name}"
+      }
+    }
+  }
+}
+
+tasks.register('generateBinaryContractions') {
+  description 'Generate optimized binary contractions from JSON sources (perftodos2.md Todo 4)'
+  doLast {
+    def dictDir = file("assets/dictionaries")
+    def nonPairedFile = new File(dictDir, "contractions_non_paired.json")
+    def pairedFile = new File(dictDir, "contraction_pairings.json")
+    def binFile = new File(dictDir, "contractions.bin")
+
+    // Only regenerate if either JSON is newer than binary, or binary doesn't exist
+    def needsRegenerate = !binFile.exists() ||
+                          nonPairedFile.lastModified() > binFile.lastModified() ||
+                          pairedFile.lastModified() > binFile.lastModified()
+
+    if (needsRegenerate) {
+      println "Generating binary contractions: ${binFile.name}"
+      exec {
+        workingDir = projectDir
+        commandLine "python", "scripts/generate_binary_contractions.py",
+                    nonPairedFile.absolutePath,
+                    pairedFile.absolutePath,
+                    binFile.absolutePath
+      }
+    } else {
+      println "Binary contractions up-to-date: ${binFile.name}"
+    }
+  }
+}
+
+tasks.register('generateVersionInfo') {
+  doLast {
+    def gitCommit = 'git rev-parse --short HEAD'.execute().text.trim()
+    def gitCommitFull = 'git rev-parse HEAD'.execute().text.trim()
+    def gitDate = 'git log -1 --format=%cd --date=short'.execute().text.trim()
+    def buildDate = new Date().format('yyyy-MM-dd HH:mm:ss')
+    def buildNumber = System.currentTimeMillis().toString()
+
+    def versionFile = file("build/generated-resources/raw/version_info.txt")
+    versionFile.parentFile.mkdirs()
+    versionFile.text = """commit=$gitCommit
+commit_full=$gitCommitFull
+commit_date=$gitDate
+build_date=$buildDate
+build_number=$buildNumber
+"""
+
+    println "Generated version info: $gitCommit ($gitDate)"
+  }
+}
+
 tasks.named("preBuild") {
   dependsOn += "initDebugKeystore"
   dependsOn += "copyRawQwertyUS"
   dependsOn += "copyLayoutDefinitions"
+  dependsOn += "generateBinaryDictionaries"
+  dependsOn += "generateBinaryContractions"
+  dependsOn += "generateVersionInfo"
 }
 
 tasks.register('initDebugKeystore') {
@@ -184,3 +307,24 @@ tasks.register('copyLayoutDefinitions')
     into "build/generated-resources/xml"
   }
 }
+
+// Detekt static analysis configuration
+detekt {
+  buildUponDefaultConfig = true
+  allRules = false
+  config.setFrom("$projectDir/detekt-config.yml")
+  
+  source.setFrom("srcs/juloo.keyboard2", "test")
+  
+  reports {
+    html.required = true
+    xml.required = false
+    txt.required = false
+    sarif.required = false
+  }
+}
+
+tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
+  jvmTarget = "1.8"
+}
+

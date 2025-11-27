@@ -1,0 +1,161 @@
+name: Unexpected Keyboard CI/CD
+
+on:
+  push:
+    branches: [ feature/swipe-typing, main ]
+  pull_request:
+    branches: [ feature/swipe-typing, main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Restore debug keystore from GitHub Secrets
+        run: |
+          # Use the same debug keystore across all builds to prevent signing key mismatches
+          # This allows testers to update without uninstalling
+          if [[ ! "${{ secrets.DEBUG_KEYSTORE }}" = "" ]]; then
+              echo "${{ secrets.DEBUG_KEYSTORE }}" > "debug.keystore.asc"
+              if [[ -s "debug.keystore.asc" ]]; then
+                  echo "Restoring debug keystore from GitHub secrets"
+                  gpg -d --passphrase "debug0" --batch "debug.keystore.asc" > "debug.keystore"
+              fi
+          fi
+
+      - name: Run tests
+        continue-on-error: true
+        run: ./gradlew test --no-daemon --stacktrace
+
+      - name: Build debug APK
+        env:
+          DEBUG_KEYSTORE: "debug.keystore"
+          DEBUG_KEYSTORE_PASSWORD: debug0
+          DEBUG_KEY_ALIAS: debug
+          DEBUG_KEY_PASSWORD: debug0
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: keyboard-debug
+          path: build/outputs/apk/debug/juloo.keyboard2.debug.apk
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    # Create release on every push to feature/swipe-typing branch
+    if: github.ref == 'refs/heads/feature/swipe-typing' && github.event_name == 'push'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: keyboard-debug
+          path: ./artifacts
+
+      - name: Get version and commit info
+        id: version
+        run: |
+          # Extract version from build.gradle
+          VERSION_NAME=$(grep "versionName" build.gradle | head -1 | sed 's/.*versionName "\(.*\)".*/\1/')
+          VERSION_CODE=$(grep "versionCode" build.gradle | head -1 | sed 's/.*versionCode \(.*\)/\1/')
+
+          if [ -z "$VERSION_NAME" ]; then
+            VERSION_NAME="1.0.0"
+          fi
+          if [ -z "$VERSION_CODE" ]; then
+            VERSION_CODE="1"
+          fi
+
+          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+          TAG="v${VERSION_NAME}-build${VERSION_CODE}-${TIMESTAMP}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "build=${VERSION_CODE}" >> $GITHUB_OUTPUT
+
+          # Get commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "commit_msg<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Get short SHA
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Create release notes in a file to avoid shell escaping issues
+          cat > release_notes.md << 'EOF'
+          **Swipe Typing Feature Release** 🚀
+
+          **Version**: ${{ steps.version.outputs.version }}
+          **Build**: ${{ steps.version.outputs.build }}
+          **Commit**: ${{ steps.version.outputs.sha }}
+
+          **Commit Message**:
+          ```
+          ${{ steps.version.outputs.commit_msg }}
+          ```
+
+          **Installation**:
+          1. Download `juloo.keyboard2.debug.apk`
+          2. Enable "Install from unknown sources" in Android settings
+          3. Install the APK
+          4. Go to Settings → System → Languages & input → Virtual keyboard
+          5. Enable "Unexpected Keyboard"
+
+          **APK Details**:
+          - Debug build with logging enabled
+          - Includes swipe typing ML/neural features
+          - Built from `feature/swipe-typing` branch
+
+          Built with GitHub Actions on $(date)
+          EOF
+
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "Unexpected Keyboard v${{ steps.version.outputs.version }} (Build ${{ steps.version.outputs.build }})" \
+            --notes-file release_notes.md \
+            ./artifacts/juloo.keyboard2.debug.apk

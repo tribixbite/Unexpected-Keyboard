@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">사용자 정의 키 추가</string>
     <string name="pref_extra_keys_internal">키보드에 추가할 키 선택</string>
     <string name="pref_category_typing">입력</string>
-    <string name="pref_swipe_dist_title">스와이프 범위</string>
-    <string name="pref_swipe_dist_summary">키 모서리 문자의 입력 범위 (%s)</string>
     <string name="pref_long_timeout_title">길게 누르는 시간</string>
     <string name="pref_long_interval_title">키 반복 간격</string>
     <string name="pref_keyrepeat_enabled">키보드 입력을 길게 유지할 때 반복</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">모네트 (라이트)</string>
     <string name="pref_theme_e_monetdark">모네트 (다크)</string>
     <!-- <string name="pref_theme_e_rosepine">Rosé Pine</string> -->
-    <string name="pref_swipe_dist_e_very_short">매우 짧음</string>
-    <string name="pref_swipe_dist_e_short">짧음</string>
-    <string name="pref_swipe_dist_e_default">보통</string>
-    <string name="pref_swipe_dist_e_far">넓음</string>
-    <string name="pref_swipe_dist_e_very_far">매우 넓음</string>
     <string name="pref_key_horizontal_space">키보드 양 옆 간격</string>
     <string name="pref_key_vertical_space">키보드 세로 간격</string>
     <string name="pref_border_config_title">경계선 사용자 정의</string>

@@ -35,8 +35,6 @@
     <string name="pref_extra_keys_custom">Pievienot pielāgotus taustiņus</string>
     <string name="pref_extra_keys_internal">Atlasīt taustiņus, ko pievienot tastatūrai</string>
     <string name="pref_category_typing">Rakstīšana</string>
-    <string name="pref_swipe_dist_title">Pavilkšanas attālums</string>
-    <string name="pref_swipe_dist_summary">Taustiņu stūros esošo rakstzīmju attālums (%s)</string>
     <string name="pref_long_timeout_title">Ilgas piespiešanas noildze</string>
     <string name="pref_long_interval_title">Laiks starp taustiņa atkārtošanos</string>
     <string name="pref_keyrepeat_enabled">Taustiņa atkārtošanās ar ilgu piespiešanu</string>
@@ -73,11 +71,6 @@
     <string name="pref_theme_e_monetlight">Monē (gaišs)</string>
     <string name="pref_theme_e_monetdark">Monē (tumšs)</string>
     <string name="pref_theme_e_rosepine">Sārtā priede</string>
-    <string name="pref_swipe_dist_e_very_short">Ļoti tuvs</string>
-    <string name="pref_swipe_dist_e_short">Tuvs</string>
-    <string name="pref_swipe_dist_e_default">Vidējs</string>
-    <string name="pref_swipe_dist_e_far">Tāls</string>
-    <string name="pref_swipe_dist_e_very_far">Ļoti tāls</string>
     <string name="pref_key_horizontal_space">Līmeniskais attālums starp taustiņiem</string>
     <string name="pref_key_vertical_space">Stateniskais attālums starp taustiņiem</string>
     <string name="pref_border_config_title">Pielāgot apmales</string>
