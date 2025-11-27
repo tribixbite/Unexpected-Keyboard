@@ -34,6 +34,7 @@ class LanguageDetector {
         initializeEnglishPatterns()
         initializeSpanishPatterns()
         initializeFrenchPatterns()
+        initializePortuguesePatterns()
         initializeGermanPatterns()
     }
 
@@ -109,6 +110,31 @@ class LanguageDetector {
             "que", "pour", "dans", "ce", "son", "une", "sur", "avec", "ne", "se"
         )
         languageCommonWords["fr"] = frWords
+    }
+
+    /**
+     * Initialize Portuguese language patterns
+     */
+    private fun initializePortuguesePatterns() {
+        val ptChars = mapOf(
+            'a' to 14.6f,
+            'e' to 12.6f,
+            'o' to 10.7f,
+            's' to 7.8f,
+            'r' to 6.5f,
+            'i' to 6.2f,
+            'm' to 4.7f,
+            't' to 4.7f,
+            'd' to 5.0f,
+            'n' to 5.0f
+        )
+        languageCharFreqs["pt"] = ptChars
+
+        val ptWords = arrayOf(
+            "de", "a", "o", "que", "e", "do", "da", "em", "um", "para",
+            "é", "com", "não", "uma", "os", "no", "se", "na", "por", "mais"
+        )
+        languageCommonWords["pt"] = ptWords
     }
 
     /**

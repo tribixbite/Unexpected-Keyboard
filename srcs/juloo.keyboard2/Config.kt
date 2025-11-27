@@ -73,6 +73,12 @@ class Config private constructor(
     @JvmField var personalized_learning_enabled = false // Phase 7.2: Personalized word frequency learning
     @JvmField var learning_aggression = "BALANCED" // Phase 7.2: Learning aggression level
 
+    // Multi-language support (Phase 8.3 & 8.4)
+    @JvmField var enable_multilang = false // Phase 8.3: Enable multi-language support
+    @JvmField var primary_language = "en" // Phase 8.3: Primary language (default)
+    @JvmField var auto_detect_language = true // Phase 8.3: Auto-detect language from context
+    @JvmField var language_detection_sensitivity = 0.6f // Phase 8.3: Detection sensitivity (0.0-1.0)
+
     // Auto-correction settings
     @JvmField var autocorrect_enabled = false
     @JvmField var autocorrect_min_word_length = 0
@@ -255,6 +261,13 @@ class Config private constructor(
         context_aware_predictions_enabled = _prefs.getBoolean("context_aware_predictions_enabled", true)
         personalized_learning_enabled = _prefs.getBoolean("personalized_learning_enabled", true)
         learning_aggression = _prefs.getString("learning_aggression", "BALANCED") ?: "BALANCED"
+
+        // Multi-language settings (Phase 8.3 & 8.4)
+        enable_multilang = _prefs.getBoolean("pref_enable_multilang", false)
+        primary_language = _prefs.getString("pref_primary_language", "en") ?: "en"
+        auto_detect_language = _prefs.getBoolean("pref_auto_detect_language", true)
+        val sensitivity = safeGetInt(_prefs, "pref_language_detection_sensitivity", 60)
+        language_detection_sensitivity = sensitivity / 100.0f
 
         autocorrect_enabled = _prefs.getBoolean("autocorrect_enabled", true)
         autocorrect_min_word_length = safeGetInt(_prefs, "autocorrect_min_word_length", 3)
