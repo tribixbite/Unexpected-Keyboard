@@ -26,7 +26,32 @@
 
 ### 🔄 Latest Work (2025-11-27) - 🎯 CRITICAL KEYBOARD RENDERING BUG FIXED! ✅
 
-**Latest Commit:** `0f1fcc26` - docs(changelog): add v1.32.917 release notes for rendering fix and Phase 8.3/8.4
+**Latest Commits:**
+- `cd111b96` - perf(assets): move Python scripts from assets/models to ml_training (56KB)
+- `d7354104` - perf(assets): remove unused libjni_latinimegoogle.so library (1.1MB)
+- `0f1fcc26` - docs(changelog): add v1.32.917 release notes for rendering fix and Phase 8.3/8.4
+
+### 2025-11-27 Performance Optimizations ⚡
+**Status:** ✅ APK size optimizations applied
+
+**Optimizations:**
+1. **Removed unused library** (commit d7354104):
+   - Deleted libjni_latinimegoogle.so (1.1MB unused Latin IME library)
+   - No functionality impact - library was never loaded in code
+   - Already excluded from APK packaging
+
+2. **Moved development scripts** (commit cd111b96):
+   - Relocated 3 Python scripts from assets/models/ to ml_training/
+   - export_and_quantize_standalone.py (18KB)
+   - export_broadcast.py (21KB)
+   - test_alpha_model.py (11KB)
+   - **APK size reduction: 56KB** (scripts no longer packaged in APK)
+
+**Build Configuration:**
+- ✅ ENABLE_VERBOSE_LOGGING flag properly implemented
+- Debug builds: verbose logging enabled for development
+- Release builds: verbose logging disabled for performance
+- Compiler optimizes out all gated log calls in release builds
 
 ### 2025-11-27 CRITICAL FIX: Keyboard Rendering Bug (v1.32.917) ✅
 **Status:** ✅ FULLY RESOLVED - Keyboard now renders correctly!
