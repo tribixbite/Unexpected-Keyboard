@@ -7,6 +7,7 @@ import android.graphics.PointF
 import android.util.Log
 import juloo.keyboard2.Config
 import juloo.keyboard2.KeyboardGrid
+import juloo.keyboard2.NeuralModelMetadata
 import juloo.keyboard2.OptimizedVocabulary
 import juloo.keyboard2.SwipeInput
 import juloo.keyboard2.SwipeResampler
@@ -105,42 +106,62 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
     @Synchronized
     fun initialize(): Boolean {
         if (isInitialized) return isModelLoaded
-        
+
+        val startTime = System.currentTimeMillis()
+
         try {
             Log.d(TAG, "Initializing SwipePredictorOrchestrator...")
-            
+
             // Load Tokenizer & Vocabulary
             tokenizer.loadFromAssets(context)
             if (!vocabulary.isLoaded()) vocabulary.loadVocabulary() // Fixed: used isLoaded()
-            
+
             // Load Models
             val encoderPath = "models/swipe_encoder_android.onnx"
             val decoderPath = "models/swipe_decoder_android.onnx"
-            
+
             // Use SessionConfigurator logic inside ModelLoader
             val encResult = modelLoader.loadModel(encoderPath, "Encoder", !forceCpuFallback)
             val decResult = modelLoader.loadModel(decoderPath, "Decoder", !forceCpuFallback)
-            
+
             encoderSession = encResult.session
             decoderSession = decResult.session
-            
+
             // Initialize Wrappers
             tensorFactory = TensorFactory(ortEnvironment, maxSequenceLength, TRAJECTORY_FEATURES)
             encoderWrapper = EncoderWrapper(encoderSession!!, tensorFactory!!, ortEnvironment, enableVerboseLogging)
             // Check broadcast support (simplified)
             val broadcastEnabled = true // Assuming v2 models
             decoderWrapper = DecoderWrapper(decoderSession!!, tensorFactory!!, ortEnvironment, broadcastEnabled, enableVerboseLogging)
-            
+
             isModelLoaded = true
-            Log.i(TAG, "✅ Initialization complete")
-            
+
+            // Record model metadata for versioning and monitoring
+            val loadDuration = System.currentTimeMillis() - startTime
+            try {
+                val metadata = NeuralModelMetadata.getInstance(context)
+                metadata.recordModelLoad(
+                    modelType = NeuralModelMetadata.MODEL_TYPE_BUILTIN,
+                    encoderPath = "assets://$encoderPath",
+                    decoderPath = "assets://$decoderPath",
+                    encoderSize = encResult.fileSize,
+                    decoderSize = decResult.fileSize,
+                    loadDuration = loadDuration
+                )
+                Log.d(TAG, "Model metadata recorded (load time: ${loadDuration}ms)")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to record model metadata", e)
+            }
+
+            Log.i(TAG, "✅ Initialization complete (${loadDuration}ms)")
+
         } catch (e: Exception) {
             Log.e(TAG, "Initialization failed", e)
             isModelLoaded = false
         } finally {
             isInitialized = true
         }
-        
+
         return isModelLoaded
     }
 

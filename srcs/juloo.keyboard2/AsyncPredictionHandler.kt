@@ -126,6 +126,9 @@ class AsyncPredictionHandler(
             // Record performance statistics
             perfStats.recordPrediction(duration)
 
+            // Record model usage for versioning
+            NeuralModelMetadata.getInstance(context).recordInferenceUsage()
+
             // Post results to main thread
             mainHandler.post {
                 val callbackDelay = System.currentTimeMillis() - postTime

@@ -143,6 +143,12 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             true
         }
 
+        // Neural model metadata
+        findPreference("neural_model_metadata")?.setOnPreferenceClickListener {
+            showModelMetadata()
+            true
+        }
+
         // ML data export
         findPreference("export_swipe_ml_data")?.let { pref ->
             try {
@@ -1315,6 +1321,21 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             bytes < 1024 * 1024 -> String.format("%.1f KB", bytes / 1024.0)
             else -> String.format("%.1f MB", bytes / (1024.0 * 1024.0))
         }
+    }
+
+    /**
+     * Show model metadata dialog
+     * @since v1.32.897 - Phase 6.2: Model Versioning
+     */
+    private fun showModelMetadata() {
+        val metadata = NeuralModelMetadata.getInstance(this)
+        val message = metadata.formatSummary()
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("🔍 Model Information")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+            .show()
     }
 
     /**
