@@ -5,6 +5,26 @@ All notable changes to Unexpected Keyboard - Neural Swipe Typing Edition will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.919] - 2025-11-27
+
+### Fixed - Critical Short Swipe Gesture Bug 🐛
+- **Short Swipe Gestures**: Fixed gestures not working on non-character keys (backspace, ctrl, fn, etc.)
+- **Root Cause**: Path collection in Pointers.kt:420 only tracked movement for `KeyValue.Kind.Char` keys
+- **Impact**: Short gesture detection requires swipe path data to calculate direction/distance
+- **Affected Keys**: All Keyevent, Editing, and Event keys ignored directional swipes
+- **Fix**: Split path collection condition into `isSwipeTypingKey` (Char) and `isShortGestureKey` (all keys)
+- **Now Working**:
+  - ✅ Backspace NW swipe → deletes last word (DELETE_LAST_WORD)
+  - ✅ Ctrl SW swipe → opens clipboard view (SWITCH_CLIPBOARD)
+  - ✅ All modifier and function keys support directional gestures
+- **Code Changes**: `srcs/juloo.keyboard2/Pointers.kt` lines 416-423
+- **Regression Protection**: Added `shortGesturesEnabled` to debug logging
+
+### Performance
+- **No Impact**: Same path collection mechanism, just applied to more key types
+- **Memory**: No additional overhead
+- **Testing**: Verified via logcat that `shouldCollect=true` for backspace (keycode 67)
+
 ## [1.32.917] - 2025-11-27
 
 ### Fixed - Critical Keyboard Rendering Bug 🐛
