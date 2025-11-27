@@ -195,6 +195,8 @@ R8 8.6.17 has an internal bug when processing Kotlin data classes with this spec
 
 ### When R8 is Fixed
 
+**Complete Migration Plan**: See [MIGRATION_RESUME_CHECKLIST.md](MIGRATION_RESUME_CHECKLIST.md) for detailed step-by-step instructions
+
 **Phase 1: Complete Migration** (16-22 hours)
 1. SwipeCalibrationActivity.java → Kotlin (2-3 hours)
 2. SettingsActivity.java → Kotlin (4-5 hours)

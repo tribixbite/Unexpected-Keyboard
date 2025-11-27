@@ -22,31 +22,32 @@ Generated version info:  ()
 > Task :mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :checkKotlinGradlePluginConfigurationErrors
 > Task :dataBindingMergeDependencyArtifactsDebug
-> Task :generateDebugResValues FROM-CACHE
+> Task :generateDebugResValues
 > Task :generateDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig
 > Task :mapDebugSourceSetPaths
-> Task :checkDebugAarMetadata
-> Task :parseDebugLocalResources
 > Task :createDebugCompatibleScreenManifests
-> Task :extractDeepLinksDebug FROM-CACHE
+> Task :extractDeepLinksDebug
+> Task :parseDebugLocalResources
+> Task :checkDebugAarMetadata
 > Task :processDebugMainManifest
 > Task :processDebugManifest
-> Task :javaPreCompileDebug FROM-CACHE
+> Task :javaPreCompileDebug
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
+> Task :processDebugManifestForPackage
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
-> Task :compressDebugAssets FROM-CACHE
 > Task :mergeDebugResources
-> Task :processDebugManifestForPackage
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :checkDebugDuplicateClasses
-> Task :desugarDebugFileDependencies FROM-CACHE
-> Task :mergeExtDexDebug FROM-CACHE
-> Task :mergeLibDexDebug FROM-CACHE
+> Task :dataBindingGenBaseClassesDebug
+> Task :compressDebugAssets
+> Task :desugarDebugFileDependencies
+> Task :processDebugResources
+> Task :mergeExtDexDebug
 > Task :mergeDebugJniLibFolders
+> Task :mergeLibDexDebug
 > Task :validateSigningDebug
 > Task :writeDebugAppMetadata
 > Task :writeDebugSigningConfigVersions
@@ -63,7 +64,6 @@ Generated version info:  ()
 
 Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
 
-> Task :processDebugResources
 > Task :compileDebugKotlin
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Autocapitalisation.kt:97:27 Parameter 'old_cursor' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:40:43 'versionCode: Int' is deprecated. Deprecated in Java
@@ -786,5 +786,5 @@ Execution failed for task ':dexBuilderDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 42s
-39 actionable tasks: 31 executed, 8 from cache
+BUILD FAILED in 2m 16s
+39 actionable tasks: 39 executed

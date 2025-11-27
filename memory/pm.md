@@ -4709,11 +4709,13 @@ None currently
    - See **[docs/JAVA_TEST_MIGRATION.md](../docs/JAVA_TEST_MIGRATION.md)** for test file plans
 
 2. **When R8 Fixed**: Complete Kotlin Migration (16-22 hours estimated)
+   - **Complete Checklist**: [MIGRATION_RESUME_CHECKLIST.md](../MIGRATION_RESUME_CHECKLIST.md)
    - Phase 1: SwipeCalibrationActivity.java (1,321 lines, LOW risk, 2-3 hours)
    - Phase 2: SettingsActivity.java (2,051 lines, LOW risk, 4-5 hours)
    - Phase 3: Keyboard2.java (698 lines, HIGH risk, 5-6 hours - migrate LAST)
    - Phase 4: 8 test files (1,043 lines, LOW risk, 6-8 hours)
    - Phase 5: Full testing and verification (4-6 hours)
+   - Phase 6: Cleanup and documentation (2-3 hours)
 
 3. ✅ **Report R8 Bug** to Google Issue Tracker
    - URL: https://issuetracker.google.com/issues?q=componentid:192708
