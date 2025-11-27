@@ -1,3 +1,26 @@
+=== Unexpected Keyboard Termux Build Script ===
+Building debug APK on Termux ARM64
+
+Step 1: Checking prerequisites...
+Step 2: Auto-incrementing version...
+  Current: versionCode 894, versionName 1.32.894
+  New:     versionCode 895, versionName 1.32.895
+  ✅ Version updated in build.gradle
+
+Step 3: Preparing layout resources...
+Step 4: Cleaning previous builds...
+> Task :clean
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1s
+1 actionable task: 1 executed
+Step 5: Building Debug APK...
+This may take a few minutes on first run...
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -29,18 +52,18 @@ Generated version info:  ()
 > Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests
 > Task :extractDeepLinksDebug FROM-CACHE
-> Task :parseDebugLocalResources
 > Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
 > Task :processDebugMainManifest
+> Task :mergeDebugResources
 > Task :processDebugManifest
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :javaPreCompileDebug FROM-CACHE
 > Task :mergeDebugShaders
 > Task :compileDebugShaders NO-SOURCE
 > Task :generateDebugAssets UP-TO-DATE
 > Task :mergeDebugAssets
 > Task :compressDebugAssets FROM-CACHE
-> Task :mergeDebugResources
-> Task :dataBindingGenBaseClassesDebug FROM-CACHE
 > Task :checkDebugDuplicateClasses
 > Task :desugarDebugFileDependencies FROM-CACHE
 > Task :mergeExtDexDebug FROM-CACHE
@@ -70,22 +93,18 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:448:41 Parameter 'key' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:458:39 Parameter 'key' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BigramModel.kt:28:25 Parameter 'context' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BinaryDw: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Autocapitalisation.kt:97:27 Parameter 'old_cursor' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:40:43 'versionCode: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:448:41 Parameter 'key' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BackupRestoreManager.kt:458:39 Parameter 'key' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BigramModel.kt:28:25 Parameter 'context' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/BinaryDictionaryLoader.kt:99:21 Variable 'prefixOffset' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:48 'getColor(Int): Int' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardEntry.kt:59:73 'secondary_text_dark: Int' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardManager.kt:55:26 Parameter 'layoutInflater' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ClipboardManager.kt:178:13 Variable 'modeGroup' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:27:38 'toInt(): Int' is deprecated. Conversion of Char w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:212:48 'get_extra_keys(SharedPreferences): Map<KeyValue, KeyboardData.PreferredPos>' is deprecated. Use getExtraKeys instead
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:27:38 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:32:28 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComposeKey.kt:39:46 'toInt(): Int' is deprecated. Conversion of Char to Number is deprecated. Use Char.code property instead.
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ComprehensiveTraceAnalyzer.kt:512:57 Parameter 'position' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:173:37 'load_from_preferences(Resources, SharedPreferences): List<KeyboardData?>' is deprecated. Use loadFromPreferences instead
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:212:48 'get_extra_keys(SharedPreferences): Map<KeyValue, KeyboardData.PreferredPos>' is deprecated. Use getExtraKeys instead
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:212:71 Elvis operator (?:) always returns the left operand of non-nullable type Map<KeyValue, KeyboardData.PreferredPos>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:213:67 Elvis operator (?:) always returns the left operand of non-nullable type Map<KeyValue, KeyboardData.PreferredPos>
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:559:39 'save_to_preferences(SharedPreferences.Editor, List<LayoutsPreference.Layout>): Unit' is deprecated. Use saveToPreferences instead
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:388:22 Variable 'dx' initializer is redundant
-w: file:///data/data/com.termux/fw: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:212:71 Elvis operator (?:) always returns the left operand of non-nullable type Map<KeyValue, KeyboardData.PreferredPos>
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:213:67 Elvis operator (?:) always returns the left operand of non-nullable type Map<KeyValue, KeyboardData.PreferredPos>
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Config.kt:559:39 'save_to_preferences(SharedPreferences.Editor, List<LayoutsPreference.Layout>): Unit' is deprecated. Use saveToPreferences instead
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/ContinuousGestureRecognizer.kt:388:22 Variable 'dx' initializer is redundant
@@ -126,11 +145,12 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:230:20 Unsafe use of a nullable receiver of type String?
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/KeyValueParser.kt:237:20 Type mismatch: inferred type is String? but String was expected
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2.kt:330:34 'getInputMethodManager(): InputMethodManager' is deprecated. Use inputMethodManager field instead
-w: file:///data/datw: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:158:23 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:160:29 'SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:162:30 'SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:163:9 'setter for systemUiVisibility: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:454:49 'toLowerCasw: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:158:23 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:73:13 Lateinit is unnecessary: definitely initialized in constructors
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:77:13 Lateinit is unnecessary: definitely initialized in constructors
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:102:13 Lateinit is unnecessary: definitely initialized in constructors
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:104:13 Lateinit is unnecessary: definitely initialized in constructors
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:155:12 'setter for navigationBarColor: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:158:23 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:160:29 'SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR: Int' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:162:30 'SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR: Int' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/Keyboard2View.kt:163:9 'setter for systemUiVisibility: Int' is deprecated. Deprecated in Java
@@ -225,107 +245,102 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:135:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:135:47 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:141:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:141:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:147:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:147:50 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:153:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:157:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:159:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:163:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:170:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:170:49 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:176:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:180:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:182:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:186:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:193:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:193:49 'setOnPreferenceChangeListener(Preference.OnPreferenceChangeListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:199:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:200:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:207:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:208:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:217:29 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:220:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:220:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:242:27 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:244:27 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/sw
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:349:13 'setProgressStyle(Int): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:349:30 'ProgressDialog' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:349:45 'STYLE_HORIZONTAL: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:350:13 'setter for max: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:358:36 'setMessage(CharSequence!): Unit' is deprecated. Deprecated i
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:349:13 'setProgressStyle(Int): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:349:30 'ProgressDialog' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:349:45 'STYLE_HORIZONTAL: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:350:13 'setter for max: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:358:36 'setMessage(CharSequence!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:364:36 'setter for progress: Int' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:526:19 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:526:37 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:528:15 'onStop(): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:532:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:532:42 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:537:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:537:43 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:542:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:542:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:547:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:547:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:552:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:552:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:557:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:557:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:613:15 'onActivityResult(Int, Int, Intent!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:694:26 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:694:44 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:703:13 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:703:42 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:709:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:709:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:737:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:737:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:753:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:753:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:886:48 Type mismatch: inferred type is (Mutable)Set<String!>? but (MutableCollection<out String!>..Collection<String!>) was expected
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1087:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1087:48 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1092:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1092:47 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1097:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1097:52 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1104:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1104:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1122:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1122:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1139:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1139:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1211:9 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1211:27 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1218:9 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1218:27 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1222:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1222:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1224:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1226:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1229:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1231:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1234:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1236:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1239:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1241:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1244:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1246:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1251:25 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1255:23 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1261:23 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1266:46 'Preference' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1268:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1268:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:145:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:147:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:151:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:158:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:158:49 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:164:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:168:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:170:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:174:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:181:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:181:49 'setOnPreferenceChangeListener(Preference.OnPreferenceChangeListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:187:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:188:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:195:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:196:18 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:205:29 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:208:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:208:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:230:27 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:232:27 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:311:17 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:313:26 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:334:30 'constructor ProgressDialog(Context!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:334:30 'ProgressDialog' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:336:13 'setMessage(CharSequence!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:337:13 'setProgressStyle(Int): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:337:30 'ProgressDialog' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:337:45 'STYLE_HORIZONTAL: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:338:13 'setter for max: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:346:36 'setMessage(CharSequence!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:352:36 'setter for progress: Int' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:514:19 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:514:37 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:516:15 'onStop(): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:520:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:520:42 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:525:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:525:43 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:530:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:530:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:535:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:535:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:540:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:540:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:545:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:545:53 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:601:15 'onActivityResult(Int, Int, Intent!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:682:26 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:682:44 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:691:13 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:691:42 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:697:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:697:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:725:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:725:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:741:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:741:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:874:48 Type mismatch: inferred type is (Mutable)Set<String!>? but (MutableCollection<out String!>..Collection<String!>) was expected
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1075:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1075:48 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1080:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1080:47 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1085:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1085:52 'setOnPreferenceClickListener(Preference.OnPreferenceClickListener!): Unit' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1092:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1092:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1110:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1110:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1127:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1127:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1199:9 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1199:27 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1206:9 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1206:27 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1210:21 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1210:39 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1212:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1214:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1217:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1219:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1222:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1224:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1227:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1229:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1232:9 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1234:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1239:25 'findPreference(CharSequence!): Preference!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1243:23 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1249:23 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1254:46 'Preference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1256:25 'getter for preferenceManager: PreferenceManager!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1256:43 'getter for sharedPreferences: SharedPreferences!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1260:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1270:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1272:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1282:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1284:22 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1287:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SettingsActivity.kt:1275:18 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:52:21 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:54:24 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/SubtypeManager.kt:98:20 'imm: InputMethodManager' is deprecated. Use inputMethodManager instead
@@ -370,7 +385,7 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/BeamSearchEngine.kt:360:25 Type mismatch: inferred type is Int? but Int was expected
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/GreedySearchEngine.kt:68:59 Unchecked cast: Any! to Array<Array<FloatArray>>
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/ModelLoader.kt:248:24 Parameter 'sessionOptions' is never used
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/SwipePredictorOrchestrator.kt:224:24 Parameter 'logger' is never used
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/onnx/SwipePredictorOrchestrator.kt:203:24 Parameter 'logger' is never used
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:24:9 'setter for key: String!' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:29:62 The corresponding parameter in the supertype 'ListGroupPreference' is named 'oldValue'. This may cause problems when calling this function with named arguments.
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/CustomExtraKeysPreference.kt:30:36 'getter for context: Context!' is deprecated. Deprecated in Java
@@ -380,12 +395,12 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:16:69 'constructor PreferenceCategory(Context!, AttributeSet!)' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:16:69 'PreferenceCategory' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:20:9 'setOrderingAsAdded(Boolean): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcw: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:43:13 'setDefaultValue(Any!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:44:13 'setTitle(CharSequence!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:46:17 'setter for isSingleLineTitle: Boolean' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:51:19 'onBindView(View!): Unit' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:53:47 'getter for context: Context!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/IntSlideBarPre
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:27:13 'addPreference(Preference!): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:27:54 'getter for context: Context!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:35:9 'constructor CheckBoxPreference(Context!)' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:35:9 'CheckBoxPreference' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:42:13 'setter for key: String!' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:43:13 'setDefaultValue(Any!): Unit' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:44:13 'setTitle(CharSequence!): Unit' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:46:17 'setter for isSingleLineTitle: Boolean' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/ExtraKeysPreference.kt:51:19 'onBindView(View!): Unit' is deprecated. Deprecated in Java
@@ -449,7 +464,12 @@ w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/ju
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:81:32 'getPersistedInt(Int): Int' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:83:17 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
 w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:88:36 'getPersistedString(String!): String!' is deprecated. Deprecated in Java
-w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/src
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:90:21 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:94:21 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:105:44 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:117:13 'persistFloat(Float): Boolean' is deprecated. Deprecated in Java
+w: file:///data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/srcs/juloo.keyboard2/prefs/SlideBarPreference.kt:133:9 'setter for summary: CharSequence!' is deprecated. Deprecated in Java
+
 > Task :compileDebugJavaWithJavac
 Java compiler version 21 has deprecated support for compiling with source/target version 8.
 Try one of the following options:
@@ -471,37 +491,17 @@ warning: [options] To suppress warnings about obsolete options, use -Xlint:-opti
 > Task :createDebugApkListingFileRedirect
 > Task :assembleDebug
 
-BUILD SUCCESSFUL in 1m 51s
-42 actionable tasks: 34 executed, 8 from cache
-sion
-    2. Set a higher source/target version
-    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
-For more details on how to configure these settings, see https://developer.android.com/build/jdks.
-To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
-warning: [options] source value 8 is obsolete and will be removed in a future release
-warning: [options] target value 8 is obsolete and will be removed in a future release
-warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
-3 warnings
-
-> Task :processDebugJavaRes
-> Task :mergeDebugJavaResource
-> Task :dexBuilderDebug
-> Task :mergeProjectDexDebug
-> Task :packageDebug
-> Task :createDebugApkListingFileRedirect
-> Task :assembleDebug
-
-BUILD SUCCESSFUL in 1m 51s
+BUILD SUCCESSFUL in 1m 35s
 42 actionable tasks: 34 executed, 8 from cache
 
 === BUILD SUCCESSFUL! ===
 APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
--rw-------. 1 u0_a364 u0_a364 47M Nov 27 03:47 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+-rw-------. 1 u0_a364 u0_a364 47M Nov 27 02:01 build/outputs/apk/debug/juloo.keyboard2.debug.apk
 
 Copying APK to /storage/emulated/0/unexpected/ for updates...
-APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.898-898.apk
--rw-rw----. 1 u0_a315 media_rw 47M Nov 27 03:47 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.898-898.apk
+APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.895-895.apk
+-rw-rw----. 1 u0_a315 media_rw 47M Nov 27 02:01 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.895-895.apk
 Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
 
 Step 6: Attempting ADB connection and installation...

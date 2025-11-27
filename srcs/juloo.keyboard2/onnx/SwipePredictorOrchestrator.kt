@@ -144,8 +144,8 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
                     modelType = NeuralModelMetadata.MODEL_TYPE_BUILTIN,
                     encoderPath = "assets://$encoderPath",
                     decoderPath = "assets://$decoderPath",
-                    encoderSize = encResult.fileSize,
-                    decoderSize = decResult.fileSize,
+                    encoderSize = encResult.modelSizeBytes,
+                    decoderSize = decResult.modelSizeBytes,
                     loadDuration = loadDuration
                 )
                 Log.d(TAG, "Model metadata recorded (load time: ${loadDuration}ms)")
