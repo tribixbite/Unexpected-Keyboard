@@ -9,11 +9,11 @@
 
 ## 🔥 Current Status (2025-11-27 - 💯 READY FOR PRODUCTION! 🎉🎉🎉)
 
-**Latest Version**: v1.32.895 (100% Kotlin - NULL-SAFETY + KDOC + DETEKT!)
+**Latest Version**: v1.32.901 (100% Kotlin - Phase 6.4: Rollback Capability!)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
 **Device Status**: ✅ TESTED & WORKING - No crashes, all features functional!
 **Branch**: feature/swipe-typing
-**Current Focus**: 🎯 **KOTLIN MIGRATION COMPLETE & VERIFIED!** - Ready for new features!
+**Current Focus**: 🎯 **PHASE 6 PRODUCTION FEATURES - 80% COMPLETE!** - Rollback capability deployed!
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)** 🎊
 **Main Files**: 148/148 (100%) ✅
 **Test Files**: 8/8 (100%) ✅
@@ -24,7 +24,102 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-27) - 💯 PRODUCTION READY + KDOC DOCUMENTATION! ✅
+### 🔄 Latest Work (2025-11-27) - 🔙 ROLLBACK CAPABILITY DEPLOYED! ✅
+
+### 2025-11-27 v1.32.901 - Rollback Capability (Phase 6.4 Complete!)
+**Status:** ✅ DEPLOYED
+
+**Implementation:**
+Automatic model version management with rollback capability for production safety and recovery from failed model updates.
+
+**New Component:**
+**ModelVersionManager.kt** (480 lines)
+- Comprehensive version history tracking with success/failure statistics
+- Automatic rollback after 3 consecutive failures (configurable threshold)
+- Manual rollback support with health validation
+- Version pinning to prevent automatic changes
+- 1-minute cooldown between rollbacks (prevents rollback loops)
+- Minimum 50% success rate for healthy status determination
+- JSON export for external analysis
+- Tracks up to 10 historical versions
+- SharedPreferences persistence for durability
+
+**Data Model:**
+```kotlin
+data class ModelVersion(
+    val versionId: String,
+    val versionName: String,
+    val encoderPath: String,
+    val decoderPath: String,
+    val loadTimestamp: Long,
+    val successCount: Int,
+    val failureCount: Int,
+    val isPinned: Boolean,
+    val isBuiltin: Boolean
+)
+```
+
+**Key Features:**
+- **Automatic Rollback**: Triggers after MAX_CONSECUTIVE_FAILURES (3)
+- **Health Tracking**: Monitors success/failure rates per version
+- **Rollback Decision**: Evaluates cooldown, pinning, health status
+- **Version Registration**: Records model paths and metadata
+- **Success/Failure Recording**: Updates statistics on each load attempt
+- **Manual Controls**: Force rollback, pin version, reset history
+- **Status Reporting**: Formatted summaries for UI display
+
+**Integration:**
+Modified SwipePredictorOrchestrator.kt to integrate version management:
+- Pre-load rollback check: `shouldRollback()` before model initialization
+- Version registration: Records "builtin_v2_android" with paths
+- Success tracking: `recordSuccess(versionId)` on successful load
+- Failure tracking: `recordFailure(versionId, error)` on exceptions
+- Post-failure rollback: Checks again after failure for immediate recovery
+
+**Settings UI:**
+- 🔙 Rollback & Recovery preference screen with 7 options:
+  - 📊 Version Status: View current model health
+  - 📜 Version History: See all versions with success rates
+  - ✅ Enable Auto-Rollback: Toggle automatic recovery (default: true)
+  - ⚠️ Manual Rollback: Force rollback to previous version
+  - 📌 Pin Version: Lock current version (prevent changes)
+  - 💾 Export History: JSON export to clipboard
+  - 🔄 Reset History: Clear all version data
+
+**Rollback Logic:**
+1. Check if auto-rollback enabled
+2. Check if version is pinned
+3. Check cooldown period (60 seconds)
+4. Check current version health (3 failures → unhealthy)
+5. Check previous version exists and is healthy
+6. If all pass: swap current ↔ previous, record timestamp
+
+**Build:**
+- Version: v1.32.901 (auto-incremented from 900 due to XML fix)
+- Build time: 1m 48s
+- APK size: 47MB
+- Status: ✅ SUCCESS
+
+**XML Fix (v1.32.900 → v1.32.901):**
+- Fixed unescaped `&` in settings.xml line 70
+- Changed "Rollback & Recovery" → "Rollback &amp; Recovery"
+- Resolved XML parsing error: "The entity name must immediately follow the '&'"
+
+**Deployment:**
+- Installed via ADB on device
+- Rollback UI accessible in Neural Prediction Settings
+- Version tracking active for builtin_v2_android model
+- Ready for automatic recovery from model failures
+
+**Benefits:**
+- **Production Safety**: Automatic recovery from bad model updates
+- **Downtime Prevention**: Immediate rollback on repeated failures
+- **User Control**: Manual rollback and version pinning options
+- **Transparency**: Full version history with success rates
+- **Debugging**: Export capability for external analysis
+
+**Next:**
+- Phase 6.5: Privacy Considerations (final Phase 6 task)
 
 ### 2025-11-27 v1.32.899 - A/B Testing Framework (Phase 6.3 Complete!)
 **Status:** ✅ DEPLOYED
