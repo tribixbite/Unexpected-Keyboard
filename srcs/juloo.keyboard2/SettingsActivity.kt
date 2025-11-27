@@ -137,6 +137,12 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             true
         }
 
+        // Neural performance statistics
+        findPreference("neural_performance_stats")?.setOnPreferenceClickListener {
+            showPerformanceStatistics()
+            true
+        }
+
         // ML data export
         findPreference("export_swipe_ml_data")?.let { pref ->
             try {
@@ -1309,5 +1315,44 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             bytes < 1024 * 1024 -> String.format("%.1f KB", bytes / 1024.0)
             else -> String.format("%.1f MB", bytes / (1024.0 * 1024.0))
         }
+    }
+
+    /**
+     * Show performance statistics dialog with reset option
+     * @since v1.32.896
+     */
+    private fun showPerformanceStatistics() {
+        val stats = NeuralPerformanceStats.getInstance(this)
+        val message = if (stats.hasStats()) {
+            stats.formatSummary()
+        } else {
+            "No statistics available yet.\n\nStart using swipe typing with neural predictions to collect performance data!"
+        }
+
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("📊 Neural Performance Statistics")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+
+        // Add reset button if there are stats
+        if (stats.hasStats()) {
+            dialog.setNeutralButton("Reset Statistics") { _, _ ->
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("Reset Statistics?")
+                    .setMessage("This will permanently delete all performance statistics. Are you sure?")
+                    .setPositiveButton("Reset") { _, _ ->
+                        stats.reset()
+                        android.widget.Toast.makeText(
+                            this,
+                            "Statistics reset successfully",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+        }
+
+        dialog.show()
     }
 }

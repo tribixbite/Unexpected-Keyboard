@@ -134,8 +134,8 @@ class PredictionCoordinator(
 
             neuralEngine = engine
 
-            // Initialize async prediction handler
-            asyncPredictionHandler = AsyncPredictionHandler(engine)
+            // Initialize async prediction handler with context for performance stats
+            asyncPredictionHandler = AsyncPredictionHandler(engine, context)
 
             Log.d(TAG, "NeuralSwipeTypingEngine initialized successfully")
         } catch (e: Exception) {

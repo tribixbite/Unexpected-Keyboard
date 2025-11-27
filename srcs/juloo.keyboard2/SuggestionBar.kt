@@ -87,6 +87,9 @@ class SuggestionBar : LinearLayout {
             // Set click listener
             setOnClickListener {
                 if (index < currentSuggestions.size) {
+                    // Record selection statistics for neural predictions
+                    NeuralPerformanceStats.getInstance(context).recordSelection(index)
+
                     listener?.onSuggestionSelected(currentSuggestions[index])
                 }
             }

@@ -1,5 +1,6 @@
 package juloo.keyboard2
 
+import android.content.Context
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
@@ -11,8 +12,13 @@ import java.util.concurrent.atomic.AtomicInteger
  * Handles swipe predictions asynchronously to prevent UI blocking.
  * Uses a dedicated thread for prediction processing and cancels
  * pending predictions when new input arrives.
+ *
+ * @since v1.32.896 - Added performance statistics tracking
  */
-class AsyncPredictionHandler(private val neuralEngine: NeuralSwipeTypingEngine) {
+class AsyncPredictionHandler(
+    private val neuralEngine: NeuralSwipeTypingEngine,
+    private val context: Context
+) {
     companion object {
         private const val TAG = "AsyncPredictionHandler"
 
@@ -33,6 +39,7 @@ class AsyncPredictionHandler(private val neuralEngine: NeuralSwipeTypingEngine) 
     private val workerHandler: Handler
     private val mainHandler: Handler = Handler(Looper.getMainLooper())
     private val requestId: AtomicInteger = AtomicInteger(0)
+    private val perfStats: NeuralPerformanceStats = NeuralPerformanceStats.getInstance(context)
 
     @Volatile
     private var currentRequestId: Int = 0
@@ -115,6 +122,9 @@ class AsyncPredictionHandler(private val neuralEngine: NeuralSwipeTypingEngine) 
             val duration = System.currentTimeMillis() - startTime
             val postTime = System.currentTimeMillis()
             Log.e(TAG, "⏱️ PREDICTION COMPLETED in ${duration}ms (ID: ${request.requestId})")
+
+            // Record performance statistics
+            perfStats.recordPrediction(duration)
 
             // Post results to main thread
             mainHandler.post {

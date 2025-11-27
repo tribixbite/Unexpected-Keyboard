@@ -32,6 +32,7 @@
     <PreferenceScreen android:key="swipe_calibration" android:title="@string/pref_swipe_calibration_title" android:summary="@string/pref_swipe_calibration_summary" android:dependency="swipe_typing_enabled"/>
     <PreferenceScreen android:key="neural_swipe_settings" android:title="🧠 Neural Prediction Settings" android:summary="Configure ONNX transformer neural network parameters" android:dependency="swipe_typing_enabled">
       <CheckBoxPreference android:key="neural_prediction_enabled" android:title="Enable Neural Prediction" android:summary="Use ONNX transformer for swipe recognition" android:defaultValue="true"/>
+      <Preference android:key="neural_performance_stats" android:title="📊 Performance Statistics" android:summary="View neural prediction accuracy and performance metrics"/>
       <CheckBoxPreference android:key="termux_mode_enabled" android:title="📱 Termux Mode" android:summary="Insert predictions in Termux-compatible way for terminal usage" android:defaultValue="false"/>
       <PreferenceScreen android:key="neural_beam_search" android:title="Beam Search Configuration" android:summary="Control neural decoding parameters">
         <juloo.keyboard2.prefs.IntSlideBarPreference android:key="neural_beam_width" android:title="Beam Width" android:summary="Number of parallel prediction paths (%s)" android:defaultValue="2" min="1" max="16" android:dependency="neural_prediction_enabled"/>
