@@ -5,7 +5,7 @@
 **Method**: Read ENTIRE file contents (no grep/sed), compare with current Kotlin, identify issues.
 
 **Started**: 2025-11-27
-**Status**: IN PROGRESS (13/100 files completed - 13%)
+**Status**: IN PROGRESS (14/100 files completed - 14%)
 
 ---
 
@@ -576,13 +576,39 @@
 
 ---
 
+#### 14. Modmap.java → Modmap.kt ✅ **PERFECT MIGRATION**
+
+**File**: `migration2/srcs/juloo.keyboard2/Modmap.java` (33 lines)
+**Kotlin**: `srcs/juloo.keyboard2/Modmap.kt` (23 lines)
+**Lines Read**: Full file - modifier key mapping storage
+**Status**: ✅ **PERFECT MIGRATION**
+
+**Issues Found**: **NONE** ✅
+
+**Critical Sections Audited**:
+1. **Enum M (Java 10, Kotlin 7)**: public enum → enum class, Shift/Fn/Ctrl modifiers ✅
+2. **Map array (Java 12-18, Kotlin 9)**: Array.newInstance reflection → arrayOfNulls (no reflection!) ✅
+3. **add() method (Java 20-26, Kotlin 11-17)**: TreeMap lazy initialization, safe call operator ✅
+4. **get() method (Java 28-32, Kotlin 19-22)**: Ternary → safe call operator `mm?.get(a)` ✅
+
+**Notable Improvements**:
+1. No reflection needed: `arrayOfNulls()` instead of `Array.newInstance(TreeMap.class, ...)`
+2. Safe call operators: `map[i]?.put(a, b)` and `mm?.get(a)`
+3. Property syntax: `m.ordinal` vs `m.ordinal()`
+4. Explicit nullability: `MutableMap<KeyValue, KeyValue>?`
+5. 30% line reduction (33 → 23)
+
+**Verdict**: **PERFECT** migration. All modifier key mapping logic preserved with cleaner Kotlin idioms (no reflection, safe calls). Zero bugs found.
+
+---
+
 ## 🔄 IN PROGRESS (0/100)
 
 *None currently*
 
 ---
 
-## ⏳ PENDING (87/100)
+## ⏳ PENDING (86/100)
 
 ### High Priority Files (Core Functionality)
 
@@ -775,6 +801,7 @@ For each file:
   - LayoutModifier (228→237 lines) - layout caching and modification
   - ComposeKey (86→92 lines) - compose key state machine with binary search
   - Autocapitalisation (203→183 lines) - auto-caps state machine with 50ms delay
+  - Modmap (33→23 lines) - modifier key mapping storage
 - **User-Reported Issues**: 1 (gestures not working - FIX DEPLOYED in v1.32.923)
 - **Resolution**: v1.32.923 installed, awaiting user testing
 
