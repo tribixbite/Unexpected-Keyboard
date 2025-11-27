@@ -5,7 +5,7 @@
 **Method**: Read ENTIRE file contents (no grep/sed), compare with current Kotlin, identify issues.
 
 **Started**: 2025-11-27
-**Status**: IN PROGRESS (14/100 files completed - 14%)
+**Status**: IN PROGRESS (15/100 files completed - 15%)
 
 ---
 
@@ -602,13 +602,51 @@
 
 ---
 
+#### 15. ExtraKeys.java → ExtraKeys.kt ✅ **PERFECT MIGRATION**
+
+**File**: `migration2/srcs/juloo.keyboard2/ExtraKeys.java` (150 lines)
+**Kotlin**: `srcs/juloo.keyboard2/ExtraKeys.kt` (131 lines)
+**Lines Read**: Full file - extra key parsing and merging system
+**Status**: ✅ **PERFECT MIGRATION**
+
+**Issues Found**: **NONE** ✅
+
+**Critical Sections Audited**:
+1. **EMPTY constant (Java 19, Kotlin 10)**: Static field → companion object with @JvmField ✅
+2. **compute() iteration (Java 23-40, Kotlin 14-27)**: HashMap → mutableMapOf, `q.compute()` calls ✅
+3. **parse() string splitting (Java 42-54, Kotlin 29-38)**: Moved to companion object, delimiter logic ✅
+4. **merge() HashMap logic (Java 61-76, Kotlin 40-50)**: Size-based merging, putAll operations ✅
+5. **ExtraKey class (Java 81, Kotlin 52)**: Static inner → companion object nested class ✅
+6. **ExtraKey constructor (Java 83-88, Kotlin 52)**: Constructor parameters with val ✅
+7. **ExtraKey.compute() (Java 90-103, Kotlin 62-71)**: use_alternative, script checks identical ✅
+8. **ExtraKey.merge_with() (Java 105-112, Kotlin 54-59)**: ArrayList → list concatenation operator! ✅
+   - Java: `alts.addAll(k2.alternatives)` → Kotlin: `alternatives + k2.alternatives`
+9. **ExtraKey.one_or_none() (Java 114-118, Kotlin 61-63)**: Nested ternary → when expression ✅
+10. **ExtraKey.parse() (Java 120-137, Kotlin 73-88)**: Array loop → `drop(1).map()` functional! ✅
+    - Java: `for (int i = 1; i < key_names.length; i++)` → Kotlin: `keyNames.drop(1).map { }`
+11. **Query class (Java 141-149, Kotlin 92-97)**: Constructor parameters with val, Set<KeyValue> ✅
+
+**Notable Improvements**:
+1. List concatenation operator: `alternatives + k2.alternatives` instead of `addAll()`
+2. Functional transformations: `keyNames.drop(1).map { KeyValue.getKeyByName(it) }` instead of manual loop
+3. When expression: nested ternary (`a != null ? (b != null ? none() : a) : b`) → clean when block
+4. Constructor parameters with val: no boilerplate field declarations
+5. @JvmField for EMPTY constant
+6. mutableMapOf() instead of HashMap<>()
+7. Nullable types: `String?`, `List<KeyValue>?`
+8. 13% line reduction (150 → 131)
+
+**Verdict**: **PERFECT** migration. All 150 lines of extra key parsing/merging logic correctly preserved in 131 Kotlin lines with excellent functional programming improvements (drop, map, list concatenation). Zero bugs found.
+
+---
+
 ## 🔄 IN PROGRESS (0/100)
 
 *None currently*
 
 ---
 
-## ⏳ PENDING (86/100)
+## ⏳ PENDING (85/100)
 
 ### High Priority Files (Core Functionality)
 
@@ -629,13 +667,15 @@ These files handle critical keyboard operations and should be audited next:
 
 11. ~~**ComposeKey.java**~~ ✅ COMPLETE - NO BUGS (86 lines, state machine)
 12. ~~**Autocapitalisation.java**~~ ✅ COMPLETE - NO BUGS (203 lines, auto-caps state machine)
-13. **ClipboardManager.java** - Clipboard management
-14. **EmojiGridView.java** - Emoji picker
-15. **CustomExtraKeys.java** - Custom extra keys
+13. ~~**Modmap.java**~~ ✅ COMPLETE - NO BUGS (33 lines, modifier mappings)
+14. ~~**ExtraKeys.java**~~ ✅ COMPLETE - NO BUGS (150 lines, extra key system)
+15. **ClipboardManager.java** - Clipboard management
+16. **EmojiGridView.java** - Emoji picker
+17. **CustomExtraKeys.java** - Custom extra keys
 
 ### Lower Priority Files (UI/Utils)
 
-16-100. Remaining files (see full list below)
+18-100. Remaining files (see full list below)
 
 ---
 
