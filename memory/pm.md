@@ -24,7 +24,39 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-27) - 🎯 PHASE 8.3 & 8.4 FULLY FUNCTIONAL! ✅
+### 🔄 Latest Work (2025-11-27) - 🎯 CRITICAL KEYBOARD RENDERING BUG FIXED! ✅
+
+### 2025-11-27 CRITICAL FIX: Keyboard Rendering Bug (v1.32.917) ✅
+**Status:** ✅ FULLY RESOLVED - Keyboard now renders correctly!
+
+**The Bug:**
+- Keyboard showed as completely black screen in all apps
+- Only Termux's extra keys bar visible (ESC, CTRL, ALT, etc.)
+- System allocated space for keyboard but view didn't draw
+- Root cause: `KeyboardData.keysHeight` was always 0f
+
+**Root Cause Analysis:**
+- KeyboardData.kt line 175 hardcoded `keysHeight = 0f` with comment "computed below"
+- init block tried to compute it but couldn't reassign (val is immutable)
+- Result: `keysHeight` stayed 0f, causing NaN in Theme.kt row_height calculation
+- `row_height = config.screenHeightPixels / 0 = NaN`
+- Final keyboard height = `(NaN * keysHeight + margins).toInt() = 0`
+
+**The Fix (commit 8576965c):**
+- Added `compute_total_height()` helper function
+- Changed constructor to call `compute_total_height(rows)` instead of hardcoded 0f
+- Removed broken init block
+- Now correctly sums `row.height + row.shift` for all rows
+
+**Results:**
+- ✅ Keyboard renders with correct height (~630px on test device)
+- ✅ Full QWERTY layout visible in all apps
+- ✅ Tested in Termux and browser - works perfectly
+- ✅ No more NaN calculations
+
+**Build:** v1.32.917 (1m 38s compile time)
+
+---
 
 ### 2025-11-27 Phase 8.3 & 8.4: Multi-Language Infrastructure COMPLETE! ✅
 **Status:** ✅ FULLY FUNCTIONAL - ALL BUGS FIXED!
