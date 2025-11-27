@@ -2,6 +2,7 @@ package juloo.keyboard2
 
 import android.app.AlertDialog
 import android.app.ProgressDialog
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.database.Cursor
@@ -224,6 +225,92 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
         // Reset rollback data
         findPreference("rollback_reset")?.setOnPreferenceClickListener {
             resetRollbackData()
+            true
+        }
+
+        // === PRIVACY CONTROLS (Phase 6.5) ===
+
+        // Privacy status
+        findPreference("privacy_status")?.setOnPreferenceClickListener {
+            showPrivacyStatus()
+            true
+        }
+
+        // Consent management
+        findPreference("privacy_consent")?.setOnPreferenceClickListener {
+            manageConsent()
+            true
+        }
+
+        // Data collection toggles
+        findPreference("privacy_collect_swipe")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setCollectSwipeData(newValue as Boolean)
+            true
+        }
+
+        findPreference("privacy_collect_performance")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setCollectPerformanceData(newValue as Boolean)
+            true
+        }
+
+        findPreference("privacy_collect_errors")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setCollectErrorLogs(newValue as Boolean)
+            true
+        }
+
+        // Privacy settings toggles
+        findPreference("privacy_anonymize")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setAnonymizeData(newValue as Boolean)
+            true
+        }
+
+        findPreference("privacy_local_only")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setLocalOnlyTraining(newValue as Boolean)
+            true
+        }
+
+        findPreference("privacy_allow_export")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setAllowDataExport(newValue as Boolean)
+            true
+        }
+
+        findPreference("privacy_allow_sharing")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setAllowModelSharing(newValue as Boolean)
+            true
+        }
+
+        // Data retention
+        findPreference("privacy_retention_days")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setDataRetentionDays((newValue as String).toInt())
+            true
+        }
+
+        findPreference("privacy_auto_delete")?.setOnPreferenceChangeListener { _, newValue ->
+            PrivacyManager.getInstance(this).setAutoDeleteEnabled(newValue as Boolean)
+            true
+        }
+
+        // Delete all data
+        findPreference("privacy_delete_now")?.setOnPreferenceClickListener {
+            deleteAllPrivacyData()
+            true
+        }
+
+        // Privacy audit trail
+        findPreference("privacy_audit")?.setOnPreferenceClickListener {
+            showPrivacyAudit()
+            true
+        }
+
+        // Export privacy settings
+        findPreference("privacy_export")?.setOnPreferenceClickListener {
+            exportPrivacySettings()
+            true
+        }
+
+        // Reset privacy settings
+        findPreference("privacy_reset")?.setOnPreferenceClickListener {
+            resetPrivacySettings()
             true
         }
 
@@ -1785,6 +1872,151 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                     "Rollback data reset successfully",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // === PRIVACY DIALOG METHODS (Phase 6.5) ===
+
+    private fun showPrivacyStatus() {
+        val manager = PrivacyManager.getInstance(this)
+        val message = manager.formatStatus()
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("🔒 Privacy Status")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun manageConsent() {
+        val manager = PrivacyManager.getInstance(this)
+        val consent = manager.getConsentStatus()
+
+        if (consent.hasConsent) {
+            // User has consent - offer to revoke
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Revoke Data Collection Consent?")
+                .setMessage("This will:\n\n• Stop all data collection immediately\n• Optionally delete all collected data\n\nYou can grant consent again later.\n\nDo you want to delete collected data?")
+                .setPositiveButton("Revoke & Delete") { _, _ ->
+                    manager.revokeConsent(deleteData = true)
+                    deleteAllMLData()
+                    android.widget.Toast.makeText(
+                        this,
+                        "Consent revoked and data deleted",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                .setNeutralButton("Revoke Only") { _, _ ->
+                    manager.revokeConsent(deleteData = false)
+                    android.widget.Toast.makeText(
+                        this,
+                        "Consent revoked (data preserved)",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        } else {
+            // No consent - offer to grant
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Grant Data Collection Consent?")
+                .setMessage("By granting consent, you allow:\n\n• Collection of swipe gesture data for model training\n• Performance statistics (accuracy, latency)\n• Optional error logging\n\nYour privacy:\n• Data anonymization enabled by default\n• Local-only training by default\n• You control what data is collected\n• You can revoke consent at any time\n\nGrant consent for data collection?")
+                .setPositiveButton("Grant Consent") { _, _ ->
+                    manager.grantConsent()
+                    android.widget.Toast.makeText(
+                        this,
+                        "Consent granted - data collection enabled",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
+
+    private fun deleteAllPrivacyData() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("⚠️ Delete All Data?")
+            .setMessage("This will permanently delete:\n\n• All collected swipe gesture data\n• Performance statistics\n• Error logs\n• Training data\n\nThis cannot be undone.\n\nContinue?")
+            .setPositiveButton("Delete All") { _, _ ->
+                deleteAllMLData()
+                android.widget.Toast.makeText(
+                    this,
+                    "All ML data deleted successfully",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteAllMLData() {
+        try {
+            // Delete ML data
+            val dataStore = SwipeMLDataStore.getInstance(this)
+            dataStore.clearAllData()
+
+            // Reset performance stats
+            val perfStats = NeuralPerformanceStats.getInstance(this)
+            perfStats.reset()
+
+            Log.i(TAG, "All ML data deleted")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete ML data", e)
+            android.widget.Toast.makeText(
+                this,
+                "Error deleting data: ${e.message}",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun showPrivacyAudit() {
+        val manager = PrivacyManager.getInstance(this)
+        val message = manager.formatAuditTrail()
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("📜 Privacy Audit Trail")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun exportPrivacySettings() {
+        val manager = PrivacyManager.getInstance(this)
+        val json = manager.exportSettings()
+
+        // Copy to clipboard
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Privacy Settings", json)
+        clipboard.setPrimaryClip(clip)
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Privacy Settings Exported")
+            .setMessage("Privacy settings have been copied to clipboard as JSON.\n\nYou can paste it into a file for backup or analysis.")
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun resetPrivacySettings() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Reset Privacy Settings?")
+            .setMessage("This will:\n\n• Reset all privacy preferences to defaults\n• Revoke data collection consent\n• Clear audit trail\n\nCollected data will NOT be deleted.\n\nContinue?")
+            .setPositiveButton("Reset") { _, _ ->
+                val manager = PrivacyManager.getInstance(this)
+                manager.resetAll()
+
+                android.widget.Toast.makeText(
+                    this,
+                    "Privacy settings reset to defaults",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+
+                // Refresh preference screen
+                preferenceScreen.removeAll()
+                addPreferencesFromResource(R.xml.settings)
             }
             .setNegativeButton("Cancel", null)
             .show()

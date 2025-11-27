@@ -16,7 +16,12 @@ import kotlin.math.roundToInt
  *
  * Statistics are persisted in SharedPreferences and can be reset.
  *
+ * Privacy controls (Phase 6.5):
+ * - Respects user consent for performance data collection
+ * - Can be disabled via privacy settings
+ *
  * @since v1.32.896
+ * @since v1.32.902 - Phase 6.5: Privacy considerations integrated
  */
 class NeuralPerformanceStats(context: Context) {
 
@@ -24,6 +29,8 @@ class NeuralPerformanceStats(context: Context) {
         "neural_performance_stats",
         Context.MODE_PRIVATE
     )
+
+    private val privacyManager = PrivacyManager.getInstance(context)
 
     companion object {
         private const val KEY_TOTAL_PREDICTIONS = "total_predictions"
@@ -48,9 +55,15 @@ class NeuralPerformanceStats(context: Context) {
 
     /**
      * Record a prediction inference.
+     * Privacy: Checks canCollectPerformanceData() before recording.
      * @param inferenceTimeMs Time taken for neural network inference
      */
     fun recordPrediction(inferenceTimeMs: Long) {
+        // Privacy check
+        if (!privacyManager.canCollectPerformanceData()) {
+            return
+        }
+
         synchronized(this) {
             prefs.edit().apply {
                 putLong(KEY_TOTAL_PREDICTIONS, getTotalPredictions() + 1)
@@ -65,9 +78,15 @@ class NeuralPerformanceStats(context: Context) {
 
     /**
      * Record user selection of a predicted word.
+     * Privacy: Checks canCollectPerformanceData() before recording.
      * @param selectedIndex Index of selected word (0 = first, 1 = second, etc.)
      */
     fun recordSelection(selectedIndex: Int) {
+        // Privacy check
+        if (!privacyManager.canCollectPerformanceData()) {
+            return
+        }
+
         synchronized(this) {
             prefs.edit().apply {
                 putLong(KEY_TOTAL_SELECTIONS, getTotalSelections() + 1)

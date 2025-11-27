@@ -14,12 +14,15 @@ import juloo.keyboard2.ml.SwipeMLDataStore
  * - Copying registered keys from swipe data
  * - Storing ML data in the data store
  * - Handling normalization/denormalization of coordinates
+ * - Enforcing privacy controls and user consent (v1.32.902 - Phase 6.5)
  *
  * Responsibilities:
  * - Check if ML data collection should occur (was last input swipe?)
+ * - Verify user consent before collecting data
  * - Create SwipeMLData objects with correct dimensions
  * - Copy trace points and registered keys from current swipe
  * - Store collected data in ML data store
+ * - Apply privacy settings (anonymization, retention)
  *
  * NOT included (remains in Keyboard2):
  * - Retrieving current swipe data from InputCoordinator
@@ -28,11 +31,21 @@ import juloo.keyboard2.ml.SwipeMLDataStore
  *
  * This class is extracted from Keyboard2.java for better separation of concerns
  * and testability (v1.32.370).
+ *
+ * @since v1.32.902 - Phase 6.5: Privacy considerations integrated
  */
 class MLDataCollector(private val context: Context) {
 
+    private val privacyManager = PrivacyManager.getInstance(context)
+
     /**
      * Collects and stores ML data from a swipe gesture when user selects a suggestion.
+     *
+     * Privacy controls (Phase 6.5):
+     * - Checks user consent before collecting
+     * - Respects privacy_collect_swipe setting
+     * - Applies anonymization if enabled
+     * - Enforces data retention policies
      *
      * @param word Selected word from suggestion
      * @param currentSwipeData Current swipe data containing trace points and registered keys
@@ -46,6 +59,12 @@ class MLDataCollector(private val context: Context) {
         keyboardHeight: Int,
         mlDataStore: SwipeMLDataStore?
     ): Boolean {
+        // Privacy check: Verify consent before collecting
+        if (!privacyManager.canCollectSwipeData()) {
+            Log.d("MLDataCollector", "Swipe data collection disabled or no consent")
+            return false
+        }
+
         if (currentSwipeData == null || mlDataStore == null) {
             return false
         }

@@ -76,6 +76,29 @@
         <Preference android:key="rollback_export" android:title="💾 Export History" android:summary="Export version history as JSON"/>
         <Preference android:key="rollback_reset" android:title="🔄 Reset History" android:summary="Clear all version data"/>
       </PreferenceScreen>
+      <PreferenceScreen android:key="neural_privacy" android:title="🔒 Privacy &amp; Data" android:summary="Control data collection and privacy settings">
+        <Preference android:key="privacy_status" android:title="📊 Privacy Status" android:summary="View current privacy settings and consent status"/>
+        <Preference android:key="privacy_consent" android:title="✅ Data Collection Consent" android:summary="Grant or revoke consent for ML data collection"/>
+        <PreferenceCategory android:title="Data Collection Controls">
+          <CheckBoxPreference android:key="privacy_collect_swipe" android:title="Collect Swipe Data" android:summary="Allow collection of swipe gesture data for model training" android:defaultValue="true"/>
+          <CheckBoxPreference android:key="privacy_collect_performance" android:title="Collect Performance Data" android:summary="Allow collection of prediction accuracy and latency statistics" android:defaultValue="true"/>
+          <CheckBoxPreference android:key="privacy_collect_errors" android:title="Collect Error Logs" android:summary="Allow collection of error logs for debugging" android:defaultValue="false"/>
+        </PreferenceCategory>
+        <PreferenceCategory android:title="Privacy Settings">
+          <CheckBoxPreference android:key="privacy_anonymize" android:title="Anonymize Data" android:summary="Remove identifying information from collected data" android:defaultValue="true"/>
+          <CheckBoxPreference android:key="privacy_local_only" android:title="Local-Only Training" android:summary="Keep all data and training on this device only" android:defaultValue="true"/>
+          <CheckBoxPreference android:key="privacy_allow_export" android:title="Allow Data Export" android:summary="Enable exporting collected data for external analysis" android:defaultValue="false"/>
+          <CheckBoxPreference android:key="privacy_allow_sharing" android:title="Allow Model Sharing" android:summary="Enable sharing trained models with other devices" android:defaultValue="false"/>
+        </PreferenceCategory>
+        <PreferenceCategory android:title="Data Retention">
+          <ListPreference android:key="privacy_retention_days" android:title="Retention Period" android:summary="How long to keep collected data" android:defaultValue="90" android:entries="@array/privacy_retention_entries" android:entryValues="@array/privacy_retention_values"/>
+          <CheckBoxPreference android:key="privacy_auto_delete" android:title="Auto-Delete Old Data" android:summary="Automatically delete data older than retention period" android:defaultValue="true"/>
+          <Preference android:key="privacy_delete_now" android:title="⚠️ Delete All Data Now" android:summary="Immediately delete all collected ML data"/>
+        </PreferenceCategory>
+        <Preference android:key="privacy_audit" android:title="📜 Privacy Audit Trail" android:summary="View history of privacy-related actions"/>
+        <Preference android:key="privacy_export" android:title="💾 Export Privacy Settings" android:summary="Export all privacy settings as JSON"/>
+        <Preference android:key="privacy_reset" android:title="🔄 Reset Privacy Settings" android:summary="Reset to default privacy settings"/>
+      </PreferenceScreen>
     </PreferenceScreen>
     <PreferenceScreen android:key="swipe_corrections" android:title="✨ Swipe Corrections" android:summary="Adjust how accurately the keyboard corrects words when you swipe" android:dependency="swipe_typing_enabled">
       <CheckBoxPreference android:key="swipe_beam_autocorrect_enabled" android:title="Enable Beam Search Corrections" android:summary="Fuzzy match custom words and dictionary during prediction. Controls autocorrect while building suggestions." android:defaultValue="true"/>

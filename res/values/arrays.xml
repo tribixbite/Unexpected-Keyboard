@@ -204,4 +204,22 @@
     <item>discard</item>
     <item>merge</item>
   </string-array>
+
+  <!-- Privacy Data Retention -->
+  <string-array name="privacy_retention_entries">
+    <item>7 days</item>
+    <item>30 days</item>
+    <item>90 days (default)</item>
+    <item>180 days</item>
+    <item>365 days</item>
+    <item>Never delete</item>
+  </string-array>
+  <string-array name="privacy_retention_values">
+    <item>7</item>
+    <item>30</item>
+    <item>90</item>
+    <item>180</item>
+    <item>365</item>
+    <item>999999</item>
+  </string-array>
 </resources>
