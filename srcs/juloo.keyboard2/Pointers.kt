@@ -200,8 +200,11 @@ class Pointers(
                         "pathSize=${swipePath?.size ?: 0}"
                 )
 
+                // CRITICAL FIX: Changed from swipePath.size > 1 to >= 1
+                // Some gestures only collect 1 point (downX,downY) before UP fires
+                // We can still calculate direction from ptr.downX/downY to the last point
                 if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
-                    swipePath != null && swipePath.size > 1
+                    swipePath != null && swipePath.size >= 1
                 ) {
                     val lastPoint = swipePath[swipePath.size - 1]
                     val dx = lastPoint.x - ptr.downX

@@ -9,11 +9,11 @@
 
 ## 🔥 Current Status (2025-11-27 - 💯 READY FOR PRODUCTION! 🎉🎉🎉)
 
-**Latest Version**: v1.32.919 (CRITICAL FIX: Short swipe gestures on all keys)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 54s)
-**Device Status**: ✅ FULLY FUNCTIONAL - All gestures working correctly
-**Branch**: main (5 commits pushed: gesture fix + docs + cleanup)
-**Current Focus**: 🎯 **GESTURE FIX COMPLETE** - Ready for next phase
+**Latest Version**: v1.32.923 (CRITICAL FIX: swipePath.size condition for short gestures)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 51s)
+**Device Status**: ✅ v1.32.923 INSTALLED - Testing gestures now
+**Branch**: main (pending commit: swipePath.size >= 1 fix)
+**Current Focus**: 🎯 **PATH SIZE FIX** - Changed condition from >1 to >=1
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)** 🎊
 **Main Files**: 148/148 (100%) ✅
 **Test Files**: 11/11 (100%) ✅
@@ -24,7 +24,38 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-27) - 🎯 PHASE 7.1 VERIFICATION COMPLETE! ✅
+### 🔄 Latest Work (2025-11-27) - 🐛 CRITICAL PATH SIZE FIX! ⚡
+
+**v1.32.923 - Short Gesture Path Collection Fix:**
+
+**Problem Discovered:**
+- User reported gestures STILL not working on v1.32.922 despite path collection fix
+- Logcat showed `pathSize=1` or `pathSize=2` but condition required `swipePath.size > 1`
+- Most gestures only collect 1-2 points before UP event fires
+- Original condition was too strict, blocking valid short gestures
+
+**Root Cause Analysis:**
+- Compared migration2/Pointers.java with current Pointers.kt line-by-line
+- Found the same strict condition `swipePath.size > 1` in both versions
+- Path collection IS working (logs confirm `shouldCollect=true`)
+- BUT: Touch events don't fire frequently enough to accumulate 2+ points
+- Example: NW swipe on backspace might only have 1 point before UP
+
+**Fix Applied (Pointers.kt:203-208):**
+```kotlin
+// CRITICAL FIX: Changed from swipePath.size > 1 to >= 1
+// Some gestures only collect 1 point (downX,downY) before UP fires
+// We can still calculate direction from ptr.downX/downY to the last point
+if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
+    swipePath != null && swipePath.size >= 1
+)
+```
+
+**Why This Works:**
+- With 1 point in swipePath, we have: `lastPoint = swipePath[0]`
+- Can still calculate direction: `dx = lastPoint.x - ptr.downX`, `dy = lastPoint.y - ptr.downY`
+- Distance calculation works fine with single point
+- Direction mapping (16 directions → 9 positions) unaffected
 
 **Latest Commits:**
 - `e3eb2a36` - docs(pm): document detekt static analysis results
