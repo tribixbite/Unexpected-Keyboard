@@ -5,6 +5,30 @@ All notable changes to Unexpected Keyboard - Neural Swipe Typing Edition will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.923] - 2025-11-27
+
+### Fixed - Critical Path Size Condition Bug 🐛
+- **Short Swipe Gestures**: Fixed gestures STILL not triggering despite v1.32.919 path collection fix
+- **Root Cause**: Condition required `swipePath.size > 1` but most gestures only collect 1-2 points before UP
+- **Discovery**: User reported gestures broken on v1.32.922, logcat showed `pathSize=1` or `pathSize=2`
+- **Analysis**: Compared migration2/Pointers.java with Pointers.kt - found same strict condition in both
+- **Impact**: Quick swipes (NW on backspace, SW on Ctrl) only fire 1-2 touch events before UP
+- **Fix**: Changed condition from `swipePath.size > 1` to `swipePath.size >= 1`
+- **Why It Works**:
+  - With 1 point: `lastPoint = swipePath[0]`
+  - Direction calculation: `dx = lastPoint.x - ptr.downX`, `dy = lastPoint.y - ptr.downY`
+  - Distance and direction mapping work identically
+- **Code Changes**: `srcs/juloo.keyboard2/Pointers.kt` lines 203-208
+- **Now Working**:
+  - ✅ Backspace NW → DELETE_LAST_WORD (confirmed in testing)
+  - ✅ Ctrl SW → SWITCH_CLIPBOARD (confirmed in testing)
+  - ✅ All short gestures fire with just 1 collected point
+
+### Performance
+- **No Impact**: Same calculation logic, just relaxed condition
+- **Memory**: No additional overhead
+- **Testing**: Path collection confirmed working (`shouldCollect=true`), now gestures trigger correctly
+
 ## [1.32.919] - 2025-11-27
 
 ### Fixed - Critical Short Swipe Gesture Bug 🐛
