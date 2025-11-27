@@ -278,8 +278,9 @@ class WordPredictor {
         }
 
         // Phase 7.1: Record word sequences for dynamic N-gram learning
-        // Only record if we have at least 2 words (minimum for bigrams)
-        if (recentWords.size >= 2 && contextModel != null) {
+        // Only record if feature is enabled and we have at least 2 words (minimum for bigrams)
+        val contextAwareEnabled = config?.context_aware_predictions_enabled ?: true
+        if (contextAwareEnabled && recentWords.size >= 2 && contextModel != null) {
             // Record last few words as a sequence (up to 4 words for trigram future-proofing)
             val sequenceLength = kotlin.math.min(4, recentWords.size)
             val sequence = recentWords.takeLast(sequenceLength)
@@ -917,7 +918,9 @@ class WordPredictor {
 
         // 3b. Phase 7.1: Dynamic context boost from learned N-gram model
         // ContextModel provides personalized boost based on user's actual typing patterns
-        val dynamicContextBoost = if (contextModel != null && context.isNotEmpty()) {
+        // Only apply if feature is enabled in settings
+        val contextAwareEnabled = config?.context_aware_predictions_enabled ?: true
+        val dynamicContextBoost = if (contextAwareEnabled && contextModel != null && context.isNotEmpty()) {
             contextModel?.getContextBoost(word, context) ?: 1.0f
         } else {
             1.0f

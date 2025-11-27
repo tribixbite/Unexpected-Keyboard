@@ -69,6 +69,7 @@ class Config private constructor(
     // Word prediction scoring weights
     @JvmField var prediction_context_boost = 0f
     @JvmField var prediction_frequency_scale = 0f
+    @JvmField var context_aware_predictions_enabled = false // Phase 7.1: Dynamic N-gram learning
 
     // Auto-correction settings
     @JvmField var autocorrect_enabled = false
@@ -249,6 +250,7 @@ class Config private constructor(
 
         prediction_context_boost = safeGetFloat(_prefs, "prediction_context_boost", 2.0f)
         prediction_frequency_scale = safeGetFloat(_prefs, "prediction_frequency_scale", 1000.0f)
+        context_aware_predictions_enabled = _prefs.getBoolean("context_aware_predictions_enabled", true)
 
         autocorrect_enabled = _prefs.getBoolean("autocorrect_enabled", true)
         autocorrect_min_word_length = safeGetInt(_prefs, "autocorrect_min_word_length", 3)

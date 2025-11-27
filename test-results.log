@@ -42,3 +42,25 @@ Recommended next steps:
   1. git commit -m 'your message'
   2. ./build-test-deploy.sh  (full deployment test)
 
+[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;34m   Pre-Commit Test Verification[0m
+[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;34m[1/4][0m Checking Kotlin/Java compilation...
+[0;32m✓ Compilation successful[0m
+[0;34m[2/4][0m Verifying test code compiles...
+[0;32m✓ Found 45 test files[0m
+  Note: Run './gradlew test' on x86_64 for full test execution
+[0;34m[3/4][0m Checking for unfinished work markers...
+[0;32m✓ No unfinished work markers[0m
+[0;34m[4/4][0m Checking version info...
+[0;31m⚠ Version not updated[0m (run build script first)
+
+[0;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;32m   All checks passed! Ready to commit.[0m
+[0;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+Recommended next steps:
+  1. git commit -m 'your message'
+  2. ./build-test-deploy.sh  (full deployment test)
+
