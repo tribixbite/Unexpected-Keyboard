@@ -260,7 +260,7 @@ class KeyboardData private constructor(
          *  5 0 6
          *  3 8 4
          */
-        val keys: Array<KeyValue?>,
+        val keys: List<KeyValue?>,
         /** Key accessed by the anti-clockwise circle gesture. */
         val anticircle: KeyValue?,
         /** Pack flags for every key values. Flags are: [F_LOC]. */
@@ -291,7 +291,7 @@ class KeyboardData private constructor(
         fun getKeyValue(i: Int): KeyValue? = keys[i]
 
         fun withKeyValue(i: Int, kv: KeyValue): Key {
-            val ks = keys.copyOf()
+            val ks = keys.toMutableList()
             ks[i] = kv
             val flags = keysflags and (ALL_FLAGS shl i).inv()
             return Key(ks, anticircle, flags, width, shift, indication)
@@ -309,34 +309,13 @@ class KeyboardData private constructor(
             return false
         }
 
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is Key) return false
-            return keys.contentEquals(other.keys) &&
-                anticircle == other.anticircle &&
-                keysflags == other.keysflags &&
-                width == other.width &&
-                shift == other.shift &&
-                indication == other.indication
-        }
-
-        override fun hashCode(): Int {
-            var result = keys.contentHashCode()
-            result = 31 * result + (anticircle?.hashCode() ?: 0)
-            result = 31 * result + keysflags
-            result = 31 * result + width.hashCode()
-            result = 31 * result + shift.hashCode()
-            result = 31 * result + (indication?.hashCode() ?: 0)
-            return result
-        }
-
         companion object {
             /** Whether a key was declared with the 'loc' prefix. */
             const val F_LOC = 1
             const val ALL_FLAGS = F_LOC
 
             @JvmField
-            val EMPTY = Key(Array(9) { null }, null, 0, 1f, 1f, null)
+            val EMPTY = Key(List(9) { null }, null, 0, 1f, 1f, null)
 
             /** Read a key value attribute that have a synonym. Having both synonyms
                 present at the same time is an error.
@@ -408,7 +387,7 @@ class KeyboardData private constructor(
                 val indication = parser.getAttributeValue(null, "indication")
                 while (parser.next() != XmlPullParser.END_TAG)
                     continue
-                return Key(ks, anticircle, keysflags, maxOf(width, 0f), maxOf(shift, 0f), indication)
+                return Key(ks.toList(), anticircle, keysflags, maxOf(width, 0f), maxOf(shift, 0f), indication)
             }
         }
     }
@@ -422,7 +401,7 @@ class KeyboardData private constructor(
         abstract fun apply(c: KeyValue, localized: Boolean): KeyValue?
 
         override fun apply(k: Key): Key {
-            val ks = Array<KeyValue?>(k.keys.size) { i ->
+            val ks = List<KeyValue?>(k.keys.size) { i ->
                 if (k.keys[i] != null)
                     apply(k.keys[i]!!, k.keyHasFlag(i, Key.F_LOC))
                 else
