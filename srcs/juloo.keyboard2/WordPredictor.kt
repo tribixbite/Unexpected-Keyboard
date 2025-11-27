@@ -52,6 +52,8 @@ class WordPredictor {
     private var personalizationEngine: PersonalizationEngine? = null // Phase 7.2: Personalized learning
     private var personalizedScorer: PersonalizedScorer? = null // Phase 7.2: Adaptive scoring
     private var languageDetector: LanguageDetector? = LanguageDetector()
+    private var multiLanguageManager: MultiLanguageManager? = null // Phase 8.3: Multi-language models
+    private var multiLanguageDictManager: MultiLanguageDictionaryManager? = null // Phase 8.4: Multi-language dictionaries
     private var currentLanguage: String = "en" // Default to English
     private val recentWords: MutableList<String> = mutableListOf() // For language detection
     private var config: Config? = null
@@ -87,6 +89,20 @@ class WordPredictor {
             personalizationEngine = PersonalizationEngine(context)
             personalizedScorer = PersonalizedScorer(personalizationEngine!!)
             Log.d(TAG, "PersonalizationEngine and PersonalizedScorer initialized for adaptive predictions")
+        }
+
+        // Phase 8.3 & 8.4: Initialize Multi-Language support if enabled
+        val enableMultiLang = config?.enable_multilang ?: false
+        if (enableMultiLang) {
+            if (multiLanguageManager == null) {
+                val primaryLang = config?.primary_language ?: "en"
+                multiLanguageManager = MultiLanguageManager(context, primaryLang)
+                Log.d(TAG, "MultiLanguageManager initialized (primary: $primaryLang)")
+            }
+            if (multiLanguageDictManager == null) {
+                multiLanguageDictManager = MultiLanguageDictionaryManager(context)
+                Log.d(TAG, "MultiLanguageDictionaryManager initialized")
+            }
         }
 
         // Initialize dictionary observer for automatic updates
@@ -271,6 +287,16 @@ class WordPredictor {
             it.setLanguage(language)
             Log.d(TAG, "N-gram language set to: $language")
         }
+
+        // Phase 8.3: Switch multi-language models if enabled
+        multiLanguageManager?.let {
+            val switched = it.switchLanguage(language)
+            if (switched) {
+                Log.d(TAG, "MultiLanguageManager switched to: $language")
+            } else {
+                Log.w(TAG, "Failed to switch MultiLanguageManager to: $language")
+            }
+        }
     }
 
     /**
@@ -328,6 +354,21 @@ class WordPredictor {
      * Try to automatically detect and switch language based on recent words
      */
     private fun tryAutoLanguageDetection() {
+        // Phase 8.3: Use MultiLanguageManager for detection and switching if enabled
+        val autoDetectEnabled = config?.auto_detect_language ?: true
+        if (autoDetectEnabled && multiLanguageManager != null) {
+            val sensitivity = config?.language_detection_sensitivity ?: 0.6f
+            val detected = multiLanguageManager?.detectAndSwitch(recentWords, sensitivity)
+            if (detected != null) {
+                currentLanguage = detected
+                Log.d(TAG, "MultiLanguageManager auto-detected and switched to: $detected")
+                // Also update bigram model
+                bigramModel?.setLanguage(detected)
+                return
+            }
+        }
+
+        // Fallback to legacy detection if multi-language disabled
         languageDetector ?: return
 
         val detectedLanguage = languageDetector?.detectLanguageFromWords(recentWords)
