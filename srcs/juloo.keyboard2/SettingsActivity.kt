@@ -149,6 +149,36 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             true
         }
 
+        // A/B test status
+        findPreference("ab_test_status")?.setOnPreferenceClickListener {
+            showABTestStatus()
+            true
+        }
+
+        // A/B test comparison
+        findPreference("ab_test_comparison")?.setOnPreferenceClickListener {
+            showABTestComparison()
+            true
+        }
+
+        // A/B test configuration
+        findPreference("ab_test_configure")?.setOnPreferenceClickListener {
+            showABTestConfiguration()
+            true
+        }
+
+        // A/B test export
+        findPreference("ab_test_export")?.setOnPreferenceClickListener {
+            exportABTestData()
+            true
+        }
+
+        // A/B test reset
+        findPreference("ab_test_reset")?.setOnPreferenceClickListener {
+            resetABTest()
+            true
+        }
+
         // ML data export
         findPreference("export_swipe_ml_data")?.let { pref ->
             try {
@@ -1375,5 +1405,158 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
         }
 
         dialog.show()
+    }
+
+    private fun showABTestStatus() {
+        val manager = ABTestManager.getInstance(this)
+        val message = manager.formatTestStatus()
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("🧪 A/B Test Status")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun showABTestComparison() {
+        val manager = ABTestManager.getInstance(this)
+        val config = manager.getTestConfig()
+
+        if (!config.enabled || config.modelAId.isEmpty() || config.modelBId.isEmpty()) {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("No Active Test")
+                .setMessage("Configure and start an A/B test first to see comparison results.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        val tracker = ModelComparisonTracker.getInstance(this)
+        val message = tracker.formatComparisonSummary(config.modelAId, config.modelBId)
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("📈 Model Comparison")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+            .setNeutralButton("Export JSON") { _, _ ->
+                exportABTestData()
+            }
+            .show()
+    }
+
+    private fun showABTestConfiguration() {
+        val manager = ABTestManager.getInstance(this)
+        val config = manager.getTestConfig()
+
+        // For now, show current configuration and provide basic controls
+        val message = if (config.enabled) {
+            buildString {
+                append("Current A/B Test:\n\n")
+                append("Model A: ${config.modelAName}\n")
+                append("Model B: ${config.modelBName}\n")
+                append("Traffic Split: ${config.trafficSplitA}/${100-config.trafficSplitA}\n")
+                append("Duration: ${config.testDurationDays} days\n")
+                append("Min Samples: ${config.minSamplesRequired}\n")
+                append("Session-based: ${if (config.sessionBased) "Yes" else "No"}\n")
+                append("Auto-select winner: ${if (config.autoSelectWinner) "Yes" else "No"}\n\n")
+                append("Test is currently ACTIVE")
+            }
+        } else {
+            "No A/B test currently configured.\n\n" +
+            "To set up an A/B test:\n" +
+            "1. Load two different models\n" +
+            "2. Use ABTestManager.configureTest() programmatically\n" +
+            "3. Monitor results in Test Status\n\n" +
+            "Note: Full UI configuration coming in future update!"
+        }
+
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("⚙️ Test Configuration")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+
+        if (config.enabled) {
+            dialog.setNeutralButton("Stop Test") { _, _ ->
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("Stop Test?")
+                    .setMessage("This will end the current A/B test without selecting a winner. Continue?")
+                    .setPositiveButton("Stop") { _, _ ->
+                        manager.stopTest()
+                        android.widget.Toast.makeText(
+                            this,
+                            "A/B test stopped",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+
+            dialog.setNegativeButton("Select Winner") { _, _ ->
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("Select Winner?")
+                    .setMessage("This will analyze the results and select the best performing model. Continue?")
+                    .setPositiveButton("Analyze") { _, _ ->
+                        val winner = manager.selectWinnerAndEndTest()
+                        val winnerName = if (winner == config.modelAId) {
+                            config.modelAName
+                        } else if (winner == config.modelBId) {
+                            config.modelBName
+                        } else {
+                            null
+                        }
+
+                        val resultMessage = if (winnerName != null) {
+                            "Winner selected: $winnerName\n\nThe test has been ended."
+                        } else {
+                            "No clear winner could be determined.\nThe test has been ended."
+                        }
+
+                        android.app.AlertDialog.Builder(this)
+                            .setTitle("Test Results")
+                            .setMessage(resultMessage)
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun exportABTestData() {
+        val tracker = ModelComparisonTracker.getInstance(this)
+        val jsonData = tracker.exportComparisonData()
+
+        // Copy to clipboard
+        val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("A/B Test Data", jsonData)
+        clipboard.setPrimaryClip(clip)
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("💾 Data Exported")
+            .setMessage("A/B test comparison data has been copied to clipboard as JSON.\n\nYou can paste it into a file or analysis tool.")
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun resetABTest() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Reset A/B Test?")
+            .setMessage("This will permanently delete:\n• All test configuration\n• All collected comparison data\n• Model performance metrics\n\nThis cannot be undone. Continue?")
+            .setPositiveButton("Reset") { _, _ ->
+                val manager = ABTestManager.getInstance(this)
+                manager.resetTest()
+
+                android.widget.Toast.makeText(
+                    this,
+                    "A/B test reset successfully",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }

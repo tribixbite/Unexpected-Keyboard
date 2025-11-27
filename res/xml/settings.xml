@@ -60,6 +60,13 @@
         <ListPreference android:key="neural_resampling_mode" android:title="@string/pref_neural_resampling_mode_title" android:summary="@string/pref_neural_resampling_mode_summary" android:defaultValue="discard" android:entries="@array/pref_neural_resampling_mode_entries" android:entryValues="@array/pref_neural_resampling_mode_values" android:dependency="neural_prediction_enabled"/>
         <Preference android:key="neural_resampling_info" android:title="@string/pref_neural_resampling_info_title" android:summary="@string/pref_neural_resampling_info_summary"/>
       </PreferenceScreen>
+      <PreferenceScreen android:key="neural_ab_testing" android:title="🧪 A/B Testing" android:summary="Compare and test different model versions">
+        <Preference android:key="ab_test_status" android:title="📊 Test Status" android:summary="View current A/B test progress and results"/>
+        <Preference android:key="ab_test_comparison" android:title="📈 Model Comparison" android:summary="Compare performance metrics between models"/>
+        <Preference android:key="ab_test_configure" android:title="⚙️ Configure Test" android:summary="Set up A/B test parameters"/>
+        <Preference android:key="ab_test_export" android:title="💾 Export Data" android:summary="Export comparison data as JSON"/>
+        <Preference android:key="ab_test_reset" android:title="🔄 Reset Test" android:summary="Clear all A/B test data"/>
+      </PreferenceScreen>
     </PreferenceScreen>
     <PreferenceScreen android:key="swipe_corrections" android:title="✨ Swipe Corrections" android:summary="Adjust how accurately the keyboard corrects words when you swipe" android:dependency="swipe_typing_enabled">
       <CheckBoxPreference android:key="swipe_beam_autocorrect_enabled" android:title="Enable Beam Search Corrections" android:summary="Fuzzy match custom words and dictionary during prediction. Controls autocorrect while building suggestions." android:defaultValue="true"/>
