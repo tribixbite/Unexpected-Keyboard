@@ -57,7 +57,17 @@ if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
 - Distance calculation works fine with single point
 - Direction mapping (16 directions → 9 positions) unaffected
 
+**Testing Status:**
+- ✅ APK v1.32.923 built and installed successfully
+- ⏳ Awaiting user gesture testing (device not connected via ADB)
+- 📋 User should test:
+  1. NW swipe on backspace → DELETE_LAST_WORD
+  2. SW swipe on Ctrl → SWITCH_CLIPBOARD
+- 🎯 Expected: Gestures should now trigger with just 1 path point collected
+
 **Latest Commits:**
+- `5363004a` - docs(changelog): add v1.32.923 path size condition fix
+- `29ee397b` - fix(gestures): change swipePath.size condition from >1 to >=1
 - `e3eb2a36` - docs(pm): document detekt static analysis results
 - `8bc4074c` - docs(pm): update status with completed gesture fix session
 - `169f021b` - chore(cleanup): remove 31 build log files from repository
@@ -67,8 +77,6 @@ if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
 - `ac2bfe0f` - fix(gestures): enable short swipe gestures on non-character keys (v1.32.919)
 - `205c05ae` - fix(layouts): add delete_last_word gesture to all QWERTY variants
 - `7a958f64` - docs(pm): document delete_word gesture fix for all QWERTY layouts
-- `cd111b96` - perf(assets): move Python scripts from assets/models to ml_training (56KB)
-- `d7354104` - perf(assets): remove unused libjni_latinimegoogle.so library (1.1MB)
 
 ### 2025-11-27 Phase 7.1 Context-Aware Predictions Verification 🧠
 **Status:** ✅ IMPLEMENTATION VERIFIED - Ready for device testing
