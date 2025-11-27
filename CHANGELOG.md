@@ -5,6 +5,25 @@ All notable changes to Unexpected Keyboard - Neural Swipe Typing Edition will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.917] - 2025-11-27
+
+### Fixed - Critical Keyboard Rendering Bug 🐛
+- **Keyboard Rendering**: Fixed critical bug where keyboard showed as black screen (keysHeight was hardcoded to 0f)
+- **Root Cause**: KeyboardData constructor had hardcoded `keysHeight = 0f` with comment "computed below"
+- **Fix**: Added `compute_total_height()` helper that properly sums row heights and shifts
+- **Impact**: Keyboard now renders correctly with proper height calculations (~630px on test devices)
+- **Regression Protection**: Added KeyboardDataTest.kt with 4 test cases to prevent future issues
+
+### Added - Phase 8.3 & 8.4: Multi-Language Infrastructure 🌍
+- **Multi-Language Support**: Complete infrastructure for 5 languages (English, Spanish, French, Portuguese, German)
+- **LanguageDetector**: Automatic language detection from character frequencies and common words
+- **MultiLanguageManager**: Model loading, caching, and switching with <100ms latency target
+- **MultiLanguageDictionaryManager**: Per-language dictionary management with lazy loading
+- **Settings**: Multi-language configuration (enable_multilang, primary_language, auto_detect_language, sensitivity)
+- **Thread Safety**: All operations properly synchronized for concurrent access
+- **Memory Efficiency**: ~12MB per language (10MB model + 2MB dictionary)
+- **Graceful Degradation**: Works without models (detection only) until Phase 8.2 models are trained
+
 ## [1.32.904] - 2025-11-27
 
 ### Added - Phase 6: Production Features 🚀
