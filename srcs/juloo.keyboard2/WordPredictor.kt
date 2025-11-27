@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.provider.UserDictionary
 import android.util.Log
+import juloo.keyboard2.contextaware.ContextModel
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -45,6 +46,7 @@ class WordPredictor {
     private val dictionary: AtomicReference<MutableMap<String, Int>> = AtomicReference(mutableMapOf())
     private val prefixIndex: AtomicReference<MutableMap<String, MutableSet<String>>> = AtomicReference(mutableMapOf())
     private var bigramModel: BigramModel? = BigramModel.getInstance(null)
+    private var contextModel: ContextModel? = null // Phase 7.1: Dynamic N-gram model
     private var languageDetector: LanguageDetector? = LanguageDetector()
     private var currentLanguage: String = "en" // Default to English
     private val recentWords: MutableList<String> = mutableListOf() // For language detection
@@ -69,6 +71,12 @@ class WordPredictor {
     fun setContext(context: Context) {
         this.context = context
         loadDisabledWords()
+
+        // Phase 7.1: Initialize ContextModel for dynamic N-gram predictions
+        if (contextModel == null) {
+            contextModel = ContextModel(context)
+            Log.d(TAG, "ContextModel initialized for dynamic N-gram predictions")
+        }
 
         // Initialize dictionary observer for automatic updates
         if (dictionaryObserver == null) {
@@ -267,6 +275,15 @@ class WordPredictor {
         // Keep only the most recent words
         while (recentWords.size > MAX_RECENT_WORDS) {
             recentWords.removeAt(0)
+        }
+
+        // Phase 7.1: Record word sequences for dynamic N-gram learning
+        // Only record if we have at least 2 words (minimum for bigrams)
+        if (recentWords.size >= 2 && contextModel != null) {
+            // Record last few words as a sequence (up to 4 words for trigram future-proofing)
+            val sequenceLength = kotlin.math.min(4, recentWords.size)
+            val sequence = recentWords.takeLast(sequenceLength)
+            contextModel?.recordSequence(sequence)
         }
 
         // Try to detect language change if we have enough words
@@ -875,6 +892,8 @@ class WordPredictor {
      * Combines: prefix quality + frequency + user adaptation + context probability
      * Context is evaluated for ALL candidates, not just top N (key improvement)
      *
+     * Phase 7.1: Now includes dynamic N-gram boost from ContextModel alongside static BigramModel
+     *
      * @param word The word being scored
      * @param keySequence The typed prefix
      * @param frequency Dictionary frequency (higher = more common)
@@ -889,12 +908,25 @@ class WordPredictor {
         // 2. User adaptation multiplier (learns user's vocabulary)
         val adaptationMultiplier = adaptationManager?.getAdaptationMultiplier(word) ?: 1.0f
 
-        // 3. Context multiplier (bigram probability boost)
-        val contextMultiplier = if (bigramModel != null && context.isNotEmpty()) {
+        // 3a. Static context multiplier (bigram probability boost from hardcoded model)
+        val staticContextMultiplier = if (bigramModel != null && context.isNotEmpty()) {
             bigramModel?.getContextMultiplier(word, context) ?: 1.0f
         } else {
             1.0f
         }
+
+        // 3b. Phase 7.1: Dynamic context boost from learned N-gram model
+        // ContextModel provides personalized boost based on user's actual typing patterns
+        val dynamicContextBoost = if (contextModel != null && context.isNotEmpty()) {
+            contextModel?.getContextBoost(word, context) ?: 1.0f
+        } else {
+            1.0f
+        }
+
+        // 3c. Combine static and dynamic context signals
+        // Both contribute to final context multiplier: static for common phrases, dynamic for personal patterns
+        // Maximum of the two to take best prediction (user patterns override static when stronger)
+        val contextMultiplier = kotlin.math.max(staticContextMultiplier, dynamicContextBoost)
 
         // 4. Frequency scaling (log to prevent common words from dominating)
         // Using log1p helps balance: "the" (freq ~10000) vs "think" (freq ~100)
