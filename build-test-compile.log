@@ -1,26 +1,3 @@
-
-Generating srcs/juloo.keyboard2/ComposeKeyData.kt
-Warning: Sequence collide: 'ng = ŋ' and 'ng~ = n͠g'
-Warning: Sequence collide: 'Ij = Ĳ' and 'Ij = Ĳ'
-Warning: Sequence C+C = ℂ has no lower case equivalent C+c (but c+c = č exists)
-Warning: Sequence C+E = ₠ has no lower case equivalent C+e (but c+e = ě exists)
-Warning: Sequence C+O = © has no lower case equivalent C+o (but c+o = ǒ exists)
-Warning: Sequence F+U = 🖕 has no lower case equivalent F+u
-Warning: Sequence O+A = Ⓐ has no lower case equivalent O+a (but o+a = å exists)
-Warning: Sequence O+Y = ☮ has no lower case equivalent O+y (but o+y = ẙ exists)
-Warning: Sequence P+P = ¶ has no lower case equivalent P+p
-Warning: Sequence R+O = ® has no lower case equivalent R+o
-Warning: Sequence U+A = Ă is not the same as U+a = ă (but u+a = ă exists)
-Warning: Sequence U+E = Ĕ is not the same as U+e = ĕ (but u+e = ĕ exists)
-Warning: Sequence U+G = Ğ is not the same as U+g = ğ (but u+g = ğ exists)
-Warning: Sequence U+I = Ĭ is not the same as U+i = ĭ (but u+i = ĭ exists)
-Warning: Sequence U+O = Ŏ is not the same as U+o = ŏ (but u+o = ŏ exists)
-Warning: Sequence U+U = Ŭ is not the same as U+u = ŭ (but u+u = ŭ exists)
-Compiled 4050 sequences into 8659 states. Dropped 548 sequences. Generated 16 warnings.
-
-Generating res/values/layouts.xml
-
-Checking layouts
 > Task :checkKotlinGradlePluginConfigurationErrors
 > Task :copyLayoutDefinitions UP-TO-DATE
 > Task :copyRawQwertyUS UP-TO-DATE
@@ -40,18 +17,19 @@ Generated version info:  ()
 > Task :dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
 > Task :generateDebugResValues UP-TO-DATE
 > Task :generateDebugResources
-> Task :mergeDebugResources
 > Task :packageDebugResources
 > Task :generateDebugBuildConfig UP-TO-DATE
+> Task :parseDebugLocalResources
 > Task :checkDebugAarMetadata UP-TO-DATE
 > Task :mapDebugSourceSetPaths
 > Task :createDebugCompatibleScreenManifests UP-TO-DATE
 > Task :extractDeepLinksDebug UP-TO-DATE
-> Task :parseDebugLocalResources
 > Task :processDebugMainManifest UP-TO-DATE
-> Task :dataBindingGenBaseClassesDebug UP-TO-DATE
 > Task :processDebugManifest UP-TO-DATE
 > Task :processDebugManifestForPackage UP-TO-DATE
+> Task :javaPreCompileDebug UP-TO-DATE
+> Task :mergeDebugResources
+> Task :dataBindingGenBaseClassesDebug UP-TO-DATE
 AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Unexpected error output: /data/data/com.termux/files/home/.gradle/caches/transforms-4/4b7eb610c958ff049e80eb03634a5aba/transformed/aapt2-8.6.0-11315950-linux/aapt2: 2: Syntax error: "(" unexpected
 AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Unexpected error output: /data/data/com.termux/files/home/.gradle/caches/transforms-4/4b7eb610c958ff049e80eb03634a5aba/transformed/aapt2-8.6.0-11315950-linux/aapt2: 2: Syntax error: "(" unexpected
 > Task :processDebugResources FAILED
@@ -63,47 +41,47 @@ Execution failed for task ':processDebugResources'.
 > Could not resolve all files for configuration ':debugRuntimeClasspath'.
    > Failed to transform appcompat-1.6.1.aar (androidx.appcompat:appcompat:1.6.1) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.category=library, org.gradle.dependency.bundling=external, org.gradle.libraryelements=aar, org.gradle.status=release, org.gradle.usage=java-runtime}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/424aaba044825e4a7d73e4ac4eb4534d/transformed/appcompat-1.6.1.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.category=library, org.gradle.dependency.bundling=external, org.gradle.libraryelements=aar, org.gradle.status=release, org.gradle.usage=java-runtime}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
    > Failed to transform core-1.16.0.aar (androidx.core:core:1.16.0) to match attributes {artifactType=android-compiled-dependencies-resources, org.gradle.status=release}.
       > Execution failed for AarResourcesCompilerTransform: /data/data/com.termux/files/home/.gradle/caches/transforms-4/fc857bc6cdab4367010ca09f95b9b152/transformed/core-1.16.0.
-         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #0: Daemon startup failed
+         > AAPT2 aapt2-8.6.0-11315950-linux Daemon #1: Daemon startup failed
            This should not happen under normal circumstances, please file an issue if it does.
 
 * Try:
@@ -118,5 +96,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2s
-20 actionable tasks: 10 executed, 10 up-to-date
+BUILD FAILED in 6s
+21 actionable tasks: 10 executed, 11 up-to-date
