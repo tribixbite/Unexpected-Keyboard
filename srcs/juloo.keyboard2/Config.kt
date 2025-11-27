@@ -266,8 +266,8 @@ class Config private constructor(
         enable_multilang = _prefs.getBoolean("pref_enable_multilang", false)
         primary_language = _prefs.getString("pref_primary_language", "en") ?: "en"
         auto_detect_language = _prefs.getBoolean("pref_auto_detect_language", true)
-        val sensitivity = safeGetInt(_prefs, "pref_language_detection_sensitivity", 60)
-        language_detection_sensitivity = sensitivity / 100.0f
+        // SlideBarPreference stores as Float (0.4-0.9), not Int
+        language_detection_sensitivity = safeGetFloat(_prefs, "pref_language_detection_sensitivity", 0.6f)
 
         autocorrect_enabled = _prefs.getBoolean("autocorrect_enabled", true)
         autocorrect_min_word_length = safeGetInt(_prefs, "autocorrect_min_word_length", 3)

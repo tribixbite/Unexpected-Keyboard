@@ -74,10 +74,15 @@ class MultiLanguageManager(
             Log.i(TAG, "Loading language model: $language")
             val startTime = System.currentTimeMillis()
 
+            // ONNX Runtime environment (created once per app instance)
+            val ortEnvironment = ai.onnxruntime.OrtEnvironment.getEnvironment()
+            val modelLoader = juloo.keyboard2.onnx.ModelLoader(context, ortEnvironment)
+
             // Try to load encoder
             val encoderPath = "models/swipe_encoder_${language}.onnx"
             val encoder = try {
-                ModelVersionManager.createOnnxSessionFromAsset(context, encoderPath)
+                val result = modelLoader.loadModel(encoderPath, "encoder_$language")
+                result.session
             } catch (e: Exception) {
                 Log.w(TAG, "Encoder not found for $language: $encoderPath", e)
                 null
@@ -86,18 +91,21 @@ class MultiLanguageManager(
             // Try to load decoder
             val decoderPath = "models/swipe_decoder_${language}.onnx"
             val decoder = try {
-                ModelVersionManager.createOnnxSessionFromAsset(context, decoderPath)
+                val result = modelLoader.loadModel(decoderPath, "decoder_$language")
+                result.session
             } catch (e: Exception) {
                 Log.w(TAG, "Decoder not found for $language: $decoderPath", e)
                 null
             }
 
-            // Try to load dictionary
-            val dictPath = "${language}_enhanced.bin"
+            // Try to load dictionary (currently uses same vocabulary for all languages)
+            // TODO Phase 8.2: Load language-specific dictionaries
             val vocabulary = try {
-                OptimizedVocabulary(context, dictPath)
+                val vocab = OptimizedVocabulary(context)
+                val success = vocab.loadVocabulary()
+                if (success) vocab else null
             } catch (e: Exception) {
-                Log.w(TAG, "Dictionary not found for $language: $dictPath", e)
+                Log.w(TAG, "Dictionary not found for $language", e)
                 null
             }
 

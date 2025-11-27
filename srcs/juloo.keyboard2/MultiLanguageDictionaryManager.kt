@@ -43,12 +43,21 @@ class MultiLanguageDictionaryManager(
             Log.i(TAG, "Loading dictionary: $language")
             val startTime = System.currentTimeMillis()
 
-            val filename = "${language}_enhanced.bin"
-            val vocab = OptimizedVocabulary(context, filename)
+            // OptimizedVocabulary loads from assets/en_enhanced.bin by default
+            // For multi-language support, we would need language-specific dictionaries
+            // For now, just load the standard vocabulary
+            val vocab = OptimizedVocabulary(context)
+            val success = vocab.loadVocabulary()
+
+            if (!success) {
+                Log.w(TAG, "Failed to load vocabulary for $language")
+                return null
+            }
+
             dictionaries[language] = vocab
 
             val loadTime = System.currentTimeMillis() - startTime
-            Log.i(TAG, "Loaded dictionary: $language ($filename, ${loadTime}ms)")
+            Log.i(TAG, "Loaded dictionary: $language (${loadTime}ms)")
 
             return vocab
 
