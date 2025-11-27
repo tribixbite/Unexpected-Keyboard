@@ -20,6 +20,41 @@ import android.view.Window
 import android.view.WindowInsets
 import java.util.ArrayList
 
+/**
+ * Custom View that renders and manages the keyboard interface.
+ *
+ * This view is responsible for:
+ * - **Rendering**: Draws keyboard keys, labels, modifiers, and visual feedback
+ * - **Touch Handling**: Processes multi-touch input via [Pointers] system
+ * - **Swipe Gestures**: Recognizes swipe typing gestures through [EnhancedSwipeGestureRecognizer]
+ * - **Visual Feedback**: Shows swipe trails, key press animations, and modifier states
+ * - **Layout Management**: Positions keys based on screen size and [KeyboardData] layout
+ * - **Theme Support**: Applies colors and styles from [Theme] configuration
+ * - **Modifier States**: Displays and manages Shift, Fn, Ctrl, Alt, and Meta key states
+ *
+ * ## Touch Processing Flow
+ * 1. [onTouch] receives raw MotionEvent
+ * 2. [Pointers] tracks individual finger positions and gestures
+ * 3. [EnhancedSwipeGestureRecognizer] detects swipe typing patterns
+ * 4. [IPointerEventHandler] callbacks notify parent ([Keyboard2]) of key events
+ *
+ * ## Swipe Typing
+ * When swipe typing is enabled, the view:
+ * - Captures touch trajectory as [List]<[PointF]> coordinates
+ * - Visualizes swipe trail in real-time during gesture
+ * - Sends completed gesture to [WordPredictor] for neural network prediction
+ * - Clears trail and resets state after prediction
+ *
+ * ## Performance Optimizations
+ * - Reuses [Path] objects for swipe trail rendering (zero allocation during draw)
+ * - Caches [Theme.Computed] instances in [LruCache] for fast theme lookups
+ * - Batches canvas draw calls for efficient rendering
+ * - Handles system insets (notches, nav bars) for proper key positioning
+ *
+ * @param context Android context for accessing resources and system services
+ * @param attrs XML attributes for view inflation (nullable for programmatic creation)
+ * @since v1.0 (migrated to Kotlin in v1.32.874)
+ */
 class Keyboard2View @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null

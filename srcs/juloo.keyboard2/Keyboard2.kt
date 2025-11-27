@@ -18,6 +18,36 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import juloo.keyboard2.ml.SwipeMLData
 
+/**
+ * Main InputMethodService implementation for Unexpected Keyboard.
+ *
+ * This class serves as the central coordinator for the keyboard, managing:
+ * - **View Lifecycle**: Creates and manages keyboard views, content panes (emoji/clipboard), and input views
+ * - **Layout Management**: Delegates to [LayoutManager] for keyboard layout loading and switching
+ * - **Input Processing**: Coordinates with [KeyEventHandler] for key events and text input
+ * - **Prediction System**: Manages neural network-based swipe typing via [PredictionCoordinator]
+ * - **Configuration**: Maintains keyboard settings through [ConfigurationManager]
+ * - **Clipboard**: Handles clipboard history via [ClipboardManager]
+ * - **Suggestions**: Displays word predictions through [SuggestionBar] and [SuggestionHandler]
+ *
+ * ## Architecture
+ * The class has undergone extensive refactoring (v1.32.341-v1.32.412) to extract concerns into
+ * specialized helper classes. This improves maintainability while keeping the InputMethodService
+ * lifecycle methods (onCreate, onCreateInputView, onStartInputView, etc.) in this class.
+ *
+ * ## Prediction Strategy
+ * All predictions wait for gesture completion to avoid premature suggestions. This matches
+ * SwipeCalibrationActivity behavior and ensures consistent user experience.
+ *
+ * ## Key Lifecycle Methods
+ * - [onCreate]: Initialize managers and load configuration
+ * - [onCreateInputView]: Create keyboard view and UI components
+ * - [onStartInputView]: Configure keyboard for current input field (restarting={true/false})
+ * - [onFinishInputView]: Clean up when keyboard is hidden
+ * - [onDestroy]: Release resources and unregister listeners
+ *
+ * @since v1.0 (migrated to Kotlin in v1.32.884)
+ */
 class Keyboard2 : InputMethodService(),
     SharedPreferences.OnSharedPreferenceChangeListener,
     SuggestionBar.OnSuggestionSelectedListener,
