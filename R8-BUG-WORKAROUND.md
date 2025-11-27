@@ -153,13 +153,18 @@ git checkout feature/swipe-typing  # Return to current work
 
 ### Medium-term: Report R8 Bug
 
-File bug report at: https://issuetracker.google.com/issues?q=componentid:192708
+✅ **Bug report prepared**: See [R8-BUG-REPORT.md](R8-BUG-REPORT.md) for complete submission-ready report.
 
-Include:
+Submit to: https://issuetracker.google.com/issues?q=componentid:192708
+
+Includes:
 - R8 version: 8.6.17 (AGP 8.6.0)
+- Minimal reproduction case
+- Complete environment details
+- All 8 failed workaround attempts
+- Full stack trace and pattern analysis
 - Error: NPE in `com.android.tools.r8.internal.yo`
-- Trigger: Complex Kotlin nullable types after Java→Kotlin migration
-- Stack trace: See `build-debug.log`
+- Trigger: Kotlin data class with nullable arrays + companion objects + self-referential types
 
 ### Long-term: Wait for R8 Fix
 

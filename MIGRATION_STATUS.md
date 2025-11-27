@@ -182,10 +182,11 @@ R8 8.6.17 has an internal bug when processing Kotlin data classes with this spec
    - Test with AGP 8.7.x, 8.8.x when available
    - Check R8 release notes for bug fixes
 
-2. 📝 **Report R8 Bug** to Google Issue Tracker
+2. ✅ **Report R8 Bug** to Google Issue Tracker
    - URL: https://issuetracker.google.com/issues?q=componentid:192708
-   - Include: R8 8.6.17, error trace, minimal repro
-   - Reference: KeyboardData$Key static initializer crash
+   - ✅ Bug report prepared: [R8-BUG-REPORT.md](R8-BUG-REPORT.md)
+   - Includes: Minimal reproduction case, all 8 workarounds, full analysis
+   - Ready to submit
 
 3. 🔧 **Use Previous Build** for testing
    - Commit: 2544cf9d (Pointers migration)
