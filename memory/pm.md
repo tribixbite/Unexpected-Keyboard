@@ -26,8 +26,11 @@
 
 ### 🔄 Latest Work (2025-11-27) - 🎯 CRITICAL KEYBOARD RENDERING BUG FIXED! ✅
 
+**Latest Commit:** `0f1fcc26` - docs(changelog): add v1.32.917 release notes for rendering fix and Phase 8.3/8.4
+
 ### 2025-11-27 CRITICAL FIX: Keyboard Rendering Bug (v1.32.917) ✅
 **Status:** ✅ FULLY RESOLVED - Keyboard now renders correctly!
+**Documentation:** ✅ CHANGELOG.md updated with complete release notes
 
 **The Bug:**
 - Keyboard showed as completely black screen in all apps
