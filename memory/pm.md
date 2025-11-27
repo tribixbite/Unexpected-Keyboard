@@ -7,20 +7,71 @@
 
 ---
 
-## 🔥 Current Status (2025-11-26 - UPDATED)
+## 🔥 Current Status (2025-11-26 - R8 BUG DEFEATED! 🎉)
 
-**Latest Version**: v1.32.879 🎯
-**Build Status**: ⚠️  Kotlin Compilation ✅ 100% | DEX Compilation ❌ (R8 8.6.17 bug - see [../R8-BUG-WORKAROUND.md](../R8-BUG-WORKAROUND.md))
+**Latest Version**: v1.32.883 🎯 **← R8 WORKAROUND SUCCESSFUL!**
+**Build Status**: ✅ Kotlin Compilation ✅ 100% | DEX Compilation ✅ **R8 8.6.17 BYPASSED!**
 **Branch**: feature/swipe-typing
-**Current Focus**: ✅ Keyboard2View.java migrated + All null safety fixes complete! (Migration successful, R8 bug blocking APK build)
-**Migration Progress**: 145 Kotlin files, 2 Java files remaining (98.6% complete, 3,134 lines)
+**Current Focus**: 🚀 R8 bug defeated via Array→List refactoring! Ready to complete remaining 2.7% migration!
+**Migration Progress**: 145 Kotlin files, 3 Java files remaining (98.6% complete, 4,070 lines main + 1,043 lines tests)
 **Test Coverage**: ✅ 38 test files total! 5 comprehensive Kotlin test suites (190+ tests)
-**Migration Plan**: ✅ [migration-plan.md](migration-plan.md) - Migration paused pending R8 bug fix
-**Critical Fixes**: 56 fixes applied (see history below) - ALL OPTIMIZATIONS COMPLETE
+**Migration Plan**: ✅ [MIGRATION_RESUME_CHECKLIST.md](../MIGRATION_RESUME_CHECKLIST.md) - **READY TO RESUME!**
+**Critical Fixes**: 57 fixes applied (see history below) - ALL OPTIMIZATIONS COMPLETE + R8 WORKAROUND
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
-**Last Working Build**: v1.32.860 (commit 2544cf9d - Pointers migration)
+**Blocker**: ✅ **RESOLVED** - R8 bug bypassed via KeyboardData.Key Array→List refactoring (commit 8c381025)
 
-### 🔄 Latest Work (2025-11-26) - KEYBOARD2VIEW MIGRATION + NULL SAFETY FIXES COMPLETE! ⭐⭐⭐
+### 🔄 Latest Work (2025-11-26) - R8 BUG DEFEATED VIA ARRAY→LIST REFACTORING! 🎉🎉🎉
+
+**BREAKTHROUGH: R8/D8 8.6.17 BUG BYPASSED** (commit 8c381025):
+
+**The Workaround That Worked**:
+- Changed `KeyboardData.Key` from `Array<KeyValue?>` to `List<KeyValue?>`
+- This alters the bytecode pattern R8 processes, avoiding the internal NPE
+- More idiomatic Kotlin + matches successful patterns in HeliBoard/FlorisBoard
+
+**Changes Applied**:
+1. ✅ Constructor parameter: `val keys: List<KeyValue?>` (was Array)
+2. ✅ EMPTY initialization: `List(9) { null }` (was Array(9))
+3. ✅ Parser method: `.toList()` conversion from arrayOfNulls
+4. ✅ MapKeyValues.apply(): `List<KeyValue?>` constructor (was Array)
+5. ✅ Removed custom equals/hashCode (data class generates correct ones for List)
+
+**Build Result**:
+- ✅ Kotlin compilation: **PASS**
+- ✅ Java compilation: **PASS**
+- ✅ **DEX compilation (R8/D8 8.6.17): PASS** ← **PREVIOUSLY FAILING!**
+- ✅ APK packaging: **PASS**
+- ✅ Output: **v1.32.883 (47MB)**
+
+**Why This Works**:
+The R8 bug was triggered by the specific combination of:
+- Data class with `Array<T?>` (nullable array elements)
+- Companion object with constants
+- Custom equals/hashCode for array content comparison
+- Self-referential nullable types
+
+Switching to `List<T?>`:
+- Eliminates need for custom equals/hashCode
+- Changes the bytecode generation pattern
+- More idiomatic Kotlin
+- Matches patterns used in successful Kotlin keyboard apps
+
+**Credit**:
+- Gemini 2.5 Pro for the primary workaround recommendation
+- User's insistence that "dozens of Kotlin apps built on Termux" means solution exists
+- HeliBoard/FlorisBoard codebases for successful List-based patterns
+
+**Next Steps**:
+- Follow [MIGRATION_RESUME_CHECKLIST.md](../MIGRATION_RESUME_CHECKLIST.md) to complete remaining 2.7%
+- Migrate SwipeCalibrationActivity.java (1,321 lines)
+- Migrate SettingsActivity.java (2,051 lines)
+- Migrate Keyboard2.java (698 lines) - LAST, highest risk
+- Migrate 8 test files (1,043 lines)
+- **GOAL: 100% Kotlin!**
+
+---
+
+**PREVIOUS WORK - KEYBOARD2VIEW MIGRATION + NULL SAFETY FIXES COMPLETE! ⭐⭐⭐**
 
 **SUCCESSFULLY MIGRATED Keyboard2View.java → Keyboard2View.kt** (commits 4bb895cf, 6892124e, 5d1284d1):
 
