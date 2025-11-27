@@ -42,7 +42,40 @@ This fork implements a **production-ready neural network-based swipe typing syst
 - **Disable/enable** individual words
 - **Import/export** custom dictionaries
 
-#### 6. **Advanced Debug Tools**
+#### 6. **Production Features (Phase 6)** 🆕
+- **Privacy-First Data Collection**:
+  - Opt-in consent with granular controls
+  - Local-only training by default
+  - GDPR/CCPA compliant
+  - Data retention policies with auto-delete
+  - Complete audit trail
+
+- **Performance Monitoring**:
+  - Real-time accuracy tracking (Top-1, Top-3)
+  - Inference latency metrics
+  - Usage statistics dashboard
+  - Performance trends over time
+
+- **Smart Model Management**:
+  - Automatic version tracking
+  - Success/failure monitoring
+  - Auto-rollback on poor performance
+  - Model health checks
+  - Version pinning
+
+- **A/B Testing Framework**:
+  - Side-by-side model comparison
+  - Statistical significance testing
+  - Win rate and accuracy tracking
+  - Traffic split configuration
+
+- **Custom Model Support**:
+  - Load your own ONNX models
+  - Train on exported data
+  - Interface auto-detection
+  - Model switching without app updates
+
+#### 7. **Advanced Debug Tools**
 - **Swipe Debug Screen**: Real-time pipeline visualization
   - Trajectory visualization
   - Neural network internals
@@ -187,6 +220,36 @@ All settings accessible via **Settings → Swipe Typing**:
 | **Android Compatibility** | API 21+ (Android 5.0+) |
 | **Neural Network Model** | Transformer encoder-decoder |
 | **Beam Width** | 2 (configurable) |
+
+## 📚 Documentation
+
+### User Guides
+- **[Neural Swipe Guide](docs/NEURAL_SWIPE_GUIDE.md)** - Complete user manual for neural swipe features
+  - Getting started with swipe typing
+  - Privacy & data controls explained
+  - Performance monitoring dashboard
+  - Model management and A/B testing
+  - Custom model loading
+  - Troubleshooting guide
+
+- **[Privacy Policy](docs/PRIVACY_POLICY.md)** - Comprehensive privacy documentation
+  - Data collection practices
+  - GDPR/CCPA compliance
+  - User rights and controls
+  - Audit trail
+  - Security measures
+
+### Developer Guides
+- **[ML Training Guide](docs/ML_TRAINING_GUIDE.md)** - Train your own swipe prediction models
+  - Data collection and export
+  - Training pipeline setup
+  - Model architecture details
+  - ONNX conversion workflow
+  - Deployment instructions
+  - Performance optimization
+
+- **[Architecture Docs](memory/swipe.md)** - Technical implementation details
+- **[Project Management](memory/pm.md)** - Development roadmap and status
 
 ## 🔍 Advanced Usage
 
