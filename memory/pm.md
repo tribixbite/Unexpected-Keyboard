@@ -27,9 +27,32 @@
 ### 🔄 Latest Work (2025-11-27) - 🎯 CRITICAL KEYBOARD RENDERING BUG FIXED! ✅
 
 **Latest Commits:**
+- `205c05ae` - fix(layouts): add delete_last_word gesture to all QWERTY variants
 - `cd111b96` - perf(assets): move Python scripts from assets/models to ml_training (56KB)
 - `d7354104` - perf(assets): remove unused libjni_latinimegoogle.so library (1.1MB)
 - `0f1fcc26` - docs(changelog): add v1.32.917 release notes for rendering fix and Phase 8.3/8.4
+
+### 2025-11-27 Delete Word Gesture Fix 🔧
+**Status:** ✅ FIXED - Feature now available in all QWERTY layouts
+
+**Issue:** User reported "swipe over backspace to delete word doesn't work"
+
+**Root Cause:**
+- `delete_last_word` gesture was only in latn_qwerty_us.xml
+- Users of other QWERTY variants (APL, BQN, IS, MT) lacked the feature
+
+**Solution (commit 205c05ae):**
+- Added `nw="delete_last_word"` to backspace key in all 4 missing QWERTY layouts
+- latn_qwerty_apl.xml (APL keyboard)
+- latn_qwerty_bqn.xml (BQN keyboard)
+- latn_qwerty_is.xml (Icelandic)
+- latn_qwerty_mt.xml (Maltese)
+
+**Usage:** Swipe northwest (↖ upper-left) from backspace to delete last word
+
+**Implementation:** Smart word deletion with Termux detection, auto-inserted word tracking, safety limits
+
+---
 
 ### 2025-11-27 Performance Optimizations ⚡
 **Status:** ✅ APK size optimizations applied
