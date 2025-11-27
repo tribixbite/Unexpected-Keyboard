@@ -9,11 +9,11 @@
 
 ## 🔥 Current Status (2025-11-27 - 💯 READY FOR PRODUCTION! 🎉🎉🎉)
 
-**Latest Version**: v1.32.917 (CRITICAL FIX: Keyboard rendering restored)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 38s)
-**Device Status**: ✅ FULLY FUNCTIONAL - Keyboard renders correctly in all apps
+**Latest Version**: v1.32.919 (CRITICAL FIX: Short swipe gestures on all keys)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 54s)
+**Device Status**: ✅ FULLY FUNCTIONAL - All gestures working correctly
 **Branch**: main
-**Current Focus**: 🎯 **CRITICAL BUG FIXED** - Ready for Phase 8.2
+**Current Focus**: 🎯 **GESTURE BUG FIXED** - Delete word & clipboard swipes restored
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)** 🎊
 **Main Files**: 148/148 (100%) ✅
 **Test Files**: 11/11 (100%) ✅
@@ -27,12 +27,67 @@
 ### 🔄 Latest Work (2025-11-27) - 🎯 CRITICAL KEYBOARD RENDERING BUG FIXED! ✅
 
 **Latest Commits:**
+- `ac2bfe0f` - fix(gestures): enable short swipe gestures on non-character keys (v1.32.919)
 - `205c05ae` - fix(layouts): add delete_last_word gesture to all QWERTY variants
 - `cd111b96` - perf(assets): move Python scripts from assets/models to ml_training (56KB)
 - `d7354104` - perf(assets): remove unused libjni_latinimegoogle.so library (1.1MB)
-- `0f1fcc26` - docs(changelog): add v1.32.917 release notes for rendering fix and Phase 8.3/8.4
 
-### 2025-11-27 Delete Word Gesture Fix 🔧
+### 2025-11-27 Short Swipe Gesture Fix (v1.32.919) 🔧
+**Status:** ✅ FIXED - Short swipe gestures now work on ALL keys!
+
+**Issue:**
+- Swipe NW (↖) on backspace to delete word → NOT WORKING
+- Swipe SW (↙) on Ctrl to open clipboard → NOT WORKING
+- Short swipe gestures only worked on letter/number keys
+- Non-character keys (backspace, ctrl, fn, etc.) ignored swipe gestures entirely
+
+**Root Cause (Pointers.kt:420):**
+```kotlin
+// OLD CODE - BROKEN
+val shouldCollectPath = _config.swipe_typing_enabled && _ptrs.size == 1 &&
+    ptrValue != null && ptrValue.getKind() == KeyValue.Kind.Char
+```
+- Path collection (tracking finger movement) only enabled for `KeyValue.Kind.Char` keys
+- Short gesture detection in `onTouchUp()` requires swipe path to calculate direction & distance
+- No path collected = gesture silently fails
+- Affected ALL non-Char keys: Keyevent (backspace, delete), Editing (paste, cut), Event (ctrl, fn)
+
+**Solution (commit ac2bfe0f):**
+```kotlin
+// NEW CODE - FIXED
+val isSwipeTypingKey = _config.swipe_typing_enabled && _ptrs.size == 1 &&
+    ptrValue != null && ptrValue.getKind() == KeyValue.Kind.Char
+val isShortGestureKey = _config.short_gestures_enabled && _ptrs.size == 1 && ptrValue != null
+val shouldCollectPath = isSwipeTypingKey || isShortGestureKey
+```
+- Split condition into two purposes:
+  - `isSwipeTypingKey`: Char keys for swipe typing (words)
+  - `isShortGestureKey`: ALL keys for directional gestures
+- Path now collected for BOTH swipe typing AND short gestures
+
+**Testing Results:**
+- ✅ Backspace NW swipe → deletes last word (via DELETE_LAST_WORD)
+- ✅ Ctrl SW swipe → opens clipboard view (via SWITCH_CLIPBOARD)
+- ✅ Fn keys respond to swipe gestures
+- ✅ Swipe typing on letter keys still works perfectly
+- ✅ No performance impact - same path collection mechanism
+
+**Technical Details:**
+- File: `srcs/juloo.keyboard2/Pointers.kt`
+- Lines changed: 416-423 (path collection logic)
+- Added: `shortGesturesEnabled` to debug logging
+- Works with existing short gesture config settings
+
+**Impact:**
+All keyboard gestures now functional as designed. Users can:
+- Delete words with backspace NW swipe
+- Access clipboard with ctrl SW swipe
+- Use directional swipes on modifier keys
+- Enjoy full gesture-based keyboard experience
+
+---
+
+### 2025-11-27 Delete Word Gesture Layout Fix 🔧
 **Status:** ✅ FIXED - Feature now available in all QWERTY layouts
 
 **Issue:** User reported "swipe over backspace to delete word doesn't work"
