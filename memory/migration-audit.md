@@ -1000,3 +1000,111 @@ For each file:
 ---
 
 *Last Updated: 2025-11-27*
+
+## 📊 TEST COVERAGE ANALYSIS
+
+### Audited Files Test Coverage (18 files)
+
+**Files WITH Unit Tests (6/18 - 33%)**:
+1. ✅ **KeyValue.kt** - 2 test cases (KeyValueTest.kt)
+2. ✅ **ComposeKey.kt** - 3 test cases (ComposeKeyTest.kt)
+3. ✅ **Modmap.kt** - 2 test cases (ModmapTest.kt)
+4. ✅ **Config.kt** - 26 test cases (ConfigTest.kt)
+5. ✅ **KeyboardData.kt** - 4 test cases (KeyboardDataTest.kt)
+6. ✅ **ClipboardManager.kt** - 17 test cases (ClipboardManagerTest.kt)
+
+**UI/View Components (3/18 - integration tests recommended)**:
+7. ⚠️  **Keyboard2View.kt** - UI component (tested via integration/smoke tests)
+8. ⚠️  **EmojiGridView.kt** - UI component (tested via integration/smoke tests)
+9. ⚠️  **Theme.kt** - UI component (tested via integration/smoke tests)
+
+**Gesture Recognition (4/18 - functional tests)**:
+10. ⚠️  **Pointers.kt** - tested via functional gesture tests (v1.32.923 fix verified)
+11. ⚠️  **ImprovedSwipeGestureRecognizer.kt** - functional tests
+12. ⚠️  **GestureClassifier.kt** - functional tests
+13. ⚠️  **EnhancedSwipeGestureRecognizer.kt** - functional tests
+
+**Business Logic WITHOUT Unit Tests (5/18 - 28%)**:
+14. ❌ **KeyEventHandler.kt** - NO UNIT TESTS (540 lines, business logic)
+15. ❌ **KeyModifier.kt** - NO UNIT TESTS (527 lines, modifier composition)
+16. ❌ **LayoutModifier.kt** - NO UNIT TESTS (228 lines, layout caching)
+17. ❌ **Autocapitalisation.kt** - NO UNIT TESTS (183 lines, state machine)
+18. ❌ **ExtraKeys.kt** - NO UNIT TESTS (131 lines, parsing/merging)
+
+### Test Coverage Summary
+
+- **Total Audited**: 18 files
+- **With Unit Tests**: 6 files (33%)
+- **UI Components**: 3 files (17%) - integration tests appropriate
+- **Gesture Components**: 4 files (22%) - functional tests appropriate
+- **Missing Unit Tests**: 5 files (28%) - **SHOULD HAVE TESTS**
+
+### Recommendations
+
+**HIGH PRIORITY - Add Unit Tests**:
+1. **KeyEventHandler.kt** (540 lines)
+   - Test key routing logic
+   - Test meta state handling
+   - Test clipboard search routing
+   - Test backspace/delete word logic
+   - Test cursor movement calculations
+   - Estimated: 20-30 test cases needed
+
+2. **KeyModifier.kt** (527 lines)
+   - Test modifier composition (Shift + Fn + char)
+   - Test handleDeadChar() logic
+   - Test numpad script modification
+   - Test fn_of_char() mapping
+   - Estimated: 15-20 test cases needed
+
+3. **LayoutModifier.kt** (228 lines)
+   - Test modify_layout() transformations
+   - Test extra key insertion
+   - Test number row addition
+   - Test numpad modification
+   - Test layout caching
+   - Estimated: 10-15 test cases needed
+
+4. **Autocapitalisation.kt** (183 lines)
+   - Test auto-capitalization state machine
+   - Test trigger character detection
+   - Test text variation handling
+   - Test 50ms delayed callback
+   - Estimated: 8-12 test cases needed
+
+5. **ExtraKeys.kt** (131 lines)
+   - Test parse() string splitting
+   - Test merge() HashMap logic
+   - Test ExtraKey.compute() logic
+   - Test one_or_none() edge cases
+   - Estimated: 8-10 test cases needed
+
+**MEDIUM PRIORITY - Enhance Existing Tests**:
+- **KeyValue.kt**: Only 2 tests - should have more comprehensive coverage
+- **ComposeKey.kt**: Only 3 tests - should test all three state types
+- **Modmap.kt**: Only 2 tests - should test all three modifiers
+- **KeyboardData.kt**: Only 4 tests - should test row insertion, key mapping
+
+### Project Test Infrastructure
+
+- **Total Test Files**: 45 test files in project
+- **Test Framework**: JUnit 4.13.2
+- **Mocking**: Mockito 4.11.0 (core + inline)
+- **Test Location**: `test/juloo.keyboard2/`
+- **Build Command**: `./gradlew test`
+
+### Testing Best Practices Applied
+
+✅ **Good Practices Observed**:
+- ClipboardManager has 17 test cases (good coverage)
+- Config has 26 test cases (excellent coverage)
+- Tests use proper Kotlin naming conventions
+- Tests organized in same package structure as source
+
+❌ **Areas for Improvement**:
+- Business logic classes lack unit tests
+- Low test coverage for complex modifier logic
+- State machine logic (Autocapitalisation) untested
+- Parser logic (ExtraKeys) untested
+- Layout transformation logic untested
+
