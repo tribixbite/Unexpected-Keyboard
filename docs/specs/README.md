@@ -106,6 +106,7 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 
 | Feature | Status | Version | Notes |
 |---------|--------|---------|-------|
+| **Kotlin Migration** | ⏸️ **98.6%** | v1.32.880 | 145/148 files migrated, blocked by R8 bug (see [../../MIGRATION_STATUS.md](../../MIGRATION_STATUS.md)) |
 | Dictionary Manager | ✅ Complete | v1.32.306 | Tab counts, instant search, import/export |
 | Clipboard Manager | ⚠️ Partial | v1.32.309 | History, pinning, import/export, expand/collapse; search TODO |
 | Swipe Prediction | ✅ Complete | v1.32.207 | Autocorrect + debug logging |
@@ -344,6 +345,6 @@ For new specifications, follow this structure:
 
 ---
 
-**Last Updated**: 2025-11-11
+**Last Updated**: 2025-11-26
 **Project**: Unexpected Keyboard
 **Repository**: https://github.com/Julow/Unexpected-Keyboard
