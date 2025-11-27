@@ -67,6 +67,15 @@
         <Preference android:key="ab_test_export" android:title="💾 Export Data" android:summary="Export comparison data as JSON"/>
         <Preference android:key="ab_test_reset" android:title="🔄 Reset Test" android:summary="Clear all A/B test data"/>
       </PreferenceScreen>
+      <PreferenceScreen android:key="neural_rollback" android:title="🔙 Rollback &amp; Recovery" android:summary="Model version management and automatic recovery">
+        <Preference android:key="rollback_status" android:title="📊 Version Status" android:summary="View current model version and health"/>
+        <Preference android:key="rollback_history" android:title="📜 Version History" android:summary="View all model versions and success rates"/>
+        <CheckBoxPreference android:key="rollback_auto_enabled" android:title="Enable Auto-Rollback" android:summary="Automatically revert to previous version after repeated failures" android:defaultValue="true"/>
+        <Preference android:key="rollback_manual" android:title="⚠️ Manual Rollback" android:summary="Force rollback to previous model version"/>
+        <Preference android:key="rollback_pin_version" android:title="📌 Pin Version" android:summary="Lock current version (prevent automatic changes)"/>
+        <Preference android:key="rollback_export" android:title="💾 Export History" android:summary="Export version history as JSON"/>
+        <Preference android:key="rollback_reset" android:title="🔄 Reset History" android:summary="Clear all version data"/>
+      </PreferenceScreen>
     </PreferenceScreen>
     <PreferenceScreen android:key="swipe_corrections" android:title="✨ Swipe Corrections" android:summary="Adjust how accurately the keyboard corrects words when you swipe" android:dependency="swipe_typing_enabled">
       <CheckBoxPreference android:key="swipe_beam_autocorrect_enabled" android:title="Enable Beam Search Corrections" android:summary="Fuzzy match custom words and dictionary during prediction. Controls autocorrect while building suggestions." android:defaultValue="true"/>

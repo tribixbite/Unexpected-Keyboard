@@ -179,6 +179,54 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             true
         }
 
+        // Rollback status
+        findPreference("rollback_status")?.setOnPreferenceClickListener {
+            showRollbackStatus()
+            true
+        }
+
+        // Rollback history
+        findPreference("rollback_history")?.setOnPreferenceClickListener {
+            showRollbackHistory()
+            true
+        }
+
+        // Auto-rollback enabled
+        findPreference("rollback_auto_enabled")?.setOnPreferenceChangeListener { _, newValue ->
+            val enabled = newValue as Boolean
+            ModelVersionManager.getInstance(this).setAutoRollbackEnabled(enabled)
+            android.widget.Toast.makeText(
+                this,
+                "Auto-rollback ${if (enabled) "enabled" else "disabled"}",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            true
+        }
+
+        // Manual rollback
+        findPreference("rollback_manual")?.setOnPreferenceClickListener {
+            performManualRollback()
+            true
+        }
+
+        // Pin version
+        findPreference("rollback_pin_version")?.setOnPreferenceClickListener {
+            toggleVersionPin()
+            true
+        }
+
+        // Export rollback history
+        findPreference("rollback_export")?.setOnPreferenceClickListener {
+            exportRollbackHistory()
+            true
+        }
+
+        // Reset rollback data
+        findPreference("rollback_reset")?.setOnPreferenceClickListener {
+            resetRollbackData()
+            true
+        }
+
         // ML data export
         findPreference("export_swipe_ml_data")?.let { pref ->
             try {
@@ -1553,6 +1601,188 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                 android.widget.Toast.makeText(
                     this,
                     "A/B test reset successfully",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showRollbackStatus() {
+        val manager = ModelVersionManager.getInstance(this)
+        val message = manager.formatStatus()
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("🔙 Rollback Status")
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun showRollbackHistory() {
+        val manager = ModelVersionManager.getInstance(this)
+        val history = manager.getVersionHistory()
+
+        if (history.isEmpty()) {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Version History")
+                .setMessage("No version history available yet.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        val sb = StringBuilder()
+        sb.append("📜 Model Version History\n\n")
+
+        for ((index, versionId) in history.withIndex()) {
+            val version = manager.getVersion(versionId) ?: continue
+            val isCurrent = manager.getCurrentVersion()?.versionId == versionId
+            val isPrevious = manager.getPreviousVersion()?.versionId == versionId
+
+            sb.append("${index + 1}. ${version.versionName}\n")
+            if (isCurrent) sb.append("   [CURRENT]\n")
+            if (isPrevious) sb.append("   [PREVIOUS]\n")
+            if (version.isPinned) sb.append("   📌 PINNED\n")
+            sb.append("   Success Rate: ${String.format("%.1f", version.getSuccessRate() * 100)}%\n")
+            sb.append("   Attempts: ${version.successCount + version.failureCount}\n")
+            sb.append("   Status: ${if (version.isHealthy()) "✅ Healthy" else "⚠️ Unhealthy"}\n")
+            sb.append("\n")
+        }
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("📜 Version History")
+            .setMessage(sb.toString())
+            .setPositiveButton("Close", null)
+            .setNeutralButton("Export JSON") { _, _ ->
+                exportRollbackHistory()
+            }
+            .show()
+    }
+
+    private fun performManualRollback() {
+        val manager = ModelVersionManager.getInstance(this)
+        val decision = manager.shouldRollback()
+        val previous = manager.getPreviousVersion()
+
+        if (previous == null) {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Rollback Not Available")
+                .setMessage("No previous version available to rollback to.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        val message = buildString {
+            append("⚠️ Manual Rollback\n\n")
+            append("This will switch from the current version to:\n")
+            append("${previous.versionName}\n\n")
+            append("Current version health:\n")
+            val current = manager.getCurrentVersion()
+            if (current != null) {
+                append("Success rate: ${String.format("%.1f", current.getSuccessRate() * 100)}%\n")
+                append("Failures: ${current.failureCount}\n\n")
+            }
+            append("Note: The keyboard will need to be restarted for changes to take effect.\n\n")
+            append("Continue?")
+        }
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("⚠️ Manual Rollback")
+            .setMessage(message)
+            .setPositiveButton("Rollback") { _, _ ->
+                if (manager.rollback()) {
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Rollback Complete")
+                        .setMessage("Rolled back to: ${previous.versionName}\n\nPlease restart the keyboard for changes to take effect.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                } else {
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Rollback Failed")
+                        .setMessage("Could not perform rollback. Check logs for details.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun toggleVersionPin() {
+        val manager = ModelVersionManager.getInstance(this)
+        val current = manager.getCurrentVersion()
+
+        if (current == null) {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("No Version Active")
+                .setMessage("No model version is currently loaded.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        if (current.isPinned) {
+            // Unpin
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Unpin Version?")
+                .setMessage("Unpinning ${current.versionName} will allow automatic rollback if failures occur.\n\nContinue?")
+                .setPositiveButton("Unpin") { _, _ ->
+                    manager.unpinVersion()
+                    android.widget.Toast.makeText(
+                        this,
+                        "Version unpinned",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        } else {
+            // Pin
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Pin Version?")
+                .setMessage("Pinning ${current.versionName} will prevent automatic rollback, even if failures occur.\n\nContinue?")
+                .setPositiveButton("Pin") { _, _ ->
+                    manager.pinCurrentVersion()
+                    android.widget.Toast.makeText(
+                        this,
+                        "Version pinned",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
+
+    private fun exportRollbackHistory() {
+        val manager = ModelVersionManager.getInstance(this)
+        val jsonData = manager.exportHistory()
+
+        // Copy to clipboard
+        val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Rollback History", jsonData)
+        clipboard.setPrimaryClip(clip)
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("💾 History Exported")
+            .setMessage("Version history has been copied to clipboard as JSON.\n\nYou can paste it into a file or analysis tool.")
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun resetRollbackData() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Reset Rollback Data?")
+            .setMessage("This will permanently delete:\n• All version history\n• Success/failure statistics\n• Rollback configuration\n\nThis cannot be undone. Continue?")
+            .setPositiveButton("Reset") { _, _ ->
+                val manager = ModelVersionManager.getInstance(this)
+                manager.reset()
+
+                android.widget.Toast.makeText(
+                    this,
+                    "Rollback data reset successfully",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
             }

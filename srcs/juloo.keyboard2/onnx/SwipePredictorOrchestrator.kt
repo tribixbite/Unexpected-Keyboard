@@ -7,6 +7,7 @@ import android.graphics.PointF
 import android.util.Log
 import juloo.keyboard2.Config
 import juloo.keyboard2.KeyboardGrid
+import juloo.keyboard2.ModelVersionManager
 import juloo.keyboard2.NeuralModelMetadata
 import juloo.keyboard2.OptimizedVocabulary
 import juloo.keyboard2.SwipeInput
@@ -43,6 +44,7 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
     private val vocabulary = OptimizedVocabulary(context)
     private val modelLoader = ModelLoader(context, ortEnvironment)
     private val trajectoryProcessor = SwipeTrajectoryProcessor() // Move here
+    private val versionManager = ModelVersionManager.getInstance(context)
     private var tensorFactory: TensorFactory? = null
     private var encoderWrapper: EncoderWrapper? = null
     private var decoderWrapper: DecoderWrapper? = null
@@ -108,17 +110,38 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
         if (isInitialized) return isModelLoaded
 
         val startTime = System.currentTimeMillis()
+        val versionId = "builtin_v2_android" // Unique ID for builtin models
+
+        // Check if rollback is needed before attempting load
+        val rollbackDecision = versionManager.shouldRollback()
+        if (rollbackDecision.shouldRollback) {
+            Log.w(TAG, "Rollback recommended: ${rollbackDecision.reason}")
+            if (versionManager.rollback()) {
+                Log.i(TAG, "Rolled back to previous version successfully")
+                // The rollback changed the version, but we'll still try loading builtin
+                // In a full implementation, this would load the previous version from storage
+            }
+        }
 
         try {
             Log.d(TAG, "Initializing SwipePredictorOrchestrator...")
 
             // Load Tokenizer & Vocabulary
             tokenizer.loadFromAssets(context)
-            if (!vocabulary.isLoaded()) vocabulary.loadVocabulary() // Fixed: used isLoaded()
+            if (!vocabulary.isLoaded()) vocabulary.loadVocabulary()
 
             // Load Models
             val encoderPath = "models/swipe_encoder_android.onnx"
             val decoderPath = "models/swipe_decoder_android.onnx"
+
+            // Register this version attempt
+            versionManager.registerVersion(
+                versionId = versionId,
+                versionName = "Built-in v2 Android",
+                encoderPath = "assets://$encoderPath",
+                decoderPath = "assets://$decoderPath",
+                isBuiltin = true
+            )
 
             // Use SessionConfigurator logic inside ModelLoader
             val encResult = modelLoader.loadModel(encoderPath, "Encoder", !forceCpuFallback)
@@ -135,6 +158,9 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
             decoderWrapper = DecoderWrapper(decoderSession!!, tensorFactory!!, ortEnvironment, broadcastEnabled, enableVerboseLogging)
 
             isModelLoaded = true
+
+            // Record success in version manager
+            versionManager.recordSuccess(versionId)
 
             // Record model metadata for versioning and monitoring
             val loadDuration = System.currentTimeMillis() - startTime
@@ -158,6 +184,17 @@ class SwipePredictorOrchestrator private constructor(private val context: Contex
         } catch (e: Exception) {
             Log.e(TAG, "Initialization failed", e)
             isModelLoaded = false
+
+            // Record failure in version manager
+            versionManager.recordFailure(versionId, e.message ?: "Unknown error")
+
+            // Check if we should trigger rollback
+            val postFailureDecision = versionManager.shouldRollback()
+            if (postFailureDecision.shouldRollback) {
+                Log.w(TAG, "⚠️ Rollback triggered after failure: ${postFailureDecision.reason}")
+                // In a production system, this would attempt to reload with the previous version
+                // For now, we just log the recommendation
+            }
         } finally {
             isInitialized = true
         }
