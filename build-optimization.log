@@ -1,0 +1,122 @@
+=== Unexpected Keyboard Termux Build Script ===
+Building debug APK on Termux ARM64
+
+Step 1: Checking prerequisites...
+Step 2: Auto-incrementing version...
+  Current: versionCode 917, versionName 1.32.917
+  New:     versionCode 918, versionName 1.32.918
+  ✅ Version updated in build.gradle
+
+Step 3: Preparing layout resources...
+Step 4: Cleaning previous builds...
+> Task :clean
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 2s
+1 actionable task: 1 executed
+Step 5: Building Debug APK...
+This may take a few minutes on first run...
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+WARNING: The option setting 'android.aapt2FromMavenOverride=/data/data/com.termux/files/home/git/swype/Unexpected-Keyboard/tools/aapt2-arm64/aapt2' is experimental.
+
+> Task :copyLayoutDefinitions UP-TO-DATE
+> Task :copyRawQwertyUS UP-TO-DATE
+
+> Task :generateBinaryContractions
+Binary contractions up-to-date: contractions.bin
+
+> Task :generateBinaryDictionaries
+Binary dictionary up-to-date: en_enhanced.bin
+
+> Task :generateVersionInfo
+Generated version info:  ()
+
+> Task :initDebugKeystore UP-TO-DATE
+> Task :preBuild
+> Task :preDebugBuild
+> Task :mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :checkKotlinGradlePluginConfigurationErrors
+> Task :dataBindingMergeDependencyArtifactsDebug
+> Task :generateDebugResValues FROM-CACHE
+> Task :generateDebugResources
+> Task :packageDebugResources
+> Task :generateDebugBuildConfig FROM-CACHE
+> Task :mapDebugSourceSetPaths
+> Task :createDebugCompatibleScreenManifests
+> Task :extractDeepLinksDebug FROM-CACHE
+> Task :checkDebugAarMetadata
+> Task :parseDebugLocalResources
+> Task :processDebugMainManifest FROM-CACHE
+> Task :processDebugManifest FROM-CACHE
+> Task :processDebugManifestForPackage FROM-CACHE
+> Task :javaPreCompileDebug FROM-CACHE
+> Task :mergeDebugShaders
+> Task :compileDebugShaders NO-SOURCE
+> Task :generateDebugAssets UP-TO-DATE
+> Task :mergeDebugAssets
+> Task :checkDebugDuplicateClasses
+> Task :desugarDebugFileDependencies FROM-CACHE
+> Task :mergeDebugResources
+> Task :mergeExtDexDebug FROM-CACHE
+> Task :dataBindingGenBaseClassesDebug FROM-CACHE
+> Task :compressDebugAssets
+> Task :mergeLibDexDebug FROM-CACHE
+> Task :mergeDebugJniLibFolders
+> Task :validateSigningDebug
+> Task :writeDebugAppMetadata
+> Task :writeDebugSigningConfigVersions
+> Task :mergeDebugNativeLibs
+
+> Task :stripDebugDebugSymbols
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+/data/data/com.termux/files/home/android-sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip: 1: Syntax error: "(" unexpected
+
+Unable to strip the following libraries, packaging them as they are: libonnxruntime.so, libonnxruntime4j_jni.so.
+
+> Task :processDebugResources
+> Task :compileDebugKotlin FROM-CACHE
+> Task :compileDebugJavaWithJavac FROM-CACHE
+> Task :processDebugJavaRes
+> Task :dexBuilderDebug FROM-CACHE
+> Task :mergeProjectDexDebug FROM-CACHE
+> Task :mergeDebugJavaResource
+> Task :packageDebug
+> Task :createDebugApkListingFileRedirect
+> Task :assembleDebug
+
+BUILD SUCCESSFUL in 39s
+42 actionable tasks: 27 executed, 15 from cache
+
+=== BUILD SUCCESSFUL! ===
+APK created at: build/outputs/apk/debug/juloo.keyboard2.debug.apk
+
+-rw-------. 1 u0_a364 u0_a364 47M Nov 27 12:44 build/outputs/apk/debug/juloo.keyboard2.debug.apk
+
+Copying APK to /storage/emulated/0/unexpected/ for updates...
+APK copied to: /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.918-918.apk
+-rw-rw----. 1 u0_a315 media_rw 47M Nov 27 12:44 /storage/emulated/0/unexpected/unexpected-keyboard-v1.32.918-918.apk
+Also copied to: /storage/emulated/0/unexpected/debug-kb.apk (latest)
+
+Step 6: Attempting ADB connection and installation...
+No ADB device connected, attempting wireless connection...
+Scanning for ADB on host: 100.89.250.210
+Scanning ports 30000-50000 for ADB...
+Trying 100.89.250.210:5555... no response
+Trying 100.89.250.210:45015... no response
+Trying 100.89.250.210:46153... no response
+No working ADB port found on 100.89.250.210
+❌ Could not establish ADB connection
+Opening APK for installation...

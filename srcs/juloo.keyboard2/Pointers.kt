@@ -415,13 +415,17 @@ class Pointers(
 
         // CRITICAL: For potential swipe typing, ALWAYS track path during movement
         // Short gesture detection should only happen on touch UP, not during MOVE
+        // Also collect path for short gestures on non-Char keys (backspace, ctrl, etc.)
         val ptrValue = ptr.value
-        val shouldCollectPath = _config.swipe_typing_enabled && _ptrs.size == 1 &&
+        val isSwipeTypingKey = _config.swipe_typing_enabled && _ptrs.size == 1 &&
             ptrValue != null && ptrValue.getKind() == KeyValue.Kind.Char
+        val isShortGestureKey = _config.short_gestures_enabled && _ptrs.size == 1 && ptrValue != null
+        val shouldCollectPath = isSwipeTypingKey || isShortGestureKey
 
         Log.d(
             "Pointers", "Path collection check: " +
                 "swipeEnabled=${_config.swipe_typing_enabled} " +
+                "shortGesturesEnabled=${_config.short_gestures_enabled} " +
                 "ptrsSize=${_ptrs.size} " +
                 "hasValue=${ptrValue != null} " +
                 "isChar=${ptrValue != null && ptrValue.getKind() == KeyValue.Kind.Char} " +
