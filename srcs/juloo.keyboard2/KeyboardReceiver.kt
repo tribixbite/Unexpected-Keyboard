@@ -134,7 +134,9 @@ class KeyboardReceiver(
 
             KeyValue.Event.CHANGE_METHOD_AUTO -> {
                 if (Build.VERSION.SDK_INT < 28) {
-                    subtypeManager.inputMethodManager.switchToLastInputMethod(keyboard2.connectionToken)
+                    keyboard2.getConnectionToken()?.let { token ->
+                        subtypeManager.inputMethodManager.switchToLastInputMethod(token)
+                    }
                 } else {
                     keyboard2.switchToNextInputMethod(false)
                 }
@@ -170,7 +172,7 @@ class KeyboardReceiver(
                         Config.globalPrefs()
                     )
                 ) {
-                    keyboard2.config.shouldOfferVoiceTyping = false
+                    keyboard2.getConfig()?.shouldOfferVoiceTyping = false
                 }
             }
 
