@@ -38,7 +38,7 @@ open class ImprovedSwipeGestureRecognizer {
     private val SMOOTHING_WINDOW = 3 // Points for moving average (optimal balance)
     private val DUPLICATE_CHECK_WINDOW = 5 // Check last 5 keys for duplicates
     private val MAX_POINT_INTERVAL_MS = 500L
-    private val NOISE_THRESHOLD = 10.0f // Ignore tiny movements
+    private val NOISE_THRESHOLD = 2.0f // Reduced from 10.0f to 2.0f to prevent data loss on high-polling devices
 
     // For velocity-based filtering
     private var _recentVelocity: Float = 0f
@@ -294,8 +294,12 @@ open class ImprovedSwipeGestureRecognizer {
      * Find key at a given point (placeholder - needs keyboard layout)
      */
     private fun findKeyAtPoint(point: PointF): KeyboardData.Key? {
-        // This would need access to the keyboard layout
-        // For now, return null - actual implementation would find closest key
+        // Use the probabilistic detector to find the key
+        if (_probabilisticDetector != null) {
+            return _probabilisticDetector!!.getKeyAt(point.x, point.y)
+        }
+        
+        // Fallback if detector not available (shouldn't happen if setKeyboard called)
         return null
     }
     

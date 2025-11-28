@@ -54,6 +54,34 @@ class ProbabilisticKeyDetector(
     }
 
     /**
+     * Find the key at a specific coordinate
+     */
+    fun getKeyAt(x: Float, y: Float): KeyboardData.Key? {
+        if (keyboard?.rows == null) {
+            return null
+        }
+
+        var currentY = 0f
+        for (row in keyboard.rows) {
+            val rowHeight = row.height * keyboardHeight
+            
+            if (y >= currentY && y < currentY + rowHeight) {
+                var currentX = 0f
+                for (key in row.keys) {
+                    val keyWidth = key.width * keyboardWidth
+                    
+                    if (x >= currentX && x < currentX + keyWidth) {
+                        return key
+                    }
+                    currentX += keyWidth
+                }
+            }
+            currentY += rowHeight
+        }
+        return null
+    }
+
+    /**
      * Find keys within reasonable distance of a point
      */
     private fun findNearbyKeys(point: PointF): List<KeyWithDistance> {
