@@ -61,6 +61,7 @@ class KeyboardReceiver(
     }
 
     override fun handle_event_key(ev: KeyValue.Event) {
+        android.util.Log.i("KeyboardReceiver", "handle_event_key: $ev")
         when (ev) {
             KeyValue.Event.CONFIG -> {
                 val intent = Intent(context, SettingsActivity::class.java).apply {

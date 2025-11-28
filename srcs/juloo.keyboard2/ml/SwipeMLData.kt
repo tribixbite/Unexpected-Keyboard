@@ -20,9 +20,9 @@ class SwipeMLData {
     val traceId: String
     val targetWord: String
     val timestampUtc: Long
-    private val screenWidthPx: Int
-    private val screenHeightPx: Int
-    private val keyboardHeightPx: Int
+    val screenWidthPx: Int
+    val screenHeightPx: Int
+    val keyboardHeightPx: Int
     val collectionSource: String // "calibration" or "user_selection"
     private val tracePoints: MutableList<TracePoint> = mutableListOf()
     private val registeredKeys: MutableList<String> = mutableListOf()

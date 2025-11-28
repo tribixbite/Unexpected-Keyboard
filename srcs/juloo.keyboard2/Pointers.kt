@@ -243,18 +243,19 @@ class Pointers(
                     // This ensures wide keys (like Backspace) don't require huge swipes, 
                     // while small keys still respect the percentage to avoid accidental triggers.
                     val percentThreshold = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f)
-                    val absoluteThreshold = _config.swipe_dist_px
-                    // Use absolute threshold as a ceiling for the required distance
-                    // If swipe_dist_px is 0 (not set), fallback to percentage
-                    val minDistance = if (absoluteThreshold > 0) {
-                        min(percentThreshold, absoluteThreshold * 1.5f) 
-                    } else {
-                        percentThreshold
-                    }
+                    val absoluteThreshold = _config.swipe_dist_px.toFloat()
+                    
+                    // RELAXED THRESHOLD: Use 0.8 factor to approximate Manhattan->Euclidean conversion
+                    // (Manhattan distance is ~1.4x Euclidean for diagonals).
+                    // Also removed the 1.5f multiplier which made triggering too hard.
+                    val effectiveAbsolute = if (absoluteThreshold > 0) absoluteThreshold * 0.8f else Float.MAX_VALUE
+                    
+                    // Use the easier (smaller) of the two thresholds
+                    val minDistance = min(percentThreshold, effectiveAbsolute)
 
                     Log.d(
                         "Pointers", "Short gesture check: distance=$distance " +
-                            "minDistance=$minDistance (abs=$absoluteThreshold, pct=$percentThreshold) " +
+                            "minDistance=$minDistance (abs=$absoluteThreshold, effAbs=$effectiveAbsolute, pct=$percentThreshold) " +
                             "(${_config.short_gesture_min_distance}% of $keyHypotenuse)"
                     )
 
