@@ -33,6 +33,11 @@ class KeyEventHandler(
      * [setSelection] could be used instead. */
     private var moveCursorForceFallback = false
 
+    /** Track last typed character and timestamp for double-space-to-period feature */
+    private var lastTypedChar: Char = '\u0000'
+    private var lastTypedTimestamp: Long = 0L
+    private val DOUBLE_SPACE_THRESHOLD_MS = 500L // Max time between spaces
+
     /** Editing just started. */
     fun started(info: EditorInfo) {
         val conn = recv.getCurrentInputConnection()
@@ -207,9 +212,27 @@ class KeyEventHandler(
         }
 
         val conn = recv.getCurrentInputConnection() ?: return
-        conn.commitText(text, 1)
-        autocap.typed(text)
-        recv.handle_text_typed(text.toString())
+
+        // Double-space-to-period: If typing space after space within threshold, replace with ". "
+        val currentTime = System.currentTimeMillis()
+        var textToCommit = text
+        if (text.length == 1 && text[0] == ' ' && lastTypedChar == ' ' &&
+            (currentTime - lastTypedTimestamp) < DOUBLE_SPACE_THRESHOLD_MS) {
+            // Delete the previous space and insert ". "
+            conn.deleteSurroundingText(1, 0)
+            textToCommit = ". "
+            // Reset tracking to prevent triple-space weirdness
+            lastTypedChar = '.'
+        } else if (text.length == 1) {
+            lastTypedChar = text[0]
+        } else {
+            lastTypedChar = '\u0000' // Reset on multi-char input
+        }
+        lastTypedTimestamp = currentTime
+
+        conn.commitText(textToCommit, 1)
+        autocap.typed(textToCommit)
+        recv.handle_text_typed(textToCommit.toString())
     }
 
     /** See {!InputConnection.performContextMenuAction}. */

@@ -148,7 +148,7 @@ class Autocapitalisation(
 
     private fun is_trigger_character(c: Char): Boolean {
         return when (c) {
-            ' ' -> true
+            ' ', '.', '!', '?', '\n' -> true
             else -> false
         }
     }
