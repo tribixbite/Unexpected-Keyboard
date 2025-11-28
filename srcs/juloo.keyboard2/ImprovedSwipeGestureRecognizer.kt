@@ -353,32 +353,42 @@ open class ImprovedSwipeGestureRecognizer {
      * Check if the current gesture should be considered swipe typing
      */
     private fun shouldConsiderSwipeTyping(): Boolean {
-        // Add debug logging for swipe detection
-        android.util.Log.e("ImprovedSwipeGestureRecognizer", "🔍 SWIPE DETECTION CHECK:")
-        android.util.Log.e("ImprovedSwipeGestureRecognizer", "- Keys touched: ${_touchedKeys.size}")
-        android.util.Log.e("ImprovedSwipeGestureRecognizer", "- Total distance: ${_totalDistance} (need ${MIN_SWIPE_DISTANCE})")
-        
+        // Add debug logging for swipe detection (only in debug builds for performance)
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            android.util.Log.d("ImprovedSwipeGestureRecognizer", "🔍 SWIPE DETECTION CHECK:")
+            android.util.Log.d("ImprovedSwipeGestureRecognizer", "- Keys touched: ${_touchedKeys.size}")
+            android.util.Log.d("ImprovedSwipeGestureRecognizer", "- Total distance: ${_totalDistance} (need ${MIN_SWIPE_DISTANCE})")
+        }
+
         // Need at least 2 alphabetic keys
         if (_touchedKeys.size < 2) {
-            android.util.Log.e("ImprovedSwipeGestureRecognizer", "❌ Too few keys: ${_touchedKeys.size} < 2")
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("ImprovedSwipeGestureRecognizer", "❌ Too few keys: ${_touchedKeys.size} < 2")
+            }
             return false
         }
-        
+
         // Check total distance
         if (_totalDistance < MIN_SWIPE_DISTANCE) {
-            android.util.Log.e("ImprovedSwipeGestureRecognizer", "❌ Distance too short: ${_totalDistance} < ${MIN_SWIPE_DISTANCE}")
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("ImprovedSwipeGestureRecognizer", "❌ Distance too short: ${_totalDistance} < ${MIN_SWIPE_DISTANCE}")
+            }
             return false
         }
-        
+
         // Check if all touched keys are alphabetic
         for (key in _touchedKeys) {
             if (!isValidAlphabeticKey(key)) {
-                android.util.Log.e("ImprovedSwipeGestureRecognizer", "❌ Non-alphabetic key touched")
+                if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                    android.util.Log.d("ImprovedSwipeGestureRecognizer", "❌ Non-alphabetic key touched")
+                }
                 return false
             }
         }
-        
-        android.util.Log.e("ImprovedSwipeGestureRecognizer", "✅ SWIPE DETECTED - proceeding with swipe typing")
+
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            android.util.Log.d("ImprovedSwipeGestureRecognizer", "✅ SWIPE DETECTED - proceeding with swipe typing")
+        }
         return true
     }
     
