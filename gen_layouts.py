@@ -57,7 +57,9 @@ def generate_arrays(out, layouts):
     root.append(mk_array("string-array", "pref_layout_entries", entries_items))
     root.append(mk_array("integer-array", "layout_ids", ids_items))
     XML.indent(root)
-    XML.ElementTree(element=root).write(out, encoding="unicode", xml_declaration=True)
+    # Write custom XML declaration to avoid encoding case differences across Python versions
+    out.write("<?xml version='1.0' encoding='utf-8'?>\n")
+    XML.ElementTree(element=root).write(out, encoding="unicode", xml_declaration=False)
 
 layouts = sort_layouts(read_layouts(glob.glob("srcs/layouts/*.xml")))
 with open("res/values/layouts.xml", "w") as out:

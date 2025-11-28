@@ -2,9 +2,9 @@ name: Unexpected Keyboard CI/CD
 
 on:
   push:
-    branches: [ feature/swipe-typing, main ]
+    branches: [ main ]
   pull_request:
-    branches: [ feature/swipe-typing, main ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -77,8 +77,8 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     needs: build
-    # Create release on every push to feature/swipe-typing branch
-    if: github.ref == 'refs/heads/feature/swipe-typing' && github.event_name == 'push'
+    # Create release on every push to main branch
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     timeout-minutes: 10
 
     steps:
@@ -150,7 +150,7 @@ jobs:
           **APK Details**:
           - Debug build with logging enabled
           - Includes swipe typing ML/neural features
-          - Built from `feature/swipe-typing` branch
+          - Built from `main` branch
 
           Built with GitHub Actions on $(date)
           EOF

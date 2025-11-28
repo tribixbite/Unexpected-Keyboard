@@ -2,7 +2,7 @@ name: Deploy Web Demo
 
 on:
   push:
-    branches: [ main, feature/swipe-typing ]
+    branches: [ main ]
     paths: [ 'web_demo/**' ]
   workflow_dispatch:
 
