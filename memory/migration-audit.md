@@ -13,8 +13,8 @@
 - **Java Files Remaining**: 0 (migration complete, but audit ongoing)
 - **Critical Bugs Found**: 1 (inherited from original Java, fixed in v1.32.923)
 - **Migration Quality**: ✅ EXCELLENT
-- **Test Coverage**: 44% of audited files have unit tests (8/18 with business logic)
-- **New Tests Created**: KeyEventHandlerTest.kt (30 tests), KeyModifierTest.kt (44 tests)
+- **Test Coverage**: 50% of audited files have unit tests (9/18 with business logic)
+- **New Tests Created**: KeyEventHandlerTest.kt (30 tests), KeyModifierTest.kt (44 tests), LayoutModifierTest.kt (38 tests)
 
 ---
 
@@ -88,19 +88,25 @@ These files have significant business logic and SHOULD have unit tests:
 
 ---
 
-#### 3. LayoutModifier.kt (228 lines)
-**Priority**: MEDIUM  
-**Complexity**: Medium  
-**Current Test Coverage**: ❌ NONE  
+#### 3. LayoutModifier.kt (237 lines)
+**Priority**: MEDIUM
+**Complexity**: Medium
+**Current Test Coverage**: ✅ COMPREHENSIVE (38 test cases)
 
-**Recommended Tests** (10-15 test cases):
-- ✅ Layout caching (memory efficiency)
-- ✅ Modifier application (Shift, Fn, Ctrl transformations)
-- ✅ Cache invalidation (layout changes)
-- ✅ Null safety (missing modifiers, empty layouts)
+**Test Cases Implemented** (38 tests):
+- ✅ Numpad script mapping (6 scripts: hindi-arabic, bengali, devanagari, persian + null/invalid - 6 tests)
+- ✅ Numpad inversion (calculator layout: 7↔1, 8↔2, 9↔3 - 3 tests)
+- ✅ Action key behavior (null label, custom label, swap with enter - 4 tests)
+- ✅ Switch keys visibility (forward/backward based on layout count - 4 tests)
+- ✅ Voice typing availability (enabled/disabled - 2 tests)
+- ✅ Input method switching (immediate vs picker mode - 2 tests)
+- ✅ Number row behavior (disabled, enabled, embedded, with/without symbols - 5 tests)
+- ✅ Numpad configuration (disabled, enabled, precedence over number row - 3 tests)
+- ✅ Layout caching (reuse, config version invalidation - 2 tests)
+- ✅ Extra keys integration (config key, custom keys, param keys - 3 tests)
 
-**Existing Test File**: ❌ NONE  
-**Action**: Create `test/juloo.keyboard2/LayoutModifierTest.kt`
+**Test File**: `test/juloo.keyboard2/LayoutModifierTest.kt` (38 comprehensive tests)
+**Status**: ✅ COMPLETE - All layout modification logic covered
 
 ---
 
@@ -139,16 +145,16 @@ These files have significant business logic and SHOULD have unit tests:
 
 ### Test Summary
 
-**Completed**: 2/5 test files (74 tests total) ✅
-**Remaining High-Priority Tests**: 3 test files
-**Estimated Test Cases**: 30-45 remaining tests
-**Estimated Effort**: 1-1.5 days (4-6 hours)
+**Completed**: 3/5 test files (112 tests total) ✅
+**Remaining High-Priority Tests**: 2 test files
+**Estimated Test Cases**: 20-25 remaining tests
+**Estimated Effort**: 0.5-1 day (2-4 hours)
 
 **Priority Order**:
 1. ✅ KeyEventHandler.kt (HIGH - COMPLETE - 30 tests)
 2. ✅ KeyModifier.kt (HIGH - COMPLETE - 44 tests)
-3. ⏳ LayoutModifier.kt (MEDIUM - 10-15 tests) - NEXT
-4. ⏳ Autocapitalisation.kt (MEDIUM - 12-15 tests)
+3. ✅ LayoutModifier.kt (MEDIUM - COMPLETE - 38 tests)
+4. ⏳ Autocapitalisation.kt (MEDIUM - 12-15 tests) - NEXT
 5. ⏳ ExtraKeys.kt (LOW - 8-10 tests)
 
 ---
