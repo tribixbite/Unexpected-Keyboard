@@ -109,6 +109,7 @@ class Config private constructor(
     // Gesture timing configuration (exposed hardcoded constants)
     @JvmField var tap_duration_threshold = 150L // Max duration for a tap gesture (ms)
     @JvmField var double_space_threshold = 500L // Max time between spaces for period replacement (ms)
+    @JvmField var smart_punctuation = true // Attach punctuation to end of last word (no space before)
     @JvmField var swipe_min_dwell_time = 10L // Min time to register a key during swipe (ms)
     @JvmField var swipe_noise_threshold = 2.0f // Min distance to register movement (pixels)
     @JvmField var swipe_high_velocity_threshold = 1000.0f // Velocity threshold for fast swipes (px/sec)
@@ -309,6 +310,7 @@ class Config private constructor(
         // Gesture timing configuration
         tap_duration_threshold = safeGetInt(_prefs, "tap_duration_threshold", 150).toLong()
         double_space_threshold = safeGetInt(_prefs, "double_space_threshold", 500).toLong()
+        smart_punctuation = _prefs.getBoolean("smart_punctuation", true)
         swipe_min_dwell_time = safeGetInt(_prefs, "swipe_min_dwell_time", 10).toLong()
         swipe_noise_threshold = safeGetFloat(_prefs, "swipe_noise_threshold", 2.0f)
         swipe_high_velocity_threshold = safeGetFloat(_prefs, "swipe_high_velocity_threshold", 1000.0f)

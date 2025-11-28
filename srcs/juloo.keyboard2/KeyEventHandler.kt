@@ -226,7 +226,18 @@ class KeyEventHandler(
             // Reset tracking to prevent triple-space weirdness
             lastTypedChar = '.'
         } else if (text.length == 1) {
-            lastTypedChar = text[0]
+            val char = text[0]
+
+            // Smart punctuation: If typing punctuation and previous char is space, delete the space
+            // This attaches punctuation to the end of the previous word (e.g., "word ." -> "word.")
+            if (Config.globalConfig().smart_punctuation && isSmartPunctuationChar(char)) {
+                val textBefore = conn.getTextBeforeCursor(1, 0)
+                if (textBefore != null && textBefore.length == 1 && textBefore[0] == ' ') {
+                    conn.deleteSurroundingText(1, 0)
+                }
+            }
+
+            lastTypedChar = char
         } else {
             lastTypedChar = '\u0000' // Reset on multi-char input
         }
@@ -235,6 +246,14 @@ class KeyEventHandler(
         conn.commitText(textToCommit, 1)
         autocap.typed(textToCommit)
         recv.handle_text_typed(textToCommit.toString())
+    }
+
+    /** Characters that should attach to the previous word (smart punctuation). */
+    private fun isSmartPunctuationChar(c: Char): Boolean {
+        return when (c) {
+            '.', ',', '!', '?', ';', ':', '\'', '"', ')', ']', '}' -> true
+            else -> false
+        }
     }
 
     /** See {!InputConnection.performContextMenuAction}. */
@@ -483,6 +502,15 @@ class KeyEventHandler(
         }
         // Godot editor: Doesn't handle setSelection() but returns true.
         return info.packageName.startsWith("org.godotengine.editor")
+    }
+
+    /**
+     * Notify auto-capitalization system that text was typed/inserted.
+     * Call this when inserting text from sources other than sendText() (e.g., swipe predictions).
+     * This ensures auto-cap triggers after period, exclamation, etc.
+     */
+    fun notifyTextTyped(text: CharSequence) {
+        autocap.typed(text)
     }
 
     interface IReceiver {

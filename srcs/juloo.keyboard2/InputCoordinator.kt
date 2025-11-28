@@ -437,6 +437,10 @@ class InputCoordinator(
                 val commitDuration = System.currentTimeMillis() - commitStartTime
                 android.util.Log.e(TAG, "⏱️ commitText('$textToInsert'): ${commitDuration}ms")
 
+                // Notify auto-capitalization system about the inserted text
+                // This ensures shift is enabled after sentence-ending punctuation (. ! ?)
+                keyeventhandler.notifyTextTyped(textToInsert)
+
                 // Track that this commit was from candidate selection (manual tap)
                 // Note: Auto-insertions set this separately to NEURAL_SWIPE
                 if (contextTracker.getLastCommitSource() != PredictionSource.NEURAL_SWIPE) {
