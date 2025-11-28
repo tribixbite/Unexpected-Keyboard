@@ -5,6 +5,36 @@ All notable changes to Unexpected Keyboard - Neural Swipe Typing Edition will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.927] - 2025-11-27
+
+### Added - Shift+Swipe ALL CAPS Feature ✨
+- **Shift+Swipe Typing**: When shift is active during swipe typing, output entire word in ALL CAPS
+- **User Request**: Implements feature requested by user - shift+swipe produces "HELLO" instead of "Hello"
+- **Implementation**:
+  - Captures shift modifier state at swipe start in `Keyboard2View.kt:307`
+  - Passes through handling chain: Keyboard2View → Keyboard2 → InputCoordinator
+  - Applies `uppercase()` transformation before text commit in `InputCoordinator.kt:386-391`
+- **Smart Behavior**:
+  - ✅ Only applies to swipe-auto-insertions (not manual candidate selections)
+  - ✅ Uses shift state at swipe START (not affected by releasing shift mid-swipe)
+  - ✅ Works with shift latched or held during swipe
+- **Code Changes**:
+  - `Keyboard2View.kt:306-310` - Capture shift state
+  - `Keyboard2.kt:638-643` - Pass wasShiftActive parameter
+  - `InputCoordinator.kt:54-55` - Track shift state field
+  - `InputCoordinator.kt:677-683` - Store shift state
+  - `InputCoordinator.kt:386-391` - Apply uppercase transformation
+- **Examples**:
+  - Normal swipe: "hello" → "hello "
+  - Shift+swipe: "hello" → "HELLO "
+  - Perfect for typing acronyms: NASA, API, HTTP, etc.
+
+### Performance
+- **No Impact**: Simple boolean check before uppercase transformation
+- **Memory**: No additional overhead (single boolean field)
+
+---
+
 ## [1.32.925] - 2025-11-27
 
 ### Fixed - Critical Short Gesture + Modifier Conflict 🐛

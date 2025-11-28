@@ -634,12 +634,13 @@ class Keyboard2 : InputMethodService(),
     fun handleSwipeTyping(
         swipedKeys: List<KeyboardData.Key>,
         swipePath: List<android.graphics.PointF>,
-        timestamps: List<Long>
+        timestamps: List<Long>,
+        wasShiftActive: Boolean = false  // v1.32.926: Pass shift state for ALL CAPS
     ) {
         // v1.32.350: Delegated to InputCoordinator
         val ic = currentInputConnection
         val editorInfo = currentInputEditorInfo
-        _inputCoordinator.handleSwipeTyping(swipedKeys, swipePath, timestamps, ic, editorInfo, resources)
+        _inputCoordinator.handleSwipeTyping(swipedKeys, swipePath, timestamps, ic, editorInfo, resources, wasShiftActive)
     }
 
     /**

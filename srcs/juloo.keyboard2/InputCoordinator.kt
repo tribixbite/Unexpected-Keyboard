@@ -51,6 +51,9 @@ class InputCoordinator(
     // Swipe ML data collection
     private var currentSwipeData: SwipeMLData? = null
 
+    // v1.32.926: Track if shift was active when current swipe started (for ALL CAPS output)
+    private var wasShiftActiveAtSwipeStart: Boolean = false
+
     // Async prediction execution
     private val predictionExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var currentPredictionTask: Future<*>? = null
@@ -380,6 +383,13 @@ class InputCoordinator(
                     false
                 }
 
+                // v1.32.926: If shift was active when swipe started, convert entire word to UPPERCASE
+                // This applies ONLY to swipe-auto-insertions (not manual candidate selections)
+                if (wasShiftActiveAtSwipeStart && isSwipeAutoInsert) {
+                    android.util.Log.d("Keyboard2", "SHIFT+SWIPE: Converting '$processedWord' to ALL CAPS")
+                    processedWord = processedWord.uppercase(java.util.Locale.getDefault())
+                }
+
                 // Commit the selected word - use Termux mode if enabled
                 val textToInsert = when {
                     config.termux_mode_enabled && !isSwipeAutoInsert -> {
@@ -673,8 +683,12 @@ class InputCoordinator(
         timestamps: List<Long>?,
         ic: InputConnection?,
         editorInfo: EditorInfo?,
-        resources: Resources
+        resources: Resources,
+        wasShiftActive: Boolean = false  // v1.32.926: Track if shift was active when swipe started
     ) {
+        // v1.32.926: Store shift state for ALL CAPS transformation in onSuggestionSelected
+        wasShiftActiveAtSwipeStart = wasShiftActive
+
         // Clear auto-inserted word tracking when new swipe starts
         contextTracker.clearLastAutoInsertedWord()
 
