@@ -8,21 +8,54 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✅ PROJECT CLEANUP COMPLETE)
+## 🔥 Current Status (2025-11-28 - ✅ Session 15 Complete)
 
-**Latest Version**: v1.32.959 (GitHub Update Feature + Bug Fixes)
+**Latest Version**: v1.32.960 (GitHub Update Permission Fix)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.959 DEPLOYED | ✅ GitHub updates, Shift+Swipe fixed, 9 gesture settings
+**Device Status**: ✅ v1.32.960 DEPLOYED | ✅ GitHub updates working, all features stable
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 14: Bug fixes + GitHub update feature**
+**Current Focus**: ✅ **Session 15: Fix GitHub update check permission denied**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
 **Audit Report**: **[migration-audit.md](migration-audit.md)** - ✅ 1 bug found (inherited, fixed)
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)**
 **Test Coverage**: ✅ 41 test files total! 16 comprehensive Kotlin test suites (300+ tests)
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
-**Blockers**: ✅ **ALL RESOLVED** (2 bugs fixed in v1.32.957)
+**Blockers**: ✅ **ALL RESOLVED**
 
-### 🆕 Session 14 Summary (v1.32.957 → v1.32.959)
+### 🆕 Session 15 Summary (v1.32.959 → v1.32.960)
+
+**Bug Fixed:**
+1. **✅ GitHub Update Check Permission Denied** (v1.32.960)
+   - Root cause: Missing INTERNET permission in AndroidManifest.xml
+   - Fix: Added `<uses-permission android:name="android.permission.INTERNET"/>`
+
+**Improvements:**
+1. **Enhanced Error Handling** - Better error messages with specific handling for:
+   - `UnknownHostException` (no internet)
+   - `SocketTimeoutException` (connection timeout)
+   - `SecurityException` (permission denied)
+   - Fallback dialog with "Open GitHub Releases" option
+
+2. **Multi-folder APK Search** - Install Update now searches:
+   - `/unexpected/` (custom folder)
+   - `/Download/` and `/Downloads/` (downloads folders)
+   - Shows folder source in selection dialog
+   - "Browse..." button for file picker
+   - GitHub releases link when no APKs found
+
+3. **Improved Download Flow**:
+   - Saves to Downloads folder first (more accessible)
+   - Falls back to /unexpected/ or app storage if needed
+   - Progress shows KB downloaded
+   - Cleans up partial downloads on failure
+   - Offers browser fallback on failure
+
+**Commits:**
+- `d96b7839` - fix(settings): resolve GitHub update check permission denied error
+
+---
+
+### Session 14 Summary (v1.32.957 → v1.32.959)
 
 **New Features:**
 1. **🔄 Check for Updates Button** - Settings > About > Check for Updates
