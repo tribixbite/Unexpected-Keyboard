@@ -49,6 +49,11 @@ class MLDataCollectorTest {
 
         `when`(mockContext.resources).thenReturn(mockResources)
         `when`(mockResources.displayMetrics).thenReturn(displayMetrics)
+        
+        // Mock SharedPreferences for PrivacyManager
+        val mockPrefs = mock(android.content.SharedPreferences::class.java)
+        `when`(mockContext.getSharedPreferences(anyString(), anyInt())).thenReturn(mockPrefs)
+        `when`(mockContext.applicationContext).thenReturn(mockContext)
 
         collector = MLDataCollector(mockContext)
     }
@@ -121,7 +126,7 @@ class MLDataCollectorTest {
         // Assert
         verify(mockDataStore).storeSwipeData(captor.capture())
         val storedData = captor.value
-        assertEquals("Should strip 'raw:' prefix", expectedCleanWord, storedData.word)
+        assertEquals("Should strip 'raw:' prefix", expectedCleanWord, storedData.targetWord)
     }
 
     @Test
@@ -143,7 +148,7 @@ class MLDataCollectorTest {
         val captor = argumentCaptor<SwipeMLData>()
         verify(mockDataStore).storeSwipeData(captor.capture())
         val storedData = captor.value
-        assertEquals("Should have 3 trace points", 3, storedData.tracePoints.size)
+        assertEquals("Should have 3 trace points", 3, storedData.getTracePoints().size)
     }
 
     @Test
@@ -166,10 +171,10 @@ class MLDataCollectorTest {
         val captor = argumentCaptor<SwipeMLData>()
         verify(mockDataStore).storeSwipeData(captor.capture())
         val storedData = captor.value
-        assertEquals("Should have 4 registered keys", 4, storedData.registeredKeys.size)
-        assertTrue("Should contain key 't'", storedData.registeredKeys.contains("t"))
-        assertTrue("Should contain key 'e'", storedData.registeredKeys.contains("e"))
-        assertTrue("Should contain key 's'", storedData.registeredKeys.contains("s"))
+        assertEquals("Should have 4 registered keys", 4, storedData.getRegisteredKeys().size)
+        assertTrue("Should contain key 't'", storedData.getRegisteredKeys().contains("t"))
+        assertTrue("Should contain key 'e'", storedData.getRegisteredKeys().contains("e"))
+        assertTrue("Should contain key 's'", storedData.getRegisteredKeys().contains("s"))
     }
 
     @Test
@@ -245,11 +250,11 @@ class MLDataCollectorTest {
 
         // Verify dimensions match display metrics
         assertEquals("Width should match display metrics",
-            displayMetrics.widthPixels, storedData.screenWidth)
+            displayMetrics.widthPixels, storedData.screenWidthPx)
         assertEquals("Height should match display metrics",
-            displayMetrics.heightPixels, storedData.screenHeight)
+            displayMetrics.heightPixels, storedData.screenHeightPx)
         assertEquals("Keyboard height should match parameter",
-            keyboardHeight, storedData.keyboardHeight)
+            keyboardHeight, storedData.keyboardHeightPx)
     }
 
     @Test
@@ -269,15 +274,15 @@ class MLDataCollectorTest {
         verify(mockDataStore).storeSwipeData(captor.capture())
         val storedData = captor.value
         assertEquals("Source should be user_selection",
-            "user_selection", storedData.source)
+            "user_selection", storedData.collectionSource)
     }
 
     // Helper methods for creating mock data
 
     private fun createMockSwipeData(): SwipeMLData {
         return mock(SwipeMLData::class.java).apply {
-            `when`(tracePoints).thenReturn(emptyList())
-            `when`(registeredKeys).thenReturn(emptyList())
+            `when`(getTracePoints()).thenReturn(emptyList())
+            `when`(getRegisteredKeys()).thenReturn(emptyList())
         }
     }
 
@@ -293,15 +298,15 @@ class MLDataCollectorTest {
         }
 
         return mock(SwipeMLData::class.java).apply {
-            `when`(tracePoints).thenReturn(points)
-            `when`(registeredKeys).thenReturn(emptyList())
+            `when`(getTracePoints()).thenReturn(points)
+            `when`(getRegisteredKeys()).thenReturn(emptyList())
         }
     }
 
     private fun createMockSwipeDataWithKeys(keys: List<String>): SwipeMLData {
         return mock(SwipeMLData::class.java).apply {
-            `when`(tracePoints).thenReturn(emptyList())
-            `when`(registeredKeys).thenReturn(keys)
+            `when`(getTracePoints()).thenReturn(emptyList())
+            `when`(getRegisteredKeys()).thenReturn(keys)
         }
     }
 
