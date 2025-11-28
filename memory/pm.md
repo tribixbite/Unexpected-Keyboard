@@ -7,13 +7,14 @@
 
 ---
 
-## 🔥 Current Status (2025-11-27 - 💯 READY FOR PRODUCTION! 🎉🎉🎉)
+## 🔥 Current Status (2025-11-27 - 💯 READY FOR TESTING! ✅)
 
 **Latest Version**: v1.32.929 (GESTURE REGRESSION FIX + Shift+Swipe ALL CAPS)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 58s)
 **Device Status**: ✅ v1.32.929 INSTALLED - All features ready for testing
-**Branch**: main (8 commits total - 3 bug fixes + 1 feature)
-**Current Focus**: ✅ **THREE CRITICAL FIXES + ONE FEATURE DELIVERED**
+**Branch**: main (9 commits total - 3 bug fixes + 1 feature + session docs)
+**Current Focus**: ✅ **THREE CRITICAL FIXES + ONE FEATURE DELIVERED - READY FOR USER TESTING**
+**Session Summary**: 📄 **[SESSION_SUMMARY.md](../SESSION_SUMMARY.md)** - Complete technical details
 **Audit Report**: **[migration-audit.md](migration-audit.md)** - ✅ 1 bug found (inherited, fixed)
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)** 🎊
 **Main Files**: 148/148 (100%) ✅
@@ -68,6 +69,45 @@ if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
 **Testing Status:**
 - ✅ APK v1.32.929 built and installed successfully
 - ⏳ Ready for comprehensive gesture testing
+
+---
+
+### 🧪 TESTING CHECKLIST (v1.32.929)
+
+**Regression Tests (Verify fixes still work):**
+- [ ] Shift+c produces 'C' (NOT period '.') - v1.32.925 fix
+- [ ] Fn+key produces function variant (NOT gesture)
+- [ ] Ctrl+key produces control character (NOT gesture)
+
+**Gesture Functionality Tests (Verify v1.32.929 fixes):**
+- [ ] Backspace NW gesture → delete_last_word (CRITICAL - was broken in v1.32.925)
+- [ ] Ctrl SW gesture → switch_clipboard (CRITICAL - was broken in v1.32.925)
+- [ ] Fn key gestures work correctly (CRITICAL - was broken in v1.32.925)
+- [ ] 'c' key SW gesture (no shift) → period '.' (baseline test)
+
+**New Feature Tests (Shift+Swipe ALL CAPS - v1.32.927):**
+- [ ] Normal swipe "hello" → "hello " (lowercase, baseline)
+- [ ] Shift+swipe "hello" → "HELLO " (ALL CAPS - NEW FEATURE)
+- [ ] Shift latched + swipe → ALL CAPS output
+- [ ] Shift held + swipe → ALL CAPS output
+
+**What Should Work:**
+
+| Input | Expected Output | Status |
+|-------|----------------|--------|
+| Shift+c | 'C' (uppercase) | ⏳ Test |
+| c (SW gesture, no shift) | '.' (period) | ⏳ Test |
+| Backspace NW gesture | delete_last_word | ⏳ Test |
+| Ctrl SW gesture | switch_clipboard | ⏳ Test |
+| Fn gestures | Function variants | ⏳ Test |
+| Normal swipe "test" | "test " | ⏳ Test |
+| Shift+swipe "test" | "TEST " | ⏳ Test |
+
+**How to Test:**
+1. Open any text editor app
+2. Switch to Unexpected Keyboard (v1.32.929)
+3. Run through each test case above
+4. Report any failures or unexpected behavior
 
 ---
 
