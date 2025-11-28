@@ -665,8 +665,12 @@ class SuggestionHandler(
 
         // Fallback: Delete the last word before cursor (generic approach)
         val textBefore = ic.getTextBeforeCursor(100, 0)
-        if (textBefore == null || textBefore.isEmpty()) {
-            Log.d(TAG, "DELETE_LAST_WORD: No text before cursor")
+        if (textBefore.isNullOrEmpty()) {
+            Log.d(TAG, "DELETE_LAST_WORD: No text before cursor, falling back to Ctrl+Backspace")
+            keyeventhandler.send_key_down_up(
+                KeyEvent.KEYCODE_DEL,
+                KeyEvent.META_CTRL_ON or KeyEvent.META_CTRL_LEFT_ON
+            )
             return
         }
 
@@ -699,7 +703,13 @@ class SuggestionHandler(
         }
 
         Log.d(TAG, "DELETE_LAST_WORD: Deleting last word (generic), count=$deleteCount")
-        ic.deleteSurroundingText(deleteCount, 0)
+        if (!ic.deleteSurroundingText(deleteCount, 0)) {
+            Log.d(TAG, "DELETE_LAST_WORD: deleteSurroundingText failed, falling back to Ctrl+Backspace")
+            keyeventhandler.send_key_down_up(
+                KeyEvent.KEYCODE_DEL,
+                KeyEvent.META_CTRL_ON or KeyEvent.META_CTRL_LEFT_ON
+            )
+        }
 
         // Clear tracking
         contextTracker.clearLastAutoInsertedWord()

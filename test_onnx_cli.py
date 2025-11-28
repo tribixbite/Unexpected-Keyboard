@@ -12,8 +12,8 @@ import os
 
 def setup_models():
     """Load ONNX models and create inference sessions"""
-    encoder_path = "assets/models/bs/swipe_encoder_android.onnx"
-    decoder_path = "assets/models/bs/swipe_decoder_android.onnx"
+    encoder_path = "assets/models/swipe_encoder_android.onnx"
+    decoder_path = "assets/models/swipe_decoder_android.onnx"
     
     if not os.path.exists(encoder_path):
         print(f"❌ Encoder model not found: {encoder_path}")

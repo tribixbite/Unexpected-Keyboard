@@ -146,9 +146,13 @@ class Pointers(
 
         // UNIFIED GESTURE CLASSIFICATION: Use GestureClassifier to decide TAP vs SWIPE
         // This eliminates race conditions between multiple prediction systems
-        if (_config.swipe_typing_enabled && ptr.gesture == null &&
+        // Allow entry if either Swipe Typing (Char keys) OR Short Gestures (Any key) is enabled
+        val isCharKey = ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char
+        val canSwipeType = _config.swipe_typing_enabled && isCharKey
+        val canShortGesture = _config.short_gestures_enabled && ptr_value != null
+
+        if ((canSwipeType || canShortGesture) && ptr.gesture == null &&
             !ptr.hasFlagsAny(FLAG_P_SLIDING or FLAG_P_SWIPE_TYPING or FLAG_P_LATCHED) &&
-            ptr_value != null && ptr_value.getKind() == KeyValue.Kind.Char &&
             ptr.key != null
         ) {
             // Collect gesture data for classification
@@ -181,7 +185,6 @@ class Pointers(
             // CRITICAL FIX: Only Char keys can trigger Neural Swipe Typing
             // For non-Char keys (like Backspace), even if the gesture is long (classified as SWIPE),
             // we must treat it as a TAP/Short Gesture to allow directional actions (e.g. Delete Word)
-            val isCharKey = ptr.value != null && ptr.value!!.getKind() == KeyValue.Kind.Char
             val effectiveGestureType = if (!isCharKey && gestureType == GestureClassifier.GestureType.SWIPE) {
                 GestureClassifier.GestureType.TAP
             } else {
@@ -299,8 +302,10 @@ class Pointers(
                     }
                 }
 
-                // Regular TAP - output the key character
-                _handler.onPointerDown(ptr_value, false)
+                // Regular TAP - output the key character only if it was deferred
+                if (ptr.hasFlagsAny(FLAG_P_DEFERRED_DOWN)) {
+                    _handler.onPointerDown(ptr_value, false)
+                }
                 _swipeRecognizer.reset()
             }
         }
@@ -374,6 +379,10 @@ class Pointers(
         val mightBeSwipe = _config.swipe_typing_enabled && _ptrs.size == 1 &&
             key != null && firstKey != null &&
             firstKey.getKind() == KeyValue.Kind.Char
+
+        if (mightBeSwipe) {
+            ptr.flags = ptr.flags or FLAG_P_DEFERRED_DOWN
+        }
 
         // Don't start long press timer if we might be swipe typing
         if (!mightBeSwipe && !(_config.swipe_typing_enabled && _swipeRecognizer.isSwipeTyping())) {
@@ -996,6 +1005,9 @@ class Pointers(
 
         /** Pointer is part of a swipe typing gesture. */
         const val FLAG_P_SWIPE_TYPING = 1 shl 8
+
+        /** Key down event was deferred (waiting for gesture classification). */
+        const val FLAG_P_DEFERRED_DOWN = 1 shl 9
 
         private var uniqueTimeoutWhat = 0
 
