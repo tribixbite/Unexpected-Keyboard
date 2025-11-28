@@ -275,7 +275,7 @@ if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
 
 ### Short-term (v1.33-1.36)
 - [ ] Profile `saveLastUsed()` emoji optimization (if users report lag)
-- [ ] Test smaller neural bounding box offset (NeuralLayoutHelper:276)
+- [x] Test smaller neural bounding box offset (NeuralLayoutHelper:276) - ✅ COMPLETE v1.32.943
 
 ### Medium-term (v1.37-1.40)
 - [ ] Analyze and optimize remaining files (Keyboard2View, KeyboardGrid, etc.)

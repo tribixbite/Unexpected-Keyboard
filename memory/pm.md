@@ -8,13 +8,13 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✅ LOGGING OPTIMIZATION ROADMAP COMPLETE)
+## 🔥 Current Status (2025-11-28 - ✅ TOUCH Y-OFFSET RE-ENABLED)
 
-**Latest Version**: v1.32.941 (Quick Win Logging Optimizations)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 48s)
-**Device Status**: ✅ v1.32.941 BUILT | ✅ All planned logging optimizations complete
-**Branch**: main (25 commits total - logging optimization roadmap complete)
-**Current Focus**: ✅ **COMPLETE: All high & medium priority logging optimizations done**
+**Latest Version**: v1.32.943 (Touch Y-Offset Optimization)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 52s)
+**Device Status**: ✅ v1.32.943 DEPLOYED | ✅ Touch Y-offset re-enabled with conservative 12.5% value
+**Branch**: main (26 commits total - neural layout optimization complete)
+**Current Focus**: ✅ **COMPLETE: Neural swipe typing optimizations (logging + touch offset)**
 **Test Status**: ✅ Coordinate scaling enables endpoint stabilization for short words
 **Session Summary**: 📄 **[SESSION_SUMMARY.md](../SESSION_SUMMARY.md)** - Complete technical details
 **Test Report**: 📄 **[TEST_REPORT_v1.32.929.md](../TEST_REPORT_v1.32.929.md)** - Detailed test results
@@ -30,7 +30,39 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-28) - ✅ LOGGING OPTIMIZATION ROADMAP COMPLETE! 🎉
+### 🔄 Latest Work (2025-11-28) - ✅ NEURAL LAYOUT OPTIMIZATIONS COMPLETE! 🎉
+
+**Session 6 - Touch Y-Offset Re-enablement (v1.32.943):**
+
+**Problem Identified**:
+- Touch Y-offset was disabled (set to 0.0f) in v1.32.467 for debugging QWERTY bounds
+- Previous 37% offset was too aggressive and caused top row key detection issues
+- No fat finger compensation active - reduces swipe typing accuracy
+- Short-term roadmap item in TECHNICAL_DEBT.md
+
+**Fix Applied**:
+- Re-enabled touch Y-offset with conservative 12.5% value (rowHeight * 0.125f)
+- Midpoint of recommended 10-15% range from TODO comment
+- NeuralLayoutHelper.kt lines 273-284: Updated implementation and comments
+- Balanced compensation: not too aggressive (37%), not disabled (0%)
+
+**Performance Impact**:
+- ✅ **Better tap target prediction**: Fat finger compensation active
+- ✅ **Improved swipe accuracy**: More forgiving touch detection
+- ✅ **Low risk**: Conservative value, previously working before debug disable
+- ✅ **Completes neural optimization**: Logging + layout tuning both done
+
+**Build & Deploy**:
+- v1.32.943: ✅ Compiled successfully (1m 52s)
+- ✅ Deployed and verified (no crashes or errors)
+- ✅ App process running (PID 31905)
+
+**Commits**:
+- `b7654463` - perf(neural): re-enable touch Y-offset with conservative 12.5% value
+
+**Roadmap Status**: Short-term optimization complete (TECHNICAL_DEBT.md line 278)
+
+---
 
 **Session 5 - Quick Win Logging Optimizations (v1.32.941):**
 
