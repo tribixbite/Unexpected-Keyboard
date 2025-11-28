@@ -225,6 +225,7 @@
   </PreferenceCategory>
   <PreferenceCategory android:title="About">
     <Preference android:key="version_info" android:title="Version Info" android:summary="Loading version info..."/>
+    <Preference android:key="check_updates" android:title="🔄 Check for Updates" android:summary="Check GitHub for new releases"/>
     <Preference android:key="update_app" android:title="Install Update" android:summary="Install update from /sdcard/unexpected/debug-kb.apk"/>
   </PreferenceCategory>
 </PreferenceScreen>

@@ -114,6 +114,12 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
     }
 
     private fun setupPreferenceHandlers() {
+        // Check for updates from GitHub
+        findPreference("check_updates")?.setOnPreferenceClickListener {
+            checkForGitHubUpdates()
+            true
+        }
+
         // Update app
         findPreference("update_app")?.setOnPreferenceClickListener {
             installUpdate()
@@ -680,6 +686,193 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun checkForGitHubUpdates() {
+        val progressDialog = ProgressDialog(this).apply {
+            setMessage("Checking for updates...")
+            setCancelable(false)
+            show()
+        }
+
+        Thread {
+            try {
+                val url = java.net.URL("https://api.github.com/repos/tribixbite/Unexpected-Keyboard/releases/latest")
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                val responseCode = connection.responseCode
+                if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                    val response = connection.inputStream.bufferedReader().readText()
+                    val json = JSONObject(response)
+
+                    val tagName = json.optString("tag_name", "unknown")
+                    val releaseName = json.optString("name", tagName)
+                    val htmlUrl = json.optString("html_url", "")
+                    val body = json.optString("body", "No release notes")
+                    val publishedAt = json.optString("published_at", "")
+
+                    // Find APK asset
+                    val assets = json.optJSONArray("assets")
+                    var apkUrl: String? = null
+                    var apkName: String? = null
+                    var apkSize: Long = 0
+
+                    if (assets != null) {
+                        for (i in 0 until assets.length()) {
+                            val asset = assets.getJSONObject(i)
+                            val name = asset.optString("name", "")
+                            if (name.endsWith(".apk")) {
+                                apkUrl = asset.optString("browser_download_url", null)
+                                apkName = name
+                                apkSize = asset.optLong("size", 0)
+                                break
+                            }
+                        }
+                    }
+
+                    runOnUiThread {
+                        progressDialog.dismiss()
+                        showUpdateDialog(tagName, releaseName, body, publishedAt, apkUrl, apkName, apkSize, htmlUrl)
+                    }
+                } else {
+                    runOnUiThread {
+                        progressDialog.dismiss()
+                        Toast.makeText(this, "❌ Failed to check updates (HTTP $responseCode)", Toast.LENGTH_LONG).show()
+                    }
+                }
+                connection.disconnect()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to check for updates", e)
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    Toast.makeText(this, "❌ Update check failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
+    private fun showUpdateDialog(
+        tagName: String,
+        releaseName: String,
+        body: String,
+        publishedAt: String,
+        apkUrl: String?,
+        apkName: String?,
+        apkSize: Long,
+        htmlUrl: String
+    ) {
+        val currentVersion = try {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (e: Exception) {
+            "unknown"
+        }
+
+        val sizeStr = if (apkSize > 0) "${apkSize / (1024 * 1024)} MB" else "unknown size"
+        val dateStr = if (publishedAt.isNotEmpty()) {
+            try {
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+                val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+                outputFormat.format(inputFormat.parse(publishedAt)!!)
+            } catch (e: Exception) {
+                publishedAt
+            }
+        } else ""
+
+        val message = buildString {
+            append("📦 Latest: $tagName\n")
+            append("📱 Current: $currentVersion\n")
+            if (dateStr.isNotEmpty()) append("📅 Released: $dateStr\n")
+            append("\n")
+            if (apkUrl != null) {
+                append("📥 Download: $apkName ($sizeStr)\n\n")
+            }
+            append("📝 Release Notes:\n")
+            append(body.take(500))
+            if (body.length > 500) append("...")
+        }
+
+        val builder = AlertDialog.Builder(this)
+            .setTitle("🔄 $releaseName")
+            .setMessage(message)
+            .setNegativeButton("Close", null)
+
+        if (apkUrl != null) {
+            builder.setPositiveButton("⬇️ Download & Install") { _, _ ->
+                downloadAndInstallApk(apkUrl, apkName ?: "update.apk")
+            }
+        }
+
+        builder.setNeutralButton("🌐 Open in Browser") { _, _ ->
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(htmlUrl))
+            startActivity(intent)
+        }
+
+        builder.show()
+    }
+
+    private fun downloadAndInstallApk(apkUrl: String, apkName: String) {
+        val progressDialog = ProgressDialog(this).apply {
+            setMessage("Downloading $apkName...")
+            setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+            setCancelable(false)
+            max = 100
+            show()
+        }
+
+        Thread {
+            try {
+                val url = java.net.URL(apkUrl)
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.connectTimeout = 30000
+                connection.readTimeout = 30000
+
+                val fileLength = connection.contentLength
+                val unexpectedDir = File("/storage/emulated/0/unexpected")
+                if (!unexpectedDir.exists()) {
+                    unexpectedDir.mkdirs()
+                }
+
+                val apkFile = File(unexpectedDir, apkName)
+                val input = connection.inputStream
+                val output = java.io.FileOutputStream(apkFile)
+
+                val buffer = ByteArray(8192)
+                var total: Long = 0
+                var count: Int
+
+                while (input.read(buffer).also { count = it } != -1) {
+                    total += count
+                    if (fileLength > 0) {
+                        val progress = (total * 100 / fileLength).toInt()
+                        runOnUiThread {
+                            progressDialog.progress = progress
+                        }
+                    }
+                    output.write(buffer, 0, count)
+                }
+
+                output.flush()
+                output.close()
+                input.close()
+                connection.disconnect()
+
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    Toast.makeText(this, "✅ Downloaded to ${apkFile.absolutePath}", Toast.LENGTH_LONG).show()
+                    installApkFile(apkFile)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to download APK", e)
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    Toast.makeText(this, "❌ Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 
     private fun fallbackEncrypted() {
