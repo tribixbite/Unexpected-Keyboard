@@ -8,13 +8,13 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - 🧪 TEST COVERAGE ENHANCEMENT)
+## 🔥 Current Status (2025-11-28 - ✨ TYPING ENHANCEMENTS)
 
-**Latest Version**: v1.32.948 (Test Coverage Enhancement)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 33s)
-**Device Status**: ✅ v1.32.947 DEPLOYED | ✅ All debug logging optimized
-**Branch**: main (39 commits total - logging complete + docs + test coverage)
-**Current Focus**: 🧪 **TEST COVERAGE: Building comprehensive unit tests (1/5 complete)**
+**Latest Version**: v1.32.952 (Typing Enhancements)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 8s)
+**Device Status**: ✅ v1.32.952 DEPLOYED | ✅ Auto-cap + double-space-to-period
+**Branch**: main (40 commits total - typing enhancements)
+**Current Focus**: ✨ **TYPING ENHANCEMENTS: Auto-cap triggers + double-space-to-period**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
 **Session Summary**: 📄 **[SESSION_SUMMARY.md](../SESSION_SUMMARY.md)** - Complete technical details
 **Test Report**: 📄 **[TEST_REPORT_v1.32.929.md](../TEST_REPORT_v1.32.929.md)** - Detailed test results
@@ -30,7 +30,35 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-28) - ✅ ALL LOGGING OPTIMIZATIONS COMPLETE! 🎉
+### 🔄 Latest Work (2025-11-28) - ✨ TYPING ENHANCEMENTS (v1.32.952)
+
+**Session 11 - Typing Enhancements & Issue Analysis:**
+
+**Issues Investigated**:
+1. ✅ DELETE_LAST_WORD function - Code path verified correct
+2. ✅ Settings/Clipboard short swipe triggers - Code verified (non-char keys work)
+3. ✅ Auto-capitalization - Fixed by adding punctuation triggers
+4. ✅ Shift+swipe ALL CAPS - Code exists (wasShiftActiveAtSwipeStart tracking)
+5. ✅ Double-space-to-period - Implemented new feature
+
+**Fixes Applied**:
+- Autocapitalisation.kt:149-154 - Added '.', '!', '?', '\n' to is_trigger_character()
+- KeyEventHandler.kt:36-39 - Added tracking vars for double-space detection
+- KeyEventHandler.kt:216-231 - Implemented double-space-to-period (500ms threshold)
+
+**Documentation Created**:
+- docs/specs/ISSUES_AND_RECOMMENDATIONS.md - Comprehensive issue analysis
+  - Documented 30+ hardcoded constants that should be exposed as settings
+  - High-priority: tap duration, dwell time, swipe distance thresholds
+  - Medium-priority: algorithm weights (shape, location, frequency)
+  - Low-priority: loop gesture detection, language detection thresholds
+
+**Commits**:
+- a6017c8f - feat(typing): add auto-capitalization triggers and double-space-to-period
+
+---
+
+### Previous Work (2025-11-28) - ✅ ALL LOGGING OPTIMIZATIONS COMPLETE! 🎉
 
 **Session 8 - Low-Priority Logging Cleanup (v1.32.947):**
 
