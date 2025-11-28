@@ -36,7 +36,9 @@ class KeyEventHandler(
     /** Track last typed character and timestamp for double-space-to-period feature */
     private var lastTypedChar: Char = '\u0000'
     private var lastTypedTimestamp: Long = 0L
-    private val DOUBLE_SPACE_THRESHOLD_MS = 500L // Max time between spaces
+    // Use configurable threshold from settings
+    private val doubleSpaceThresholdMs: Long
+        get() = Config.globalConfig().double_space_threshold
 
     /** Editing just started. */
     fun started(info: EditorInfo) {
@@ -217,7 +219,7 @@ class KeyEventHandler(
         val currentTime = System.currentTimeMillis()
         var textToCommit = text
         if (text.length == 1 && text[0] == ' ' && lastTypedChar == ' ' &&
-            (currentTime - lastTypedTimestamp) < DOUBLE_SPACE_THRESHOLD_MS) {
+            (currentTime - lastTypedTimestamp) < doubleSpaceThresholdMs) {
             // Delete the previous space and insert ". "
             conn.deleteSurroundingText(1, 0)
             textToCommit = ". "

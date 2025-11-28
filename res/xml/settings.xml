@@ -144,6 +144,22 @@
     <juloo.keyboard2.prefs.IntSlideBarPreference android:key="short_gesture_min_distance" android:title="@string/pref_short_gesture_distance_title" android:summary="@string/pref_short_gesture_distance_summary" android:defaultValue="30" min="10" max="95" android:dependency="short_gestures_enabled"/>
     <ListPreference android:key="circle_sensitivity" android:title="@string/pref_circle_sensitivity_title" android:summary="%s" android:defaultValue="2" android:entries="@array/pref_circle_sensitivity_entries" android:entryValues="@array/pref_circle_sensitivity_values"/>
     <ListPreference android:key="slider_sensitivity" android:title="@string/pref_slider_sensitivity_title" android:summary="%s" android:defaultValue="30" android:entries="@array/pref_slider_sensitivity_entries" android:entryValues="@array/pref_slider_sensitivity_values"/>
+    <PreferenceScreen android:key="advanced_gesture_settings" android:title="⚙️ Advanced Gesture Tuning" android:summary="Fine-tune tap, swipe, and slider timing thresholds">
+      <PreferenceCategory android:title="Tap &amp; Typing">
+        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="tap_duration_threshold" android:title="Tap Duration Threshold" android:summary="Maximum duration for a tap gesture (%sms). Higher values make taps easier but may interfere with swipes." android:defaultValue="150" min="50" max="500"/>
+        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="double_space_threshold" android:title="Double-Space-to-Period" android:summary="Maximum time between spaces to insert period (%sms). Set to 0 to disable." android:defaultValue="500" min="0" max="1000"/>
+      </PreferenceCategory>
+      <PreferenceCategory android:title="Swipe Recognition">
+        <juloo.keyboard2.prefs.IntSlideBarPreference android:key="swipe_min_dwell_time" android:title="Minimum Key Dwell Time" android:summary="Minimum time to register a key during swipe (%sms). Lower values allow faster swiping." android:defaultValue="10" min="0" max="50"/>
+        <juloo.keyboard2.prefs.SlideBarPreference android:key="swipe_noise_threshold" android:title="Movement Noise Filter" android:summary="Minimum distance to register movement (%s px). Higher values filter jitter but may lose data." android:defaultValue="2.0" min="0.5" max="10.0"/>
+        <juloo.keyboard2.prefs.SlideBarPreference android:key="swipe_high_velocity_threshold" android:title="High Velocity Threshold" android:summary="Velocity for fast swipe detection (%s px/sec). Higher allows faster swipes." android:defaultValue="1000.0" min="200.0" max="2000.0"/>
+      </PreferenceCategory>
+      <PreferenceCategory android:title="Slider Key Behavior">
+        <juloo.keyboard2.prefs.SlideBarPreference android:key="slider_speed_smoothing" android:title="Speed Smoothing" android:summary="Smoothing factor for slider movement (%s). Higher values are smoother but less responsive." android:defaultValue="0.7" min="0.1" max="0.95"/>
+        <juloo.keyboard2.prefs.SlideBarPreference android:key="slider_speed_max" android:title="Maximum Speed Multiplier" android:summary="Maximum slider acceleration (%sx). Higher values allow faster sliding." android:defaultValue="4.0" min="1.0" max="10.0"/>
+      </PreferenceCategory>
+      <Preference android:key="gesture_tuning_info" android:title="ℹ️ About These Settings" android:summary="These settings control low-level gesture recognition. If gestures feel laggy, reduce dwell time and noise threshold. If taps register as swipes, increase tap duration. Reset to defaults if typing becomes difficult." android:selectable="false"/>
+    </PreferenceScreen>
     <juloo.keyboard2.prefs.IntSlideBarPreference android:key="longpress_timeout" android:title="@string/pref_long_timeout_title" android:summary="%sms" android:defaultValue="600" min="50" max="2000"/>
     <CheckBoxPreference android:key="keyrepeat_enabled" android:title="@string/pref_keyrepeat_enabled" android:defaultValue="true"/>
     <juloo.keyboard2.prefs.IntSlideBarPreference android:key="longpress_interval" android:dependency="keyrepeat_enabled" android:title="@string/pref_long_interval_title" android:summary="%sms" android:defaultValue="25" min="5" max="100"/>

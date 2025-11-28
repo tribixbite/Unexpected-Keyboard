@@ -106,6 +106,17 @@ class Config private constructor(
     @JvmField var short_gestures_enabled = false
     @JvmField var short_gesture_min_distance = 0
 
+    // Gesture timing configuration (exposed hardcoded constants)
+    @JvmField var tap_duration_threshold = 150L // Max duration for a tap gesture (ms)
+    @JvmField var double_space_threshold = 500L // Max time between spaces for period replacement (ms)
+    @JvmField var swipe_min_dwell_time = 10L // Min time to register a key during swipe (ms)
+    @JvmField var swipe_noise_threshold = 2.0f // Min distance to register movement (pixels)
+    @JvmField var swipe_high_velocity_threshold = 1000.0f // Velocity threshold for fast swipes (px/sec)
+
+    // Slider speed configuration
+    @JvmField var slider_speed_smoothing = 0.7f // Smoothing factor for slider speed (0.0-1.0)
+    @JvmField var slider_speed_max = 4.0f // Maximum slider speed multiplier
+
     // Neural swipe prediction configuration
     @JvmField var neural_prediction_enabled = false
     @JvmField var neural_beam_width = 0
@@ -292,6 +303,17 @@ class Config private constructor(
 
         short_gestures_enabled = _prefs.getBoolean("short_gestures_enabled", true)
         short_gesture_min_distance = safeGetInt(_prefs, "short_gesture_min_distance", 20)
+
+        // Gesture timing configuration
+        tap_duration_threshold = safeGetInt(_prefs, "tap_duration_threshold", 150).toLong()
+        double_space_threshold = safeGetInt(_prefs, "double_space_threshold", 500).toLong()
+        swipe_min_dwell_time = safeGetInt(_prefs, "swipe_min_dwell_time", 10).toLong()
+        swipe_noise_threshold = safeGetFloat(_prefs, "swipe_noise_threshold", 2.0f)
+        swipe_high_velocity_threshold = safeGetFloat(_prefs, "swipe_high_velocity_threshold", 1000.0f)
+
+        // Slider speed configuration
+        slider_speed_smoothing = safeGetFloat(_prefs, "slider_speed_smoothing", 0.7f)
+        slider_speed_max = safeGetFloat(_prefs, "slider_speed_max", 4.0f)
 
         neural_prediction_enabled = _prefs.getBoolean("neural_prediction_enabled", true)
         neural_beam_width = safeGetInt(_prefs, "neural_beam_width", 4)

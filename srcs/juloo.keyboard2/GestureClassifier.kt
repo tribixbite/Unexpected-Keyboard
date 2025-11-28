@@ -8,7 +8,9 @@ import android.util.TypedValue
  * Eliminates race conditions by providing single source of truth for gesture classification
  */
 class GestureClassifier(private val context: Context) {
-    private val maxTapDurationMs: Long = 150 // Maximum duration for a tap
+    // Use configurable tap duration threshold from settings
+    private val maxTapDurationMs: Long
+        get() = Config.globalConfig().tap_duration_threshold
 
     enum class GestureType {
         TAP,

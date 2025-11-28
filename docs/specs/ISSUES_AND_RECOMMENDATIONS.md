@@ -153,15 +153,29 @@ The following settings ARE properly exposed:
 
 2. **Double-space-to-period** (KeyEventHandler.kt:207-236)
    - ✅ Tracks last character + timestamp
-   - ✅ Replaces double-space with ". " within 500ms threshold
+   - ✅ Replaces double-space with ". " within configurable threshold
    - ✅ Properly resets tracking to prevent triple-space issues
 
-### Settings to Expose (Future)
+3. **Advanced Gesture Tuning Settings** (v1.32.953)
+   - ✅ Created "Advanced Gesture Tuning" preference screen in Settings
+   - ✅ Exposed 7 high-priority hardcoded constants as user settings:
+     - `tap_duration_threshold` (150ms) - Max duration for tap gesture
+     - `double_space_threshold` (500ms) - Period replacement timing
+     - `swipe_min_dwell_time` (10ms) - Key registration during swipe
+     - `swipe_noise_threshold` (2.0px) - Movement noise filter
+     - `swipe_high_velocity_threshold` (1000 px/sec) - Fast swipe detection
+     - `slider_speed_smoothing` (0.7) - Slider movement smoothing
+     - `slider_speed_max` (4.0x) - Maximum slider acceleration
+   - ✅ Updated GestureClassifier.kt to use Config.tap_duration_threshold
+   - ✅ Updated KeyEventHandler.kt to use Config.double_space_threshold
+   - ✅ Updated ImprovedSwipeGestureRecognizer.kt to use Config values
+   - ✅ Updated Pointers.kt to use Config slider speed values
 
-1. Create "Advanced Swipe Settings" preference screen
-2. Expose high-priority constants listed above
-3. Add "Developer Options" section for algorithm tuning
-4. Make `DOUBLE_SPACE_THRESHOLD_MS` configurable
+### Settings Remaining (Lower Priority)
+
+1. Algorithm tuning weights (SAMPLING_POINTS, SHAPE_WEIGHT, etc.)
+2. Loop gesture thresholds (CLOSURE_THRESHOLD, MIN_LOOP_RADIUS)
+3. Language detection settings (already partially exposed)
 
 ### Testing Required
 
@@ -174,6 +188,18 @@ The following settings ARE properly exposed:
 
 ## 5. Files Modified/Created
 
+### v1.32.952 (Session 11)
 - Created: `docs/specs/ISSUES_AND_RECOMMENDATIONS.md` (this file)
 - Modified: `Autocapitalisation.kt` - Added punctuation triggers
 - Modified: `KeyEventHandler.kt` - Added double-space-to-period feature
+
+### v1.32.953 (Session 12)
+- Modified: `Config.kt` - Added 7 new configurable settings
+- Modified: `GestureClassifier.kt` - Use Config.tap_duration_threshold
+- Modified: `KeyEventHandler.kt` - Use Config.double_space_threshold
+- Modified: `ImprovedSwipeGestureRecognizer.kt` - Use Config for thresholds
+- Modified: `Pointers.kt` - Use Config for slider speed values
+- Modified: `res/xml/settings.xml` - Added "Advanced Gesture Tuning" screen
+- Modified: `.github/workflows/build.yml` - Update to main branch
+- Modified: `.github/workflows/deploy-web-demo.yml` - Update to main branch
+- Modified: `gen_layouts.py` - Fix XML encoding case for CI

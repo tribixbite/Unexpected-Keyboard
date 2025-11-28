@@ -813,8 +813,8 @@ class Pointers(
          */
         private fun update_speed(travelled: Float, x: Float, y: Float) {
             val now = System.currentTimeMillis()
-            val instant_speed = min(SLIDING_SPEED_MAX, travelled / (now - last_move_ms) + 1f)
-            speed = speed + (instant_speed - speed) * SLIDING_SPEED_SMOOTHING
+            val instant_speed = min(getSlidingSpeedMax(), travelled / (now - last_move_ms) + 1f)
+            speed = speed + (instant_speed - speed) * getSlidingSpeedSmoothing()
             last_move_ms = now
             last_x = x
             last_y = y
@@ -1018,9 +1018,14 @@ class Pointers(
             7, 2, 2, 6, 4, 4, 4, 8, 8, 3, 3, 5, 5, 1, 1, 7
         )
 
-        // Sliding constants (moved from inner class companion object)
-        const val SLIDING_SPEED_SMOOTHING = 0.7f
-        const val SLIDING_SPEED_MAX = 4f
+        // Sliding constants - use Config where available, fallback to defaults
+        // These are used in Sliding class which may not have direct Config access
         const val SLIDING_SPEED_VERTICAL_MULT = 0.5f
+
+        // Helper functions to get configurable slider values
+        @JvmStatic
+        fun getSlidingSpeedSmoothing(): Float = Config.globalConfig().slider_speed_smoothing
+        @JvmStatic
+        fun getSlidingSpeedMax(): Float = Config.globalConfig().slider_speed_max
     }
 }
