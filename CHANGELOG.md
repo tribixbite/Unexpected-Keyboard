@@ -5,6 +5,30 @@ All notable changes to Unexpected Keyboard - Neural Swipe Typing Edition will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.925] - 2025-11-27
+
+### Fixed - Critical Short Gesture + Modifier Conflict 🐛
+- **Short Swipe + Modifiers**: Fixed shift+c producing period (.) instead of C
+- **Root Cause**: Short gesture detection (v1.32.923 fix) triggered even when modifiers active
+- **Discovery**: User reported shift+c → period instead of uppercase C
+- **Analysis**: SW gesture on 'c' key produces '.', short gestures fired before modifier check
+- **Impact**: Any modifier (shift, fn, ctrl) + key press could accidentally trigger gestures
+- **Fix**: Disable short gestures when ANY modifiers are active (`ptr.modifiers.size() == 0`)
+- **Rationale**: When modifiers pressed, user wants modified character (C), not gesture (.)
+- **Code Changes**: `srcs/juloo.keyboard2/Pointers.kt` lines 208-213
+- **Now Working**:
+  - ✅ Shift+C → 'C' (uppercase), NOT '.' (period)
+  - ✅ Fn+key → function variant, NOT gesture
+  - ✅ Ctrl+key → control character, NOT gesture
+  - ✅ Short gestures still work when NO modifiers active
+
+### Performance
+- **No Impact**: Simple size check before gesture detection
+- **Memory**: No additional overhead
+- **UX Improvement**: Typing with modifiers now predictable and reliable
+
+---
+
 ## [1.32.923] - 2025-11-27
 
 ### Fixed - Critical Path Size Condition Bug 🐛

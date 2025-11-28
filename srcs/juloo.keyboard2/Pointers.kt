@@ -197,14 +197,20 @@ class Pointers(
                 Log.d(
                     "Pointers", "TAP path: short_gestures=${_config.short_gestures_enabled} " +
                         "hasLeftKey=${ptr.hasLeftStartingKey} " +
-                        "pathSize=${swipePath?.size ?: 0}"
+                        "pathSize=${swipePath?.size ?: 0} " +
+                        "modifiers=${ptr.modifiers.size()}"
                 )
 
-                // CRITICAL FIX: Changed from swipePath.size > 1 to >= 1
+                // CRITICAL FIX v1.32.923: Changed from swipePath.size > 1 to >= 1
                 // Some gestures only collect 1 point (downX,downY) before UP fires
                 // We can still calculate direction from ptr.downX/downY to the last point
+                //
+                // CRITICAL FIX v1.32.924: Disable short gestures when modifiers are active
+                // When shift/fn/ctrl are pressed, user wants the modified character (e.g. 'C')
+                // not a gesture (e.g. '.' from SW swipe on 'c' key)
                 if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
-                    swipePath != null && swipePath.size >= 1
+                    swipePath != null && swipePath.size >= 1 &&
+                    ptr.modifiers.size() == 0
                 ) {
                     val lastPoint = swipePath[swipePath.size - 1]
                     val dx = lastPoint.x - ptr.downX
