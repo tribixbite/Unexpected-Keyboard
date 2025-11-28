@@ -178,14 +178,24 @@ class Pointers(
 
             val gestureType = _gestureClassifier.classify(gestureData)
 
+            // CRITICAL FIX: Only Char keys can trigger Neural Swipe Typing
+            // For non-Char keys (like Backspace), even if the gesture is long (classified as SWIPE),
+            // we must treat it as a TAP/Short Gesture to allow directional actions (e.g. Delete Word)
+            val isCharKey = ptr.value != null && ptr.value!!.getKind() == KeyValue.Kind.Char
+            val effectiveGestureType = if (!isCharKey && gestureType == GestureClassifier.GestureType.SWIPE) {
+                GestureClassifier.GestureType.TAP
+            } else {
+                gestureType
+            }
+
             Log.d(
-                "Pointers", "Gesture classified as: $gestureType " +
+                "Pointers", "Gesture classified as: $gestureType (effective=$effectiveGestureType) " +
                     "(hasLeftKey=${ptr.hasLeftStartingKey} " +
                     "distance=$totalDistance " +
                     "time=${timeElapsed}ms)"
             )
 
-            if (gestureType == GestureClassifier.GestureType.SWIPE) {
+            if (effectiveGestureType == GestureClassifier.GestureType.SWIPE) {
                 // This is a swipe gesture - send to neural predictor
                 Log.d("Pointers", "Sending to neural predictor")
                 _handler.onSwipeEnd(_swipeRecognizer)
@@ -210,10 +220,13 @@ class Pointers(
                 // NOT a gesture (e.g. '.' from SW swipe on 'c' key)
                 // BUT: Allow gestures on non-CHAR keys (backspace, ctrl, fn) regardless of modifiers
                 // This allows backspace NW→delete_last_word, ctrl SW→clipboard, etc.
-                val isCharKey = ptr.value != null && ptr.value!!.getKind() == KeyValue.Kind.Char
                 val shouldBlockGesture = isCharKey && ptr.modifiers.size() > 0
+                
+                // CRITICAL FIX: Allow leaving the key bounds for non-Char keys (like Backspace)
+                // This allows "Short Swipe over Backspace" (which often leaves the key) to trigger delete_last_word
+                val allowLeftKey = !isCharKey
 
-                if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
+                if (_config.short_gestures_enabled && (!ptr.hasLeftStartingKey || allowLeftKey) &&
                     swipePath != null && swipePath.size >= 1 &&
                     !shouldBlockGesture
                 ) {
