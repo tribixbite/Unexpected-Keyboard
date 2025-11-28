@@ -10,9 +10,9 @@
 
 ## 🔥 Current Status (2025-11-28 - ✅ PROJECT CLEANUP COMPLETE)
 
-**Latest Version**: v1.32.954 (Project Cleanup)
+**Latest Version**: v1.32.955 (Complete High-Priority Settings)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.953 DEPLOYED | ✅ Auto-cap + double-space + gesture tuning settings
+**Device Status**: ✅ v1.32.955 DEPLOYED | ✅ Auto-cap + double-space + 9 gesture tuning settings
 **Branch**: main (✅ All GitHub Actions pass)
 **Current Focus**: ✅ **PROJECT CLEANUP: MD files organized, GH Actions fixed, settings exposed**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
@@ -55,9 +55,22 @@
 
 **Commits**:
 - 23fa934d - fix(ci): update workflows for main branch and fix layouts encoding
-- 2d8845c0 - feat(settings): expose gesture timing thresholds as user settings
+- 2d8845c0 - feat(settings): expose gesture timing thresholds as user settings (7 settings)
 - ba979464 - chore: archive obsolete MD files for cleaner project structure
 - 9544ce5a - docs: update specs README and ISSUES_AND_RECOMMENDATIONS
+- dcfaa029 - docs: update pm.md with session 13 cleanup summary
+- ba905e9c - feat(settings): expose swipe distance thresholds (2 more settings)
+
+**All High-Priority Settings Now Exposed (9 total)**:
+1. tap_duration_threshold (150ms) - Max tap gesture duration
+2. double_space_threshold (500ms) - Period replacement timing
+3. swipe_min_dwell_time (10ms) - Key registration during swipe
+4. swipe_noise_threshold (2.0px) - Movement noise filter
+5. swipe_high_velocity_threshold (1000 px/sec) - Fast swipe detection
+6. slider_speed_smoothing (0.7) - Slider movement smoothing
+7. slider_speed_max (4.0x) - Maximum slider acceleration
+8. swipe_min_distance (50px) - Minimum swipe distance
+9. swipe_min_key_distance (40px) - Minimum distance between keys
 
 ---
 
