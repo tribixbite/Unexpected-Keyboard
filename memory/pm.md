@@ -10,11 +10,11 @@
 
 ## 🔥 Current Status (2025-11-28 - ✅ Session 15 Complete)
 
-**Latest Version**: v1.32.960 (GitHub Update Permission Fix)
+**Latest Version**: v1.32.961 (DownloadManager for APK Downloads)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.960 DEPLOYED | ✅ GitHub updates working, all features stable
+**Device Status**: ✅ v1.32.961 DEPLOYED | ✅ GitHub updates working, no permission prompts
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 15: Fix GitHub update check permission denied**
+**Current Focus**: ✅ **Session 15: Fix download permission denied (no permissions needed)**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
 **Audit Report**: **[migration-audit.md](migration-audit.md)** - ✅ 1 bug found (inherited, fixed)
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)**
@@ -22,36 +22,42 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED**
 
-### 🆕 Session 15 Summary (v1.32.959 → v1.32.960)
+### 🆕 Session 15 Summary (v1.32.959 → v1.32.961)
 
-**Bug Fixed:**
+**Bugs Fixed:**
 1. **✅ GitHub Update Check Permission Denied** (v1.32.960)
    - Root cause: Missing INTERNET permission in AndroidManifest.xml
    - Fix: Added `<uses-permission android:name="android.permission.INTERNET"/>`
 
+2. **✅ APK Download Permission Denied** (v1.32.961)
+   - Root cause: Direct file writes to `/storage/emulated/0/Download/` require storage permission
+   - Fix: Use Android DownloadManager (handles its own permissions)
+   - Fallback: App-specific storage (`getExternalFilesDir`) - no permissions needed
+
 **Improvements:**
-1. **Enhanced Error Handling** - Better error messages with specific handling for:
+1. **DownloadManager Integration** (v1.32.961):
+   - Uses system DownloadManager for APK downloads
+   - Shows download progress in notification tray
+   - Downloads to system Downloads folder (no permission needed)
+   - Auto-monitors completion and triggers install
+   - Fallback to app-specific storage if DownloadManager fails
+
+2. **Enhanced Error Handling** - Better error messages with specific handling for:
    - `UnknownHostException` (no internet)
    - `SocketTimeoutException` (connection timeout)
    - `SecurityException` (permission denied)
    - Fallback dialog with "Open GitHub Releases" option
 
-2. **Multi-folder APK Search** - Install Update now searches:
-   - `/unexpected/` (custom folder)
-   - `/Download/` and `/Downloads/` (downloads folders)
+3. **Multi-folder APK Search** - Install Update now searches:
+   - App-specific storage first (no permissions needed)
+   - System Downloads folder (Environment.DIRECTORY_DOWNLOADS)
+   - Legacy paths for backward compatibility
    - Shows folder source in selection dialog
    - "Browse..." button for file picker
-   - GitHub releases link when no APKs found
-
-3. **Improved Download Flow**:
-   - Saves to Downloads folder first (more accessible)
-   - Falls back to /unexpected/ or app storage if needed
-   - Progress shows KB downloaded
-   - Cleans up partial downloads on failure
-   - Offers browser fallback on failure
 
 **Commits:**
 - `d96b7839` - fix(settings): resolve GitHub update check permission denied error
+- `585168de` - fix(settings): use DownloadManager for APK downloads (no permission needed)
 
 ---
 
