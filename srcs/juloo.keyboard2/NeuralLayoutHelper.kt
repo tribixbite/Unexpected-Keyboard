@@ -271,15 +271,14 @@ class NeuralLayoutHelper(
                 )
 
                 // Touch Y-offset for fat finger compensation
-                // DISABLED (v1.32.467): The 37% offset was too aggressive and may have caused issues
-                // with top row key detection. Setting to 0 to isolate QWERTY bounds fix.
-                // TODO: Re-enable with smaller offset (10-15%) after verifying bounds work correctly
-                val touchYOffset = 0.0f // Was: rowHeight * 0.37f
+                // RE-ENABLED (v1.32.942): Conservative 12.5% offset for better tap target prediction
+                // Previous 37% was too aggressive, 0% had no compensation - 12.5% is balanced
+                val touchYOffset = rowHeight * 0.125f // Conservative value (10-15% recommended range)
                 _predictionCoordinator.getNeuralEngine()!!.setTouchYOffset(touchYOffset)
                 Log.d(
                     TAG,
                     String.format(
-                        "Touch Y-offset: %.0f pixels (DISABLED for debugging, row height=%.0f)",
+                        "Touch Y-offset: %.0f pixels (12.5%% of row height %.0f)",
                         touchYOffset, rowHeight
                     )
                 )
