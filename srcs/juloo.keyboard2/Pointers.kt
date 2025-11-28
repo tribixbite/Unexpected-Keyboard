@@ -372,7 +372,8 @@ class Pointers(
         }
 
         // Initialize swipe typing if enabled and this could be the start of a swipe
-        if (_config.swipe_typing_enabled && _ptrs.isEmpty() && key != null) {
+        // Use countActivePointers() == 0 instead of _ptrs.isEmpty() to handle latched Shift
+        if (_config.swipe_typing_enabled && countActivePointers() == 0 && key != null) {
             _swipeRecognizer.startSwipe(x, y, key)
         }
 
