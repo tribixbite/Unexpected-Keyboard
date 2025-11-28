@@ -419,4 +419,89 @@ class AutocapitalisationTest {
         assertTrue((supported and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES) != 0)
         assertTrue((supported and InputType.TYPE_TEXT_FLAG_CAP_WORDS) != 0)
     }
+
+    // ============================================
+    // TRIGGER CHARACTER TESTS (v1.32.952)
+    // ============================================
+
+    @Test
+    fun testTyped_period_triggersCapsCheck() {
+        mockEditorInfo.inputType = InputType.TYPE_CLASS_TEXT or
+                                   InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        mockEditorInfo.initialCapsMode = 0
+        `when`(mockInputConnection.getCursorCapsMode(anyInt())).thenReturn(1)
+
+        autocap.started(mockEditorInfo, mockInputConnection)
+        clearInvocations(mockCallback)
+
+        // Type a period - should trigger caps mode check
+        autocap.typed(".")
+
+        // Should schedule a callback (via handler.postDelayed)
+        verify(mockCallback, timeout(100)).update_shift_state(anyBoolean(), anyBoolean())
+    }
+
+    @Test
+    fun testTyped_exclamation_triggersCapsCheck() {
+        mockEditorInfo.inputType = InputType.TYPE_CLASS_TEXT or
+                                   InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        mockEditorInfo.initialCapsMode = 0
+        `when`(mockInputConnection.getCursorCapsMode(anyInt())).thenReturn(1)
+
+        autocap.started(mockEditorInfo, mockInputConnection)
+        clearInvocations(mockCallback)
+
+        // Type an exclamation mark - should trigger caps mode check
+        autocap.typed("!")
+
+        verify(mockCallback, timeout(100)).update_shift_state(anyBoolean(), anyBoolean())
+    }
+
+    @Test
+    fun testTyped_question_triggersCapsCheck() {
+        mockEditorInfo.inputType = InputType.TYPE_CLASS_TEXT or
+                                   InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        mockEditorInfo.initialCapsMode = 0
+        `when`(mockInputConnection.getCursorCapsMode(anyInt())).thenReturn(1)
+
+        autocap.started(mockEditorInfo, mockInputConnection)
+        clearInvocations(mockCallback)
+
+        // Type a question mark - should trigger caps mode check
+        autocap.typed("?")
+
+        verify(mockCallback, timeout(100)).update_shift_state(anyBoolean(), anyBoolean())
+    }
+
+    @Test
+    fun testTyped_newline_triggersCapsCheck() {
+        mockEditorInfo.inputType = InputType.TYPE_CLASS_TEXT or
+                                   InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        mockEditorInfo.initialCapsMode = 0
+        `when`(mockInputConnection.getCursorCapsMode(anyInt())).thenReturn(1)
+
+        autocap.started(mockEditorInfo, mockInputConnection)
+        clearInvocations(mockCallback)
+
+        // Type a newline - should trigger caps mode check
+        autocap.typed("\n")
+
+        verify(mockCallback, timeout(100)).update_shift_state(anyBoolean(), anyBoolean())
+    }
+
+    @Test
+    fun testTyped_comma_doesNotTriggerCapsCheck() {
+        mockEditorInfo.inputType = InputType.TYPE_CLASS_TEXT or
+                                   InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        mockEditorInfo.initialCapsMode = 0
+
+        autocap.started(mockEditorInfo, mockInputConnection)
+        clearInvocations(mockCallback)
+
+        // Type a comma - should NOT trigger caps mode check (not a trigger char)
+        autocap.typed(",")
+
+        // Callback will still be called but shouldEnableShift should be false
+        verify(mockCallback, timeout(100)).update_shift_state(false, anyBoolean())
+    }
 }
