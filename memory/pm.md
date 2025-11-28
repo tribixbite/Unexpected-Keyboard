@@ -10,9 +10,9 @@
 
 ## 🔥 Current Status (2025-11-28 - ✅ PROJECT CLEANUP COMPLETE)
 
-**Latest Version**: v1.32.955 (Complete High-Priority Settings)
+**Latest Version**: v1.32.957 (Bug Fixes + Settings Complete)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.955 DEPLOYED | ✅ Auto-cap + double-space + 9 gesture tuning settings
+**Device Status**: ✅ v1.32.957 DEPLOYED | ✅ Shift+Swipe fixed, Calibration fixed, 9 gesture settings
 **Branch**: main (✅ All GitHub Actions pass)
 **Current Focus**: ✅ **PROJECT CLEANUP: MD files organized, GH Actions fixed, settings exposed**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
