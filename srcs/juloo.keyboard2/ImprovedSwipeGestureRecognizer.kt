@@ -211,6 +211,13 @@ open class ImprovedSwipeGestureRecognizer {
         // Apply endpoint stabilization
         stabilizeEndpoints()
         
+        // Re-evaluate swipe typing status after stabilization
+        // This handles cases where the swipe was too fast/short to trigger detection during movement,
+        // but endpoint stabilization found a second valid key (e.g. "for", "not", "it")
+        if (!_isSwipeTyping && _touchedKeys.size >= 2 && _totalDistance > MIN_SWIPE_DISTANCE) {
+            _isSwipeTyping = shouldConsiderSwipeTyping()
+        }
+        
         if (_isSwipeTyping && _touchedKeys.size >= 2) {
             val finalKeys: MutableList<KeyboardData.Key>
             

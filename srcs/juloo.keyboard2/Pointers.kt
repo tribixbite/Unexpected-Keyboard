@@ -234,12 +234,26 @@ class Pointers(
                     val dx = lastPoint.x - ptr.downX
                     val dy = lastPoint.y - ptr.downY
                     val distance = sqrt(dx * dx + dy * dy)
+                    
+                    // CRITICAL FIX: Calculate keyHypotenuse since it's needed for threshold calculation
                     val keyHypotenuse = _handler.getKeyHypotenuse(ptr.key)
-                    val minDistance = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f)
+                    
+                    // Calculate threshold: Use MIN of percentage-based and absolute threshold
+                    // This ensures wide keys (like Backspace) don't require huge swipes, 
+                    // while small keys still respect the percentage to avoid accidental triggers.
+                    val percentThreshold = keyHypotenuse * (_config.short_gesture_min_distance / 100.0f)
+                    val absoluteThreshold = _config.swipe_dist_px
+                    // Use absolute threshold as a ceiling for the required distance
+                    // If swipe_dist_px is 0 (not set), fallback to percentage
+                    val minDistance = if (absoluteThreshold > 0) {
+                        min(percentThreshold, absoluteThreshold * 1.5f) 
+                    } else {
+                        percentThreshold
+                    }
 
                     Log.d(
                         "Pointers", "Short gesture check: distance=$distance " +
-                            "minDistance=$minDistance " +
+                            "minDistance=$minDistance (abs=$absoluteThreshold, pct=$percentThreshold) " +
                             "(${_config.short_gesture_min_distance}% of $keyHypotenuse)"
                     )
 
