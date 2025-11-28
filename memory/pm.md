@@ -7,14 +7,14 @@
 
 ---
 
-## 🔥 Current Status (2025-11-27 - 💯 FULLY TESTED & READY! ✅)
+## 🔥 Current Status (2025-11-27 - 🐛 GESTURE DEBUGGING IN PROGRESS)
 
-**Latest Version**: v1.32.929 (GESTURE REGRESSION FIX + Shift+Swipe ALL CAPS)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 58s)
-**Device Status**: ✅ v1.32.929 INSTALLED & TESTED - All automated tests PASSED
-**Branch**: main (13 commits total - 3 bug fixes + 1 feature + comprehensive testing)
-**Current Focus**: ✅ **COMPLETE: 3 Fixes + 1 Feature + Full Test Suite**
-**Test Status**: ✅ 6/6 automated tests PASSED | ⏳ Manual verification pending
+**Latest Version**: v1.32.930 (GESTURE FIX REBUILT + Migration Review Complete)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
+**Device Status**: ✅ v1.32.930 INSTALLED | ❌ Gestures still not working
+**Branch**: main (15 commits total - includes migration review documentation)
+**Current Focus**: 🐛 **DEBUGGING: Gesture regression - touch path collection issue**
+**Test Status**: ⚠️ ADB synthetic swipe tests unreliable | ⏳ Requires manual device testing
 **Session Summary**: 📄 **[SESSION_SUMMARY.md](../SESSION_SUMMARY.md)** - Complete technical details
 **Test Report**: 📄 **[TEST_REPORT_v1.32.929.md](../TEST_REPORT_v1.32.929.md)** - Detailed test results
 **Testing Summary**: 📄 **[TESTING_SUMMARY.md](../TESTING_SUMMARY.md)** - Test metrics & procedures
@@ -29,9 +29,39 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-27) - 🐛 GESTURE REGRESSION FIX! ⚡
+### 🔄 Latest Work (2025-11-27) - 🐛 GESTURE DEBUGGING! 🔍
 
-**v1.32.929 - Gesture Regression Fix:**
+**v1.32.930 - Gesture Debugging & Migration Review:**
+
+**Current Issue:**
+- User reports gestures still not working on v1.32.930
+- Manual testing required - ADB synthetic swipes don't properly trigger touch events
+- Logcat shows `distance=0.0` for all gestures (path collection issue)
+- Path always shows `pathSize=1` (only touch-down event, no move events)
+
+**Investigation Findings:**
+1. **Code Logic**: ✅ CORRECT - should allow gestures on backspace/ctrl/fn
+2. **Touch Collection**: ❌ FAILING - `onTouchMove()` not capturing swipe path
+3. **Distance Calculation**: ❌ ALWAYS ZERO - indicates path not being collected
+
+**Root Cause Hypothesis:**
+- Touch event collection system not capturing `MotionEvent.ACTION_MOVE` properly
+- Only recording initial touch-down, missing swipe motion
+- May be view touch handling configuration issue
+
+**Debug Documentation:**
+- Created `GESTURE_DEBUG_v930.md` with complete analysis
+- Created `MIGRATION_REVIEW.md` documenting completed Java→Kotlin migration
+- All 5 Java test files in `../migration2/` reviewed (should remain as test utilities)
+
+**Next Steps:**
+1. Manual device testing required (ADB swipes unreliable)
+2. Monitor logcat during manual gestures
+3. Investigate `onTouchMove()` event handling if still failing
+
+---
+
+**v1.32.929 - Gesture Regression Fix (Superseded by v1.32.930):**
 
 **Problem Discovered:**
 - User reported: "short swipe for backspace to delete word isnt working. same with ctrl and fn"
