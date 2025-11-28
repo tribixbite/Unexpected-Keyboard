@@ -226,14 +226,15 @@ class Pointers(
                 // This allows "Short Swipe over Backspace" (which often leaves the key) to trigger delete_last_word
                 val allowLeftKey = !isCharKey
 
+                // Use tracked last position instead of relying on swipePath (which might be filtered/smoothed)
+                val dx = ptr.lastX - ptr.downX
+                val dy = ptr.lastY - ptr.downY
+                val distance = sqrt(dx * dx + dy * dy)
+
                 if (_config.short_gestures_enabled && (!ptr.hasLeftStartingKey || allowLeftKey) &&
-                    swipePath != null && swipePath.size >= 1 &&
+                    distance > 0 && // Basic check that we moved
                     !shouldBlockGesture
                 ) {
-                    val lastPoint = swipePath[swipePath.size - 1]
-                    val dx = lastPoint.x - ptr.downX
-                    val dy = lastPoint.y - ptr.downY
-                    val distance = sqrt(dx * dx + dy * dy)
                     
                     // CRITICAL FIX: Calculate keyHypotenuse since it's needed for threshold calculation
                     val keyHypotenuse = _handler.getKeyHypotenuse(ptr.key)
@@ -427,6 +428,10 @@ class Pointers(
 
     fun onTouchMove(x: Float, y: Float, pointerId: Int) {
         val ptr = getPtr(pointerId) ?: return
+
+        // Update last known position
+        ptr.lastX = x
+        ptr.lastY = y
 
         Log.d(
             "Pointers", "onTouchMove: id=$pointerId pos=($x,$y) " +
@@ -707,6 +712,11 @@ class Pointers(
         /** See [FLAG_P_*] flags. */
         var flags: Int
     ) {
+        /** Last known X position. */
+        var lastX: Float = downX
+        /** Last known Y position. */
+        var lastY: Float = downY
+
         /** Gesture state, see [Gesture]. [null] means the pointer has not moved out of the center region. */
         var gesture: Gesture? = null
 
