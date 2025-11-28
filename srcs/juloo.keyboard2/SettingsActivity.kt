@@ -28,6 +28,8 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import android.app.DownloadManager
+import android.os.Environment
 
 class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
     companion object {
@@ -576,14 +578,24 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
     }
 
     private fun installUpdate() {
-        // Search multiple common locations for APK files
-        val searchDirs = listOf(
-            File("/storage/emulated/0/unexpected"),           // Custom app folder
-            File("/storage/emulated/0/Download"),             // Downloads folder
-            File("/storage/emulated/0/Downloads"),            // Alternative downloads
-            File("/sdcard/Download"),                         // Fallback path
-            File("/sdcard/unexpected")                        // Fallback custom folder
-        )
+        // Search multiple locations for APK files
+        // Priority: app-specific storage first (no permissions needed), then system folders
+        val appDownloadsDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+        val searchDirs = mutableListOf<File>()
+
+        // App-specific storage (no permissions needed)
+        appDownloadsDir?.let { searchDirs.add(it) }
+
+        // System Downloads folder (DownloadManager saves here)
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)?.let {
+            searchDirs.add(it)
+        }
+
+        // Legacy paths for backward compatibility (may not be accessible on Android 10+)
+        searchDirs.addAll(listOf(
+            File("/storage/emulated/0/unexpected"),
+            File("/storage/emulated/0/Download")
+        ))
 
         val allApkFiles = mutableListOf<Pair<File, String>>() // Pair of (file, source folder name)
 
@@ -598,8 +610,9 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                     // Avoid duplicates from /sdcard and /storage/emulated/0 being the same
                     if (allApkFiles.none { it.first.absolutePath == apk.absolutePath }) {
                         val folderName = when {
+                            dir == appDownloadsDir -> "App Storage/"
                             dir.absolutePath.contains("unexpected") -> "unexpected/"
-                            dir.absolutePath.contains("ownload") -> "Downloads/"
+                            dir.absolutePath.contains("ownload", ignoreCase = true) -> "Downloads/"
                             else -> dir.name + "/"
                         }
                         allApkFiles.add(Pair(apk, folderName))
@@ -611,7 +624,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
         if (allApkFiles.isEmpty()) {
             AlertDialog.Builder(this)
                 .setTitle("📦 No APKs Found")
-                .setMessage("No Unexpected Keyboard APK files found in:\n• /unexpected/\n• /Download/\n\nYou can:\n• Download from GitHub first\n• Use file picker to select APK manually")
+                .setMessage("No Unexpected Keyboard APK files found.\n\nUse 'Check for Updates' to download, or use file picker to select an APK manually.")
                 .setPositiveButton("🌐 GitHub Releases") { _, _ ->
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_RELEASES_URL))
                     startActivity(intent)
@@ -889,6 +902,77 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
     }
 
     private fun downloadAndInstallApk(apkUrl: String, apkName: String) {
+        // Try using system DownloadManager first (handles permissions better)
+        try {
+            val request = DownloadManager.Request(Uri.parse(apkUrl))
+                .setTitle("Unexpected Keyboard Update")
+                .setDescription("Downloading $apkName")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, apkName)
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+
+            val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val downloadId = downloadManager.enqueue(request)
+
+            Toast.makeText(this, "📥 Download started - check notifications", Toast.LENGTH_LONG).show()
+
+            // Monitor download in background
+            monitorDownload(downloadId, apkName)
+            return
+        } catch (e: Exception) {
+            Log.w(TAG, "DownloadManager failed, trying direct download", e)
+        }
+
+        // Fallback: Direct download to app-specific storage (no permission needed on Android 10+)
+        doDirectDownload(apkUrl, apkName)
+    }
+
+    private fun monitorDownload(downloadId: Long, apkName: String) {
+        val handler = Handler(Looper.getMainLooper())
+        val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+
+        val checkRunnable = object : Runnable {
+            override fun run() {
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = downloadManager.query(query)
+
+                if (cursor.moveToFirst()) {
+                    val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    val status = if (statusIndex >= 0) cursor.getInt(statusIndex) else -1
+
+                    when (status) {
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            cursor.close()
+                            // Find the downloaded file
+                            val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                            val apkFile = File(downloadDir, apkName)
+                            if (apkFile.exists()) {
+                                Toast.makeText(this@SettingsActivity, "✅ Download complete!", Toast.LENGTH_SHORT).show()
+                                installApkFile(apkFile)
+                            } else {
+                                Toast.makeText(this@SettingsActivity, "⚠️ Download complete - check Downloads folder", Toast.LENGTH_LONG).show()
+                            }
+                            return
+                        }
+                        DownloadManager.STATUS_FAILED -> {
+                            cursor.close()
+                            Toast.makeText(this@SettingsActivity, "❌ Download failed", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+                        else -> {
+                            // Still downloading, check again
+                            handler.postDelayed(this, 1000)
+                        }
+                    }
+                }
+                cursor.close()
+            }
+        }
+        handler.postDelayed(checkRunnable, 1000)
+    }
+
+    private fun doDirectDownload(apkUrl: String, apkName: String) {
         val progressDialog = ProgressDialog(this).apply {
             setMessage("Downloading $apkName...")
             setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
@@ -904,7 +988,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                 val connection = url.openConnection() as java.net.HttpURLConnection
                 connection.setRequestProperty("User-Agent", "Unexpected-Keyboard-App")
                 connection.connectTimeout = 30000
-                connection.readTimeout = 60000  // Longer timeout for download
+                connection.readTimeout = 60000
                 connection.instanceFollowRedirects = true
 
                 val responseCode = connection.responseCode
@@ -914,27 +998,11 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
 
                 val fileLength = connection.contentLength
 
-                // Try Downloads folder first (more accessible), fall back to app-specific folder
-                val downloadDirs = listOf(
-                    File("/storage/emulated/0/Download"),
-                    File("/storage/emulated/0/unexpected"),
-                    getExternalFilesDir(null)  // App-specific external storage
-                )
+                // Use app-specific external storage (no permission needed on Android 10+)
+                val targetDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                    ?: throw java.io.IOException("Cannot access app storage")
 
-                var targetDir: File? = null
-                for (dir in downloadDirs) {
-                    if (dir != null) {
-                        if (!dir.exists()) dir.mkdirs()
-                        if (dir.canWrite()) {
-                            targetDir = dir
-                            break
-                        }
-                    }
-                }
-
-                if (targetDir == null) {
-                    throw java.io.IOException("No writable storage location found")
-                }
+                if (!targetDir.exists()) targetDir.mkdirs()
 
                 apkFile = File(targetDir, apkName)
                 val input = connection.inputStream
@@ -967,21 +1035,8 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                     Toast.makeText(this, "✅ Downloaded to ${finalApkFile.absolutePath}", Toast.LENGTH_LONG).show()
                     installApkFile(finalApkFile)
                 }
-            } catch (e: SecurityException) {
-                Log.e(TAG, "Permission denied for download", e)
-                runOnUiThread {
-                    progressDialog.dismiss()
-                    showDownloadFailedDialog("Storage permission denied", apkUrl)
-                }
-            } catch (e: java.net.UnknownHostException) {
-                Log.e(TAG, "No internet for download", e)
-                runOnUiThread {
-                    progressDialog.dismiss()
-                    showDownloadFailedDialog("No internet connection", apkUrl)
-                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to download APK", e)
-                // Clean up partial download
                 apkFile?.delete()
                 runOnUiThread {
                     progressDialog.dismiss()
