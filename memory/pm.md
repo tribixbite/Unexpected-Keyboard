@@ -10,11 +10,11 @@
 
 ## 🔥 Current Status (2025-11-28 - ✅ PROJECT CLEANUP COMPLETE)
 
-**Latest Version**: v1.32.957 (Bug Fixes + Settings Complete)
+**Latest Version**: v1.32.959 (GitHub Update Feature + Bug Fixes)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.957 DEPLOYED | ✅ Shift+Swipe fixed, Calibration fixed, 9 gesture settings
+**Device Status**: ✅ v1.32.959 DEPLOYED | ✅ GitHub updates, Shift+Swipe fixed, 9 gesture settings
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **PROJECT CLEANUP: MD files organized, GH Actions fixed, settings exposed**
+**Current Focus**: ✅ **Session 14: Bug fixes + GitHub update feature**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
 **Audit Report**: **[migration-audit.md](migration-audit.md)** - ✅ 1 bug found (inherited, fixed)
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)**
@@ -22,18 +22,32 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** (2 bugs fixed in v1.32.957)
 
-### 🐛 Bugs Fixed (Session 14 - v1.32.957)
+### 🆕 Session 14 Summary (v1.32.957 → v1.32.959)
 
-1. **✅ FIXED: Calibrate Swipe Typing Crash**
+**New Features:**
+1. **🔄 Check for Updates Button** - Settings > About > Check for Updates
+   - Queries GitHub API for latest release
+   - Shows version, date, release notes
+   - Downloads APK with progress bar to /sdcard/unexpected/
+   - Opens installer after download
+
+**Bugs Fixed:**
+1. **✅ Calibrate Swipe Typing Crash** (v1.32.957)
    - Root cause: `logToResults()` called before `resultsTextBox` was initialized
-   - Fix: Added `::resultsTextBox.isInitialized` check in `logToResults()`
-   - File: `SwipeCalibrationActivity.kt:708-711`
+   - Fix: Added `::resultsTextBox.isInitialized` check
 
-2. **✅ FIXED: Shift+Swipe Repeat Character Bug**
-   - Root cause: `_ptrs.size == 1` check counted latched Shift pointer
-   - When Shift was latched, new pointer made size=2, bypassing swipe detection
-   - Fix: Added `countActivePointers()` helper that excludes latched pointers
-   - Files: `Pointers.kt:356-365` (new helper), `Pointers.kt:391`, `Pointers.kt:489-492`
+2. **✅ Shift+Swipe Repeat Character Bug** (v1.32.957)
+   - Root cause: `_ptrs.size == 1` counted latched Shift pointer
+   - Fix: Added `countActivePointers()` helper excluding latched pointers
+
+3. **✅ Shift+Swipe No Predictions** (v1.32.958)
+   - Root cause: `_ptrs.isEmpty()` returned false when Shift was latched
+   - Fix: Changed to `countActivePointers() == 0` for swipe initialization
+
+**Commits:**
+- `349513d3` - fix(swipe): resolve Shift+Swipe repeat bug and calibration crash
+- `f5433efc` - fix(swipe): enable swipe prediction when Shift is latched
+- `453aa336` - feat(settings): add Check for Updates button
 
 ### 🔄 Latest Work (2025-11-28) - ✅ PROJECT CLEANUP (v1.32.954)
 
