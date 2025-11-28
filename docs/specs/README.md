@@ -99,6 +99,7 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 
 **Testing & Troubleshooting:**
 - **[../TESTING_CHECKLIST.md](../TESTING_CHECKLIST.md)** - ✨ Testing checklist for NN fixes (v1.32.339-340)
+- **[ISSUES_AND_RECOMMENDATIONS.md](ISSUES_AND_RECOMMENDATIONS.md)** - ✨ Known issues, fixes, and settings recommendations (v1.32.952)
 
 ---
 
@@ -106,7 +107,8 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 
 | Feature | Status | Version | Notes |
 |---------|--------|---------|-------|
-| **Kotlin Migration** | ⏸️ **98.6%** | v1.32.880 | 145/148 files migrated, blocked by R8 bug (see [../../MIGRATION_STATUS.md](../../MIGRATION_STATUS.md)) |
+| **Kotlin Migration** | ✅ **100%** | v1.32.948 | 156/156 files migrated! R8 workaround applied |
+| **Typing Enhancements** | ✅ Complete | v1.32.952 | Auto-cap triggers + double-space-to-period |
 | Dictionary Manager | ✅ Complete | v1.32.306 | Tab counts, instant search, import/export |
 | Clipboard Manager | ⚠️ Partial | v1.32.309 | History, pinning, import/export, expand/collapse; search TODO |
 | Swipe Prediction | ✅ Complete | v1.32.207 | Autocorrect + debug logging |
