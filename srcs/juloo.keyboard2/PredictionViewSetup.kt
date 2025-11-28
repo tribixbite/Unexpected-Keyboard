@@ -130,6 +130,21 @@ class PredictionViewSetup(
                 // before adding to new container to prevent IllegalStateException
                 (keyboardView.parent as? android.view.ViewGroup)?.removeView(keyboardView)
                 inputViewContainer?.addView(keyboardView)
+            } else {
+                // CRITICAL FIX: If views already exist, we MUST still propagate them to the receiver/managers
+                // because the receiver/managers might have been recreated (e.g. onStartInputView)
+                // while the views persisted.
+                val suggestionBarPropagator = SuggestionBarPropagator.create(
+                    inputCoordinator,
+                    suggestionHandler,
+                    neuralLayoutHelper,
+                    receiver
+                )
+                suggestionBarPropagator.propagateAll(
+                    suggestionBar,
+                    emojiPane,
+                    contentPaneContainer
+                )
             }
 
             // Determine which view to use as input view
