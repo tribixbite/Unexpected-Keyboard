@@ -5,6 +5,28 @@ All notable changes to Unexpected Keyboard - Neural Swipe Typing Edition will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.929] - 2025-11-27
+
+### Fixed - Gesture Regression on Non-Character Keys 🐛
+- **Short Gesture Regression**: v1.32.925 fix blocked ALL gestures when modifiers active
+- **Root Cause**: Original fix used `ptr.modifiers.size() == 0` which affected non-char keys too
+- **Impact**: Backspace NW→delete_last_word, Ctrl SW→clipboard, Fn gestures all broken
+- **Refined Fix**: Only block short gestures on CHAR keys when modifiers active
+  - `val isCharKey = ptr.value.getKind() == KeyValue.Kind.Char`
+  - `val shouldBlockGesture = isCharKey && ptr.modifiers.size() > 0`
+  - Allows gestures on backspace, ctrl, fn, etc. regardless of modifiers
+- **Code Changes**: `srcs/juloo.keyboard2/Pointers.kt` lines 213-218
+- **Now Working**:
+  - ✅ Shift+C → 'C' (still works - char key + modifier)
+  - ✅ Backspace NW → delete_last_word (non-char key, works now)
+  - ✅ Ctrl SW → switch_clipboard (modifier key, works now)
+  - ✅ Fn gestures work (modifier key, works now)
+
+### Performance
+- **No Impact**: Added two simple boolean checks before gesture detection
+
+---
+
 ## [1.32.927] - 2025-11-27
 
 ### Added - Shift+Swipe ALL CAPS Feature ✨

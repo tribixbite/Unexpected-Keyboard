@@ -205,12 +205,17 @@ class Pointers(
                 // Some gestures only collect 1 point (downX,downY) before UP fires
                 // We can still calculate direction from ptr.downX/downY to the last point
                 //
-                // CRITICAL FIX v1.32.924: Disable short gestures when modifiers are active
-                // When shift/fn/ctrl are pressed, user wants the modified character (e.g. 'C')
-                // not a gesture (e.g. '.' from SW swipe on 'c' key)
+                // CRITICAL FIX v1.32.925: Disable short gestures ONLY on CHAR keys when modifiers active
+                // When shift/fn/ctrl pressed + swiping on CHAR key (e.g. 'c'), user wants modified char (e.g. 'C')
+                // NOT a gesture (e.g. '.' from SW swipe on 'c' key)
+                // BUT: Allow gestures on non-CHAR keys (backspace, ctrl, fn) regardless of modifiers
+                // This allows backspace NW→delete_last_word, ctrl SW→clipboard, etc.
+                val isCharKey = ptr.value != null && ptr.value!!.getKind() == KeyValue.Kind.Char
+                val shouldBlockGesture = isCharKey && ptr.modifiers.size() > 0
+
                 if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
                     swipePath != null && swipePath.size >= 1 &&
-                    ptr.modifiers.size() == 0
+                    !shouldBlockGesture
                 ) {
                     val lastPoint = swipePath[swipePath.size - 1]
                     val dx = lastPoint.x - ptr.downX
