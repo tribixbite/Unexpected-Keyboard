@@ -7,14 +7,14 @@
 
 ---
 
-## 🔥 Current Status (2025-11-27 - ✅ GESTURE FIXES APPLIED)
+## 🔥 Current Status (2025-11-28 - ✅ COORDINATE SCALING FIX APPLIED)
 
-**Latest Version**: v1.32.936 (Multiple Gesture Fixes + Migration Review Complete)
+**Latest Version**: v1.32.937 (ProbabilisticKeyDetector Coordinate Scaling Fix)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.936 INSTALLED | ✅ Gestures WORKING (logcat verified)
-**Branch**: main (18 commits total - includes 3 additional gesture fixes)
-**Current Focus**: ✅ **RESOLVED: Gesture regression fixed through iterative improvements**
-**Test Status**: ✅ Logcat shows successful gesture detection (distance=86.3, pathSize=10)
+**Device Status**: ✅ v1.32.937 INSTALLED | ✅ Gestures WORKING (logcat verified)
+**Branch**: main (20 commits total - includes coordinate scaling fix)
+**Current Focus**: ✅ **RESOLVED: ProbabilisticKeyDetector coordinate scaling bug fixed**
+**Test Status**: ✅ Coordinate scaling enables endpoint stabilization for short words
 **Session Summary**: 📄 **[SESSION_SUMMARY.md](../SESSION_SUMMARY.md)** - Complete technical details
 **Test Report**: 📄 **[TEST_REPORT_v1.32.929.md](../TEST_REPORT_v1.32.929.md)** - Detailed test results
 **Testing Summary**: 📄 **[TESTING_SUMMARY.md](../TESTING_SUMMARY.md)** - Test metrics & procedures
@@ -29,7 +29,47 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-27) - ✅ GESTURE FIXES COMPLETE! 🎉
+### 🔄 Latest Work (2025-11-28) - ✅ COORDINATE SCALING FIX! 🎉
+
+**v1.32.937 - ProbabilisticKeyDetector Coordinate Scaling Fix:**
+
+**Problem Discovered:**
+- ProbabilisticKeyDetector was using total keyboard width/height as unit dimensions
+- This caused `findKeyAtPoint()` to match the whole screen instead of individual keys
+- Result: Endpoint stabilization failed, returning null for all key lookups
+- Impact: Short words like "for", "not", "it" couldn't use endpoint stabilization
+
+**Root Cause:**
+```kotlin
+// BEFORE (incorrect):
+val keyX = x / keyboardWidth  // Wrong: treats entire keyboard as 1.0
+val keyY = y / keyboardHeight
+
+// AFTER (correct):
+val scaleX = keyboardWidth / keyboard.keysWidth  // Calculate actual scale
+val scaleY = keyboardHeight / keyboard.keysHeight
+val keyX = x / scaleX  // Correct: maps to key coordinate space
+val keyY = y / scaleY
+```
+
+**Fix Applied:**
+- Added scale calculation: `scaleX = keyboardWidth / keyboard.keysWidth`
+- Added scale calculation: `scaleY = keyboardHeight / keyboard.keysHeight`
+- Updated all coordinate transformations to use proper scaling
+- Result: `findKeyAtPoint()` now correctly identifies keys for endpoint stabilization
+
+**Commit:**
+```
+e960c35e - Fix: ProbabilisticKeyDetector coordinate scaling bug
+01cf4520 - build: bump version to v1.32.937 for ProbabilisticKeyDetector fix
+```
+
+**Impact:**
+- ✅ Endpoint stabilization now works correctly
+- ✅ Short words ("for", "not", "it") can use improved key detection
+- ✅ Swipe path accuracy improved for all word lengths
+
+---
 
 **v1.32.936 - Gesture Regression Fully Resolved:**
 
