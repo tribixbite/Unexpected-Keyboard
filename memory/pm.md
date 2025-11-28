@@ -8,13 +8,13 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✅ Session 15 Complete)
+## 🔥 Current Status (2025-11-28 - ✅ Session 16 Complete)
 
-**Latest Version**: v1.32.961 (DownloadManager for APK Downloads)
+**Latest Version**: v1.32.962 (Smart Punctuation + Auto-Cap Fix)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.961 DEPLOYED | ✅ GitHub updates working, no permission prompts
+**Device Status**: ✅ v1.32.962 DEPLOYED | ✅ Smart punctuation working
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 15: Fix download permission denied (no permissions needed)**
+**Current Focus**: ✅ **Session 16: Smart punctuation + auto-cap after swipe fix**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
 **Audit Report**: **[migration-audit.md](migration-audit.md)** - ✅ 1 bug found (inherited, fixed)
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)**
@@ -22,7 +22,34 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED**
 
-### 🆕 Session 15 Summary (v1.32.959 → v1.32.961)
+### 🆕 Session 16 Summary (v1.32.961 → v1.32.962)
+
+**Bugs Fixed:**
+1. **✅ Auto-Capitalization Not Working After Swipe** (v1.32.962)
+   - Root cause: `InputCoordinator.onSuggestionSelected()` commits text via `commitText()` but didn't notify the `Autocapitalisation` system
+   - Fix: Added `keyeventhandler.notifyTextTyped(textToInsert)` after `commitText()` in InputCoordinator
+   - Now auto-cap triggers properly after swiping words ending with `. ! ?`
+
+**New Features:**
+1. **✨ Smart Punctuation** (v1.32.962)
+   - New setting in Settings > Behavior > Smart Punctuation (default: enabled)
+   - When typing punctuation (`. , ! ? ; : ' " ) ] }`), removes preceding space
+   - Attaches punctuation to end of last word (e.g., "hello ." → "hello.")
+   - Works with both tap-typed and swiped punctuation
+   - Respects auto-capitalization (period triggers shift for next sentence)
+
+**Files Changed:**
+- `KeyEventHandler.kt` - Added `notifyTextTyped()` method + `isSmartPunctuationChar()` helper + smart punctuation logic in `sendText()`
+- `InputCoordinator.kt` - Calls `notifyTextTyped()` after swipe/prediction insertion
+- `Config.kt` - Added `smart_punctuation` setting (loaded from prefs)
+- `settings.xml` - Added Smart Punctuation checkbox under Behavior section
+
+**Commits:**
+- `01bf091d` - feat(behavior): add smart punctuation and fix auto-cap after swipe
+
+---
+
+### Session 15 Summary (v1.32.959 → v1.32.961)
 
 **Bugs Fixed:**
 1. **✅ GitHub Update Check Permission Denied** (v1.32.960)
