@@ -203,3 +203,13 @@ The following settings ARE properly exposed:
 - Modified: `.github/workflows/build.yml` - Update to main branch
 - Modified: `.github/workflows/deploy-web-demo.yml` - Update to main branch
 - Modified: `gen_layouts.py` - Fix XML encoding case for CI
+
+### v1.32.954 (Session 13)
+- Archived ~100 obsolete MD files to `archive/` directories
+  - `archive/debug-logs/` - Bug analyses and debug sessions
+  - `archive/migration-docs/` - Kotlin migration documentation
+  - `archive/planning-docs/` - Phase planning documents
+  - `archive/session-notes/` - Development session notes
+  - `archive/memory-archive/` - Superseded memory files
+- Cleaned root to essential files: CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, README.md
+- Kept active docs in: docs/, docs/specs/, memory/

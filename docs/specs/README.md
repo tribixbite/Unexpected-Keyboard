@@ -108,7 +108,8 @@ Complete technical documentation for Unexpected Keyboard features and subsystems
 | Feature | Status | Version | Notes |
 |---------|--------|---------|-------|
 | **Kotlin Migration** | ✅ **100%** | v1.32.948 | 156/156 files migrated! R8 workaround applied |
-| **Typing Enhancements** | ✅ Complete | v1.32.952 | Auto-cap triggers + double-space-to-period |
+| **Typing Enhancements** | ✅ Complete | v1.32.953 | Auto-cap triggers + double-space-to-period |
+| **Gesture Tuning** | ✅ Complete | v1.32.953 | 7 hardcoded constants exposed as settings |
 | Dictionary Manager | ✅ Complete | v1.32.306 | Tab counts, instant search, import/export |
 | Clipboard Manager | ⚠️ Partial | v1.32.309 | History, pinning, import/export, expand/collapse; search TODO |
 | Swipe Prediction | ✅ Complete | v1.32.207 | Autocorrect + debug logging |
@@ -347,6 +348,6 @@ For new specifications, follow this structure:
 
 ---
 
-**Last Updated**: 2025-11-26
+**Last Updated**: 2025-11-28
 **Project**: Unexpected Keyboard
 **Repository**: https://github.com/Julow/Unexpected-Keyboard
