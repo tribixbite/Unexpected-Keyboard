@@ -5,6 +5,57 @@ All notable changes to Unexpected Keyboard - Neural Swipe Typing Edition will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.937] - 2025-11-28
+
+### Fixed - ProbabilisticKeyDetector Coordinate Scaling Bug 🐛
+- **Coordinate Scaling Issue**: Detector was using total keyboard dimensions instead of key coordinate space
+- **Root Cause**: Used `keyboardWidth` and `keyboardHeight` directly as unit dimensions
+- **Impact**: `findKeyAtPoint()` matched entire screen instead of individual keys, endpoint stabilization failed
+- **Result**: Short words ("for", "not", "it") couldn't use endpoint stabilization (always returned null)
+- **Fix Applied**:
+  - Added scale calculation: `scaleX = keyboardWidth / keyboard.keysWidth`
+  - Added scale calculation: `scaleY = keyboardHeight / keyboard.keysHeight`
+  - Updated all coordinate transformations to use proper scaling
+  - File: `srcs/juloo.keyboard2/ProbabilisticKeyDetector.kt` (95 lines changed)
+- **Code Changes**:
+  ```kotlin
+  // BEFORE (incorrect):
+  val keyX = x / keyboardWidth  // Treats entire keyboard as 1.0
+
+  // AFTER (correct):
+  val scaleX = keyboardWidth / keyboard.keysWidth
+  val keyX = x / scaleX  // Maps to key coordinate space
+  ```
+- **Now Working**:
+  - ✅ Endpoint stabilization works correctly
+  - ✅ Short words ("for", "not", "it") use improved key detection
+  - ✅ Swipe path accuracy improved for all word lengths
+
+### Performance
+- **Minor Impact**: Added scale calculation during initialization (negligible overhead)
+- **Benefit**: Improved swipe typing accuracy through better endpoint stabilization
+
+---
+
+## [1.32.936] - 2025-11-27
+
+### Fixed - Gesture Regression Fully Resolved 🎉
+- **Touch Path Collection**: Fixed through three iterative improvements (v1.32.930-936)
+- **Final Status**: All gesture functionality restored
+- **Evidence**: Logcat verification shows distance=86.3, pathSize=10 (working correctly)
+- **Commits Applied**:
+  - `ac210482` - Fix: Short words swipe detection and Backspace gesture regression
+  - `62b86212` - Fix: Refine short swipe threshold and short word detection
+  - `498b7565` - Fix: Restore robust short swipe and backspace gestures
+
+### Now Working
+- ✅ Short swipes working correctly
+- ✅ Backspace gestures fully restored
+- ✅ Modifier key gestures (ctrl, fn) working
+- ✅ Character key gestures with proper modifier checks
+
+---
+
 ## [1.32.929] - 2025-11-27
 
 ### Fixed - Gesture Regression on Non-Character Keys 🐛
