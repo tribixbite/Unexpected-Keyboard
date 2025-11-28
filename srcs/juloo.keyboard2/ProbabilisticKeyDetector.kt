@@ -22,12 +22,16 @@ class ProbabilisticKeyDetector(
             return emptyList()
         }
 
+        // Calculate scale factors (pixels per unit)
+        val scaleX = keyboardWidth / keyboard.keysWidth
+        val scaleY = keyboardHeight / keyboard.keysHeight
+
         // Calculate probability map for all keys
         val keyProbabilities = mutableMapOf<KeyboardData.Key, Float>()
 
         // Process each point in the swipe path
         for (point in swipePath) {
-            processPathPoint(point, keyProbabilities)
+            processPathPoint(point, keyProbabilities, scaleX, scaleY)
         }
 
         // Convert probabilities to ordered key sequence
@@ -37,13 +41,18 @@ class ProbabilisticKeyDetector(
     /**
      * Process a single point on the swipe path
      */
-    private fun processPathPoint(point: PointF, keyProbabilities: MutableMap<KeyboardData.Key, Float>) {
+    private fun processPathPoint(
+        point: PointF, 
+        keyProbabilities: MutableMap<KeyboardData.Key, Float>,
+        scaleX: Float,
+        scaleY: Float
+    ) {
         // Find keys near this point
-        val nearbyKeys = findNearbyKeys(point)
+        val nearbyKeys = findNearbyKeys(point, scaleX, scaleY)
 
         // Calculate probability for each nearby key
         for (kwd in nearbyKeys) {
-            val probability = calculateGaussianProbability(kwd.distance, kwd.key)
+            val probability = calculateGaussianProbability(kwd.distance, kwd.key, scaleX)
 
             if (probability > MIN_PROBABILITY) {
                 // Accumulate probability
@@ -54,37 +63,9 @@ class ProbabilisticKeyDetector(
     }
 
     /**
-     * Find the key at a specific coordinate
-     */
-    fun getKeyAt(x: Float, y: Float): KeyboardData.Key? {
-        if (keyboard?.rows == null) {
-            return null
-        }
-
-        var currentY = 0f
-        for (row in keyboard.rows) {
-            val rowHeight = row.height * keyboardHeight
-            
-            if (y >= currentY && y < currentY + rowHeight) {
-                var currentX = 0f
-                for (key in row.keys) {
-                    val keyWidth = key.width * keyboardWidth
-                    
-                    if (x >= currentX && x < currentX + keyWidth) {
-                        return key
-                    }
-                    currentX += keyWidth
-                }
-            }
-            currentY += rowHeight
-        }
-        return null
-    }
-
-    /**
      * Find keys within reasonable distance of a point
      */
-    private fun findNearbyKeys(point: PointF): List<KeyWithDistance> {
+    private fun findNearbyKeys(point: PointF, scaleX: Float, scaleY: Float): List<KeyWithDistance> {
         val nearbyKeys = mutableListOf<KeyWithDistance>()
 
         if (keyboard?.rows == null) {
@@ -95,21 +76,21 @@ class ProbabilisticKeyDetector(
         var y = 0f
         for (row in keyboard.rows) {
             var x = 0f
-            val rowHeight = row.height * keyboardHeight
+            val rowHeight = row.height * scaleY
 
             for (key in row.keys) {
+                val keyWidth = key.width * scaleX
+                
                 if (key == null || key.keys[0] == null) {
-                    x += key.width * keyboardWidth
+                    x += keyWidth
                     continue
                 }
 
                 // Check if alphabetic
                 if (!isAlphabeticKey(key)) {
-                    x += key.width * keyboardWidth
+                    x += keyWidth
                     continue
                 }
-
-                val keyWidth = key.width * keyboardWidth
 
                 // Calculate key center
                 val keyCenterX = x + keyWidth / 2
@@ -137,13 +118,45 @@ class ProbabilisticKeyDetector(
     /**
      * Calculate Gaussian probability based on distance
      */
-    private fun calculateGaussianProbability(distance: Float, key: KeyboardData.Key): Float {
-        // Estimate key size (would be better to have actual dimensions)
-        val keySize = keyboardWidth / 10 // Approximate for QWERTY
+    private fun calculateGaussianProbability(distance: Float, key: KeyboardData.Key, scaleX: Float): Float {
+        // Estimate key size
+        val keySize = scaleX // Use unit width as base size
         val sigma = keySize * SIGMA_FACTOR
 
         // Gaussian formula: exp(-(distance^2) / (2 * sigma^2))
         return exp(-(distance * distance) / (2 * sigma * sigma))
+    }
+
+    /**
+     * Find the key at a specific coordinate
+     */
+    fun getKeyAt(x: Float, y: Float): KeyboardData.Key? {
+        if (keyboard?.rows == null) {
+            return null
+        }
+
+        // Calculate scale factors (pixels per unit)
+        val scaleX = keyboardWidth / keyboard.keysWidth
+        val scaleY = keyboardHeight / keyboard.keysHeight
+
+        var currentY = 0f
+        for (row in keyboard.rows) {
+            val rowHeight = row.height * scaleY
+            
+            if (y >= currentY && y < currentY + rowHeight) {
+                var currentX = 0f
+                for (key in row.keys) {
+                    val keyWidth = key.width * scaleX
+                    
+                    if (x >= currentX && x < currentX + keyWidth) {
+                        return key
+                    }
+                    currentX += keyWidth
+                }
+            }
+            currentY += rowHeight
+        }
+        return null
     }
 
     /**
