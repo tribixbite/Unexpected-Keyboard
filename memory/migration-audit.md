@@ -13,8 +13,8 @@
 - **Java Files Remaining**: 0 (migration complete, but audit ongoing)
 - **Critical Bugs Found**: 1 (inherited from original Java, fixed in v1.32.923)
 - **Migration Quality**: ✅ EXCELLENT
-- **Test Coverage**: 50% of audited files have unit tests (9/18 with business logic)
-- **New Tests Created**: KeyEventHandlerTest.kt (30 tests), KeyModifierTest.kt (44 tests), LayoutModifierTest.kt (38 tests)
+- **Test Coverage**: 56% of audited files have unit tests (10/18 with business logic)
+- **New Tests Created**: KeyEventHandlerTest.kt (30), KeyModifierTest.kt (44), LayoutModifierTest.kt (38), AutocapitalisationTest.kt (32)
 
 ---
 
@@ -111,19 +111,21 @@ These files have significant business logic and SHOULD have unit tests:
 ---
 
 #### 4. Autocapitalisation.kt (183 lines)
-**Priority**: MEDIUM  
-**Complexity**: Medium (state machine)  
-**Current Test Coverage**: ❌ NONE  
+**Priority**: MEDIUM
+**Complexity**: Medium (state machine)
+**Current Test Coverage**: ✅ COMPREHENSIVE (32 test cases)
 
-**Recommended Tests** (12-15 test cases):
-- ✅ Sentence start detection (. ? ! followed by space)
-- ✅ Paragraph start detection (newline)
-- ✅ Email/URL detection (no auto-caps in emails/URLs)
-- ✅ State machine transitions (OFF → SENTENCE → WORD → OFF)
-- ✅ Edge cases (multiple punctuation, whitespace variations)
+**Test Cases Implemented** (32 tests):
+- ✅ Initialization: caps mode enabled/disabled, config checks (4 tests)
+- ✅ Typing behavior: space triggers, regular chars, sentences, multi-char (4 tests)
+- ✅ Event handling: delete, enter, meta keys, cursor position (4 tests)
+- ✅ State management: stop, pause/unpause, state restoration (5 tests)
+- ✅ Selection updates: cursor movement, same position, cleared input (3 tests)
+- ✅ Input type variations: messages, person name, email subject/address, password, URI (7 tests)
+- ✅ Caps mode support: sentences and words flags (1 test)
 
-**Existing Test File**: ❌ NONE  
-**Action**: Create `test/juloo.keyboard2/AutocapitalisationTest.kt`
+**Test File**: `test/juloo.keyboard2/AutocapitalisationTest.kt` (32 comprehensive tests)
+**Status**: ✅ COMPLETE - All state machine logic and edge cases covered
 
 ---
 
@@ -145,17 +147,17 @@ These files have significant business logic and SHOULD have unit tests:
 
 ### Test Summary
 
-**Completed**: 3/5 test files (112 tests total) ✅
-**Remaining High-Priority Tests**: 2 test files
-**Estimated Test Cases**: 20-25 remaining tests
-**Estimated Effort**: 0.5-1 day (2-4 hours)
+**Completed**: 4/5 test files (144 tests total) ✅
+**Remaining High-Priority Tests**: 1 test file
+**Estimated Test Cases**: 8-10 remaining tests
+**Estimated Effort**: 0.25 day (1-2 hours)
 
 **Priority Order**:
 1. ✅ KeyEventHandler.kt (HIGH - COMPLETE - 30 tests)
 2. ✅ KeyModifier.kt (HIGH - COMPLETE - 44 tests)
 3. ✅ LayoutModifier.kt (MEDIUM - COMPLETE - 38 tests)
-4. ⏳ Autocapitalisation.kt (MEDIUM - 12-15 tests) - NEXT
-5. ⏳ ExtraKeys.kt (LOW - 8-10 tests)
+4. ✅ Autocapitalisation.kt (MEDIUM - COMPLETE - 32 tests)
+5. ⏳ ExtraKeys.kt (LOW - 8-10 tests) - FINAL
 
 ---
 
