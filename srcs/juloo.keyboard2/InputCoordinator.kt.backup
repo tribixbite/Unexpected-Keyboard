@@ -238,14 +238,10 @@ class InputCoordinator(
         // 1. Known contractions (prevent fuzzy matching)
         // 2. Raw predictions (user explicitly selected this neural output)
         if (isKnownContraction) {
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "KNOWN CONTRACTION: \"$processedWord\" - skipping autocorrect")
-            }
+            android.util.Log.d("Keyboard2", "KNOWN CONTRACTION: \"$processedWord\" - skipping autocorrect")
         }
         if (isRawPrediction) {
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "RAW PREDICTION: \"$processedWord\" - skipping autocorrect")
-            }
+            android.util.Log.d("Keyboard2", "RAW PREDICTION: \"$processedWord\" - skipping autocorrect")
         }
 
         if (!isKnownContraction && !isRawPrediction) {
@@ -257,9 +253,7 @@ class InputCoordinator(
                 predictionCoordinator.getWordPredictor()?.autoCorrect(processedWord)?.let { correctedWord ->
                     // If autocorrect found a better match, use it
                     if (correctedWord != processedWord) {
-                        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                            android.util.Log.d("Keyboard2", "FINAL AUTOCORRECT: \"$processedWord\" → \"$correctedWord\"")
-                        }
+                        android.util.Log.d("Keyboard2", "FINAL AUTOCORRECT: \"$processedWord\" → \"$correctedWord\"")
                         processedWord = correctedWord
                     }
                 }
@@ -323,45 +317,33 @@ class InputCoordinator(
                 // Only delete if the last commit was from neural swipe (not from other sources)
                 val lastAutoInserted = contextTracker.getLastAutoInsertedWord()
                 if (!lastAutoInserted.isNullOrEmpty() && contextTracker.getLastCommitSource() == PredictionSource.NEURAL_SWIPE) {
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        android.util.Log.d("Keyboard2", "REPLACE: Deleting auto-inserted word: '$lastAutoInserted'")
-                    }
+                    android.util.Log.d("Keyboard2", "REPLACE: Deleting auto-inserted word: '$lastAutoInserted'")
 
                     val deleteCount = lastAutoInserted.length + 1 // Word + trailing space
 
                     val deleteStartTime = System.currentTimeMillis()
 
                     // UNIFIED DELETION: Use InputConnection methods for ALL apps
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        val debugBefore = connection.getTextBeforeCursor(50, 0)
-                        android.util.Log.d("Keyboard2", "REPLACE: Text before cursor (50 chars): '$debugBefore'")
-                        android.util.Log.d("Keyboard2", "REPLACE: Delete count = $deleteCount")
-                    }
+                    val debugBefore = connection.getTextBeforeCursor(50, 0)
+                    android.util.Log.d("Keyboard2", "REPLACE: Text before cursor (50 chars): '$debugBefore'")
+                    android.util.Log.d("Keyboard2", "REPLACE: Delete count = $deleteCount")
 
                     // Delete the auto-inserted word and its space
                     connection.deleteSurroundingText(deleteCount, 0)
 
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        val debugAfter = connection.getTextBeforeCursor(50, 0)
-                        android.util.Log.d("Keyboard2", "REPLACE: After deleting word, text before cursor: '$debugAfter'")
-                    }
+                    val debugAfter = connection.getTextBeforeCursor(50, 0)
+                    android.util.Log.d("Keyboard2", "REPLACE: After deleting word, text before cursor: '$debugAfter'")
 
                     // Also need to check if there was a space added before it
                     val textBefore = connection.getTextBeforeCursor(1, 0)
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        android.util.Log.d("Keyboard2", "REPLACE: Checking for leading space, got: '$textBefore'")
-                    }
+                    android.util.Log.d("Keyboard2", "REPLACE: Checking for leading space, got: '$textBefore'")
                     if (textBefore?.isNotEmpty() == true && textBefore[0] == ' ') {
-                        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                            android.util.Log.d("Keyboard2", "REPLACE: Deleting leading space")
-                        }
+                        android.util.Log.d("Keyboard2", "REPLACE: Deleting leading space")
                         // Delete the leading space too
                         connection.deleteSurroundingText(1, 0)
 
-                        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                            val debugFinal = connection.getTextBeforeCursor(50, 0)
-                            android.util.Log.d("Keyboard2", "REPLACE: After deleting leading space: '$debugFinal'")
-                        }
+                        val debugFinal = connection.getTextBeforeCursor(50, 0)
+                        android.util.Log.d("Keyboard2", "REPLACE: After deleting leading space: '$debugFinal'")
                     }
 
                     val deleteDuration = System.currentTimeMillis() - deleteStartTime
@@ -374,18 +356,14 @@ class InputCoordinator(
                 // ALSO: If user is selecting a prediction during regular typing, delete the partial word
                 // This handles typing "hel" then selecting "hello" - we need to delete "hel" first
                 else if (contextTracker.getCurrentWordLength() > 0 && !isSwipeAutoInsert) {
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        android.util.Log.d("Keyboard2", "TYPING PREDICTION: Deleting partial word: '${contextTracker.getCurrentWord()}'")
-                    }
+                    android.util.Log.d("Keyboard2", "TYPING PREDICTION: Deleting partial word: '${contextTracker.getCurrentWord()}'")
 
                     val partialDeleteStart = System.currentTimeMillis()
                     // FIX: Use InputConnection for ALL apps (no more slow Termux backspaces)
                     connection.deleteSurroundingText(contextTracker.getCurrentWordLength(), 0)
 
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        val debugAfter = connection.getTextBeforeCursor(50, 0)
-                        android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '$debugAfter'")
-                    }
+                    val debugAfter = connection.getTextBeforeCursor(50, 0)
+                    android.util.Log.d("Keyboard2", "TYPING PREDICTION: After deleting partial, text before cursor: '$debugAfter'")
 
                     val partialDeleteDuration = System.currentTimeMillis() - partialDeleteStart
                     android.util.Log.e(TAG, "⏱️ UNIFIED DELETE (partial word): ${partialDeleteDuration}ms")
@@ -408,9 +386,7 @@ class InputCoordinator(
                 // v1.32.926: If shift was active when swipe started, convert entire word to UPPERCASE
                 // This applies ONLY to swipe-auto-insertions (not manual candidate selections)
                 if (wasShiftActiveAtSwipeStart && isSwipeAutoInsert) {
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        android.util.Log.d("Keyboard2", "SHIFT+SWIPE: Converting '$processedWord' to ALL CAPS")
-                    }
+                    android.util.Log.d("Keyboard2", "SHIFT+SWIPE: Converting '$processedWord' to ALL CAPS")
                     processedWord = processedWord.uppercase(java.util.Locale.getDefault())
                 }
 
@@ -427,10 +403,8 @@ class InputCoordinator(
                     }
                 }
 
-                if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                    android.util.Log.d("Keyboard2", "TERMUX/NORMAL MODE: textToInsert = '$textToInsert' (needsSpaceBefore=$needsSpaceBefore, isSwipe=$isSwipeAutoInsert)")
-                    android.util.Log.d("Keyboard2", "Committing text: '$textToInsert' (length=${textToInsert.length})")
-                }
+                android.util.Log.d("Keyboard2", "TERMUX/NORMAL MODE: textToInsert = '$textToInsert' (needsSpaceBefore=$needsSpaceBefore, isSwipe=$isSwipeAutoInsert)")
+                android.util.Log.d("Keyboard2", "Committing text: '$textToInsert' (length=${textToInsert.length})")
 
                 val commitStartTime = System.currentTimeMillis()
                 connection.commitText(textToInsert, 1)
@@ -563,9 +537,7 @@ class InputCoordinator(
         // For Termux, use Ctrl+W key event which Termux handles correctly
         // Termux doesn't support InputConnection methods, but processes terminal control sequences
         if (inTermux) {
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Using Ctrl+W (^W) for Termux")
-            }
+            android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Using Ctrl+W (^W) for Termux")
             // Send Ctrl+W which is the standard terminal "delete word backward" sequence
             keyeventhandler.send_key_down_up(KeyEvent.KEYCODE_W, KeyEvent.META_CTRL_ON or KeyEvent.META_CTRL_LEFT_ON)
             // Clear tracking
@@ -577,9 +549,7 @@ class InputCoordinator(
         // First, try to delete the last auto-inserted word if it exists
         val lastAutoInserted = contextTracker.getLastAutoInsertedWord()
         if (!lastAutoInserted.isNullOrEmpty()) {
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting auto-inserted word: '$lastAutoInserted'")
-            }
+            android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting auto-inserted word: '$lastAutoInserted'")
 
             // Get text before cursor to verify
             val textBefore = ic.getTextBeforeCursor(100, 0)
@@ -610,9 +580,7 @@ class InputCoordinator(
                     if (hasTrailingSpace) deleteCount += 1
 
                     ic.deleteSurroundingText(deleteCount, 0)
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleted $deleteCount characters")
-                    }
+                    android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleted $deleteCount characters")
 
                     // Clear tracking
                     contextTracker.clearLastAutoInsertedWord()
@@ -622,17 +590,13 @@ class InputCoordinator(
             }
 
             // If verification failed, fall through to delete last word generically
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Auto-inserted word verification failed, using generic delete")
-            }
+            android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Auto-inserted word verification failed, using generic delete")
         }
 
         // Fallback: Delete the last word before cursor (generic approach)
         val textBefore = ic.getTextBeforeCursor(100, 0)
         if (textBefore.isNullOrEmpty()) {
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: No text before cursor")
-            }
+            android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: No text before cursor")
             return
         }
 
@@ -645,9 +609,7 @@ class InputCoordinator(
         }
 
         if (cursorPos == 0) {
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Only whitespace before cursor")
-            }
+            android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Only whitespace before cursor")
             return
         }
 
@@ -662,15 +624,11 @@ class InputCoordinator(
 
         // Safety check: don't delete more than 50 characters at once
         if (deleteCount > 50) {
-            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Refusing to delete $deleteCount characters (safety limit)")
-            }
+            android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Refusing to delete $deleteCount characters (safety limit)")
             deleteCount = 50
         }
 
-        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-            android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting last word (generic), count=$deleteCount")
-        }
+        android.util.Log.d("Keyboard2", "DELETE_LAST_WORD: Deleting last word (generic), count=$deleteCount")
         ic.deleteSurroundingText(deleteCount, 0)
 
         // Clear tracking
