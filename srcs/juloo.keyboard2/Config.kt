@@ -112,6 +112,8 @@ class Config private constructor(
     @JvmField var swipe_min_dwell_time = 10L // Min time to register a key during swipe (ms)
     @JvmField var swipe_noise_threshold = 2.0f // Min distance to register movement (pixels)
     @JvmField var swipe_high_velocity_threshold = 1000.0f // Velocity threshold for fast swipes (px/sec)
+    @JvmField var swipe_min_distance = 50.0f // Minimum total distance to recognize a swipe (pixels)
+    @JvmField var swipe_min_key_distance = 40.0f // Minimum distance between keys during swipe (pixels)
 
     // Slider speed configuration
     @JvmField var slider_speed_smoothing = 0.7f // Smoothing factor for slider speed (0.0-1.0)
@@ -310,6 +312,8 @@ class Config private constructor(
         swipe_min_dwell_time = safeGetInt(_prefs, "swipe_min_dwell_time", 10).toLong()
         swipe_noise_threshold = safeGetFloat(_prefs, "swipe_noise_threshold", 2.0f)
         swipe_high_velocity_threshold = safeGetFloat(_prefs, "swipe_high_velocity_threshold", 1000.0f)
+        swipe_min_distance = safeGetFloat(_prefs, "swipe_min_distance", 50.0f)
+        swipe_min_key_distance = safeGetFloat(_prefs, "swipe_min_key_distance", 40.0f)
 
         // Slider speed configuration
         slider_speed_smoothing = safeGetFloat(_prefs, "slider_speed_smoothing", 0.7f)

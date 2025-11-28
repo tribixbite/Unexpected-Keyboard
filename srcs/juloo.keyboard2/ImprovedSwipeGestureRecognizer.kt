@@ -31,14 +31,16 @@ open class ImprovedSwipeGestureRecognizer {
     private var _lastKey: KeyboardData.Key? = null
     private var _lastRegisteredKey: KeyboardData.Key? = null
     
-    // Thresholds for improved filtering - use Config values where exposed
-    private val MIN_SWIPE_DISTANCE = 50.0f // Reduced to 50.0f to allow shorter swipes (e.g. "it", "is")
-    private val MIN_KEY_DISTANCE = 40.0f // Minimum distance to register new key (balanced for accuracy)
+    // Thresholds for improved filtering - non-configurable constants
     private val SMOOTHING_WINDOW = 3 // Points for moving average (optimal balance)
     private val DUPLICATE_CHECK_WINDOW = 5 // Check last 5 keys for duplicates
     private val MAX_POINT_INTERVAL_MS = 500L
 
     // Configurable thresholds from settings
+    private val MIN_SWIPE_DISTANCE: Float
+        get() = Config.globalConfig().swipe_min_distance
+    private val MIN_KEY_DISTANCE: Float
+        get() = Config.globalConfig().swipe_min_key_distance
     private val MIN_DWELL_TIME_MS: Long
         get() = Config.globalConfig().swipe_min_dwell_time
     private val NOISE_THRESHOLD: Float

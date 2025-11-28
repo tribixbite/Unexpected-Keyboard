@@ -213,3 +213,10 @@ The following settings ARE properly exposed:
   - `archive/memory-archive/` - Superseded memory files
 - Cleaned root to essential files: CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, README.md
 - Kept active docs in: docs/, docs/specs/, memory/
+
+### v1.32.955 (Session 13 continued)
+- Added 2 more high-priority gesture settings (completing Section 2.1):
+  - `swipe_min_distance` (50.0 px) - Minimum total distance to recognize swipe
+  - `swipe_min_key_distance` (40.0 px) - Minimum distance between keys during swipe
+- Modified: Config.kt, ImprovedSwipeGestureRecognizer.kt, settings.xml
+- Total gesture settings now: 9 configurable (all high-priority complete)
