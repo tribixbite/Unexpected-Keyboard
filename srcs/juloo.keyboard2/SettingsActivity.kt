@@ -576,38 +576,67 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
     }
 
     private fun installUpdate() {
-        val unexpectedDir = File("/storage/emulated/0/unexpected")
+        // Search multiple common locations for APK files
+        val searchDirs = listOf(
+            File("/storage/emulated/0/unexpected"),           // Custom app folder
+            File("/storage/emulated/0/Download"),             // Downloads folder
+            File("/storage/emulated/0/Downloads"),            // Alternative downloads
+            File("/sdcard/Download"),                         // Fallback path
+            File("/sdcard/unexpected")                        // Fallback custom folder
+        )
 
-        if (!unexpectedDir.exists() || !unexpectedDir.isDirectory) {
-            Toast.makeText(this, "📂 Directory not found. Opening file picker...",
-                Toast.LENGTH_SHORT).show()
-            openApkFilePicker()
-            return
+        val allApkFiles = mutableListOf<Pair<File, String>>() // Pair of (file, source folder name)
+
+        for (dir in searchDirs) {
+            if (dir.exists() && dir.isDirectory) {
+                val apks = dir.listFiles { _, name ->
+                    name.lowercase().endsWith(".apk") &&
+                    (name.contains("unexpected", ignoreCase = true) ||
+                     name.contains("keyboard", ignoreCase = true))
+                }
+                apks?.forEach { apk ->
+                    // Avoid duplicates from /sdcard and /storage/emulated/0 being the same
+                    if (allApkFiles.none { it.first.absolutePath == apk.absolutePath }) {
+                        val folderName = when {
+                            dir.absolutePath.contains("unexpected") -> "unexpected/"
+                            dir.absolutePath.contains("ownload") -> "Downloads/"
+                            else -> dir.name + "/"
+                        }
+                        allApkFiles.add(Pair(apk, folderName))
+                    }
+                }
+            }
         }
 
-        val apkFiles = unexpectedDir.listFiles { _, name ->
-            name.lowercase().endsWith(".apk")
-        }
-
-        if (apkFiles == null || apkFiles.isEmpty()) {
-            Toast.makeText(this, "📂 No APKs in /storage/emulated/0/unexpected/. Opening file picker...",
-                Toast.LENGTH_SHORT).show()
-            openApkFilePicker()
+        if (allApkFiles.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("📦 No APKs Found")
+                .setMessage("No Unexpected Keyboard APK files found in:\n• /unexpected/\n• /Download/\n\nYou can:\n• Download from GitHub first\n• Use file picker to select APK manually")
+                .setPositiveButton("🌐 GitHub Releases") { _, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_RELEASES_URL))
+                    startActivity(intent)
+                }
+                .setNeutralButton("📂 File Picker") { _, _ ->
+                    openApkFilePicker()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
             return
         }
 
         // Sort by modification time (newest first)
-        apkFiles.sortByDescending { it.lastModified() }
+        allApkFiles.sortByDescending { it.first.lastModified() }
 
-        val apkNames = apkFiles.map { apk ->
+        val apkNames = allApkFiles.map { (apk, folder) ->
             val sizeMB = apk.length() / (1024 * 1024)
             val date = SimpleDateFormat("MM-dd HH:mm", Locale.US).format(Date(apk.lastModified()))
-            String.format("%s\n%d MB • %s", apk.name, sizeMB, date)
+            String.format("%s%s\n%d MB • %s", folder, apk.name, sizeMB, date)
         }.toTypedArray()
 
         AlertDialog.Builder(this)
             .setTitle("📦 Select APK to Install")
-            .setItems(apkNames) { _, which -> installApkFile(apkFiles[which]) }
+            .setItems(apkNames) { _, which -> installApkFile(allApkFiles[which].first) }
+            .setNeutralButton("📂 Browse...") { _, _ -> openApkFilePicker() }
             .setNegativeButton("Cancel", null)
             .show()
     }
@@ -688,21 +717,25 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
             .show()
     }
 
+    private val GITHUB_RELEASES_URL = "https://github.com/tribixbite/Unexpected-Keyboard/releases"
+    private val GITHUB_API_URL = "https://api.github.com/repos/tribixbite/Unexpected-Keyboard/releases/latest"
+
     private fun checkForGitHubUpdates() {
         val progressDialog = ProgressDialog(this).apply {
             setMessage("Checking for updates...")
-            setCancelable(false)
+            setCancelable(true)
             show()
         }
 
         Thread {
             try {
-                val url = java.net.URL("https://api.github.com/repos/tribixbite/Unexpected-Keyboard/releases/latest")
+                val url = java.net.URL(GITHUB_API_URL)
                 val connection = url.openConnection() as java.net.HttpURLConnection
                 connection.requestMethod = "GET"
                 connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-                connection.connectTimeout = 10000
-                connection.readTimeout = 10000
+                connection.setRequestProperty("User-Agent", "Unexpected-Keyboard-App")
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
 
                 val responseCode = connection.responseCode
                 if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
@@ -711,7 +744,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
 
                     val tagName = json.optString("tag_name", "unknown")
                     val releaseName = json.optString("name", tagName)
-                    val htmlUrl = json.optString("html_url", "")
+                    val htmlUrl = json.optString("html_url", GITHUB_RELEASES_URL)
                     val body = json.optString("body", "No release notes")
                     val publishedAt = json.optString("published_at", "")
 
@@ -741,18 +774,59 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                 } else {
                     runOnUiThread {
                         progressDialog.dismiss()
-                        Toast.makeText(this, "❌ Failed to check updates (HTTP $responseCode)", Toast.LENGTH_LONG).show()
+                        showUpdateCheckFailedDialog("HTTP error $responseCode")
                     }
                 }
                 connection.disconnect()
+            } catch (e: java.net.UnknownHostException) {
+                Log.e(TAG, "No internet connection", e)
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    showUpdateCheckFailedDialog("No internet connection")
+                }
+            } catch (e: java.net.SocketTimeoutException) {
+                Log.e(TAG, "Connection timeout", e)
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    showUpdateCheckFailedDialog("Connection timed out")
+                }
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Security/permission error", e)
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    showUpdateCheckFailedDialog("Permission denied - network access blocked")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to check for updates", e)
                 runOnUiThread {
                     progressDialog.dismiss()
-                    Toast.makeText(this, "❌ Update check failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    showUpdateCheckFailedDialog(e.message ?: "Unknown error")
                 }
             }
         }.start()
+    }
+
+    /**
+     * Show error dialog with fallback option to open releases page in browser
+     */
+    private fun showUpdateCheckFailedDialog(errorMessage: String) {
+        AlertDialog.Builder(this)
+            .setTitle("❌ Update Check Failed")
+            .setMessage("Could not check for updates:\n$errorMessage\n\nYou can manually check for updates on GitHub.")
+            .setPositiveButton("🌐 Open GitHub Releases") { _, _ ->
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_RELEASES_URL))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // Copy URL to clipboard as last resort
+                    val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    val clip = android.content.ClipData.newPlainText("GitHub URL", GITHUB_RELEASES_URL)
+                    clipboard.setPrimaryClip(clip)
+                    Toast.makeText(this, "📋 URL copied to clipboard: $GITHUB_RELEASES_URL", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showUpdateDialog(
@@ -818,25 +892,51 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
         val progressDialog = ProgressDialog(this).apply {
             setMessage("Downloading $apkName...")
             setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-            setCancelable(false)
+            setCancelable(true)
             max = 100
             show()
         }
 
         Thread {
+            var apkFile: File? = null
             try {
                 val url = java.net.URL(apkUrl)
                 val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.setRequestProperty("User-Agent", "Unexpected-Keyboard-App")
                 connection.connectTimeout = 30000
-                connection.readTimeout = 30000
+                connection.readTimeout = 60000  // Longer timeout for download
+                connection.instanceFollowRedirects = true
 
-                val fileLength = connection.contentLength
-                val unexpectedDir = File("/storage/emulated/0/unexpected")
-                if (!unexpectedDir.exists()) {
-                    unexpectedDir.mkdirs()
+                val responseCode = connection.responseCode
+                if (responseCode != java.net.HttpURLConnection.HTTP_OK) {
+                    throw java.io.IOException("HTTP error $responseCode")
                 }
 
-                val apkFile = File(unexpectedDir, apkName)
+                val fileLength = connection.contentLength
+
+                // Try Downloads folder first (more accessible), fall back to app-specific folder
+                val downloadDirs = listOf(
+                    File("/storage/emulated/0/Download"),
+                    File("/storage/emulated/0/unexpected"),
+                    getExternalFilesDir(null)  // App-specific external storage
+                )
+
+                var targetDir: File? = null
+                for (dir in downloadDirs) {
+                    if (dir != null) {
+                        if (!dir.exists()) dir.mkdirs()
+                        if (dir.canWrite()) {
+                            targetDir = dir
+                            break
+                        }
+                    }
+                }
+
+                if (targetDir == null) {
+                    throw java.io.IOException("No writable storage location found")
+                }
+
+                apkFile = File(targetDir, apkName)
                 val input = connection.inputStream
                 val output = java.io.FileOutputStream(apkFile)
 
@@ -850,6 +950,7 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                         val progress = (total * 100 / fileLength).toInt()
                         runOnUiThread {
                             progressDialog.progress = progress
+                            progressDialog.setMessage("Downloading... ${total / 1024} KB")
                         }
                     }
                     output.write(buffer, 0, count)
@@ -860,19 +961,56 @@ class SettingsActivity : PreferenceActivity(), SharedPreferences.OnSharedPrefere
                 input.close()
                 connection.disconnect()
 
+                val finalApkFile = apkFile
                 runOnUiThread {
                     progressDialog.dismiss()
-                    Toast.makeText(this, "✅ Downloaded to ${apkFile.absolutePath}", Toast.LENGTH_LONG).show()
-                    installApkFile(apkFile)
+                    Toast.makeText(this, "✅ Downloaded to ${finalApkFile.absolutePath}", Toast.LENGTH_LONG).show()
+                    installApkFile(finalApkFile)
+                }
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Permission denied for download", e)
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    showDownloadFailedDialog("Storage permission denied", apkUrl)
+                }
+            } catch (e: java.net.UnknownHostException) {
+                Log.e(TAG, "No internet for download", e)
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    showDownloadFailedDialog("No internet connection", apkUrl)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to download APK", e)
+                // Clean up partial download
+                apkFile?.delete()
                 runOnUiThread {
                     progressDialog.dismiss()
-                    Toast.makeText(this, "❌ Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    showDownloadFailedDialog(e.message ?: "Unknown error", apkUrl)
                 }
             }
         }.start()
+    }
+
+    /**
+     * Show download failed dialog with option to open URL in browser
+     */
+    private fun showDownloadFailedDialog(errorMessage: String, apkUrl: String) {
+        AlertDialog.Builder(this)
+            .setTitle("❌ Download Failed")
+            .setMessage("Could not download APK:\n$errorMessage\n\nYou can download manually in your browser.")
+            .setPositiveButton("🌐 Open in Browser") { _, _ ->
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    val clip = android.content.ClipData.newPlainText("APK URL", apkUrl)
+                    clipboard.setPrimaryClip(clip)
+                    Toast.makeText(this, "📋 Download URL copied to clipboard", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun fallbackEncrypted() {
