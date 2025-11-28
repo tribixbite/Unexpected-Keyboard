@@ -9,7 +9,10 @@
 ## 📊 Overview
 
 **Total TODOs**: 6 items (5 in code + 1 optimization note)
-**Priority**: All Low/Future Enhancements
+**Performance Optimizations**: 2 opportunities identified
+- ✅ Spatial indexing (Low priority - current performance acceptable)
+- ⏳ Verbose logging optimization (High priority for InputCoordinator.kt - 23 logs)
+**Priority**: 5 Low/Future + 1 High Priority (InputCoordinator logging)
 **Blocking Issues**: ✅ None
 
 ---
@@ -156,6 +159,93 @@ for (row in keyboard.rows) {
 
 ---
 
+### 2. Verbose Logging Optimization - Remaining Files
+
+**Status**: ✅ **PARTIALLY COMPLETE** (ImprovedSwipeGestureRecognizer fully optimized in v1.32.939)
+
+**Background**:
+The codebase uses `BuildConfig.ENABLE_VERBOSE_LOGGING` flag for compile-time log removal in release builds. This pattern is already established in 6 files:
+- ✅ ImprovedSwipeGestureRecognizer.kt (11 logs optimized in v1.32.938-939)
+- ✅ BinaryContractionLoader.kt
+- ✅ ContractionManager.kt
+- ✅ PerformanceProfiler.kt
+- ✅ SuggestionHandler.kt
+- ✅ WordPredictor.kt
+
+**Remaining Optimization Opportunities**:
+
+#### High Priority - Hot Path Files
+
+**1. InputCoordinator.kt** - 23 debug logs
+- **Location**: Main input processing loop
+- **Impact**: Executed on EVERY keystroke and swipe
+- **Current Cost**: String concatenation + method calls on every input event
+- **Lines affected**: 241, 244, 256, 320, 328-329, 335, 339, 341, 346, 350, 359, etc.
+- **Expected benefit**: Significant - critical hot path
+- **Effort**: Medium (2-3 hours to wrap all 23 logs)
+- **Priority**: HIGH
+
+**Example logs to optimize**:
+```kotlin
+// Line 241: Contraction detection
+android.util.Log.d("Keyboard2", "KNOWN CONTRACTION: \"$processedWord\" - skipping autocorrect")
+
+// Line 256: Autocorrect decisions
+android.util.Log.d("Keyboard2", "FINAL AUTOCORRECT: \"$processedWord\" → \"$correctedWord\"")
+
+// Lines 320-350: Word replacement logic (10+ logs)
+android.util.Log.d("Keyboard2", "REPLACE: Deleting auto-inserted word: '$lastAutoInserted'")
+android.util.Log.d("Keyboard2", "REPLACE: Text before cursor (50 chars): '$debugBefore'")
+// ... many more
+```
+
+#### Medium Priority - Moderate Frequency
+
+**2. ClipboardHistoryService.kt** - 2 debug logs
+- **Impact**: Executed on clipboard operations
+- **Effort**: Minimal (< 30 minutes)
+- **Priority**: MEDIUM
+
+**3. DictionaryManagerActivity.kt** - 1 debug log
+- **Impact**: Dictionary reload events
+- **Effort**: Minimal (< 15 minutes)
+- **Priority**: LOW
+
+**4. Keyboard2View.kt** - Unknown count
+- **Impact**: Varies by log location
+- **Effort**: TBD (needs analysis)
+- **Priority**: MEDIUM
+
+#### Low Priority - Infrequent Paths
+
+**5. KeyboardGrid.kt** - Unknown count
+**6. PredictionInitializer.kt** - Unknown count
+**7. SwipeGestureRecognizer.kt** - Unknown count
+**8. WordListFragment.kt** - Unknown count
+
+**Recommendation**:
+1. **v1.33.x**: Optimize InputCoordinator.kt (HIGH priority - hot path)
+2. **v1.34.x**: Optimize Clipboard and Dictionary logs (quick wins)
+3. **v1.35.x**: Analyze and optimize remaining files as needed
+
+**Performance Impact Estimate**:
+- **InputCoordinator**: ~5-10% reduction in input latency (release builds)
+- **Others**: Minimal but worthwhile for code consistency
+- **Total**: Consistent ~5-15% performance improvement in text input path
+
+**Pattern to Apply**:
+```kotlin
+// BEFORE:
+android.util.Log.d("Keyboard2", "Message: $variable")
+
+// AFTER:
+if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+    android.util.Log.d("Keyboard2", "Message: $variable")
+}
+```
+
+---
+
 ## 📈 Performance Characteristics (Current)
 
 ### Swipe Typing Performance
@@ -172,14 +262,25 @@ for (row in keyboard.rows) {
 
 ## 🎯 Optimization Roadmap
 
+### Completed (v1.32.938-939)
+- ✅ ImprovedSwipeGestureRecognizer logging optimization (11 logs)
+- ✅ Established BuildConfig.ENABLE_VERBOSE_LOGGING pattern
+- ✅ Documented remaining logging optimization opportunities
+
 ### Immediate (v1.33.x)
-- ✅ None required - performance acceptable
+- [ ] **HIGH PRIORITY**: Optimize InputCoordinator.kt logging (23 logs in hot path)
+  - Expected benefit: ~5-10% input latency reduction
+  - Effort: 2-3 hours
+  - Impact: Every keystroke and swipe
 
 ### Short-term (v1.34-1.36)
+- [ ] Optimize ClipboardHistoryService.kt logging (2 logs) - Quick win
+- [ ] Optimize DictionaryManagerActivity.kt logging (1 log) - Quick win
 - [ ] Profile `saveLastUsed()` emoji optimization (if users report lag)
 - [ ] Test smaller neural bounding box offset (NeuralLayoutHelper:276)
 
 ### Medium-term (v1.37-1.40)
+- [ ] Analyze and optimize remaining files (Keyboard2View, KeyboardGrid, etc.)
 - [ ] Implement spatial indexing IF profiling shows need
 - [ ] Add language detection confidence scores (MultiLanguageManager:185)
 
