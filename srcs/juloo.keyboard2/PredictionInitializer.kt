@@ -37,7 +37,9 @@ class PredictionInitializer(
      */
     fun initializeIfEnabled() {
         if (config?.word_prediction_enabled == true || config?.swipe_typing_enabled == true) {
-            android.util.Log.d("PredictionInitializer", "Starting model initialization (synchronous)...")
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("PredictionInitializer", "Starting model initialization (synchronous)...")
+            }
             val startTime = System.currentTimeMillis()
 
             // Load models synchronously to guarantee first swipe works
@@ -49,10 +51,12 @@ class PredictionInitializer(
 
             // Set swipe typing components on keyboard view if swipe is enabled
             if (config?.swipe_typing_enabled == true && predictionCoordinator?.isSwipeTypingAvailable() == true) {
-                android.util.Log.d(
-                    "Keyboard2",
-                    "Neural engine initialized - dimensions and key positions will be set after layout"
-                )
+                if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                    android.util.Log.d(
+                        "Keyboard2",
+                        "Neural engine initialized - dimensions and key positions will be set after layout"
+                    )
+                }
                 keyboardView.setSwipeTypingComponents(
                     predictionCoordinator.getWordPredictor(),
                     keyboard2

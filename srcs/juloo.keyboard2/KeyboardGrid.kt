@@ -117,8 +117,10 @@ object KeyboardGrid {
      * Debug: Log all key positions
      */
     fun logKeyPositions() {
-        for ((key, pos) in keyPositions.entries.sortedBy { it.key }) {
-            android.util.Log.d("KeyboardGrid", "$key -> (${pos.x}, ${pos.y})")
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            for ((key, pos) in keyPositions.entries.sortedBy { it.key }) {
+                android.util.Log.d("KeyboardGrid", "$key -> (${pos.x}, ${pos.y})")
+            }
         }
     }
 

@@ -166,7 +166,9 @@ class WordListFragment : Fragment() {
                 (activity as? DictionaryManagerActivity)?.onFragmentDataLoaded()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Search was cancelled - this is expected, don't log as error
-                android.util.Log.d("WordListFragment", "Search cancelled")
+                if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                    android.util.Log.d("WordListFragment", "Search cancelled")
+                }
             } catch (e: Exception) {
                 android.util.Log.e("WordListFragment", "Error filtering words", e)
             }
