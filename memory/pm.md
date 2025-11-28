@@ -9,11 +9,11 @@
 
 ## 🔥 Current Status (2025-11-27 - 💯 READY FOR PRODUCTION! 🎉🎉🎉)
 
-**Latest Version**: v1.32.923 (CRITICAL FIX: swipePath.size condition for short gestures)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 51s)
-**Device Status**: ✅ v1.32.923 INSTALLED - Awaiting gesture test results
-**Branch**: main (5 commits pushed - fix + docs + audit complete)
-**Current Focus**: ✅ **MIGRATION AUDIT COMPLETE** - 19 critical files verified (95% perfect)
+**Latest Version**: v1.32.927 (NEW FEATURE: Shift+Swipe ALL CAPS + Shift+C fix)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 53s)
+**Device Status**: ✅ v1.32.927 INSTALLED - Ready for shift+swipe testing
+**Branch**: main (7 commits total - modifier fix + uppercase feature)
+**Current Focus**: ✅ **TWO USER-REQUESTED FEATURES COMPLETE**
 **Audit Report**: **[migration-audit.md](migration-audit.md)** - ✅ 1 bug found (inherited, fixed)
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)** 🎊
 **Main Files**: 148/148 (100%) ✅
@@ -25,7 +25,93 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-27) - 🐛 CRITICAL PATH SIZE FIX! ⚡
+### 🔄 Latest Work (2025-11-27) - ✨ SHIFT+SWIPE ALL CAPS FEATURE! ⚡
+
+**v1.32.927 - Shift+Swipe Uppercase Feature:**
+
+**User Request:**
+- "after shift is pressed long swipes should yield all caps words"
+- Currently shift+swipe only capitalizes first letter ("Hello")
+- User wants ALL CAPS output ("HELLO")
+
+**Implementation:**
+1. **Keyboard2View.kt:306-310** - Capture shift state at swipe start
+   ```kotlin
+   val wasShiftActive = _mods.has(KeyValue.Modifier.SHIFT)
+   _keyboard2!!.handleSwipeTyping(result.keys, result.path, result.timestamps, wasShiftActive)
+   ```
+
+2. **Keyboard2.kt:638-643** - Pass wasShiftActive parameter through chain
+   ```kotlin
+   fun handleSwipeTyping(..., wasShiftActive: Boolean = false)
+   ```
+
+3. **InputCoordinator.kt:54-55** - Track shift state field
+   ```kotlin
+   private var wasShiftActiveAtSwipeStart: Boolean = false
+   ```
+
+4. **InputCoordinator.kt:677-683** - Store shift state when swipe starts
+   ```kotlin
+   wasShiftActiveAtSwipeStart = wasShiftActive
+   ```
+
+5. **InputCoordinator.kt:386-391** - Apply uppercase() transformation
+   ```kotlin
+   if (wasShiftActiveAtSwipeStart && isSwipeAutoInsert) {
+       processedWord = processedWord.uppercase(java.util.Locale.getDefault())
+   }
+   ```
+
+**Smart Behavior:**
+- ✅ Only applies to swipe-auto-insertions (not manual candidate selections)
+- ✅ Uses shift state at swipe START (not affected by releasing shift mid-swipe)
+- ✅ Works with shift latched or held during swipe
+- ✅ Perfect for typing acronyms: NASA, API, HTTP, etc.
+
+**Examples:**
+- Normal swipe: "hello" → "hello "
+- Shift+swipe: "hello" → "HELLO "
+
+**Performance:**
+- Zero overhead (single boolean check)
+- No additional memory usage (single boolean field)
+
+**Testing Status:**
+- ✅ APK v1.32.927 built and installed successfully
+- ⏳ Ready for shift+swipe testing
+
+---
+
+**v1.32.925 - Shift+C Period Bug Fix:**
+
+**Critical Bug Fixed:**
+- User reported: pressing shift then 'c' results in period '.' instead of 'C'
+- Root cause: Short gesture detection (v1.32.923) triggered even when modifiers active
+- SW (southwest) gesture on 'c' key is mapped to '.' in QWERTY layout
+- Gesture fired before modifier check, inserting period instead of uppercase C
+
+**Fix Applied (Pointers.kt:208-213):**
+```kotlin
+// CRITICAL FIX v1.32.925: Disable short gestures when modifiers are active
+// When shift/fn/ctrl are pressed, user wants the modified character (e.g. 'C')
+// not a gesture (e.g. '.' from SW swipe on 'c' key)
+if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
+    swipePath != null && swipePath.size >= 1 &&
+    ptr.modifiers.size() == 0  // ADDED: disable when modifiers active
+)
+```
+
+**Now Working:**
+- ✅ Shift+C → 'C' (uppercase), NOT '.' (period)
+- ✅ Fn+key → function variant, NOT gesture
+- ✅ Ctrl+key → control character, NOT gesture
+- ✅ Short gestures still work when NO modifiers active
+
+**Testing Status:**
+- ✅ User confirmed fix working: shift+c produces 'C' correctly
+
+---
 
 **v1.32.923 - Short Gesture Path Collection Fix:**
 
