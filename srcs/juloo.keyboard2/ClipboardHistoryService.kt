@@ -126,7 +126,9 @@ class ClipboardHistoryService private constructor(ctx: Context) {
                     _cm.setPrimaryClip(ClipData.newPlainText("", ""))
             } catch (e: SecurityException) {
                 // Android 10+ may deny clipboard access when app is not in focus
-                android.util.Log.d("ClipboardHistory", "Cannot clear clipboard (app not in focus): " + e.message)
+                if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                    android.util.Log.d("ClipboardHistory", "Cannot clear clipboard (app not in focus): " + e.message)
+                }
             }
         }
 
@@ -259,7 +261,9 @@ class ClipboardHistoryService private constructor(ctx: Context) {
         } catch (e: SecurityException) {
             // Android 10+ denies clipboard access when app is not in focus
             // This is expected behavior - we can only access clipboard when keyboard is visible
-            android.util.Log.d("ClipboardHistoryService", "Clipboard access denied (app not in focus): " + e.message)
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("ClipboardHistoryService", "Clipboard access denied (app not in focus): " + e.message)
+            }
         }
     }
 

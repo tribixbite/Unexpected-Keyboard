@@ -263,7 +263,9 @@ class DictionaryManagerActivity : AppCompatActivity() {
             val swipePredictor = SwipePredictorOrchestrator.getInstance(this)
             swipePredictor.reloadVocabulary()
 
-            android.util.Log.d("DictionaryManagerActivity", "Reloaded predictions after dictionary changes")
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("DictionaryManagerActivity", "Reloaded predictions after dictionary changes")
+            }
         } catch (e: Exception) {
             android.util.Log.e("DictionaryManagerActivity", "Failed to reload predictions", e)
         }
