@@ -232,11 +232,15 @@ open class ImprovedSwipeGestureRecognizer {
                 // If probabilistic detection gives good results, use it
                 if (probabilisticKeys != null && probabilisticKeys.size >= 2) {
                     finalKeys = probabilisticKeys.toMutableList()
-                    android.util.Log.d("SwipeRecognizer", "Using probabilistic keys: ${probabilisticKeys.size}")
+                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                        android.util.Log.d("SwipeRecognizer", "Using probabilistic keys: ${probabilisticKeys.size}")
+                    }
                 } else {
                     // Fall back to traditional detection
                     finalKeys = applyFinalFiltering(_touchedKeys)
-                    android.util.Log.d("SwipeRecognizer", "Using traditional keys: ${finalKeys.size}")
+                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                        android.util.Log.d("SwipeRecognizer", "Using traditional keys: ${finalKeys.size}")
+                    }
                 }
             } else {
                 // Use traditional detection
