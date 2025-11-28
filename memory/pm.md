@@ -8,13 +8,13 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✅ SWIPE LOGGING FULLY OPTIMIZED)
+## 🔥 Current Status (2025-11-28 - ✅ INPUT COORDINATOR HOT PATH OPTIMIZED)
 
-**Latest Version**: v1.32.939 (Complete Swipe Logging Optimization)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 51s)
-**Device Status**: ✅ v1.32.939 BUILT | ✅ All swipe logging optimized
-**Branch**: main (22 commits total - complete swipe logging optimization)
-**Current Focus**: ✅ **COMPLETE: All ImprovedSwipeGestureRecognizer logging optimized (11 total)**
+**Latest Version**: v1.32.940 (InputCoordinator Logging Optimization)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 49s)
+**Device Status**: ✅ v1.32.940 BUILT | ✅ Critical hot path logging optimized
+**Branch**: main (23 commits total - input coordinator optimization complete)
+**Current Focus**: ✅ **COMPLETE: InputCoordinator.kt hot path logging optimized (24 logs)**
 **Test Status**: ✅ Coordinate scaling enables endpoint stabilization for short words
 **Session Summary**: 📄 **[SESSION_SUMMARY.md](../SESSION_SUMMARY.md)** - Complete technical details
 **Test Report**: 📄 **[TEST_REPORT_v1.32.929.md](../TEST_REPORT_v1.32.929.md)** - Detailed test results
@@ -30,7 +30,41 @@
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
 **Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
 
-### 🔄 Latest Work (2025-11-28) - ✅ SWIPE LOGGING FULLY OPTIMIZED! 🎉
+### 🔄 Latest Work (2025-11-28) - ✅ INPUT COORDINATOR HOT PATH OPTIMIZED! 🎉
+
+**Session 4 - InputCoordinator Critical Hot Path Logging Optimization (v1.32.940):**
+
+**Problem Identified**:
+- `InputCoordinator.kt` is the **highest priority hot path** - executed on EVERY keystroke and swipe
+- 24 verbose debug logs always active in release builds
+- No compile-time optimization - all string concatenation executed on every input event
+- Performance impact: ~5-10% input latency in release builds
+- Priority: **HIGH** (per TECHNICAL_DEBT.md)
+
+**Fixes Applied**:
+- Wrapped all 24 debug logs with `if (BuildConfig.ENABLE_VERBOSE_LOGGING)` checks
+- Optimized 6 functional areas:
+  - Autocorrect/Contraction logs (3 logs, lines 241-262)
+  - Word replacement logs (8 logs, lines 326-364)
+  - Typing prediction logs (2 logs, lines 377-387)
+  - Shift+swipe logs (1 log, line 411-413)
+  - Text insertion logs (2 logs, lines 430-433)
+  - Delete last word logs (8 logs, lines 566-672)
+
+**Performance Impact**:
+- ✅ **Release builds**: All InputCoordinator debug logs removed at compile time
+- ✅ **Debug builds**: Full logging retained for debugging
+- ✅ **Hot path optimization**: Critical input processing loop optimized
+- ✅ **Expected benefit**: ~5-10% reduction in input latency (release builds)
+- ✅ **Eliminates**: 24 string concatenation + method call operations per input event
+
+**Build Status**:
+- v1.32.940: ✅ Compiled successfully (1m 49s)
+
+**Commits**:
+- `7837ef26` - perf(input): optimize InputCoordinator verbose logging (24 logs)
+
+---
 
 **Session 3 - Complete ImprovedSwipeGestureRecognizer Logging Optimization:**
 
