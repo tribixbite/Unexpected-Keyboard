@@ -8,29 +8,60 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✨ TYPING ENHANCEMENTS)
+## 🔥 Current Status (2025-11-28 - ✅ PROJECT CLEANUP COMPLETE)
 
-**Latest Version**: v1.32.952 (Typing Enhancements)
-**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL (1m 8s)
-**Device Status**: ✅ v1.32.952 DEPLOYED | ✅ Auto-cap + double-space-to-period
-**Branch**: main (40 commits total - typing enhancements)
-**Current Focus**: ✨ **TYPING ENHANCEMENTS: Auto-cap triggers + double-space-to-period**
+**Latest Version**: v1.32.954 (Project Cleanup)
+**Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
+**Device Status**: ✅ v1.32.953 DEPLOYED | ✅ Auto-cap + double-space + gesture tuning settings
+**Branch**: main (✅ All GitHub Actions pass)
+**Current Focus**: ✅ **PROJECT CLEANUP: MD files organized, GH Actions fixed, settings exposed**
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
-**Session Summary**: 📄 **[SESSION_SUMMARY.md](../SESSION_SUMMARY.md)** - Complete technical details
-**Test Report**: 📄 **[TEST_REPORT_v1.32.929.md](../TEST_REPORT_v1.32.929.md)** - Detailed test results
-**Testing Summary**: 📄 **[TESTING_SUMMARY.md](../TESTING_SUMMARY.md)** - Test metrics & procedures
 **Audit Report**: **[migration-audit.md](migration-audit.md)** - ✅ 1 bug found (inherited, fixed)
-**Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)** 🎊
-**Main Files**: 148/148 (100%) ✅
-**Test Files**: 11/11 (100%) ✅
+**Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)**
 **Test Coverage**: ✅ 41 test files total! 16 comprehensive Kotlin test suites (300+ tests)
-**Test Status**: ✅ All tests compile successfully! Phase 6 coverage complete!
-**Migration Plan**: ✅ [MIGRATION_RESUME_CHECKLIST.md](../MIGRATION_RESUME_CHECKLIST.md) - **FULLY COMPLETE!**
-**Critical Fixes**: 60 fixes applied (see history below) - R8 WORKAROUND + NULL-SAFETY + RENDERING FIX
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
-**Blockers**: ✅ **ALL RESOLVED** - R8 bypassed + load_row fixed + null-safety complete!
+**Blockers**: ✅ **ALL RESOLVED**
 
-### 🔄 Latest Work (2025-11-28) - ✨ TYPING ENHANCEMENTS (v1.32.952)
+### 🔄 Latest Work (2025-11-28) - ✅ PROJECT CLEANUP (v1.32.954)
+
+**Session 13 - Project Cleanup & Organization:**
+
+**Tasks Completed**:
+1. ✅ GitHub Actions fixed - All 3 workflows now pass (build.yml, check-layouts, make-apk)
+2. ✅ Hardcoded constants exposed - 7 gesture tuning settings in "Advanced Gesture Tuning" screen
+3. ✅ MD file cleanup - ~100 obsolete files archived
+
+**GitHub Actions Fixes**:
+- Updated build.yml and deploy-web-demo.yml to use main branch (was master)
+- Fixed gen_layouts.py XML encoding case issue (UTF-8 vs utf-8)
+- All CI workflows passing
+
+**Settings Exposed (v1.32.953)**:
+- `tap_duration_threshold` (150ms) - Max tap gesture duration
+- `double_space_threshold` (500ms) - Period replacement timing
+- `swipe_min_dwell_time` (10ms) - Key registration during swipe
+- `swipe_noise_threshold` (2.0px) - Movement noise filter
+- `swipe_high_velocity_threshold` (1000 px/sec) - Fast swipe detection
+- `slider_speed_smoothing` (0.7) - Slider movement smoothing
+- `slider_speed_max` (4.0x) - Maximum slider acceleration
+
+**MD File Cleanup**:
+- Archived to `archive/debug-logs/` - Bug analyses and debug sessions
+- Archived to `archive/migration-docs/` - Kotlin migration docs
+- Archived to `archive/planning-docs/` - Phase planning documents
+- Archived to `archive/session-notes/` - Development session notes
+- Archived to `archive/memory-archive/` - Superseded memory files
+- Root now clean: CHANGELOG.md, CLAUDE.md, CONTRIBUTING.md, README.md
+
+**Commits**:
+- 23fa934d - fix(ci): update workflows for main branch and fix layouts encoding
+- 2d8845c0 - feat(settings): expose gesture timing thresholds as user settings
+- ba979464 - chore: archive obsolete MD files for cleaner project structure
+- 9544ce5a - docs: update specs README and ISSUES_AND_RECOMMENDATIONS
+
+---
+
+### Previous Work (2025-11-28) - ✨ TYPING ENHANCEMENTS (v1.32.952)
 
 **Session 11 - Typing Enhancements & Issue Analysis:**
 
