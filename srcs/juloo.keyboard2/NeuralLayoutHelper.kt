@@ -271,9 +271,9 @@ class NeuralLayoutHelper(
                 )
 
                 // Touch Y-offset for fat finger compensation
-                // RE-ENABLED (v1.32.942): Conservative 12.5% offset for better tap target prediction
+                // RE-ENABLED (v1.32.943): Conservative 12.5% offset for better tap target prediction
                 // Previous 37% was too aggressive, 0% had no compensation - 12.5% is balanced
-                val touchYOffset = rowHeight * 0.125f // Conservative value (10-15% recommended range)
+                val touchYOffset = rowHeight * 0.125f // Conservative value within recommended 10-15% range
                 _predictionCoordinator.getNeuralEngine()!!.setTouchYOffset(touchYOffset)
                 Log.d(
                     TAG,
