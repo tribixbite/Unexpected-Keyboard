@@ -20,7 +20,20 @@
 **Migration Progress**: **156/156 Kotlin files (100% COMPLETE!)**
 **Test Coverage**: ✅ 41 test files total! 16 comprehensive Kotlin test suites (300+ tests)
 **Performance**: 3X FASTER SWIPE | INSTANT KEYBOARD | ZERO TERMUX LAG | ZERO UI ALLOCATIONS | APK -26% SIZE
-**Blockers**: ✅ **ALL RESOLVED**
+**Blockers**: ✅ **ALL RESOLVED** (2 bugs fixed in v1.32.957)
+
+### 🐛 Bugs Fixed (Session 14 - v1.32.957)
+
+1. **✅ FIXED: Calibrate Swipe Typing Crash**
+   - Root cause: `logToResults()` called before `resultsTextBox` was initialized
+   - Fix: Added `::resultsTextBox.isInitialized` check in `logToResults()`
+   - File: `SwipeCalibrationActivity.kt:708-711`
+
+2. **✅ FIXED: Shift+Swipe Repeat Character Bug**
+   - Root cause: `_ptrs.size == 1` check counted latched Shift pointer
+   - When Shift was latched, new pointer made size=2, bypassing swipe detection
+   - Fix: Added `countActivePointers()` helper that excludes latched pointers
+   - Files: `Pointers.kt:356-365` (new helper), `Pointers.kt:391`, `Pointers.kt:489-492`
 
 ### 🔄 Latest Work (2025-11-28) - ✅ PROJECT CLEANUP (v1.32.954)
 

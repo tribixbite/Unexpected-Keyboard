@@ -353,6 +353,17 @@ class Pointers(
         return false
     }
 
+    /** Count active (non-latched) pointers for swipe detection. */
+    private fun countActivePointers(): Int {
+        var count = 0
+        for (p in _ptrs) {
+            if (!p.hasFlagsAny(FLAG_P_LATCHED)) {
+                count++
+            }
+        }
+        return count
+    }
+
     fun onTouchDown(x: Float, y: Float, pointerId: Int, key: KeyboardData.Key) {
         // Ignore new presses while a sliding key is active. On some devices, ghost
         // touch events can happen while the pointer travels on top of other keys.
@@ -375,8 +386,9 @@ class Pointers(
         // CRITICAL FIX: Detect if this might be the start of a swipe gesture
         // Don't output character or start long press timer if so
         // This prevents tap/hold events from firing during swipes
+        // Use countActivePointers() instead of _ptrs.size to handle latched modifiers (Shift)
         val firstKey = key?.keys?.get(0)
-        val mightBeSwipe = _config.swipe_typing_enabled && _ptrs.size == 1 &&
+        val mightBeSwipe = _config.swipe_typing_enabled && countActivePointers() == 1 &&
             key != null && firstKey != null &&
             firstKey.getKind() == KeyValue.Kind.Char
 
@@ -472,10 +484,12 @@ class Pointers(
         // CRITICAL: For potential swipe typing, ALWAYS track path during movement
         // Short gesture detection should only happen on touch UP, not during MOVE
         // Also collect path for short gestures on non-Char keys (backspace, ctrl, etc.)
+        // Use countActivePointers() to handle latched modifiers (Shift) correctly
         val ptrValue = ptr.value
-        val isSwipeTypingKey = _config.swipe_typing_enabled && _ptrs.size == 1 &&
+        val activePointers = countActivePointers()
+        val isSwipeTypingKey = _config.swipe_typing_enabled && activePointers == 1 &&
             ptrValue != null && ptrValue.getKind() == KeyValue.Kind.Char
-        val isShortGestureKey = _config.short_gestures_enabled && _ptrs.size == 1 && ptrValue != null
+        val isShortGestureKey = _config.short_gestures_enabled && activePointers == 1 && ptrValue != null
         val shouldCollectPath = isSwipeTypingKey || isShortGestureKey
 
         Log.d(

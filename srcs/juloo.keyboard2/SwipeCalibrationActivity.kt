@@ -705,6 +705,11 @@ class SwipeCalibrationActivity : Activity() {
         val logEntry = "[$timestamp] $message\n"
         resultsLog.append(logEntry)
 
+        // Safe check: UI may not be initialized yet during onCreate
+        if (!::resultsTextBox.isInitialized) {
+            return
+        }
+
         resultsTextBox.text = resultsLog.toString()
         // Auto-scroll to bottom
         resultsTextBox.post {
