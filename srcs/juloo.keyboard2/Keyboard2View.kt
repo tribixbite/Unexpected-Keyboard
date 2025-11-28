@@ -191,7 +191,9 @@ class Keyboard2View @JvmOverloads constructor(
                 _themeCache.put(cacheKey, computed)
                 computed
             }
-            android.util.Log.d("Keyboard2View", "Pre-calculated keyWidth=$_keyWidth for immediate touch handling")
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("Keyboard2View", "Pre-calculated keyWidth=$_keyWidth for immediate touch handling")
+            }
         }
 
         // Initialize swipe recognizer if not already created
@@ -322,7 +324,9 @@ class Keyboard2View @JvmOverloads constructor(
 
     override fun isPointWithinKeyWithTolerance(x: Float, y: Float, key: KeyboardData.Key, tolerance: Float): Boolean {
         if (_keyboard == null) {
-            android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: key or keyboard is null")
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: key or keyboard is null")
+            }
             return false
         }
 
@@ -339,7 +343,9 @@ class Keyboard2View @JvmOverloads constructor(
         }
 
         if (targetRow == null) {
-            android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: targetRow not found")
+            if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: targetRow not found")
+            }
             return false
         }
 
@@ -353,7 +359,9 @@ class Keyboard2View @JvmOverloads constructor(
                 // Calculate row bounds - MUST use _tc.row_height to scale like rendering does
                 val tc = _tc
                 if (tc == null) {
-                    android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: _tc is null")
+                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                        android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: _tc is null")
+                    }
                     return false
                 }
 
@@ -387,7 +395,9 @@ class Keyboard2View @JvmOverloads constructor(
             keyX += k.width * _keyWidth
         }
 
-        android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: key not found in targetRow")
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            android.util.Log.d("Keyboard2View", "isPointWithinKeyWithTolerance: key not found in targetRow")
+        }
         return false
     }
 
@@ -866,7 +876,9 @@ class Keyboard2View @JvmOverloads constructor(
         }
         _cgrFinalPredictions = isFinal
 
-        android.util.Log.d("Keyboard2View", "Stored ${_cgrPredictions.size} CGR predictions (final: $isFinal): $_cgrPredictions")
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            android.util.Log.d("Keyboard2View", "Stored ${_cgrPredictions.size} CGR predictions (final: $isFinal): $_cgrPredictions")
+        }
 
         // Immediately trigger display update
         post {
@@ -891,7 +903,9 @@ class Keyboard2View @JvmOverloads constructor(
     private fun clearCGRPredictions() {
         _cgrPredictions.clear()
         _cgrFinalPredictions = false
-        android.util.Log.d("Keyboard2View", "Cleared CGR predictions")
+        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+            android.util.Log.d("Keyboard2View", "Cleared CGR predictions")
+        }
     }
 
     /**
