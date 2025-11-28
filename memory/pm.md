@@ -74,6 +74,19 @@ if (_config.short_gestures_enabled && !ptr.hasLeftStartingKey &&
 
 ### 🧪 TESTING CHECKLIST (v1.32.929)
 
+**Test Status**: ✅ Automated tests PASSED | ⏳ Manual verification pending
+**Test Report**: 📄 **[TEST_REPORT_v1.32.929.md](../TEST_REPORT_v1.32.929.md)**
+**Test Scripts**: `~/test-all-v929.sh`, `test-v1.32.929.sh`, `auto-test-gestures.sh`
+**Screenshots**: `~/kb-*.png` (3 screenshots captured)
+**Logcat**: `~/kb-v929-full-test.log`
+
+**Automated Test Results (2025-11-27 20:58):**
+- ✅ Version verification: v1.32.929 confirmed
+- ✅ Screenshot capture: 3 screenshots saved
+- ✅ Backspace NW gesture: Executed successfully
+- ✅ 'c' SW gesture: Executed successfully
+- ⏳ Manual verification: Required for visual confirmation
+
 **Regression Tests (Verify fixes still work):**
 - [ ] Shift+c produces 'C' (NOT period '.') - v1.32.925 fix
 - [ ] Fn+key produces function variant (NOT gesture)
