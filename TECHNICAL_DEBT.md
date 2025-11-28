@@ -8,12 +8,12 @@
 
 ## 📊 Overview
 
-**Total TODOs**: 4 items (4 in code, all low/future priority)
+**Total TODOs**: 6 items (6 in code, all low/future priority)
 **Performance Optimizations**: All completed
 - ✅ Spatial indexing (Low priority - current performance acceptable, deferred)
 - ✅ Verbose logging optimization (✅ **100% COMPLETE** - all priority levels done)
 - ✅ Touch Y-offset optimization (✅ **COMPLETE** - 12.5% conservative value, v1.32.943)
-**Priority**: 4 Low/Future items remaining (no immediate action needed)
+**Priority**: 6 Low/Future items remaining (no immediate action needed)
 **Blocking Issues**: ✅ None
 
 ---
@@ -80,7 +80,38 @@ saveLastUsed() // TODO: opti
 
 ---
 
-### 5. NeuralLayoutHelper.kt:276 - ✅ COMPLETE (v1.32.943)
+### 5. BeamSearchEngine.kt:120 - Batched Processing Optimization
+```kotlin
+// Re-enabling batching is a TODO for tensor shape verification.
+```
+
+**Priority**: Low
+**Category**: Performance Optimization
+**Effort**: Medium-Large
+**Description**: Re-enable batched beam search processing for better throughput
+**Current Status**: Using sequential processing (robust, well-tested)
+**Potential Benefit**: Faster beam search for multiple candidates
+**Current Performance**: Acceptable (sequential mode works fine)
+**Recommendation**: Profile first - only implement if beam search becomes bottleneck
+
+---
+
+### 6. SwipePredictorOrchestrator.kt:262 - Debug Logger Interface
+```kotlin
+// TODO: Implement proper debug logger interface if needed
+```
+
+**Priority**: Very Low
+**Category**: Code Organization
+**Effort**: Small
+**Description**: Implement proper debug logger interface abstraction
+**Current Status**: Using Logcat directly (works fine)
+**Impact**: None (cosmetic improvement)
+**Recommendation**: Leave as-is - Logcat is sufficient for debugging needs
+
+---
+
+### 7. NeuralLayoutHelper.kt:276 - ✅ COMPLETE (v1.32.943)
 ```kotlin
 // ✅ DONE: Touch Y-offset re-enabled with 12.5% conservative value
 ```
