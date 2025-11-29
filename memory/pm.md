@@ -8,15 +8,37 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✅ Session 18 Complete)
+## 🔥 Current Status (2025-11-28 - ✅ Session 19 Complete)
 
 **Latest Version**: v1.32.962 (Smart Punctuation + Auto-Cap Fix)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
 **Device Status**: ✅ v1.32.962 DEPLOYED | ✅ Smart punctuation working
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 18: CleverKeys UI restoration complete**
+**Current Focus**: ✅ **Session 19: CleverKeys swipe typing fix**
 
-### 🆕 Session 18 Summary (CleverKeys UI Restoration)
+### 🆕 Session 19 Summary (CleverKeys Swipe Typing Fix)
+
+**Issues Fixed:**
+1. **Swipe typing not working** - `swipe_typing_enabled` was defaulting to `false`
+   - Changed default from `false` to `true` in Config.kt
+   - Swipe typing now works out of the box
+
+2. **Missing settings toggle** - "Enable Swipe Typing" toggle was missing from Compose UI
+   - Added toggle to Neural Prediction section in SettingsActivity
+   - Neural prediction settings now nested under swipe typing toggle
+   - Made SettingsSwitch rows clickable for better touch handling
+
+**Commits in CleverKeys:**
+- `8ce22765` - fix(settings): add swipe_typing_enabled toggle and default to enabled
+
+**Keyboard Status:**
+- Swipe typing now enabled by default
+- Settings toggle visible in Neural Prediction section
+- All features functional
+
+---
+
+### Session 18 Summary (CleverKeys UI Restoration)
 
 **Material 3 UI Restored:**
 - ✅ LauncherActivity with animated raccoon mascot splash screen
@@ -36,12 +58,6 @@
 - `45458434` - feat(ui): restore Material 3 Settings UI and LauncherActivity
 - `52812e0e` - docs: add archived features inventory for future reference
 - `69bd051f` - feat(migration): port Unexpected-Keyboard core to CleverKeys
-
-**Keyboard Status:**
-- CleverKeysService running as default IME
-- LauncherActivity: Raccoon mascot splash screen ✅ verified
-- SettingsActivity: Material 3 Compose UI ✅ verified
-- Neural prediction, appearance, behavior settings all functional
 
 ---
 
