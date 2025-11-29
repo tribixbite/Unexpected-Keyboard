@@ -456,13 +456,21 @@ class InputCoordinator(
                 // This ensures shift is enabled after sentence-ending punctuation (. ! ?)
                 keyeventhandler.notifyTextTyped(textToInsert)
 
-                // v1.32.966: Clear latched shift after swiping a capitalized word
+                // v1.32.968: Clear latched shift after swiping a capitalized word
                 // This mimics normal typing behavior where shift is released after one character
                 // Only clear if shift was latched (not locked) - locked shift stays active
-                if (wasShiftActiveAtSwipeStart && !wasShiftLockedAtSwipeStart && isSwipeAutoInsert) {
+                // BUT: Don't clear if the text ends with sentence-ending punctuation + space
+                // (e.g., "Hello. ") because autocapitalization should enable shift for next sentence
+                // Note: textToInsert typically has a trailing space, so check if sentence punctuation
+                // appears before the final whitespace
+                val trimmedText = textToInsert.trimEnd()
+                val endsWithSentenceEnd = trimmedText.isNotEmpty() &&
+                    trimmedText.last() in listOf('.', '!', '?')
+                if (wasShiftActiveAtSwipeStart && !wasShiftLockedAtSwipeStart && isSwipeAutoInsert && !endsWithSentenceEnd) {
                     if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        android.util.Log.d("Keyboard2", "SWIPE: Clearing latched shift after capitalized word")
+                        android.util.Log.d("Keyboard2", "SWIPE: Clearing shift after capitalized word (no sentence end)")
                     }
+                    // Clear shift immediately - autocap will re-enable if needed via notifyTextTyped
                     keyeventhandler.clearShiftState()
                 }
 
