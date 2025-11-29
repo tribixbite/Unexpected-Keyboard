@@ -456,6 +456,16 @@ class InputCoordinator(
                 // This ensures shift is enabled after sentence-ending punctuation (. ! ?)
                 keyeventhandler.notifyTextTyped(textToInsert)
 
+                // v1.32.966: Clear latched shift after swiping a capitalized word
+                // This mimics normal typing behavior where shift is released after one character
+                // Only clear if shift was latched (not locked) - locked shift stays active
+                if (wasShiftActiveAtSwipeStart && !wasShiftLockedAtSwipeStart && isSwipeAutoInsert) {
+                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                        android.util.Log.d("Keyboard2", "SWIPE: Clearing latched shift after capitalized word")
+                    }
+                    keyeventhandler.clearShiftState()
+                }
+
                 // Track that this commit was from candidate selection (manual tap)
                 // Note: Auto-insertions set this separately to NEURAL_SWIPE
                 if (contextTracker.getLastCommitSource() != PredictionSource.NEURAL_SWIPE) {

@@ -513,6 +513,15 @@ class KeyEventHandler(
         autocap.typed(text)
     }
 
+    /**
+     * Clear the shift state (unlatch shift).
+     * Called after swipe typing inserts a capitalized word to release the latched shift.
+     * This mimics the normal behavior of shift being released after typing a character.
+     */
+    fun clearShiftState() {
+        recv.set_shift_state(false, false)
+    }
+
     interface IReceiver {
         fun handle_event_key(ev: KeyValue.Event)
         fun set_shift_state(state: Boolean, lock: Boolean)
