@@ -51,8 +51,10 @@ class InputCoordinator(
     // Swipe ML data collection
     private var currentSwipeData: SwipeMLData? = null
 
-    // v1.32.926: Track if shift was active when current swipe started (for ALL CAPS output)
+    // v1.32.926: Track if shift was active when current swipe started (for capitalization)
     private var wasShiftActiveAtSwipeStart: Boolean = false
+    // v1.32.965: Track if shift was LOCKED when swipe started (for ALL CAPS vs first letter)
+    private var wasShiftLockedAtSwipeStart: Boolean = false
 
     // Async prediction execution
     private val predictionExecutor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -405,13 +407,26 @@ class InputCoordinator(
                     false
                 }
 
-                // v1.32.926: If shift was active when swipe started, convert entire word to UPPERCASE
+                // v1.32.965: Apply capitalization based on shift state when swipe started
                 // This applies ONLY to swipe-auto-insertions (not manual candidate selections)
+                // - Shift latched (single tap): Capitalize first letter only (e.g., "Hello")
+                // - Shift locked (hold/double-tap): ALL CAPS (e.g., "HELLO")
                 if (wasShiftActiveAtSwipeStart && isSwipeAutoInsert) {
-                    if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
-                        android.util.Log.d("Keyboard2", "SHIFT+SWIPE: Converting '$processedWord' to ALL CAPS")
+                    if (wasShiftLockedAtSwipeStart) {
+                        // Shift LOCKED: ALL CAPS
+                        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                            android.util.Log.d("Keyboard2", "SHIFT LOCKED+SWIPE: Converting '$processedWord' to ALL CAPS")
+                        }
+                        processedWord = processedWord.uppercase(java.util.Locale.getDefault())
+                    } else {
+                        // Shift LATCHED: Capitalize first letter only
+                        if (BuildConfig.ENABLE_VERBOSE_LOGGING) {
+                            android.util.Log.d("Keyboard2", "SHIFT LATCHED+SWIPE: Capitalizing first letter of '$processedWord'")
+                        }
+                        processedWord = processedWord.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString()
+                        }
                     }
-                    processedWord = processedWord.uppercase(java.util.Locale.getDefault())
                 }
 
                 // Commit the selected word - use Termux mode if enabled
@@ -730,10 +745,13 @@ class InputCoordinator(
         ic: InputConnection?,
         editorInfo: EditorInfo?,
         resources: Resources,
-        wasShiftActive: Boolean = false  // v1.32.926: Track if shift was active when swipe started
+        wasShiftActive: Boolean = false,  // v1.32.926: Track if shift was active when swipe started
+        wasShiftLocked: Boolean = false   // v1.32.965: Track if shift was LOCKED (for ALL CAPS vs first letter)
     ) {
-        // v1.32.926: Store shift state for ALL CAPS transformation in onSuggestionSelected
+        // v1.32.926: Store shift state for capitalization in onSuggestionSelected
         wasShiftActiveAtSwipeStart = wasShiftActive
+        // v1.32.965: Store locked state to determine ALL CAPS vs first letter capitalization
+        wasShiftLockedAtSwipeStart = wasShiftLocked
 
         // Clear auto-inserted word tracking when new swipe starts
         contextTracker.clearLastAutoInsertedWord()

@@ -73,6 +73,26 @@ class Pointers(
         return -1
     }
 
+    /**
+     * Check if a modifier key is in locked state (vs just latched).
+     * Locked = held down or double-tapped (persistent until manually released).
+     * Latched = single tap (auto-releases after next key).
+     *
+     * @param modifier The modifier to check (e.g., KeyValue.Modifier.SHIFT)
+     * @return true if the modifier is locked, false if latched or not active
+     */
+    fun isModifierLocked(modifier: KeyValue.Modifier): Boolean {
+        for (p in _ptrs) {
+            val kv = p.value ?: continue
+            // Check if this pointer has the modifier flag set
+            if (kv.getKind() == KeyValue.Kind.Modifier && kv.getModifier() == modifier) {
+                // Check if locked flag is set
+                return (p.flags and FLAG_P_LOCKED) != 0
+            }
+        }
+        return false
+    }
+
     /** The key must not be already latched. */
     internal fun add_fake_pointer(key: KeyboardData.Key, kv: KeyValue, locked: Boolean) {
         var flags = pointer_flags_of_kv(kv) or FLAG_P_FAKE or FLAG_P_LATCHED
