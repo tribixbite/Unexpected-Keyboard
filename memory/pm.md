@@ -10,33 +10,42 @@
 
 ## 🔥 Current Status (2025-11-28 - ✅ Session 20 Complete)
 
-**Latest Version**: v1.32.965 (Shift Latched vs Locked Capitalization)
+**Latest Version**: v1.32.966 (Shift Auto-Release After Swipe)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.965 DEPLOYED | ✅ Shift capitalization fixed
+**Device Status**: ✅ v1.32.966 DEPLOYED | ✅ Shift behavior complete
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 20: Shift latched vs locked capitalization**
+**Current Focus**: ✅ **Session 20: Shift latched vs locked capitalization + auto-release**
 
-### 🆕 Session 20 Summary (Shift Capitalization Fix)
+### 🆕 Session 20 Summary (Shift Capitalization + Auto-Release)
 
-**Feature Implemented:**
-- **Differentiate shift latched vs locked for swipe capitalization**
-  - Shift latched (single tap): Capitalize first letter only (e.g., "Hello")
-  - Shift locked (hold/double-tap): ALL CAPS (e.g., "HELLO")
+**Features Implemented:**
+
+1. **Differentiate shift latched vs locked for swipe capitalization**
+   - Shift latched (single tap): Capitalize first letter only (e.g., "Hello")
+   - Shift locked (hold/double-tap): ALL CAPS (e.g., "HELLO")
+
+2. **Auto-release shift after swiping capitalized word**
+   - Latched shift automatically clears after swipe completes
+   - Mimics normal typing behavior (shift affects one character)
+   - Locked shift stays active (persistent until manually released)
 
 **Changes Made:**
 1. `Pointers.kt`: Added `isModifierLocked()` method to check if modifier is locked vs latched
 2. `Keyboard2View.kt`: Pass `wasShiftLocked` to handleSwipeTyping
 3. `Keyboard2.kt`: Pass `wasShiftLocked` parameter through to InputCoordinator
-4. `InputCoordinator.kt`: Apply correct capitalization based on lock state
+4. `InputCoordinator.kt`: Apply correct capitalization based on lock state + clear latched shift
+5. `KeyEventHandler.kt`: Added `clearShiftState()` method
 
 **Commits:**
 - `439e9b81` - feat(swipe): differentiate shift latched vs locked for capitalization
 - `189443da` - chore: bump version to 1.32.965
+- `802eb443` - fix(swipe): clear latched shift after swiping capitalized word
+- `d0c6819b` - chore: bump version to 1.32.966
 
 **Keyboard Status:**
-- ✅ Single tap shift + swipe = First letter capitalized
-- ✅ Hold/double-tap shift + swipe = ALL CAPS
-- ✅ More intuitive behavior for users
+- ✅ Single tap shift + swipe = First letter capitalized, shift releases
+- ✅ Hold/double-tap shift + swipe = ALL CAPS, shift stays active
+- ✅ Natural typing flow maintained
 
 ---
 
