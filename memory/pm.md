@@ -8,15 +8,38 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✅ Session 19 Complete)
+## 🔥 Current Status (2025-11-28 - ✅ Session 20 Complete)
 
-**Latest Version**: v1.32.962 (Smart Punctuation + Auto-Cap Fix)
+**Latest Version**: v1.32.964 (Swipe Typing Enabled by Default)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.962 DEPLOYED | ✅ Smart punctuation working
+**Device Status**: ✅ v1.32.964 DEPLOYED | ✅ Swipe typing enabled by default
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 19: CleverKeys swipe typing fix**
+**Current Focus**: ✅ **Session 20: Enable swipe typing by default**
 
-### 🆕 Session 19 Summary (CleverKeys Swipe Typing Fix)
+### 🆕 Session 20 Summary (Swipe Typing Default Enabled)
+
+**Issue Fixed:**
+- **Swipe typing disabled by default** - Same issue as CleverKeys
+  - `swipe_typing_enabled` was defaulting to `false` in 3 locations
+  - Users had to manually enable it in settings before it would work
+
+**Changes Made:**
+1. `Config.kt` line 64: Field default `false` → `true`
+2. `Config.kt` line 268: Prefs loading default `false` → `true`
+3. `res/xml/settings.xml` line 36: CheckBoxPreference defaultValue `false` → `true`
+
+**Commits:**
+- `23eaa1cb` - fix(swipe): enable swipe typing by default for better out-of-box experience
+- `54c5dda2` - chore: bump version to 1.32.964
+
+**Keyboard Status:**
+- ✅ Swipe typing now enabled by default
+- ✅ Settings show "Enable swipe typing" checked
+- ✅ All neural prediction and swipe correction features accessible
+
+---
+
+### Session 19 Summary (CleverKeys Swipe Typing Fix)
 
 **Issues Fixed:**
 1. **Swipe typing not working** - `swipe_typing_enabled` was defaulting to `false`
