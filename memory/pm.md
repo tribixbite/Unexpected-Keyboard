@@ -8,15 +8,44 @@
 
 ---
 
-## 🔥 Current Status (2025-11-28 - ✅ Session 17 Complete)
+## 🔥 Current Status (2025-11-28 - ✅ Session 18 Complete)
 
 **Latest Version**: v1.32.962 (Smart Punctuation + Auto-Cap Fix)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
 **Device Status**: ✅ v1.32.962 DEPLOYED | ✅ Smart punctuation working
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 17: CleverKeys migration complete**
+**Current Focus**: ✅ **Session 18: CleverKeys UI restoration complete**
 
-### 🆕 Session 17 Summary (CleverKeys Migration)
+### 🆕 Session 18 Summary (CleverKeys UI Restoration)
+
+**Material 3 UI Restored:**
+- ✅ LauncherActivity with animated raccoon mascot splash screen
+- ✅ SettingsActivity with Material 3 Compose UI (1749 lines)
+- ✅ Theme system (7 files: KeyboardTheme, ColorScheme, Shapes, Typography, etc.)
+- ✅ UI components (CustomThemeDialog, ThemeSelector)
+- ✅ Settings activities (NeuralSettings, LayoutManager, ExtraKeysConfig, etc.)
+
+**Bug Fixes:**
+- ✅ Config.globalConfig() NullPointerException handling in SettingsActivity
+- ✅ setDebugEnabled() added to Logs.kt
+- ✅ BackupRestoreManager export/import methods
+- ✅ ClipboardDatabase getDatabaseStats()
+- ✅ ExtraKeysPreference extraKeys property
+
+**Commits in CleverKeys:**
+- `45458434` - feat(ui): restore Material 3 Settings UI and LauncherActivity
+- `52812e0e` - docs: add archived features inventory for future reference
+- `69bd051f` - feat(migration): port Unexpected-Keyboard core to CleverKeys
+
+**Keyboard Status:**
+- CleverKeysService running as default IME
+- LauncherActivity: Raccoon mascot splash screen ✅ verified
+- SettingsActivity: Material 3 Compose UI ✅ verified
+- Neural prediction, appearance, behavior settings all functional
+
+---
+
+### Session 17 Summary (CleverKeys Migration)
 
 **CleverKeys Rebranding Complete:**
 - ✅ Ported all Unexpected-Keyboard v1.32.962 source to CleverKeys repo
@@ -27,15 +56,6 @@
 - ✅ Added missing dependencies (material, viewpager2, recyclerview)
 - ✅ Archived incompatible CleverKeys-specific files for later review
 - ✅ Pushed to GitHub: https://github.com/tribixbite/CleverKeys
-
-**Commits in CleverKeys:**
-- `69bd051f` - feat(migration): port Unexpected-Keyboard core to CleverKeys
-- `c5fb3fb5` - docs: update status after UK source migration
-
-**Keyboard Status:**
-- CleverKeysService running as default IME
-- `mInputShown=true` confirmed via dumpsys
-- ADB screenshots blocked by Samsung security (visual verification pending)
 
 ---
 **Test Status**: ✅ KeyEventHandlerTest.kt complete (30 test cases)
