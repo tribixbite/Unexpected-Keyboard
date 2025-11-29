@@ -10,13 +10,37 @@
 
 ## 🔥 Current Status (2025-11-28 - ✅ Session 20 Complete)
 
-**Latest Version**: v1.32.964 (Swipe Typing Enabled by Default)
+**Latest Version**: v1.32.965 (Shift Latched vs Locked Capitalization)
 **Build Status**: ✅ Kotlin ✅ DEX ✅ APK ✅ | ✅ BUILD SUCCESSFUL
-**Device Status**: ✅ v1.32.964 DEPLOYED | ✅ Swipe typing enabled by default
+**Device Status**: ✅ v1.32.965 DEPLOYED | ✅ Shift capitalization fixed
 **Branch**: main (✅ All GitHub Actions pass)
-**Current Focus**: ✅ **Session 20: Enable swipe typing by default**
+**Current Focus**: ✅ **Session 20: Shift latched vs locked capitalization**
 
-### 🆕 Session 20 Summary (Swipe Typing Default Enabled)
+### 🆕 Session 20 Summary (Shift Capitalization Fix)
+
+**Feature Implemented:**
+- **Differentiate shift latched vs locked for swipe capitalization**
+  - Shift latched (single tap): Capitalize first letter only (e.g., "Hello")
+  - Shift locked (hold/double-tap): ALL CAPS (e.g., "HELLO")
+
+**Changes Made:**
+1. `Pointers.kt`: Added `isModifierLocked()` method to check if modifier is locked vs latched
+2. `Keyboard2View.kt`: Pass `wasShiftLocked` to handleSwipeTyping
+3. `Keyboard2.kt`: Pass `wasShiftLocked` parameter through to InputCoordinator
+4. `InputCoordinator.kt`: Apply correct capitalization based on lock state
+
+**Commits:**
+- `439e9b81` - feat(swipe): differentiate shift latched vs locked for capitalization
+- `189443da` - chore: bump version to 1.32.965
+
+**Keyboard Status:**
+- ✅ Single tap shift + swipe = First letter capitalized
+- ✅ Hold/double-tap shift + swipe = ALL CAPS
+- ✅ More intuitive behavior for users
+
+---
+
+### Session 20a Summary (Swipe Typing Default Enabled)
 
 **Issue Fixed:**
 - **Swipe typing disabled by default** - Same issue as CleverKeys
